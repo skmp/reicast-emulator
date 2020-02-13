@@ -186,6 +186,13 @@ struct DrawParameters
     TSP tcw2;
 };
 
+enum RenderMode {
+    RM_OPAQUE,
+    RM_PUNCHTHROUGH,
+    RM_TRANSLUCENT,
+    RM_MODIFIER,
+};
+
 #if HOST_OS != OS_WINDOWS
 struct RECT {
     int left, top, right, bottom;
@@ -294,9 +301,9 @@ struct IPs3
 };
 
 
-#define TPL_DECL_pixel template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
+#define TPL_DECL_pixel template<RenderMode render_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
 
-#define TPL_PRMS_pixel <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
+#define TPL_PRMS_pixel <render_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 
 struct refrend;
 
@@ -336,8 +343,9 @@ struct refrend : Renderer
     TPL_DECL_pixel 
     static bool PixelFlush_tsp(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
     {
-        float *zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
-        u8 *cb = &pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
+        auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        auto stencil = (u32 *)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
+        auto cb = &pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
 
         float invW = *zb;
 
@@ -349,10 +357,18 @@ struct refrend : Renderer
 
         u8 rv[4];
         {
-            rv[0] = ip.Col[2].Ip(x, y);
-            rv[1] = ip.Col[1].Ip(x, y);
-            rv[2] = ip.Col[0].Ip(x, y);
-            rv[3] = ip.Col[3].Ip(x, y);
+            {
+                u32 mult = 256;
+                if (*stencil & 1) {
+                    mult = FPU_SHAD_SCALE.scale_factor;
+                }
+
+                rv[0] = ip.Col[2].Ip(x, y) * mult / 256;
+                rv[1] = ip.Col[1].Ip(x, y) * mult / 256;
+                rv[2] = ip.Col[0].Ip(x, y) * mult / 256;
+                rv[3] = ip.Col[3].Ip(x, y) * mult / 256;    
+            }
+            
 
             if (!pp_UseAlpha)
             {
@@ -431,15 +447,22 @@ struct refrend : Renderer
                 {
                     //add offset
 
-                    rv[0] += ip.Ofs[2].Ip(x, y);
-                    rv[1] += ip.Ofs[1].Ip(x, y);
-                    rv[2] += ip.Ofs[0].Ip(x, y);
+                    u32 mult = 256;
+                    if (*stencil & 1) {
+                        mult = FPU_SHAD_SCALE.scale_factor;
+                    }
+
+                    rv[0] += ip.Ofs[2].Ip(x, y) * mult / 256;
+                    rv[1] += ip.Ofs[1].Ip(x, y) * mult / 256;
+                    rv[2] += ip.Ofs[0].Ip(x, y) * mult / 256;
                     rv[3] += ip.Ofs[3].Ip(x, y);
                 }
             }
         }
 
-        if (alpha_mode == 1)
+
+
+        if (render_mode == RM_PUNCHTHROUGH)
         {
             if (rv[3] < PT_ALPHA_REF)
             {
@@ -451,7 +474,7 @@ struct refrend : Renderer
                 return false;
             }
         }
-        else if (alpha_mode == 2)
+        else if (render_mode == RM_TRANSLUCENT)
         {
             u8 *fb = (u8 *)cb;
             u8 src_blend = rv[3];
@@ -471,7 +494,7 @@ struct refrend : Renderer
         }
     }
 
-    parameter_tag_t AddTspEntry(DrawParameters* params, Vertex* vtx, int alpha_mode)
+    parameter_tag_t AddTspEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode)
     {
         CacheEntry entry;
         entry.params = *params;
@@ -483,7 +506,7 @@ struct refrend : Renderer
 
         entry.ips.Setup(&entry.texture, vtx[0], vtx[1], vtx[2]);
 
-        entry.shade = PixelFlush_tspFns[alpha_mode][entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.tsp.IgnoreTexA][entry.params.tsp.ShadInstr][entry.params.isp.Offset];
+        entry.shade = PixelFlush_tspFns[render_mode][entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.tsp.IgnoreTexA][entry.params.tsp.ShadInstr][entry.params.isp.Offset];
 
         tsp_cache.push_back(entry);
 
@@ -501,13 +524,14 @@ struct refrend : Renderer
         return entry->shade(&entry->texture, x, y, pb, entry->ips);
     }
 
-    // Depth processing for a pixel -- alpha_mode 0: OPAQ, 1: PT, 2: TRANS
-    template <int alpha_mode>
+    // Depth processing for a pixel -- render_mode 0: OPAQ, 1: PT, 2: TRANS
+    template <RenderMode render_mode>
     void PixelFlush_isp(float x, float y, u8 *pb, PlaneStepper3 &Z, parameter_tag_t tag)
     {
         float invW = Z.Ip(x, y);
-        float *zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
-        float *zb2 = (float *)&pb[DEPTH2_BUFFER_PIXEL_OFFSET * 4];
+        auto zb = (float*)&pb [DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        auto zb2 = (float*)&pb[DEPTH2_BUFFER_PIXEL_OFFSET * 4];
+        auto stencil = (u32*)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
 
 #if 0 // make sure we're writting to the right place
     verify((uintptr_t) pb >= (uintptr_t)&render_buffer[0]);
@@ -520,41 +544,60 @@ struct refrend : Renderer
     verify((uintptr_t)zb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
 #endif
 
-        // OPAQ
-        if (alpha_mode == 0)
+        switch (render_mode)
         {
-            // Z pre-pass only
-            if (invW < *zb)
-                return;
-
-            *zb = invW;
-            *(parameter_tag_t*)pb = tag;
-        }
-        // PT
-        else if (alpha_mode == 1)
-        {
-            // Z + TSP syncronized for alpha test
-            if (invW < *zb)
-                return;
-
-            if (PixelFlush_tsp_cached(x, y, pb, tag))
+            // OPAQ
+            case RM_OPAQUE:
             {
+                // Z pre-pass only
+                if (invW < *zb)
+                    return;
+
                 *zb = invW;
+                *(parameter_tag_t *)pb = tag;
             }
-        }
-        // Layer Peeling. zb2 holds the reference depth, zb is used to find closest to reference
-        else if (alpha_mode == 2)
-        {
-            if (invW <= *zb2)
-                return;
+            break;
 
-            if (invW > *zb)
-                return;
+            case RM_MODIFIER:
+            {
+                // Flip on Z pass
+                if (invW < *zb)
+                    return;
 
-            PixelsDrawn++;
-            
-            *zb = invW;
-            *(parameter_tag_t*)pb = tag;
+                *stencil ^= 0b10;
+            }
+            break;
+
+            // PT
+            case RM_PUNCHTHROUGH:
+            {
+                // Z + TSP syncronized for alpha test
+                if (invW < *zb)
+                    return;
+
+                if (PixelFlush_tsp_cached(x, y, pb, tag))
+                {
+                    *zb = invW;
+                    *(parameter_tag_t *)pb = tag;
+                }
+            }
+            break;
+
+            // Layer Peeling. zb2 holds the reference depth, zb is used to find closest to reference
+            case RM_TRANSLUCENT:
+            {
+                if (invW <= *zb2)
+                    return;
+
+                if (invW > *zb)
+                    return;
+
+                PixelsDrawn++;
+
+                *zb = invW;
+                *(parameter_tag_t *)pb = tag;
+            }
+            break;
         }
     }
 
@@ -562,8 +605,8 @@ struct refrend : Renderer
     int PixelsDrawn;
 
     // Rasterize a single triangle to ISP (or ISP+TSP for PT)
-    template<int alpha_mode>
-    void Rendtriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    template<RenderMode render_mode>
+    void RasterizeTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
     {
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation
@@ -663,7 +706,7 @@ struct refrend : Renderer
 
                 if (inTriangle)
                 {
-                    PixelFlush_isp<alpha_mode>(x_ps, y_ps, cb_x, Z, tag);
+                    PixelFlush_isp<render_mode>(x_ps, y_ps, cb_x, Z, tag);
                 }
 
                 cb_x += 4;
@@ -675,6 +718,32 @@ struct refrend : Renderer
             hs31 += DX31;
             cb_y += stride_bytes;
             y_ps = y_ps + 1;
+        }
+    }
+
+    template<RenderMode render_mode>
+    void RendTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    {
+        RasterizeTriangle<render_mode>(params, tag, vertex_offset, v1, v2, v3, colorBuffer, area);
+
+        if (render_mode == RM_MODIFIER)
+        {          
+            u32* stencil = &colorBuffer[STENCIL_BUFFER_PIXEL_OFFSET];
+
+            if (params->isp.modvol.VolumeMode == 1 ) 
+            {
+                // post movdol merge INSIDE
+                for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+                    stencil[i] |= (stencil[i] >>1);
+                }
+            }
+            else if (params->isp.modvol.VolumeMode == 2) 
+            {
+                // post movdol merge OUTSIDE
+                for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+                    stencil[i] &= (stencil[i] >>1);
+                }
+            }
         }
     }
 
@@ -699,7 +768,7 @@ struct refrend : Renderer
 
     // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
-    void RenderParamTags(int alpha_mode, int tileX, int tileY) {
+    void RenderParamTags(int tileX, int tileY) {
 
         auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
 
@@ -817,7 +886,7 @@ struct refrend : Renderer
 
 
     // render a triangle strip object list entry
-    template<int alpha_mode>
+    template<RenderMode render_mode>
     void RenderTriangleStrip(ObjectListEntry obj, RECT* rect)
     {
         Vertex vtx[8];
@@ -833,15 +902,16 @@ struct refrend : Renderer
             if (obj.tstrip.mask & (1 << (5-i)))
             {
 
-                parameter_tag_t tag = AddTspEntry(&params, &vtx[i], alpha_mode);
-                Rendtriangle<alpha_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], render_buffer, rect);
+                parameter_tag_t tag = AddTspEntry(&params, &vtx[i], render_mode);
+
+                RendTriangle<render_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], render_buffer, rect);
             }
         }
     }
 
 
     // render a triangle array object list entry
-    template<int alpha_mode>
+    template<RenderMode render_mode>
     void RenderTriangleArray(ObjectListEntry obj, RECT* rect)
     {
         auto triangles = obj.tarray.prims + 1;
@@ -857,13 +927,18 @@ struct refrend : Renderer
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.tarray.skip, obj.tarray.shadow, vtx, 3);
             
-            parameter_tag_t tag = AddTspEntry(&params, &vtx[0], alpha_mode);
-            Rendtriangle<alpha_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
+            parameter_tag_t tag = 0;
+            if (render_mode != RM_MODIFIER)
+            {
+                tag = AddTspEntry(&params, &vtx[0], render_mode);
+            }
+
+            RendTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
         }
     }
 
     // render a quad array object list entry
-    template<int alpha_mode>
+    template<RenderMode render_mode>
     void RenderQuadArray(ObjectListEntry obj, RECT* rect)
     {
         auto quads = obj.qarray.prims + 1;
@@ -879,15 +954,15 @@ struct refrend : Renderer
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
             
-            parameter_tag_t tag = AddTspEntry(&params, &vtx[0], alpha_mode);
+            parameter_tag_t tag = AddTspEntry(&params, &vtx[0], render_mode);
 
             //TODO: FIXME
-            Rendtriangle<alpha_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
+            RendTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
         }
     }
 
     // Render an object list
-    template<int alpha_mode>
+    template<RenderMode render_mode>
     void RenderObjectList(pvr32addr_t base, RECT* rect)
     {
         ObjectListEntry obj;
@@ -897,7 +972,7 @@ struct refrend : Renderer
             base += 4;
 
             if (!obj.is_not_triangle_strip) {
-                RenderTriangleStrip<alpha_mode>(obj, rect);
+                RenderTriangleStrip<render_mode>(obj, rect);
             } else {
                 switch(obj.type) {
                     case 0b111: // link
@@ -908,11 +983,11 @@ struct refrend : Renderer
                         break;
 
                     case 0b100: // triangle array
-                        RenderTriangleArray<alpha_mode>(obj, rect);
+                        RenderTriangleArray<render_mode>(obj, rect);
                         break;
                     
                     case 0b101: // quad array
-                        RenderQuadArray<alpha_mode>(obj, rect);
+                        RenderQuadArray<render_mode>(obj, rect);
                         break;
 
                     default:
@@ -959,27 +1034,38 @@ struct refrend : Renderer
                 Vertex vtx[8];
                 decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
 
-                auto tag = AddTspEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], 0);
+                auto tag = AddTspEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
 
                 for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
                     pb[i] = tag;
                 }
+
+                // Clear stencil
+                auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+
+                memset(stencil, 0, MAX_RENDER_PIXELS * 4);
             }
 
             // Render OPAQ to TAGS          
             if (!entry.opaque.empty) {
-                RenderObjectList<0>(entry.opaque.ptr_in_words * 4, &rect);
+                RenderObjectList<RM_OPAQUE>(entry.opaque.ptr_in_words * 4, &rect);
+            }
+
+            // render PT to TAGS
+            if (!entry.puncht.empty) {
+                RenderObjectList<RM_PUNCHTHROUGH>(entry.puncht.ptr_in_words * 4, &rect);
             }
 
             //TODO: Render OPAQ modvols
+            if (!entry.opaque_mod.empty) {
+                RenderObjectList<RM_MODIFIER>(entry.opaque_mod.ptr_in_words * 4, &rect);
+            }
+
 
             // Render TAGS to ACCUM
-            RenderParamTags(0, rect.left, rect.top);
+            RenderParamTags(rect.left, rect.top);
 
-            // render PT to ACCUM
-            if (!entry.puncht.empty) {
-                RenderObjectList<1>(entry.puncht.ptr_in_words * 4, &rect);
-            }
+            
 
             // layer peeling rendering
             if (!entry.trans.empty) {
@@ -1000,11 +1086,20 @@ struct refrend : Renderer
                         zb[i] = FLT_MAX;    // set the "closest" test to furthest value possible
                     }
 
+                    // clear stencil
+                    auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+                    memset(stencil, 0, MAX_RENDER_PIXELS * 4);
+
+
                     // render to TAGS
-                    RenderObjectList<2>(entry.trans.ptr_in_words * 4, &rect);
+                    RenderObjectList<RM_TRANSLUCENT>(entry.trans.ptr_in_words * 4, &rect);
+
+                    if (!entry.trans_mod.empty) {
+                        RenderObjectList<RM_MODIFIER>(entry.trans_mod.ptr_in_words * 4, &rect);
+                    }
 
                     // render TAGS to ACCUM
-                    RenderParamTags(2, rect.left, rect.top);
+                    RenderParamTags(rect.left, rect.top);
                 } while (PixelsDrawn != 0);
             }
 
@@ -1100,200 +1195,200 @@ struct refrend : Renderer
 
 #define PixelFlush_tsp refrend::PixelFlush_tsp
         {
-            PixelFlush_tspFns[0][0][1][0][0][0] = &PixelFlush_tsp<0, 0, 1, 0, 0, 0>;
-            PixelFlush_tspFns[0][0][1][0][0][1] = &PixelFlush_tsp<0, 0, 1, 0, 0, 1>;
-            PixelFlush_tspFns[0][0][1][0][1][0] = &PixelFlush_tsp<0, 0, 1, 0, 1, 0>;
-            PixelFlush_tspFns[0][0][1][0][1][1] = &PixelFlush_tsp<0, 0, 1, 0, 1, 1>;
-            PixelFlush_tspFns[0][0][1][0][2][0] = &PixelFlush_tsp<0, 0, 1, 0, 2, 0>;
-            PixelFlush_tspFns[0][0][1][0][2][1] = &PixelFlush_tsp<0, 0, 1, 0, 2, 1>;
-            PixelFlush_tspFns[0][0][1][0][3][0] = &PixelFlush_tsp<0, 0, 1, 0, 3, 0>;
-            PixelFlush_tspFns[0][0][1][0][3][1] = &PixelFlush_tsp<0, 0, 1, 0, 3, 1>;
-            PixelFlush_tspFns[0][0][1][1][0][0] = &PixelFlush_tsp<0, 0, 1, 1, 0, 0>;
-            PixelFlush_tspFns[0][0][1][1][0][1] = &PixelFlush_tsp<0, 0, 1, 1, 0, 1>;
-            PixelFlush_tspFns[0][0][1][1][1][0] = &PixelFlush_tsp<0, 0, 1, 1, 1, 0>;
-            PixelFlush_tspFns[0][0][1][1][1][1] = &PixelFlush_tsp<0, 0, 1, 1, 1, 1>;
-            PixelFlush_tspFns[0][0][1][1][2][0] = &PixelFlush_tsp<0, 0, 1, 1, 2, 0>;
-            PixelFlush_tspFns[0][0][1][1][2][1] = &PixelFlush_tsp<0, 0, 1, 1, 2, 1>;
-            PixelFlush_tspFns[0][0][1][1][3][0] = &PixelFlush_tsp<0, 0, 1, 1, 3, 0>;
-            PixelFlush_tspFns[0][0][1][1][3][1] = &PixelFlush_tsp<0, 0, 1, 1, 3, 1>;
-            PixelFlush_tspFns[0][0][0][0][0][0] = &PixelFlush_tsp<0, 0, 0, 0, 0, 0>;
-            PixelFlush_tspFns[0][0][0][0][0][1] = &PixelFlush_tsp<0, 0, 0, 0, 0, 1>;
-            PixelFlush_tspFns[0][0][0][0][1][0] = &PixelFlush_tsp<0, 0, 0, 0, 1, 0>;
-            PixelFlush_tspFns[0][0][0][0][1][1] = &PixelFlush_tsp<0, 0, 0, 0, 1, 1>;
-            PixelFlush_tspFns[0][0][0][0][2][0] = &PixelFlush_tsp<0, 0, 0, 0, 2, 0>;
-            PixelFlush_tspFns[0][0][0][0][2][1] = &PixelFlush_tsp<0, 0, 0, 0, 2, 1>;
-            PixelFlush_tspFns[0][0][0][0][3][0] = &PixelFlush_tsp<0, 0, 0, 0, 3, 0>;
-            PixelFlush_tspFns[0][0][0][0][3][1] = &PixelFlush_tsp<0, 0, 0, 0, 3, 1>;
-            PixelFlush_tspFns[0][0][0][1][0][0] = &PixelFlush_tsp<0, 0, 0, 1, 0, 0>;
-            PixelFlush_tspFns[0][0][0][1][0][1] = &PixelFlush_tsp<0, 0, 0, 1, 0, 1>;
-            PixelFlush_tspFns[0][0][0][1][1][0] = &PixelFlush_tsp<0, 0, 0, 1, 1, 0>;
-            PixelFlush_tspFns[0][0][0][1][1][1] = &PixelFlush_tsp<0, 0, 0, 1, 1, 1>;
-            PixelFlush_tspFns[0][0][0][1][2][0] = &PixelFlush_tsp<0, 0, 0, 1, 2, 0>;
-            PixelFlush_tspFns[0][0][0][1][2][1] = &PixelFlush_tsp<0, 0, 0, 1, 2, 1>;
-            PixelFlush_tspFns[0][0][0][1][3][0] = &PixelFlush_tsp<0, 0, 0, 1, 3, 0>;
-            PixelFlush_tspFns[0][0][0][1][3][1] = &PixelFlush_tsp<0, 0, 0, 1, 3, 1>;
-            PixelFlush_tspFns[0][1][1][0][0][0] = &PixelFlush_tsp<0, 1, 1, 0, 0, 0>;
-            PixelFlush_tspFns[0][1][1][0][0][1] = &PixelFlush_tsp<0, 1, 1, 0, 0, 1>;
-            PixelFlush_tspFns[0][1][1][0][1][0] = &PixelFlush_tsp<0, 1, 1, 0, 1, 0>;
-            PixelFlush_tspFns[0][1][1][0][1][1] = &PixelFlush_tsp<0, 1, 1, 0, 1, 1>;
-            PixelFlush_tspFns[0][1][1][0][2][0] = &PixelFlush_tsp<0, 1, 1, 0, 2, 0>;
-            PixelFlush_tspFns[0][1][1][0][2][1] = &PixelFlush_tsp<0, 1, 1, 0, 2, 1>;
-            PixelFlush_tspFns[0][1][1][0][3][0] = &PixelFlush_tsp<0, 1, 1, 0, 3, 0>;
-            PixelFlush_tspFns[0][1][1][0][3][1] = &PixelFlush_tsp<0, 1, 1, 0, 3, 1>;
-            PixelFlush_tspFns[0][1][1][1][0][0] = &PixelFlush_tsp<0, 1, 1, 1, 0, 0>;
-            PixelFlush_tspFns[0][1][1][1][0][1] = &PixelFlush_tsp<0, 1, 1, 1, 0, 1>;
-            PixelFlush_tspFns[0][1][1][1][1][0] = &PixelFlush_tsp<0, 1, 1, 1, 1, 0>;
-            PixelFlush_tspFns[0][1][1][1][1][1] = &PixelFlush_tsp<0, 1, 1, 1, 1, 1>;
-            PixelFlush_tspFns[0][1][1][1][2][0] = &PixelFlush_tsp<0, 1, 1, 1, 2, 0>;
-            PixelFlush_tspFns[0][1][1][1][2][1] = &PixelFlush_tsp<0, 1, 1, 1, 2, 1>;
-            PixelFlush_tspFns[0][1][1][1][3][0] = &PixelFlush_tsp<0, 1, 1, 1, 3, 0>;
-            PixelFlush_tspFns[0][1][1][1][3][1] = &PixelFlush_tsp<0, 1, 1, 1, 3, 1>;
-            PixelFlush_tspFns[0][1][0][0][0][0] = &PixelFlush_tsp<0, 1, 0, 0, 0, 0>;
-            PixelFlush_tspFns[0][1][0][0][0][1] = &PixelFlush_tsp<0, 1, 0, 0, 0, 1>;
-            PixelFlush_tspFns[0][1][0][0][1][0] = &PixelFlush_tsp<0, 1, 0, 0, 1, 0>;
-            PixelFlush_tspFns[0][1][0][0][1][1] = &PixelFlush_tsp<0, 1, 0, 0, 1, 1>;
-            PixelFlush_tspFns[0][1][0][0][2][0] = &PixelFlush_tsp<0, 1, 0, 0, 2, 0>;
-            PixelFlush_tspFns[0][1][0][0][2][1] = &PixelFlush_tsp<0, 1, 0, 0, 2, 1>;
-            PixelFlush_tspFns[0][1][0][0][3][0] = &PixelFlush_tsp<0, 1, 0, 0, 3, 0>;
-            PixelFlush_tspFns[0][1][0][0][3][1] = &PixelFlush_tsp<0, 1, 0, 0, 3, 1>;
-            PixelFlush_tspFns[0][1][0][1][0][0] = &PixelFlush_tsp<0, 1, 0, 1, 0, 0>;
-            PixelFlush_tspFns[0][1][0][1][0][1] = &PixelFlush_tsp<0, 1, 0, 1, 0, 1>;
-            PixelFlush_tspFns[0][1][0][1][1][0] = &PixelFlush_tsp<0, 1, 0, 1, 1, 0>;
-            PixelFlush_tspFns[0][1][0][1][1][1] = &PixelFlush_tsp<0, 1, 0, 1, 1, 1>;
-            PixelFlush_tspFns[0][1][0][1][2][0] = &PixelFlush_tsp<0, 1, 0, 1, 2, 0>;
-            PixelFlush_tspFns[0][1][0][1][2][1] = &PixelFlush_tsp<0, 1, 0, 1, 2, 1>;
-            PixelFlush_tspFns[0][1][0][1][3][0] = &PixelFlush_tsp<0, 1, 0, 1, 3, 0>;
-            PixelFlush_tspFns[0][1][0][1][3][1] = &PixelFlush_tsp<0, 1, 0, 1, 3, 1>;
+            PixelFlush_tspFns[0][0][1][0][0][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 0, 0>;
+            PixelFlush_tspFns[0][0][1][0][0][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 0, 1>;
+            PixelFlush_tspFns[0][0][1][0][1][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 1, 0>;
+            PixelFlush_tspFns[0][0][1][0][1][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 1, 1>;
+            PixelFlush_tspFns[0][0][1][0][2][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 2, 0>;
+            PixelFlush_tspFns[0][0][1][0][2][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 2, 1>;
+            PixelFlush_tspFns[0][0][1][0][3][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 3, 0>;
+            PixelFlush_tspFns[0][0][1][0][3][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 3, 1>;
+            PixelFlush_tspFns[0][0][1][1][0][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 1, 0, 0>;
+            PixelFlush_tspFns[0][0][1][1][0][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 1, 0, 1>;
+            PixelFlush_tspFns[0][0][1][1][1][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 1, 1, 0>;
+            PixelFlush_tspFns[0][0][1][1][1][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 1, 1, 1>;
+            PixelFlush_tspFns[0][0][1][1][2][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 1, 2, 0>;
+            PixelFlush_tspFns[0][0][1][1][2][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 1, 2, 1>;
+            PixelFlush_tspFns[0][0][1][1][3][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 1, 3, 0>;
+            PixelFlush_tspFns[0][0][1][1][3][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 1, 3, 1>;
+            PixelFlush_tspFns[0][0][0][0][0][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 0, 0, 0>;
+            PixelFlush_tspFns[0][0][0][0][0][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 0, 0, 1>;
+            PixelFlush_tspFns[0][0][0][0][1][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 0, 1, 0>;
+            PixelFlush_tspFns[0][0][0][0][1][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 0, 1, 1>;
+            PixelFlush_tspFns[0][0][0][0][2][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 0, 2, 0>;
+            PixelFlush_tspFns[0][0][0][0][2][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 0, 2, 1>;
+            PixelFlush_tspFns[0][0][0][0][3][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 0, 3, 0>;
+            PixelFlush_tspFns[0][0][0][0][3][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 0, 3, 1>;
+            PixelFlush_tspFns[0][0][0][1][0][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 1, 0, 0>;
+            PixelFlush_tspFns[0][0][0][1][0][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 1, 0, 1>;
+            PixelFlush_tspFns[0][0][0][1][1][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 1, 1, 0>;
+            PixelFlush_tspFns[0][0][0][1][1][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 1, 1, 1>;
+            PixelFlush_tspFns[0][0][0][1][2][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 1, 2, 0>;
+            PixelFlush_tspFns[0][0][0][1][2][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 1, 2, 1>;
+            PixelFlush_tspFns[0][0][0][1][3][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 1, 3, 0>;
+            PixelFlush_tspFns[0][0][0][1][3][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 0, 1, 3, 1>;
+            PixelFlush_tspFns[0][1][1][0][0][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 0, 0, 0>;
+            PixelFlush_tspFns[0][1][1][0][0][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 0, 0, 1>;
+            PixelFlush_tspFns[0][1][1][0][1][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 0, 1, 0>;
+            PixelFlush_tspFns[0][1][1][0][1][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 0, 1, 1>;
+            PixelFlush_tspFns[0][1][1][0][2][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 0, 2, 0>;
+            PixelFlush_tspFns[0][1][1][0][2][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 0, 2, 1>;
+            PixelFlush_tspFns[0][1][1][0][3][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 0, 3, 0>;
+            PixelFlush_tspFns[0][1][1][0][3][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 0, 3, 1>;
+            PixelFlush_tspFns[0][1][1][1][0][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 1, 0, 0>;
+            PixelFlush_tspFns[0][1][1][1][0][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 1, 0, 1>;
+            PixelFlush_tspFns[0][1][1][1][1][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 1, 1, 0>;
+            PixelFlush_tspFns[0][1][1][1][1][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 1, 1, 1>;
+            PixelFlush_tspFns[0][1][1][1][2][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 1, 2, 0>;
+            PixelFlush_tspFns[0][1][1][1][2][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 1, 2, 1>;
+            PixelFlush_tspFns[0][1][1][1][3][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 1, 3, 0>;
+            PixelFlush_tspFns[0][1][1][1][3][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 1, 1, 3, 1>;
+            PixelFlush_tspFns[0][1][0][0][0][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 0, 0, 0>;
+            PixelFlush_tspFns[0][1][0][0][0][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 0, 0, 1>;
+            PixelFlush_tspFns[0][1][0][0][1][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 0, 1, 0>;
+            PixelFlush_tspFns[0][1][0][0][1][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 0, 1, 1>;
+            PixelFlush_tspFns[0][1][0][0][2][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 0, 2, 0>;
+            PixelFlush_tspFns[0][1][0][0][2][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 0, 2, 1>;
+            PixelFlush_tspFns[0][1][0][0][3][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 0, 3, 0>;
+            PixelFlush_tspFns[0][1][0][0][3][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 0, 3, 1>;
+            PixelFlush_tspFns[0][1][0][1][0][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 1, 0, 0>;
+            PixelFlush_tspFns[0][1][0][1][0][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 1, 0, 1>;
+            PixelFlush_tspFns[0][1][0][1][1][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 1, 1, 0>;
+            PixelFlush_tspFns[0][1][0][1][1][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 1, 1, 1>;
+            PixelFlush_tspFns[0][1][0][1][2][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 1, 2, 0>;
+            PixelFlush_tspFns[0][1][0][1][2][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 1, 2, 1>;
+            PixelFlush_tspFns[0][1][0][1][3][0] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 1, 3, 0>;
+            PixelFlush_tspFns[0][1][0][1][3][1] = &PixelFlush_tsp<RM_OPAQUE, 1, 0, 1, 3, 1>;
+            
+            PixelFlush_tspFns[1][0][1][0][0][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 0, 0, 0>;
+            PixelFlush_tspFns[1][0][1][0][0][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 0, 0, 1>;
+            PixelFlush_tspFns[1][0][1][0][1][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 0, 1, 0>;
+            PixelFlush_tspFns[1][0][1][0][1][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 0, 1, 1>;
+            PixelFlush_tspFns[1][0][1][0][2][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 0, 2, 0>;
+            PixelFlush_tspFns[1][0][1][0][2][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 0, 2, 1>;
+            PixelFlush_tspFns[1][0][1][0][3][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 0, 3, 0>;
+            PixelFlush_tspFns[1][0][1][0][3][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 0, 3, 1>;
+            PixelFlush_tspFns[1][0][1][1][0][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 1, 0, 0>;
+            PixelFlush_tspFns[1][0][1][1][0][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 1, 0, 1>;
+            PixelFlush_tspFns[1][0][1][1][1][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 1, 1, 0>;
+            PixelFlush_tspFns[1][0][1][1][1][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 1, 1, 1>;
+            PixelFlush_tspFns[1][0][1][1][2][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 1, 2, 0>;
+            PixelFlush_tspFns[1][0][1][1][2][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 1, 2, 1>;
+            PixelFlush_tspFns[1][0][1][1][3][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 1, 3, 0>;
+            PixelFlush_tspFns[1][0][1][1][3][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 1, 1, 3, 1>;
+            PixelFlush_tspFns[1][0][0][0][0][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 0, 0, 0>;
+            PixelFlush_tspFns[1][0][0][0][0][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 0, 0, 1>;
+            PixelFlush_tspFns[1][0][0][0][1][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 0, 1, 0>;
+            PixelFlush_tspFns[1][0][0][0][1][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 0, 1, 1>;
+            PixelFlush_tspFns[1][0][0][0][2][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 0, 2, 0>;
+            PixelFlush_tspFns[1][0][0][0][2][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 0, 2, 1>;
+            PixelFlush_tspFns[1][0][0][0][3][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 0, 3, 0>;
+            PixelFlush_tspFns[1][0][0][0][3][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 0, 3, 1>;
+            PixelFlush_tspFns[1][0][0][1][0][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 1, 0, 0>;
+            PixelFlush_tspFns[1][0][0][1][0][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 1, 0, 1>;
+            PixelFlush_tspFns[1][0][0][1][1][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 1, 1, 0>;
+            PixelFlush_tspFns[1][0][0][1][1][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 1, 1, 1>;
+            PixelFlush_tspFns[1][0][0][1][2][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 1, 2, 0>;
+            PixelFlush_tspFns[1][0][0][1][2][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 1, 2, 1>;
+            PixelFlush_tspFns[1][0][0][1][3][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 1, 3, 0>;
+            PixelFlush_tspFns[1][0][0][1][3][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 0, 0, 1, 3, 1>;
+            PixelFlush_tspFns[1][1][1][0][0][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 0, 0, 0>;
+            PixelFlush_tspFns[1][1][1][0][0][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 0, 0, 1>;
+            PixelFlush_tspFns[1][1][1][0][1][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 0, 1, 0>;
+            PixelFlush_tspFns[1][1][1][0][1][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 0, 1, 1>;
+            PixelFlush_tspFns[1][1][1][0][2][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 0, 2, 0>;
+            PixelFlush_tspFns[1][1][1][0][2][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 0, 2, 1>;
+            PixelFlush_tspFns[1][1][1][0][3][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 0, 3, 0>;
+            PixelFlush_tspFns[1][1][1][0][3][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 0, 3, 1>;
+            PixelFlush_tspFns[1][1][1][1][0][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 1, 0, 0>;
+            PixelFlush_tspFns[1][1][1][1][0][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 1, 0, 1>;
+            PixelFlush_tspFns[1][1][1][1][1][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 1, 1, 0>;
+            PixelFlush_tspFns[1][1][1][1][1][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 1, 1, 1>;
+            PixelFlush_tspFns[1][1][1][1][2][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 1, 2, 0>;
+            PixelFlush_tspFns[1][1][1][1][2][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 1, 2, 1>;
+            PixelFlush_tspFns[1][1][1][1][3][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 1, 3, 0>;
+            PixelFlush_tspFns[1][1][1][1][3][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 1, 1, 3, 1>;
+            PixelFlush_tspFns[1][1][0][0][0][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 0, 0, 0>;
+            PixelFlush_tspFns[1][1][0][0][0][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 0, 0, 1>;
+            PixelFlush_tspFns[1][1][0][0][1][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 0, 1, 0>;
+            PixelFlush_tspFns[1][1][0][0][1][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 0, 1, 1>;
+            PixelFlush_tspFns[1][1][0][0][2][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 0, 2, 0>;
+            PixelFlush_tspFns[1][1][0][0][2][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 0, 2, 1>;
+            PixelFlush_tspFns[1][1][0][0][3][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 0, 3, 0>;
+            PixelFlush_tspFns[1][1][0][0][3][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 0, 3, 1>;
+            PixelFlush_tspFns[1][1][0][1][0][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 1, 0, 0>;
+            PixelFlush_tspFns[1][1][0][1][0][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 1, 0, 1>;
+            PixelFlush_tspFns[1][1][0][1][1][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 1, 1, 0>;
+            PixelFlush_tspFns[1][1][0][1][1][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 1, 1, 1>;
+            PixelFlush_tspFns[1][1][0][1][2][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 1, 2, 0>;
+            PixelFlush_tspFns[1][1][0][1][2][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 1, 2, 1>;
+            PixelFlush_tspFns[1][1][0][1][3][0] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 1, 3, 0>;
+            PixelFlush_tspFns[1][1][0][1][3][1] = &PixelFlush_tsp<RM_PUNCHTHROUGH, 1, 0, 1, 3, 1>;
 
-            PixelFlush_tspFns[1][0][1][0][0][0] = &PixelFlush_tsp<1, 0, 1, 0, 0, 0>;
-            PixelFlush_tspFns[1][0][1][0][0][1] = &PixelFlush_tsp<1, 0, 1, 0, 0, 1>;
-            PixelFlush_tspFns[1][0][1][0][1][0] = &PixelFlush_tsp<1, 0, 1, 0, 1, 0>;
-            PixelFlush_tspFns[1][0][1][0][1][1] = &PixelFlush_tsp<1, 0, 1, 0, 1, 1>;
-            PixelFlush_tspFns[1][0][1][0][2][0] = &PixelFlush_tsp<1, 0, 1, 0, 2, 0>;
-            PixelFlush_tspFns[1][0][1][0][2][1] = &PixelFlush_tsp<1, 0, 1, 0, 2, 1>;
-            PixelFlush_tspFns[1][0][1][0][3][0] = &PixelFlush_tsp<1, 0, 1, 0, 3, 0>;
-            PixelFlush_tspFns[1][0][1][0][3][1] = &PixelFlush_tsp<1, 0, 1, 0, 3, 1>;
-            PixelFlush_tspFns[1][0][1][1][0][0] = &PixelFlush_tsp<1, 0, 1, 1, 0, 0>;
-            PixelFlush_tspFns[1][0][1][1][0][1] = &PixelFlush_tsp<1, 0, 1, 1, 0, 1>;
-            PixelFlush_tspFns[1][0][1][1][1][0] = &PixelFlush_tsp<1, 0, 1, 1, 1, 0>;
-            PixelFlush_tspFns[1][0][1][1][1][1] = &PixelFlush_tsp<1, 0, 1, 1, 1, 1>;
-            PixelFlush_tspFns[1][0][1][1][2][0] = &PixelFlush_tsp<1, 0, 1, 1, 2, 0>;
-            PixelFlush_tspFns[1][0][1][1][2][1] = &PixelFlush_tsp<1, 0, 1, 1, 2, 1>;
-            PixelFlush_tspFns[1][0][1][1][3][0] = &PixelFlush_tsp<1, 0, 1, 1, 3, 0>;
-            PixelFlush_tspFns[1][0][1][1][3][1] = &PixelFlush_tsp<1, 0, 1, 1, 3, 1>;
-            PixelFlush_tspFns[1][0][0][0][0][0] = &PixelFlush_tsp<1, 0, 0, 0, 0, 0>;
-            PixelFlush_tspFns[1][0][0][0][0][1] = &PixelFlush_tsp<1, 0, 0, 0, 0, 1>;
-            PixelFlush_tspFns[1][0][0][0][1][0] = &PixelFlush_tsp<1, 0, 0, 0, 1, 0>;
-            PixelFlush_tspFns[1][0][0][0][1][1] = &PixelFlush_tsp<1, 0, 0, 0, 1, 1>;
-            PixelFlush_tspFns[1][0][0][0][2][0] = &PixelFlush_tsp<1, 0, 0, 0, 2, 0>;
-            PixelFlush_tspFns[1][0][0][0][2][1] = &PixelFlush_tsp<1, 0, 0, 0, 2, 1>;
-            PixelFlush_tspFns[1][0][0][0][3][0] = &PixelFlush_tsp<1, 0, 0, 0, 3, 0>;
-            PixelFlush_tspFns[1][0][0][0][3][1] = &PixelFlush_tsp<1, 0, 0, 0, 3, 1>;
-            PixelFlush_tspFns[1][0][0][1][0][0] = &PixelFlush_tsp<1, 0, 0, 1, 0, 0>;
-            PixelFlush_tspFns[1][0][0][1][0][1] = &PixelFlush_tsp<1, 0, 0, 1, 0, 1>;
-            PixelFlush_tspFns[1][0][0][1][1][0] = &PixelFlush_tsp<1, 0, 0, 1, 1, 0>;
-            PixelFlush_tspFns[1][0][0][1][1][1] = &PixelFlush_tsp<1, 0, 0, 1, 1, 1>;
-            PixelFlush_tspFns[1][0][0][1][2][0] = &PixelFlush_tsp<1, 0, 0, 1, 2, 0>;
-            PixelFlush_tspFns[1][0][0][1][2][1] = &PixelFlush_tsp<1, 0, 0, 1, 2, 1>;
-            PixelFlush_tspFns[1][0][0][1][3][0] = &PixelFlush_tsp<1, 0, 0, 1, 3, 0>;
-            PixelFlush_tspFns[1][0][0][1][3][1] = &PixelFlush_tsp<1, 0, 0, 1, 3, 1>;
-            PixelFlush_tspFns[1][1][1][0][0][0] = &PixelFlush_tsp<1, 1, 1, 0, 0, 0>;
-            PixelFlush_tspFns[1][1][1][0][0][1] = &PixelFlush_tsp<1, 1, 1, 0, 0, 1>;
-            PixelFlush_tspFns[1][1][1][0][1][0] = &PixelFlush_tsp<1, 1, 1, 0, 1, 0>;
-            PixelFlush_tspFns[1][1][1][0][1][1] = &PixelFlush_tsp<1, 1, 1, 0, 1, 1>;
-            PixelFlush_tspFns[1][1][1][0][2][0] = &PixelFlush_tsp<1, 1, 1, 0, 2, 0>;
-            PixelFlush_tspFns[1][1][1][0][2][1] = &PixelFlush_tsp<1, 1, 1, 0, 2, 1>;
-            PixelFlush_tspFns[1][1][1][0][3][0] = &PixelFlush_tsp<1, 1, 1, 0, 3, 0>;
-            PixelFlush_tspFns[1][1][1][0][3][1] = &PixelFlush_tsp<1, 1, 1, 0, 3, 1>;
-            PixelFlush_tspFns[1][1][1][1][0][0] = &PixelFlush_tsp<1, 1, 1, 1, 0, 0>;
-            PixelFlush_tspFns[1][1][1][1][0][1] = &PixelFlush_tsp<1, 1, 1, 1, 0, 1>;
-            PixelFlush_tspFns[1][1][1][1][1][0] = &PixelFlush_tsp<1, 1, 1, 1, 1, 0>;
-            PixelFlush_tspFns[1][1][1][1][1][1] = &PixelFlush_tsp<1, 1, 1, 1, 1, 1>;
-            PixelFlush_tspFns[1][1][1][1][2][0] = &PixelFlush_tsp<1, 1, 1, 1, 2, 0>;
-            PixelFlush_tspFns[1][1][1][1][2][1] = &PixelFlush_tsp<1, 1, 1, 1, 2, 1>;
-            PixelFlush_tspFns[1][1][1][1][3][0] = &PixelFlush_tsp<1, 1, 1, 1, 3, 0>;
-            PixelFlush_tspFns[1][1][1][1][3][1] = &PixelFlush_tsp<1, 1, 1, 1, 3, 1>;
-            PixelFlush_tspFns[1][1][0][0][0][0] = &PixelFlush_tsp<1, 1, 0, 0, 0, 0>;
-            PixelFlush_tspFns[1][1][0][0][0][1] = &PixelFlush_tsp<1, 1, 0, 0, 0, 1>;
-            PixelFlush_tspFns[1][1][0][0][1][0] = &PixelFlush_tsp<1, 1, 0, 0, 1, 0>;
-            PixelFlush_tspFns[1][1][0][0][1][1] = &PixelFlush_tsp<1, 1, 0, 0, 1, 1>;
-            PixelFlush_tspFns[1][1][0][0][2][0] = &PixelFlush_tsp<1, 1, 0, 0, 2, 0>;
-            PixelFlush_tspFns[1][1][0][0][2][1] = &PixelFlush_tsp<1, 1, 0, 0, 2, 1>;
-            PixelFlush_tspFns[1][1][0][0][3][0] = &PixelFlush_tsp<1, 1, 0, 0, 3, 0>;
-            PixelFlush_tspFns[1][1][0][0][3][1] = &PixelFlush_tsp<1, 1, 0, 0, 3, 1>;
-            PixelFlush_tspFns[1][1][0][1][0][0] = &PixelFlush_tsp<1, 1, 0, 1, 0, 0>;
-            PixelFlush_tspFns[1][1][0][1][0][1] = &PixelFlush_tsp<1, 1, 0, 1, 0, 1>;
-            PixelFlush_tspFns[1][1][0][1][1][0] = &PixelFlush_tsp<1, 1, 0, 1, 1, 0>;
-            PixelFlush_tspFns[1][1][0][1][1][1] = &PixelFlush_tsp<1, 1, 0, 1, 1, 1>;
-            PixelFlush_tspFns[1][1][0][1][2][0] = &PixelFlush_tsp<1, 1, 0, 1, 2, 0>;
-            PixelFlush_tspFns[1][1][0][1][2][1] = &PixelFlush_tsp<1, 1, 0, 1, 2, 1>;
-            PixelFlush_tspFns[1][1][0][1][3][0] = &PixelFlush_tsp<1, 1, 0, 1, 3, 0>;
-            PixelFlush_tspFns[1][1][0][1][3][1] = &PixelFlush_tsp<1, 1, 0, 1, 3, 1>;
-
-            PixelFlush_tspFns[2][0][1][0][0][0] = &PixelFlush_tsp<2, 0, 1, 0, 0, 0>;
-            PixelFlush_tspFns[2][0][1][0][0][1] = &PixelFlush_tsp<2, 0, 1, 0, 0, 1>;
-            PixelFlush_tspFns[2][0][1][0][1][0] = &PixelFlush_tsp<2, 0, 1, 0, 1, 0>;
-            PixelFlush_tspFns[2][0][1][0][1][1] = &PixelFlush_tsp<2, 0, 1, 0, 1, 1>;
-            PixelFlush_tspFns[2][0][1][0][2][0] = &PixelFlush_tsp<2, 0, 1, 0, 2, 0>;
-            PixelFlush_tspFns[2][0][1][0][2][1] = &PixelFlush_tsp<2, 0, 1, 0, 2, 1>;
-            PixelFlush_tspFns[2][0][1][0][3][0] = &PixelFlush_tsp<2, 0, 1, 0, 3, 0>;
-            PixelFlush_tspFns[2][0][1][0][3][1] = &PixelFlush_tsp<2, 0, 1, 0, 3, 1>;
-            PixelFlush_tspFns[2][0][1][1][0][0] = &PixelFlush_tsp<2, 0, 1, 1, 0, 0>;
-            PixelFlush_tspFns[2][0][1][1][0][1] = &PixelFlush_tsp<2, 0, 1, 1, 0, 1>;
-            PixelFlush_tspFns[2][0][1][1][1][0] = &PixelFlush_tsp<2, 0, 1, 1, 1, 0>;
-            PixelFlush_tspFns[2][0][1][1][1][1] = &PixelFlush_tsp<2, 0, 1, 1, 1, 1>;
-            PixelFlush_tspFns[2][0][1][1][2][0] = &PixelFlush_tsp<2, 0, 1, 1, 2, 0>;
-            PixelFlush_tspFns[2][0][1][1][2][1] = &PixelFlush_tsp<2, 0, 1, 1, 2, 1>;
-            PixelFlush_tspFns[2][0][1][1][3][0] = &PixelFlush_tsp<2, 0, 1, 1, 3, 0>;
-            PixelFlush_tspFns[2][0][1][1][3][1] = &PixelFlush_tsp<2, 0, 1, 1, 3, 1>;
-            PixelFlush_tspFns[2][0][0][0][0][0] = &PixelFlush_tsp<2, 0, 0, 0, 0, 0>;
-            PixelFlush_tspFns[2][0][0][0][0][1] = &PixelFlush_tsp<2, 0, 0, 0, 0, 1>;
-            PixelFlush_tspFns[2][0][0][0][1][0] = &PixelFlush_tsp<2, 0, 0, 0, 1, 0>;
-            PixelFlush_tspFns[2][0][0][0][1][1] = &PixelFlush_tsp<2, 0, 0, 0, 1, 1>;
-            PixelFlush_tspFns[2][0][0][0][2][0] = &PixelFlush_tsp<2, 0, 0, 0, 2, 0>;
-            PixelFlush_tspFns[2][0][0][0][2][1] = &PixelFlush_tsp<2, 0, 0, 0, 2, 1>;
-            PixelFlush_tspFns[2][0][0][0][3][0] = &PixelFlush_tsp<2, 0, 0, 0, 3, 0>;
-            PixelFlush_tspFns[2][0][0][0][3][1] = &PixelFlush_tsp<2, 0, 0, 0, 3, 1>;
-            PixelFlush_tspFns[2][0][0][1][0][0] = &PixelFlush_tsp<2, 0, 0, 1, 0, 0>;
-            PixelFlush_tspFns[2][0][0][1][0][1] = &PixelFlush_tsp<2, 0, 0, 1, 0, 1>;
-            PixelFlush_tspFns[2][0][0][1][1][0] = &PixelFlush_tsp<2, 0, 0, 1, 1, 0>;
-            PixelFlush_tspFns[2][0][0][1][1][1] = &PixelFlush_tsp<2, 0, 0, 1, 1, 1>;
-            PixelFlush_tspFns[2][0][0][1][2][0] = &PixelFlush_tsp<2, 0, 0, 1, 2, 0>;
-            PixelFlush_tspFns[2][0][0][1][2][1] = &PixelFlush_tsp<2, 0, 0, 1, 2, 1>;
-            PixelFlush_tspFns[2][0][0][1][3][0] = &PixelFlush_tsp<2, 0, 0, 1, 3, 0>;
-            PixelFlush_tspFns[2][0][0][1][3][1] = &PixelFlush_tsp<2, 0, 0, 1, 3, 1>;
-            PixelFlush_tspFns[2][1][1][0][0][0] = &PixelFlush_tsp<2, 1, 1, 0, 0, 0>;
-            PixelFlush_tspFns[2][1][1][0][0][1] = &PixelFlush_tsp<2, 1, 1, 0, 0, 1>;
-            PixelFlush_tspFns[2][1][1][0][1][0] = &PixelFlush_tsp<2, 1, 1, 0, 1, 0>;
-            PixelFlush_tspFns[2][1][1][0][1][1] = &PixelFlush_tsp<2, 1, 1, 0, 1, 1>;
-            PixelFlush_tspFns[2][1][1][0][2][0] = &PixelFlush_tsp<2, 1, 1, 0, 2, 0>;
-            PixelFlush_tspFns[2][1][1][0][2][1] = &PixelFlush_tsp<2, 1, 1, 0, 2, 1>;
-            PixelFlush_tspFns[2][1][1][0][3][0] = &PixelFlush_tsp<2, 1, 1, 0, 3, 0>;
-            PixelFlush_tspFns[2][1][1][0][3][1] = &PixelFlush_tsp<2, 1, 1, 0, 3, 1>;
-            PixelFlush_tspFns[2][1][1][1][0][0] = &PixelFlush_tsp<2, 1, 1, 1, 0, 0>;
-            PixelFlush_tspFns[2][1][1][1][0][1] = &PixelFlush_tsp<2, 1, 1, 1, 0, 1>;
-            PixelFlush_tspFns[2][1][1][1][1][0] = &PixelFlush_tsp<2, 1, 1, 1, 1, 0>;
-            PixelFlush_tspFns[2][1][1][1][1][1] = &PixelFlush_tsp<2, 1, 1, 1, 1, 1>;
-            PixelFlush_tspFns[2][1][1][1][2][0] = &PixelFlush_tsp<2, 1, 1, 1, 2, 0>;
-            PixelFlush_tspFns[2][1][1][1][2][1] = &PixelFlush_tsp<2, 1, 1, 1, 2, 1>;
-            PixelFlush_tspFns[2][1][1][1][3][0] = &PixelFlush_tsp<2, 1, 1, 1, 3, 0>;
-            PixelFlush_tspFns[2][1][1][1][3][1] = &PixelFlush_tsp<2, 1, 1, 1, 3, 1>;
-            PixelFlush_tspFns[2][1][0][0][0][0] = &PixelFlush_tsp<2, 1, 0, 0, 0, 0>;
-            PixelFlush_tspFns[2][1][0][0][0][1] = &PixelFlush_tsp<2, 1, 0, 0, 0, 1>;
-            PixelFlush_tspFns[2][1][0][0][1][0] = &PixelFlush_tsp<2, 1, 0, 0, 1, 0>;
-            PixelFlush_tspFns[2][1][0][0][1][1] = &PixelFlush_tsp<2, 1, 0, 0, 1, 1>;
-            PixelFlush_tspFns[2][1][0][0][2][0] = &PixelFlush_tsp<2, 1, 0, 0, 2, 0>;
-            PixelFlush_tspFns[2][1][0][0][2][1] = &PixelFlush_tsp<2, 1, 0, 0, 2, 1>;
-            PixelFlush_tspFns[2][1][0][0][3][0] = &PixelFlush_tsp<2, 1, 0, 0, 3, 0>;
-            PixelFlush_tspFns[2][1][0][0][3][1] = &PixelFlush_tsp<2, 1, 0, 0, 3, 1>;
-            PixelFlush_tspFns[2][1][0][1][0][0] = &PixelFlush_tsp<2, 1, 0, 1, 0, 0>;
-            PixelFlush_tspFns[2][1][0][1][0][1] = &PixelFlush_tsp<2, 1, 0, 1, 0, 1>;
-            PixelFlush_tspFns[2][1][0][1][1][0] = &PixelFlush_tsp<2, 1, 0, 1, 1, 0>;
-            PixelFlush_tspFns[2][1][0][1][1][1] = &PixelFlush_tsp<2, 1, 0, 1, 1, 1>;
-            PixelFlush_tspFns[2][1][0][1][2][0] = &PixelFlush_tsp<2, 1, 0, 1, 2, 0>;
-            PixelFlush_tspFns[2][1][0][1][2][1] = &PixelFlush_tsp<2, 1, 0, 1, 2, 1>;
-            PixelFlush_tspFns[2][1][0][1][3][0] = &PixelFlush_tsp<2, 1, 0, 1, 3, 0>;
-            PixelFlush_tspFns[2][1][0][1][3][1] = &PixelFlush_tsp<2, 1, 0, 1, 3, 1>;
+            PixelFlush_tspFns[2][0][1][0][0][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 0, 0, 0>;
+            PixelFlush_tspFns[2][0][1][0][0][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 0, 0, 1>;
+            PixelFlush_tspFns[2][0][1][0][1][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 0, 1, 0>;
+            PixelFlush_tspFns[2][0][1][0][1][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 0, 1, 1>;
+            PixelFlush_tspFns[2][0][1][0][2][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 0, 2, 0>;
+            PixelFlush_tspFns[2][0][1][0][2][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 0, 2, 1>;
+            PixelFlush_tspFns[2][0][1][0][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 0, 3, 0>;
+            PixelFlush_tspFns[2][0][1][0][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 0, 3, 1>;
+            PixelFlush_tspFns[2][0][1][1][0][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 1, 0, 0>;
+            PixelFlush_tspFns[2][0][1][1][0][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 1, 0, 1>;
+            PixelFlush_tspFns[2][0][1][1][1][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 1, 1, 0>;
+            PixelFlush_tspFns[2][0][1][1][1][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 1, 1, 1>;
+            PixelFlush_tspFns[2][0][1][1][2][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 1, 2, 0>;
+            PixelFlush_tspFns[2][0][1][1][2][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 1, 2, 1>;
+            PixelFlush_tspFns[2][0][1][1][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 1, 3, 0>;
+            PixelFlush_tspFns[2][0][1][1][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 1, 1, 3, 1>;
+            PixelFlush_tspFns[2][0][0][0][0][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 0, 0, 0>;
+            PixelFlush_tspFns[2][0][0][0][0][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 0, 0, 1>;
+            PixelFlush_tspFns[2][0][0][0][1][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 0, 1, 0>;
+            PixelFlush_tspFns[2][0][0][0][1][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 0, 1, 1>;
+            PixelFlush_tspFns[2][0][0][0][2][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 0, 2, 0>;
+            PixelFlush_tspFns[2][0][0][0][2][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 0, 2, 1>;
+            PixelFlush_tspFns[2][0][0][0][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 0, 3, 0>;
+            PixelFlush_tspFns[2][0][0][0][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 0, 3, 1>;
+            PixelFlush_tspFns[2][0][0][1][0][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 1, 0, 0>;
+            PixelFlush_tspFns[2][0][0][1][0][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 1, 0, 1>;
+            PixelFlush_tspFns[2][0][0][1][1][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 1, 1, 0>;
+            PixelFlush_tspFns[2][0][0][1][1][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 1, 1, 1>;
+            PixelFlush_tspFns[2][0][0][1][2][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 1, 2, 0>;
+            PixelFlush_tspFns[2][0][0][1][2][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 1, 2, 1>;
+            PixelFlush_tspFns[2][0][0][1][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 1, 3, 0>;
+            PixelFlush_tspFns[2][0][0][1][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 0, 0, 1, 3, 1>;
+            PixelFlush_tspFns[2][1][1][0][0][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 0, 0, 0>;
+            PixelFlush_tspFns[2][1][1][0][0][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 0, 0, 1>;
+            PixelFlush_tspFns[2][1][1][0][1][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 0, 1, 0>;
+            PixelFlush_tspFns[2][1][1][0][1][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 0, 1, 1>;
+            PixelFlush_tspFns[2][1][1][0][2][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 0, 2, 0>;
+            PixelFlush_tspFns[2][1][1][0][2][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 0, 2, 1>;
+            PixelFlush_tspFns[2][1][1][0][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 0, 3, 0>;
+            PixelFlush_tspFns[2][1][1][0][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 0, 3, 1>;
+            PixelFlush_tspFns[2][1][1][1][0][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 1, 0, 0>;
+            PixelFlush_tspFns[2][1][1][1][0][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 1, 0, 1>;
+            PixelFlush_tspFns[2][1][1][1][1][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 1, 1, 0>;
+            PixelFlush_tspFns[2][1][1][1][1][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 1, 1, 1>;
+            PixelFlush_tspFns[2][1][1][1][2][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 1, 2, 0>;
+            PixelFlush_tspFns[2][1][1][1][2][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 1, 2, 1>;
+            PixelFlush_tspFns[2][1][1][1][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 1, 3, 0>;
+            PixelFlush_tspFns[2][1][1][1][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 1, 1, 3, 1>;
+            PixelFlush_tspFns[2][1][0][0][0][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 0, 0, 0>;
+            PixelFlush_tspFns[2][1][0][0][0][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 0, 0, 1>;
+            PixelFlush_tspFns[2][1][0][0][1][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 0, 1, 0>;
+            PixelFlush_tspFns[2][1][0][0][1][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 0, 1, 1>;
+            PixelFlush_tspFns[2][1][0][0][2][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 0, 2, 0>;
+            PixelFlush_tspFns[2][1][0][0][2][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 0, 2, 1>;
+            PixelFlush_tspFns[2][1][0][0][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 0, 3, 0>;
+            PixelFlush_tspFns[2][1][0][0][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 0, 3, 1>;
+            PixelFlush_tspFns[2][1][0][1][0][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 0, 0>;
+            PixelFlush_tspFns[2][1][0][1][0][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 0, 1>;
+            PixelFlush_tspFns[2][1][0][1][1][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 1, 0>;
+            PixelFlush_tspFns[2][1][0][1][1][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 1, 1>;
+            PixelFlush_tspFns[2][1][0][1][2][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 2, 0>;
+            PixelFlush_tspFns[2][1][0][1][2][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 2, 1>;
+            PixelFlush_tspFns[2][1][0][1][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 3, 0>;
+            PixelFlush_tspFns[2][1][0][1][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 3, 1>;
         }
 #undef PixelFlush_tsp
 

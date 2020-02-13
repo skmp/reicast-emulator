@@ -820,7 +820,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		DEFAULT_INIT(Tmu)
 		DEFAULT_INIT(Ubc)
 
-		MMU_init();
+		MMU_init(this);
 	}
 
 	void Reset()

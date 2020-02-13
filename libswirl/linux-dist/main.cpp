@@ -464,6 +464,12 @@ int main(int argc, wchar* argv[])
 		pty_master = -1;
 		if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0)
 		{
+			// Turn ECHO off, we don't want to loop-back
+			struct termios tp;
+			tcgetattr(pty_master, &tp);
+			tp.c_lflag &= ~ECHO;
+			tcsetattr(pty_master, TCSAFLUSH, &tp);
+
 			printf("Serial: Created virtual serial port at %s\n", slave_name);
 
 			if (settings.debug.VirtualSerialPortFile.size())

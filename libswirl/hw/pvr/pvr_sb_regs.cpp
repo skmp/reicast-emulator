@@ -310,6 +310,9 @@ struct PVRDevice : MMIODevice {
 
         if (addr == TA_LIST_INIT_addr)
         {
+            // FIXME: Fuller TA implementation
+            // This is needed because of how KOS sets the bgpoly
+            TA_ITP_CURRENT = TA_ISP_BASE;
             if (data >> 31)
             {
                 ta_vtx_ListInit();

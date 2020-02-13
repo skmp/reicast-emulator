@@ -55,7 +55,7 @@
             android:exported="true"/>
         <activity-alias
             android:name="com.reicast.emulator.MainActivity"
-            android:targetActivity="com.reicast.emulator.NativeGLActivity">
+            android:targetActivity="com.reicast.emulator.NativeGLActivity" android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

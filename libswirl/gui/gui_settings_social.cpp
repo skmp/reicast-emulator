@@ -30,10 +30,11 @@ void gui_settings_social()
         if (ImGui::Button("Reicast Homepage")) {
             os_LaunchFromURL("https://reicast.com");
         }
-		ImGui::NextColumn();
+		ImGui::SameLine();
 		if (ImGui::Button("Official Reicast Forum")) {
 		    os_LaunchFromURL("https://forum.reicast.com");
 		}
+		ImGui::NextColumn();
 		if (ImGui::Button("Reicast Guide")) {
 		    os_LaunchFromURL("https://reicast.com/guide/");
 		}

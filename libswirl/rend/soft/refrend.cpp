@@ -327,7 +327,7 @@ struct refrend : Renderer
     u8* vram;
 
     // Used for deferred TSP processing lookups
-    struct CacheEntry
+    struct FpuEntry
     {
         IPs3 ips;
         DrawParameters params;
@@ -335,7 +335,7 @@ struct refrend : Renderer
         PixelFlush_tspFn shade;
     };
 
-    vector<CacheEntry> tsp_cache;
+    vector<FpuEntry> fpu_entires;
 
     refrend(u8* vram) : vram(vram) { }
 
@@ -494,9 +494,9 @@ struct refrend : Renderer
         }
     }
 
-    parameter_tag_t AddTspEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode)
+    parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode)
     {
-        CacheEntry entry;
+        FpuEntry entry;
         entry.params = *params;
         // generate
         if (entry.params.isp.Texture)
@@ -508,18 +508,18 @@ struct refrend : Renderer
 
         entry.shade = PixelFlush_tspFns[render_mode][entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.tsp.IgnoreTexA][entry.params.tsp.ShadInstr][entry.params.isp.Offset];
 
-        tsp_cache.push_back(entry);
+        fpu_entires.push_back(entry);
 
-        return tsp_cache.size();
+        return fpu_entires.size();
     }
 
     // Lookup/create cached TSP parameters, and call PixelFlush_tsp
-    bool PixelFlush_tsp_cached(float x, float y, u8 *pb, parameter_tag_t tag)
+    bool PixelFlush_tsp(float x, float y, u8 *pb, parameter_tag_t tag)
     {
         if (tag == 0)
             return false;
 
-        auto entry = &tsp_cache[tag-1];
+        auto entry = &fpu_entires[tag-1];
         
         return entry->shade(&entry->texture, x, y, pb, entry->ips);
     }
@@ -575,7 +575,7 @@ struct refrend : Renderer
                 if (invW < *zb)
                     return;
 
-                if (PixelFlush_tsp_cached(x, y, pb, tag))
+                if (PixelFlush_tsp(x, y, pb, tag))
                 {
                     *zb = invW;
                     *(parameter_tag_t *)pb = tag;
@@ -774,7 +774,7 @@ struct refrend : Renderer
 
         for (int y = 0; y < 32; y++) {
             for (int x = 0; x < 32; x++) {
-                PixelFlush_tsp_cached(tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
+                PixelFlush_tsp(tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
             }
         }
     }
@@ -902,7 +902,7 @@ struct refrend : Renderer
             if (obj.tstrip.mask & (1 << (5-i)))
             {
 
-                parameter_tag_t tag = AddTspEntry(&params, &vtx[i], render_mode);
+                parameter_tag_t tag = AddFpuEntry(&params, &vtx[i], render_mode);
 
                 RendTriangle<render_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], render_buffer, rect);
             }
@@ -930,7 +930,7 @@ struct refrend : Renderer
             parameter_tag_t tag = 0;
             if (render_mode != RM_MODIFIER)
             {
-                tag = AddTspEntry(&params, &vtx[0], render_mode);
+                tag = AddFpuEntry(&params, &vtx[0], render_mode);
             }
 
             RendTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
@@ -954,7 +954,7 @@ struct refrend : Renderer
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
             
-            parameter_tag_t tag = AddTspEntry(&params, &vtx[0], render_mode);
+            parameter_tag_t tag = AddFpuEntry(&params, &vtx[0], render_mode);
 
             //TODO: FIXME
             RendTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
@@ -1034,7 +1034,7 @@ struct refrend : Renderer
                 Vertex vtx[8];
                 decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
 
-                auto tag = AddTspEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
+                auto tag = AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
 
                 for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
                     pb[i] = tag;
@@ -1142,7 +1142,7 @@ struct refrend : Renderer
         } while (!entry.control.last_region);
 
         // clear the tsp cache
-        tsp_cache.clear();
+        fpu_entires.clear();
 
         return false;
     }

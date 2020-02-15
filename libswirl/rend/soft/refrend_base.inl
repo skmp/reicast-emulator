@@ -195,28 +195,38 @@ typedef u32 parameter_tag_t;
 
 struct RefRendInterface
 {
+    // Clear the buffers
     virtual void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
 
+    // Clear and set DEPTH2 for peeling
     virtual void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
 
+    // Summarize tile after rendering modvol (inside)
     virtual void SummarizeStencilOr() = 0;
     
+    // Summarize tile after rendering modvol (outside)
     virtual void SummarizeStencilAnd() = 0;
 
+    // Clear the pixel drawn counter
     virtual void ClearPixelsDrawn() = 0;
 
+    // Get the pixel drawn counter. Used during layer peeling to determine when to stop processing
     virtual u32 GetPixelsDrawn() = 0;
 
+    // Add an entry to the fpu parameters list
     virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode) = 0;
 
+    // Clear the fpu parameters list
     virtual void ClearFpuEntries() = 0;
 
+    // Get the final output of the 32x32 tile. Used to write to the VRAM framebuffer
     virtual u8* GetColorOutputBuffer() = 0;
 
-     // Render to ACCUM from TAG buffer
+    // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
     virtual void RenderParamTags(int tileX, int tileY) = 0;
 
+    // RasterizeTriangle for each rendering mode
     #define RasterizeTriangleMode(mode) \
         virtual void RasterizeTriangle_##mode(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area) = 0
 

@@ -606,7 +606,7 @@ struct refrend : Renderer
 
     // Rasterize a single triangle to ISP (or ISP+TSP for PT)
     template<RenderMode render_mode>
-    void RasterizeTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    void RasterizeTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
     {
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation
@@ -679,7 +679,7 @@ struct refrend : Renderer
         float hs31 = C3 + DX31 * miny - DY31 * minx;
 
 
-        u8* cb_y = (u8*)colorBuffer;
+        u8* cb_y = (u8*)render_buffer;
         cb_y += (miny - area->top) * stride_bytes + (minx - area->left) * 4;
 
         PlaneStepper3 Z;
@@ -722,27 +722,19 @@ struct refrend : Renderer
     }
 
     template<RenderMode render_mode>
-    void RendTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    void RenderTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
     {
-        RasterizeTriangle<render_mode>(params, tag, vertex_offset, v1, v2, v3, colorBuffer, area);
+        RasterizeTriangle<render_mode>(params, tag, vertex_offset, v1, v2, v3, area);
 
         if (render_mode == RM_MODIFIER)
         {          
-            u32* stencil = &colorBuffer[STENCIL_BUFFER_PIXEL_OFFSET];
-
             if (params->isp.modvol.VolumeMode == 1 ) 
             {
-                // post movdol merge INSIDE
-                for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
-                    stencil[i] |= (stencil[i] >>1);
-                }
+                SummarizeStencilOr();
             }
             else if (params->isp.modvol.VolumeMode == 2) 
             {
-                // post movdol merge OUTSIDE
-                for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
-                    stencil[i] &= (stencil[i] >>1);
-                }
+                SummarizeStencilAnd();
             }
         }
     }
@@ -904,7 +896,7 @@ struct refrend : Renderer
 
                 parameter_tag_t tag = AddFpuEntry(&params, &vtx[i], render_mode);
 
-                RendTriangle<render_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], render_buffer, rect);
+                RenderTriangle<render_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], rect);
             }
         }
     }
@@ -933,7 +925,7 @@ struct refrend : Renderer
                 tag = AddFpuEntry(&params, &vtx[0], render_mode);
             }
 
-            RendTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
+            RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
         }
     }
 
@@ -957,7 +949,7 @@ struct refrend : Renderer
             parameter_tag_t tag = AddFpuEntry(&params, &vtx[0], render_mode);
 
             //TODO: FIXME
-            RendTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
+            RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
         }
     }
 
@@ -997,6 +989,63 @@ struct refrend : Renderer
         }
     }
 
+    void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue)
+    {
+        auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
+        auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+        auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+
+        for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+            zb[i] = depthValue;
+            stencil[i] = stencilValue;
+            pb[i] = paramValue;
+        }
+    }
+
+    void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue)
+    {
+        auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
+        auto zb2 = reinterpret_cast<float*>(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET);
+        auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+        auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+
+        for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+            zb2[i] = zb[i];     // keep old ZB for reference
+            zb[i] = depthValue;    // set the "closest" test to furthest value possible
+            stencil[i] = stencilValue;
+            pb[i] = paramValue;
+        }
+    }
+
+    void SummarizeStencilOr() {
+        auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+
+        // post movdol merge INSIDE
+        for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+            stencil[i] |= (stencil[i] >>1);
+        }
+    }
+
+    void SummarizeStencilAnd() {
+        auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+
+        // post movdol merge OUTSIDE
+        for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+            stencil[i] &= (stencil[i] >>1);
+        }
+    }
+
+
+    void ClearPixelsDrawn()
+    {
+        PixelsDrawn = 0;
+    }
+
+    u32 GetPixelsDrawn()
+    {
+        return PixelsDrawn;
+    }
+
     // Render a frame
     // Called on START_RENDER write
     virtual bool RenderPVR() {
@@ -1019,31 +1068,15 @@ struct refrend : Renderer
 
             // Tile needs clear?
             if (!entry.control.z_keep) {
-                
-                // Clear Z
-                auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
-
-                for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
-                    zb[i] = ISP_BACKGND_D.f;
-                }
-
-                // Clear PB
-                auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
-
+                // register BGPOLY to fpu
                 DrawParameters params;
                 Vertex vtx[8];
                 decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
 
-                auto tag = AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
+                auto bgTag = AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
 
-                for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
-                    pb[i] = tag;
-                }
-
-                // Clear stencil
-                auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
-
-                memset(stencil, 0, MAX_RENDER_PIXELS * 4);
+                // Clear Param + Z + stencil buffers
+                ClearBuffers(bgTag, ISP_BACKGND_D.f, 0);
             }
 
             // Render OPAQ to TAGS          
@@ -1065,31 +1098,14 @@ struct refrend : Renderer
             // Render TAGS to ACCUM
             RenderParamTags(rect.left, rect.top);
 
-            
-
             // layer peeling rendering
             if (!entry.trans.empty) {
 
                 do {
-                    PixelsDrawn = 0;
+                    ClearPixelsDrawn();
 
-                    // clear tags
-                    memset(render_buffer, 0, MAX_RENDER_PIXELS * 4);
-
-                    //copy depth test to depth pass buffer, clear test buffer
-
-                    auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
-                    auto zb2 = reinterpret_cast<float*>(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET);
-
-                    for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
-                        zb2[i] = zb[i];     // keep old ZB for reference
-                        zb[i] = FLT_MAX;    // set the "closest" test to furthest value possible
-                    }
-
-                    // clear stencil
-                    auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
-                    memset(stencil, 0, MAX_RENDER_PIXELS * 4);
-
+                    //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
+                    PeelBuffers(0, FLT_MAX, 0);
 
                     // render to TAGS
                     RenderObjectList<RM_TRANSLUCENT>(entry.trans.ptr_in_words * 4, &rect);
@@ -1100,7 +1116,7 @@ struct refrend : Renderer
 
                     // render TAGS to ACCUM
                     RenderParamTags(rect.left, rect.top);
-                } while (PixelsDrawn != 0);
+                } while (GetPixelsDrawn() != 0);
             }
 
 

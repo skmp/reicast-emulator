@@ -614,8 +614,10 @@ struct refsw : refrend
     }
 };
 
+#if FEAT_TA == TA_LLE
 Renderer* rend_refsw(u8* vram) {
     return new(_mm_malloc(sizeof(refsw), 32)) ::refsw(vram);
 }
 
 static auto refrend = RegisterRendererBackend(rendererbackend_t{ "refsw", "RefSW", 0, rend_refsw });
+#endif

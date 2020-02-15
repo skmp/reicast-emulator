@@ -1259,8 +1259,10 @@ struct softrend : Renderer
 	}
 };
 
+#if FEAT_TA == TA_HLE
 Renderer* rend_softrend(u8* vram) {
 	return new(_mm_malloc(sizeof(softrend), 32)) ::softrend(vram);
 }
 
 static auto softrend = RegisterRendererBackend(rendererbackend_t{ "soft", "Fast Software Renderer", 0, rend_softrend });
+#endif

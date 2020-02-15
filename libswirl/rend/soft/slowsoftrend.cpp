@@ -818,8 +818,10 @@ struct slowsoftrend : Renderer
     }
 };
 
+#if FEAT_TA == TA_HLE
 Renderer* rend_slowsoftrend(u8* vram) {
     return new(_mm_malloc(sizeof(slowsoftrend), 32)) ::slowsoftrend(vram);
 }
 
 static auto slowsoftrend = RegisterRendererBackend(rendererbackend_t{ "slow", "Slow Software Renderer", 0, rend_slowsoftrend });
+#endif

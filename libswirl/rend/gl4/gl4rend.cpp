@@ -1063,4 +1063,6 @@ struct gl4rend : Renderer
 
 #include "hw/pvr/Renderer_if.h"
 
+#if FEAT_TA == TA_HLE
 static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1 (Per Pixel Sort)", 2, [](u8* vram){ return (Renderer*) new gl4rend(vram); } });
+#endif

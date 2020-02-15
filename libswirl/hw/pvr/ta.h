@@ -12,7 +12,7 @@
 #include "ta_structs.h"
 
 struct TA_context;
-#if 0
+#if FEAT_TA == TA_HLE
 void ta_init();
 void ta_reset();
 void ta_term();

@@ -104,7 +104,7 @@ void TAWrite(u32 address,u32* data,u32 count, u8* vram)
 	u32 address_w=address&0x1FFFFFF;//correct ?
 	if (address_w<0x800000)//TA poly
 	{
-		#if 0
+		#if FEAT_TA == TA_HLE
 		ta_vtx_data(data, count);
 		#else
 		lxd_ta_write((u8*)data, count * 32);
@@ -140,7 +140,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 
 	if (likely(address_w<0x800000))//TA poly
 	{
-		#if 0
+		#if FEAT_TA == TA_HLE
 		ta_vtx_data32(sq);
 		#else
 		lxd_ta_write_burst(address_w, sq);

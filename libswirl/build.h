@@ -183,7 +183,7 @@
 #endif
 
 #if !defined(FEAT_TA)
-#define FEAT_TA TA_HLE
+#define FEAT_TA TA_LLE
 #endif
 
 #ifndef CMAKE_BUILD

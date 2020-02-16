@@ -123,7 +123,9 @@ struct refsw : refrend
     PixelFlush_tspFn PixelFlush_tspFns[3][2][2][2][4][2];
 
     refsw(u8* vram) : refrend(vram) {
+        #define PixelFlush_tsp refsw::PixelFlush_tsp_impl
         #include "refsw_tsp_init.inl"
+        #undef PixelFlush_tsp
     }
 
     void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue)

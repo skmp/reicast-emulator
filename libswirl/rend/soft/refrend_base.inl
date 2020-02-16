@@ -475,6 +475,7 @@ struct refrend : Renderer, RefRendInterface
 
             //TODO: FIXME
             RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
+            RenderTriangle<render_mode>(&params, tag, 1, vtx[0], vtx[3], vtx[2], rect);
         }
     }
 

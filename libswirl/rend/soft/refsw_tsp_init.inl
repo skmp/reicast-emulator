@@ -1,4 +1,3 @@
-#define PixelFlush_tsp refsw::PixelFlush_tsp_impl
 {
     PixelFlush_tspFns[0][0][1][0][0][0] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 0, 0>;
     PixelFlush_tspFns[0][0][1][0][0][1] = &PixelFlush_tsp<RM_OPAQUE, 0, 1, 0, 0, 1>;
@@ -195,4 +194,3 @@
     PixelFlush_tspFns[2][1][0][1][3][0] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 3, 0>;
     PixelFlush_tspFns[2][1][0][1][3][1] = &PixelFlush_tsp<RM_TRANSLUCENT, 1, 0, 1, 3, 1>;
 }
-#undef PixelFlush_tsp

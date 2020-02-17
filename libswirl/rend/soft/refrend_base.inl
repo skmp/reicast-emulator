@@ -525,6 +525,16 @@ struct refrend : Renderer, RefRendInterface
         RegionArrayEntry entry;
         int tilenum = 1;
 
+        parameter_tag_t bgTag;
+        
+        // register BGPOLY to fpu
+        {
+            DrawParameters params;
+            Vertex vtx[8];
+            decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
+            bgTag = AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
+        }
+        
         // Parse region array
         do {
             base += ReadRegionArrayEntry(base, &entry);
@@ -538,13 +548,6 @@ struct refrend : Renderer, RefRendInterface
 
             // Tile needs clear?
             if (!entry.control.z_keep) {
-                // register BGPOLY to fpu
-                DrawParameters params;
-                Vertex vtx[8];
-                decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
-
-                auto bgTag = AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
-
                 // Clear Param + Z + stencil buffers
                 ClearBuffers(bgTag, ISP_BACKGND_D.f, 0);
             }

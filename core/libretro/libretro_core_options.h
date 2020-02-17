@@ -453,12 +453,11 @@ struct retro_core_option_definition option_defs_us[] = {
       "",
       {
          { "disabled", NULL },
-         { "enabled",  NULL },
          { "auto",     "Auto" },
          { NULL, NULL },
       },
 #ifdef LOW_END
-      "enabled",
+      "auto",
 #else
       "disabled",
 #endif

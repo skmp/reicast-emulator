@@ -343,11 +343,11 @@ COMMON_OPENCL_DEFINES
         float screenX = tileX + x;
         float screenY = tileY + y;
 
-        float4 planes = setup.ddx * tileX + setup.ddy * tileY + setup.c;
+        float4 planes = setup.ddx * screenX + setup.ddy * screenY + setup.c;
         
         if (planes.x >= 0 && planes.y >= 0 && planes.z >= 0 && planes.w >= 0) {
             //pixel is inside
-            RasterizePixel(screenX, screenY, (__global u8*)render_buffer, &setup.Z, setup.tag, pixelsDrawn, fpuEntries);
+            RasterizePixel(screenX, screenY, (__global u8*)&render_buffer[offset], &setup.Z, setup.tag, pixelsDrawn, fpuEntries);
         }
     }
 
@@ -368,162 +368,6 @@ COMMON_OPENCL_DEFINES
             //lookup tag         
             // call PixelFlush_tsp_impl
     }
-
-
-#if 0
-    static bool PixelFlush_tsp_impl(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
-    {
-        auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
-        auto stencil = (u32 *)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
-        auto cb = &pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
-
-        float invW = *zb;
-
-        float u = ip.U.Ip(x, y);
-        float v = ip.V.Ip(x, y);
-
-        u = u / invW;
-        v = v / invW;
-
-        u8 rv[4];
-        {
-            {
-                u32 mult = 256;
-                if (*stencil & 1) {
-                    mult = FPU_SHAD_SCALE.scale_factor;
-                }
-
-                rv[0] = ip.Col[2].Ip(x, y) * mult / 256;
-                rv[1] = ip.Col[1].Ip(x, y) * mult / 256;
-                rv[2] = ip.Col[0].Ip(x, y) * mult / 256;
-                rv[3] = ip.Col[3].Ip(x, y) * mult / 256;    
-            }
-            
-
-            if (!pp_UseAlpha)
-            {
-                rv[3] = 255;
-            }
-
-            if (pp_Texture)
-            {
-
-                int ui = u * 256;
-                int vi = v * 256;
-                mem128i px = ((mem128i *)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
-
-                int ublend = ui & 255;
-                int vblend = vi & 255;
-                int nublend = 255 - ublend;
-                int nvblend = 255 - vblend;
-
-                u8 textel[4];
-
-                for (int i = 0; i < 4; i++)
-                {
-                    textel[i] =
-                        (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
-                        (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
-                        (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
-                        (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
-                };
-
-                if (pp_IgnoreTexA)
-                {
-                    textel[3] = 255;
-                }
-
-                if (pp_ShadInstr == 0)
-                {
-                    //color.rgb = texcol.rgb;
-                    //color.a = texcol.a;
-
-                    memcpy(rv, textel, sizeof(rv));
-                }
-                else if (pp_ShadInstr == 1)
-                {
-                    //color.rgb *= texcol.rgb;
-                    //color.a = texcol.a;
-                    for (int i = 0; i < 3; i++)
-                    {
-                        rv[i] = textel[i] * rv[i] / 256;
-                    }
-
-                    rv[3] = textel[3];
-                }
-                else if (pp_ShadInstr == 2)
-                {
-                    //color.rgb=mix(color.rgb,texcol.rgb,texcol.a);
-                    u8 tb = textel[3];
-                    u8 cb = 255 - tb;
-
-                    for (int i = 0; i < 3; i++)
-                    {
-                        rv[i] = (textel[i] * tb + rv[i] * cb) / 256;
-                    }
-
-                    //rv[3] is not affected
-                }
-                else if (pp_ShadInstr == 3)
-                {
-                    //color*=texcol
-                    for (int i = 0; i < 4; i++)
-                    {
-                        rv[i] = textel[i] * rv[i] / 256;
-                    }
-                }
-
-                if (pp_Offset)
-                {
-                    //add offset
-
-                    u32 mult = 256;
-                    if (*stencil & 1) {
-                        mult = FPU_SHAD_SCALE.scale_factor;
-                    }
-
-                    rv[0] += ip.Ofs[2].Ip(x, y) * mult / 256;
-                    rv[1] += ip.Ofs[1].Ip(x, y) * mult / 256;
-                    rv[2] += ip.Ofs[0].Ip(x, y) * mult / 256;
-                    rv[3] += ip.Ofs[3].Ip(x, y);
-                }
-            }
-        }
-
-
-
-        if (render_mode == RM_PUNCHTHROUGH)
-        {
-            if (rv[3] < PT_ALPHA_REF)
-            {
-                memcpy(cb, rv, 4);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else if (render_mode == RM_TRANSLUCENT)
-        {
-            u8 *fb = (u8 *)cb;
-            u8 src_blend = rv[3];
-            u8 dst_blend = 255 - rv[3];
-            for (int j = 0; j < 3; j++)
-            {
-                rv[j] = (rv[j] * src_blend) / 256 + (fb[j] * dst_blend) / 256;
-            }
-
-            memcpy(cb, rv, 4);
-            return true;
-        }
-        else
-        {
-            memcpy(cb, rv, 4);
-            return true;
-        }
-    }
-#endif
 );
 
 struct refcl : refrend
@@ -536,11 +380,17 @@ struct refcl : refrend
         cl_context context = NULL;
         cl_command_queue command_queue = NULL;
         cl_mem render_buffer = NULL;
+        cl_mem pixels_drawn = NULL;
         int    fpu_entries_count = 0;
         int    fpu_entries_size = 0;
         cl_mem fpu_entries = NULL;
         cl_program program[RM_COUNT] = {NULL};
         cl_kernel shadePixelsKernel[RM_COUNT] = {NULL};
+        cl_kernel rasterizeTriangleKernel[RM_COUNT] = {NULL};
+        cl_kernel clearBuffersKernel = NULL;
+        cl_kernel peelBuffersKernel = NULL;
+        cl_kernel summarizeStencilOrKernel = NULL;
+        cl_kernel summarizeStencilAndKernel = NULL;
     } cl;
     
     refcl(u8* vram) : refrend(vram) {
@@ -549,6 +399,16 @@ struct refcl : refrend
 
     void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue)
     {
+        #if 1
+            //__kernel void ClearBuffers(__global float* render_buffer, u32 paramValue, float depthValue, u32 stencilValue)
+            clSetKernelArg(cl.clearBuffersKernel, 0, sizeof(cl_mem), (void *)&cl.render_buffer);
+            clSetKernelArg(cl.clearBuffersKernel, 1, sizeof(paramValue), (void *)&paramValue);
+            clSetKernelArg(cl.clearBuffersKernel, 2, sizeof(depthValue), (void *)&depthValue);
+            clSetKernelArg(cl.clearBuffersKernel, 3, sizeof(stencilValue), (void *)&stencilValue);
+
+            size_t worksize[] = { MAX_RENDER_PIXELS };
+            clEnqueueNDRangeKernel( cl.command_queue, cl.clearBuffersKernel, 1, NULL, worksize, 0, 0, 0, 0 );
+        #else
         auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
         auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
         auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
@@ -558,10 +418,21 @@ struct refcl : refrend
             stencil[i] = stencilValue;
             pb[i] = paramValue;
         }
+        #endif
     }
 
     void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue)
     {
+        #if 1
+            //__kernel void ClearBuffers(__global float* render_buffer, u32 paramValue, float depthValue, u32 stencilValue)
+            clSetKernelArg(cl.peelBuffersKernel, 0, sizeof(cl_mem), (void *)&cl.render_buffer);
+            clSetKernelArg(cl.peelBuffersKernel, 1, sizeof(paramValue), (void *)&paramValue);
+            clSetKernelArg(cl.peelBuffersKernel, 2, sizeof(depthValue), (void *)&depthValue);
+            clSetKernelArg(cl.peelBuffersKernel, 3, sizeof(stencilValue), (void *)&stencilValue);
+
+            size_t worksize[] = { MAX_RENDER_PIXELS };
+            clEnqueueNDRangeKernel( cl.command_queue, cl.peelBuffersKernel, 1, NULL, worksize, 0, 0, 0, 0 );
+        #else
         auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
         auto zb2 = reinterpret_cast<float*>(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET);
         auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
@@ -573,34 +444,57 @@ struct refcl : refrend
             stencil[i] = stencilValue;
             pb[i] = paramValue;
         }
+        #endif
     }
 
     void SummarizeStencilOr() {
+         #if 1
+            //__kernel void SummarizeStencilOr(__global float* render_buffer)
+            clSetKernelArg(cl.summarizeStencilOrKernel, 0, sizeof(cl_mem), (void *)&cl.render_buffer);
+
+            size_t worksize[] = { MAX_RENDER_PIXELS };
+            clEnqueueNDRangeKernel( cl.command_queue, cl.summarizeStencilOrKernel, 1, NULL, worksize, 0, 0, 0, 0 );
+        #else
         auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
 
         // post movdol merge INSIDE
         for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
             stencil[i] |= (stencil[i] >>1);
         }
+        #endif
     }
 
     void SummarizeStencilAnd() {
+        #if 1
+            //__kernel void SummarizeStencilAnd(__global float* render_buffer)
+            clSetKernelArg(cl.summarizeStencilAndKernel, 0, sizeof(cl_mem), (void *)&cl.render_buffer);
+
+            size_t worksize[] = { MAX_RENDER_PIXELS };
+            clEnqueueNDRangeKernel( cl.command_queue, cl.summarizeStencilAndKernel, 1, NULL, worksize, 0, 0, 0, 0 );
+        #else
         auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
 
         // post movdol merge OUTSIDE
         for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
             stencil[i] &= (stencil[i] >>1);
         }
+        #endif
     }
 
     void ClearPixelsDrawn()
     {
+        cl_uint data = 0;
+        clEnqueueWriteBuffer(cl.command_queue, cl.pixels_drawn, CL_TRUE, 0, sizeof(data), &data, 0, 0, 0);
+
         PixelsDrawn = 0;
     }
 
     u32 GetPixelsDrawn()
     {
-        return PixelsDrawn;
+        cl_uint data = 0;
+        clEnqueueReadBuffer(cl.command_queue, cl.pixels_drawn, CL_TRUE, 0, sizeof(data), &data, 0, 0, 0);
+        
+        return data;
     }
 
      // Render to ACCUM from TAG buffer
@@ -609,7 +503,7 @@ struct refcl : refrend
         
         SyncFpuEntries();
 
-        clEnqueueWriteBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
+        //clEnqueueWriteBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
 
         cl_float tileX = tileXi;
         cl_float tileY = tileYi;
@@ -633,7 +527,7 @@ struct refcl : refrend
         }
         */
 
-       clEnqueueReadBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
+       //clEnqueueReadBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
     }
 
     parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode)
@@ -819,51 +713,81 @@ struct refcl : refrend
         float C3 = -DY31 * X3 - DX31 * Y3;
 
 
-        float hs12 = C1 + DX12 * miny + DY12 * minx;
-        float hs23 = C2 + DX23 * miny + DY23 * minx;
-        float hs31 = C3 + DX31 * miny + DY31 * minx;
+        TriangleSetup setup;
+        setup.Z.Setup(v1, v2, v3, v1.z, v2.z, v3.z);
+        setup.tag = tag;
 
+        setup.ddx.s[0] = DY12;
+        setup.ddx.s[1] = DY23;
+        setup.ddx.s[2] = DY31;
+        setup.ddx.s[3] = 0;
 
+        setup.ddy.s[0] = DX12;
+        setup.ddy.s[1] = DX23;
+        setup.ddy.s[2] = DX31;
+        setup.ddy.s[3] = 0;
+
+        setup.c.s[0] = C1;
+        setup.c.s[1] = C2;
+        setup.c.s[2] = C3;
+        setup.c.s[3] = 1;
+
+#if 1
+        SyncFpuEntries();
+
+        //clEnqueueWriteBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
+
+        cl_float tileX = area->left;
+        cl_float tileY = area->top;
+
+        //__kernel void RasterizeTriangle(__global float* render_buffer, TriangleSetup setup, float tileX, float tileY, 
+        //__global s32* pixelsDrawn, __global const FpuEntry* fpuEntries) {
+
+        clSetKernelArg(cl.rasterizeTriangleKernel[render_mode], 0, sizeof(cl_mem), (void *)&cl.render_buffer);
+        clSetKernelArg(cl.rasterizeTriangleKernel[render_mode], 1, sizeof(setup), (void *)&setup);
+        clSetKernelArg(cl.rasterizeTriangleKernel[render_mode], 2, sizeof(tileX), (void *)&tileX);
+        clSetKernelArg(cl.rasterizeTriangleKernel[render_mode], 3, sizeof(tileY), (void *)&tileY);
+        clSetKernelArg(cl.rasterizeTriangleKernel[render_mode], 4, sizeof(cl_mem), (void *)&cl.pixels_drawn);
+        clSetKernelArg(cl.rasterizeTriangleKernel[render_mode], 5, sizeof(cl_mem), (void *)&cl.fpu_entries);
+ 
+        size_t worksize[] = { MAX_RENDER_WIDTH, MAX_RENDER_HEIGHT };
+        clEnqueueNDRangeKernel( cl.command_queue, cl.rasterizeTriangleKernel[render_mode], 2, NULL, worksize, 0, 0, 0, 0 );
+
+        //clEnqueueReadBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
+#else
         u8* cb_y = (u8*)render_buffer;
         cb_y += (miny - area->top) * stride_bytes + (minx - area->left) * 4;
-
-        PlaneStepper3 Z;
-        Z.Setup(v1, v2, v3, v1.z, v2.z, v3.z);
 
         float y_ps = miny;
         float minx_ps = minx;
 
         // Loop through pixels
-        for (int y = spany; y > 0; y -= 1)
+        for (int y = 0; y < spany; y++)
         {
-            float Xhs12 = hs12;
-            float Xhs23 = hs23;
-            float Xhs31 = hs31;
             u8* cb_x = cb_y;
             float x_ps = minx_ps;
-            for (int x = spanx; x > 0; x -= 1)
+            for (int x = 0; x < spanx; x++)
             {
-                Xhs12 += DY12;
-                Xhs23 += DY23;
-                Xhs31 += DY31;
+                float e0 = setup.ddx.s[0] * (minx + x) + setup.ddy.s[0] * (miny + y) + setup.c.s[0];
+                float e1 = setup.ddx.s[1] * (minx + x) + setup.ddy.s[1] * (miny + y) + setup.c.s[1];
+                float e2 = setup.ddx.s[2] * (minx + x) + setup.ddy.s[2] * (miny + y) + setup.c.s[2];
+                float e3 = setup.ddx.s[3] * (minx + x) + setup.ddy.s[3] * (miny + y) + setup.c.s[3];
 
-                bool inTriangle = EvalHalfSpaceAll(Xhs12, Xhs23, Xhs31);
+                bool inTriangle = EvalHalfSpaceAll(e0, e1, e2);
 
                 if (inTriangle)
                 {
-                    PixelFlush_isp<render_mode>(x_ps, y_ps, cb_x, Z, tag);
+                    PixelFlush_isp<render_mode>(x_ps, y_ps, cb_x, setup.Z, setup.tag);
                 }
 
                 cb_x += 4;
                 x_ps = x_ps + 1;
             }
         next_y:
-            hs12 += DX12;
-            hs23 += DX23;
-            hs31 += DX31;
             cb_y += stride_bytes;
             y_ps = y_ps + 1;
         }
+#endif
     }
 
 
@@ -951,6 +875,8 @@ struct refcl : refrend
 
         // Step 05: Create memory objects and tranfer the data to memory buffer
         cl.render_buffer = clCreateBuffer(cl.context, CL_MEM_READ_WRITE, sizeof(render_buffer), NULL, &err);
+
+        cl.pixels_drawn = clCreateBuffer(cl.context, CL_MEM_READ_WRITE, sizeof(cl_uint), NULL, &err);
         
         //err = clEnqueueWriteBuffer(command_queue, Amobj, CL_TRUE, 0, 16*sizeof(float), A, 0, NULL, NULL);
 
@@ -983,6 +909,21 @@ struct refcl : refrend
             // Step 09: Create OpenCL Kernel
             cl.shadePixelsKernel[i] = clCreateKernel( cl.program[i], "ShadePixels", &err );
             cl_check( err, "clCreateKernel" );
+
+            cl.rasterizeTriangleKernel[i] = clCreateKernel( cl.program[i], "RasterizeTriangle", &err );
+            cl_check( err, "clCreateKernel" );
+
+            cl.clearBuffersKernel = clCreateKernel( cl.program[i], "ClearBuffers", &err);
+            cl_check( err, "clCreateKernel");
+
+            cl.peelBuffersKernel = clCreateKernel( cl.program[i], "PeelBuffers", &err);
+            cl_check( err, "clCreateKernel");
+
+            cl.summarizeStencilOrKernel = clCreateKernel( cl.program[i], "SummarizeStencilOr", &err);
+            cl_check( err, "clCreateKernel");
+
+            cl.summarizeStencilAndKernel = clCreateKernel( cl.program[i], "SummarizeStencilAnd", &err);
+            cl_check( err, "clCreateKernel");
         }
 
         return true;
@@ -994,6 +935,7 @@ struct refcl : refrend
             if (cl.program[i]) clReleaseProgram(cl.program[i]);
         }
 
+        if (cl.pixels_drawn) clReleaseMemObject(cl.pixels_drawn);
         if (cl.render_buffer) clReleaseMemObject(cl.render_buffer);
         if (cl.fpu_entries) clReleaseMemObject(cl.fpu_entries);
         if (cl.command_queue) clReleaseCommandQueue(cl.command_queue);

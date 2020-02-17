@@ -810,18 +810,18 @@ struct refcl : refrend
         const float DX23 = sgn * (X2 - X3);
         const float DX31 = sgn * (X3 - X1);
 
-        const float DY12 = sgn * (Y1 - Y2);
-        const float DY23 = sgn * (Y2 - Y3);
-        const float DY31 = sgn * (Y3 - Y1);
+        const float DY12 = -sgn * (Y1 - Y2);
+        const float DY23 = -sgn * (Y2 - Y3);
+        const float DY31 = -sgn * (Y3 - Y1);
 
-        float C1 = DY12 * X1 - DX12 * Y1;
-        float C2 = DY23 * X2 - DX23 * Y2;
-        float C3 = DY31 * X3 - DX31 * Y3;
+        float C1 = -DY12 * X1 - DX12 * Y1;
+        float C2 = -DY23 * X2 - DX23 * Y2;
+        float C3 = -DY31 * X3 - DX31 * Y3;
 
 
-        float hs12 = C1 + DX12 * miny - DY12 * minx;
-        float hs23 = C2 + DX23 * miny - DY23 * minx;
-        float hs31 = C3 + DX31 * miny - DY31 * minx;
+        float hs12 = C1 + DX12 * miny + DY12 * minx;
+        float hs23 = C2 + DX23 * miny + DY23 * minx;
+        float hs31 = C3 + DX31 * miny + DY31 * minx;
 
 
         u8* cb_y = (u8*)render_buffer;
@@ -843,9 +843,9 @@ struct refcl : refrend
             float x_ps = minx_ps;
             for (int x = spanx; x > 0; x -= 1)
             {
-                Xhs12 -= DY12;
-                Xhs23 -= DY23;
-                Xhs31 -= DY31;
+                Xhs12 += DY12;
+                Xhs23 += DY23;
+                Xhs31 += DY31;
 
                 bool inTriangle = EvalHalfSpaceAll(Xhs12, Xhs23, Xhs31);
 

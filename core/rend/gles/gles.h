@@ -14,6 +14,13 @@
 #ifndef MAX_TEXTURE_MAX_ANISOTROPY_EXT
 #define MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
 #endif
+#ifndef GL_TEXTURE_BASE_LEVEL
+#define GL_TEXTURE_BASE_LEVEL                   0x813C
+#endif
+#ifndef GL_TEXTURE_MAX_LEVEL
+#define GL_TEXTURE_MAX_LEVEL                    0x813D
+#endif
+
 
 #define VERTEX_POS_ARRAY      0
 #define VERTEX_COL_BASE_ARRAY 1

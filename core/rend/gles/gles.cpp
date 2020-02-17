@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 
 #include <libretro.h>
 
@@ -15,6 +16,9 @@
 #endif
 #ifndef GL_MAJOR_VERSION
 #define GL_MAJOR_VERSION                  0x821B
+#endif
+#ifndef GL_MINOR_VERSION
+#define GL_MINOR_VERSION                  0x821C
 #endif
 
 GLCache glcache;
@@ -450,6 +454,23 @@ void findGLVersion()
          gl.fog_image_format = GL_ALPHA;
       }
    }
+	gl.max_anisotropy = 1.f;
+#ifndef HAVE_OPENGLES2
+   if (gl.gl_major >= 3)
+   {
+		for (u32 i = 0; ; i++)
+		{
+			const char* extension = (const char *)glGetStringi(GL_EXTENSIONS, i);
+			if (extension == nullptr)
+				break;
+			if (!strcmp(extension, "GL_EXT_texture_filter_anisotropic"))
+			{
+				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl.max_anisotropy);
+				break;
+			}
+		}
+   }
+#endif
 }
 
 GLuint gl_CompileShader(const char* shader,GLuint type)

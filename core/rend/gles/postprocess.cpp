@@ -104,7 +104,7 @@ void main()
 #if INTERLACED == 1
 	// Blend vertically for composite mode
 	int taps = int(3);
-	float tap = (2.666f/float(taps)) / float(TextureSize.y);
+	float tap = (2.666f/float(taps)) / float(min(TextureSize.y, 720));
 	vec2 texcoord4  = vTexCoord;
 	texcoord4.y -= tap * 2.f;
 	int bl;

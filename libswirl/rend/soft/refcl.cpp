@@ -45,8 +45,8 @@ static __forceinline bool EvalHalfSpaceAll(float cp12, float cp23, float cp31)
 */
 struct PlaneStepper3
 {
-    float ddx, ddy;
-    float c;
+    cl_float ddx, ddy;
+    cl_float c;
 
     void Setup(const Vertex& v1, const Vertex& v2, const Vertex& v3, float v1_a, float v2_a, float v3_a)
     {
@@ -133,26 +133,214 @@ struct IPs3
     OPENCL_DEFINE(ACCUM1_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*4)) \
     OPENCL_DEFINE(ACCUM2_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*5))
 
-OPENCL_SHADER(add_1d,
+OPENCL_SHADER(openclPixelPipeline,
 COMMON_OPENCL_DEFINES,
-    __kernel void four_ops( __global float4 *A, __global float4 *B, __global float4 *C )
+    typedef struct
     {
-            int gid = get_global_id(0);  // gid'th instance [0, sizeof(A)/4]
+        float ddx, ddy;
+        float c;
+    } PlaneStepper3_cl;
 
-            C[gid]=A[gid]+B[gid];
+    typedef struct
+    {
+        PlaneStepper3_cl U;
+        PlaneStepper3_cl V;
+        PlaneStepper3_cl Col[4];
+        PlaneStepper3_cl Ofs[4];
+    } IPs3_cl;
+
+    float Interpolate(__global PlaneStepper3_cl* cl, float x, float y) {
+        return cl->ddx * x + cl->ddy*y + cl->c;
     }
 
-    __kernel void five_ops( __global float4 *A, __global float4 *B, __global float4 *C )
+    __kernel void PixelFlush_tsp( __global float* render_buffer, __global const PlaneStepper3_cl* fpu_entries)
     {
-            int gid = get_global_id(0);  // gid'th instance [0, sizeof(A)/4]
+            __global uint* pb = (__global uint*)&render_buffer[PARAM_BUFFER_PIXEL_OFFSET];
+            __global uint* cb = (__global uint*)&render_buffer[ACCUM1_BUFFER_PIXEL_OFFSET];
 
-            C[gid]=A[gid]+B[gid];
+            int x = get_global_id(0);
+            int y = get_global_id(1);
+            int offset = y* MAX_RENDER_WIDTH + x;
+            uint tag = pb[offset];
+            if (tag) {
+                cb[offset] = tag*0x07050301;
+            }
+            //lookup tag         
+            // call PixelFlush_tsp_impl
     }
+
+#if 0
+    static bool PixelFlush_tsp_impl(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
+    {
+        auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        auto stencil = (u32 *)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
+        auto cb = &pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
+
+        float invW = *zb;
+
+        float u = ip.U.Ip(x, y);
+        float v = ip.V.Ip(x, y);
+
+        u = u / invW;
+        v = v / invW;
+
+        u8 rv[4];
+        {
+            {
+                u32 mult = 256;
+                if (*stencil & 1) {
+                    mult = FPU_SHAD_SCALE.scale_factor;
+                }
+
+                rv[0] = ip.Col[2].Ip(x, y) * mult / 256;
+                rv[1] = ip.Col[1].Ip(x, y) * mult / 256;
+                rv[2] = ip.Col[0].Ip(x, y) * mult / 256;
+                rv[3] = ip.Col[3].Ip(x, y) * mult / 256;    
+            }
+            
+
+            if (!pp_UseAlpha)
+            {
+                rv[3] = 255;
+            }
+
+            if (pp_Texture)
+            {
+
+                int ui = u * 256;
+                int vi = v * 256;
+                mem128i px = ((mem128i *)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
+
+                int ublend = ui & 255;
+                int vblend = vi & 255;
+                int nublend = 255 - ublend;
+                int nvblend = 255 - vblend;
+
+                u8 textel[4];
+
+                for (int i = 0; i < 4; i++)
+                {
+                    textel[i] =
+                        (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
+                        (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
+                        (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
+                        (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
+                };
+
+                if (pp_IgnoreTexA)
+                {
+                    textel[3] = 255;
+                }
+
+                if (pp_ShadInstr == 0)
+                {
+                    //color.rgb = texcol.rgb;
+                    //color.a = texcol.a;
+
+                    memcpy(rv, textel, sizeof(rv));
+                }
+                else if (pp_ShadInstr == 1)
+                {
+                    //color.rgb *= texcol.rgb;
+                    //color.a = texcol.a;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        rv[i] = textel[i] * rv[i] / 256;
+                    }
+
+                    rv[3] = textel[3];
+                }
+                else if (pp_ShadInstr == 2)
+                {
+                    //color.rgb=mix(color.rgb,texcol.rgb,texcol.a);
+                    u8 tb = textel[3];
+                    u8 cb = 255 - tb;
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        rv[i] = (textel[i] * tb + rv[i] * cb) / 256;
+                    }
+
+                    //rv[3] is not affected
+                }
+                else if (pp_ShadInstr == 3)
+                {
+                    //color*=texcol
+                    for (int i = 0; i < 4; i++)
+                    {
+                        rv[i] = textel[i] * rv[i] / 256;
+                    }
+                }
+
+                if (pp_Offset)
+                {
+                    //add offset
+
+                    u32 mult = 256;
+                    if (*stencil & 1) {
+                        mult = FPU_SHAD_SCALE.scale_factor;
+                    }
+
+                    rv[0] += ip.Ofs[2].Ip(x, y) * mult / 256;
+                    rv[1] += ip.Ofs[1].Ip(x, y) * mult / 256;
+                    rv[2] += ip.Ofs[0].Ip(x, y) * mult / 256;
+                    rv[3] += ip.Ofs[3].Ip(x, y);
+                }
+            }
+        }
+
+
+
+        if (render_mode == RM_PUNCHTHROUGH)
+        {
+            if (rv[3] < PT_ALPHA_REF)
+            {
+                memcpy(cb, rv, 4);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if (render_mode == RM_TRANSLUCENT)
+        {
+            u8 *fb = (u8 *)cb;
+            u8 src_blend = rv[3];
+            u8 dst_blend = 255 - rv[3];
+            for (int j = 0; j < 3; j++)
+            {
+                rv[j] = (rv[j] * src_blend) / 256 + (fb[j] * dst_blend) / 256;
+            }
+
+            memcpy(cb, rv, 4);
+            return true;
+        }
+        else
+        {
+            memcpy(cb, rv, 4);
+            return true;
+        }
+    }
+#endif
 );
 
 struct refcl : refrend
 {
     DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 6]; //param pointers + depth1 + depth2 + stencil + acum 1 + acum 2
+
+    struct {   
+        cl_platform_id platform_id = NULL;
+        cl_device_id device_id = NULL;
+        cl_context context = NULL;
+        cl_command_queue command_queue = NULL;
+        cl_mem render_buffer = NULL;
+        int    fpu_entries_count = 0;
+        int    fpu_entries_size = 0;
+        cl_mem fpu_entries = NULL;
+        cl_program program = NULL;
+        cl_kernel kernel = NULL;
+    } cl;
     
     // lookup tables
     typedef bool(*PixelFlush_tspFn)(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip);
@@ -223,7 +411,18 @@ struct refcl : refrend
      // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
     void RenderParamTags(int tileX, int tileY) {
+        
+        SyncFpuEntries();
 
+        clEnqueueWriteBuffer(cl.command_queue, cl.render_buffer, CL_FALSE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
+
+        clSetKernelArg(cl.kernel, 0, sizeof(cl_mem), (void *)&cl.render_buffer);
+        clSetKernelArg(cl.kernel, 1, sizeof(cl_mem), (void *)&cl.fpu_entries);
+ 
+        size_t worksize[] = { MAX_RENDER_WIDTH, MAX_RENDER_HEIGHT };
+        clEnqueueNDRangeKernel( cl.command_queue, cl.kernel, 2, NULL, worksize, 0, 0, 0, 0 );
+
+        /*
         auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
 
         for (int y = 0; y < 32; y++) {
@@ -231,6 +430,11 @@ struct refcl : refrend
                 PixelFlush_tsp(tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
             }
         }
+        */
+        
+        clEnqueueReadBuffer(cl.command_queue, cl.render_buffer, CL_FALSE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
+        clFlush(cl.command_queue);
+        clFinish(cl.command_queue);
     }
 
     // Texture and shade a pixel
@@ -660,61 +864,88 @@ struct refcl : refrend
         }
     }
 
+    void clAllocFpuEntries() {
+        cl_int err;
+
+        if (cl.fpu_entries) {
+            clReleaseMemObject(cl.fpu_entries);
+        }
+
+        cl.fpu_entries = clCreateBuffer(cl.context, CL_MEM_READ_WRITE, cl.fpu_entries_size * sizeof(FpuEntry), NULL, &err);
+        cl_check( err, "clCreateBuffer" );
+    }
+
+    void SyncFpuEntries() {
+        if (cl.fpu_entries_count < fpu_entires.size()) {
+
+            if (cl.fpu_entries_size < fpu_entires.size()) {
+                cl.fpu_entries_size = 16 + fpu_entires.size() * 2;
+                clAllocFpuEntries();
+                cl.fpu_entries_count = 0;
+            }
+
+            clEnqueueWriteBuffer(cl.command_queue, cl.fpu_entries, CL_TRUE, 0, fpu_entires.size() * sizeof(FpuEntry), &fpu_entires[0], 0, NULL, NULL);
+
+            cl.fpu_entries_count = fpu_entires.size();
+        }
+    }
+
     bool Init()  {
         if (!refrend::Init())
             return false;
 
-        cl_platform_id platform_id = NULL;
-        cl_device_id device_id = NULL;
-        cl_context context = NULL;
-        cl_command_queue command_queue = NULL;
-        cl_mem Amobj = NULL;
-        cl_mem Bmobj = NULL;
-        cl_mem Cmobj = NULL;
-        cl_program program = NULL;
-        cl_kernel kernel = NULL;
         cl_uint ret_num_devices;
         cl_uint ret_num_platforms;
         cl_int err;
 
-        float *A = (float *) malloc( 16*sizeof(float) );
-        float *B = (float *) malloc( 16*sizeof(float) );
-        float *C = (float *) malloc( 16*sizeof(float) );
-
         // Step 01: Get platform/device information
-        err = clGetPlatformIDs( 1, &platform_id, &ret_num_platforms );
+        err = clGetPlatformIDs( 1, &cl.platform_id, &ret_num_platforms );
         cl_check( err, "clGetPlatformIDs" );
 
         // Step 02: Get information about the device
-        err = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &ret_num_devices );
+        err = clGetDeviceIDs( cl.platform_id, CL_DEVICE_TYPE_GPU, 1, &cl.device_id, &ret_num_devices );
         cl_check( err, "clGetDeviceIDs" );
  
         // Step 03: Create OpenCL Context
-        context = clCreateContext( NULL, 1, &device_id, NULL, NULL, &err );
+        cl.context = clCreateContext( NULL, 1, &cl.device_id, NULL, NULL, &err );
         cl_check( err, "clCreateContext" );
-        printf("zero\n");
- 
+   
         // Step 04: Create Command Queue
-        command_queue = clCreateCommandQueue( context, device_id, 0, &err );
+        cl.command_queue = clCreateCommandQueue( cl.context, cl.device_id, 0, &err );
         cl_check( err, "clCreateCommandQueue" );
 
         // Step 05: Create memory objects and tranfer the data to memory buffer
-        Amobj = clCreateBuffer(context, CL_MEM_READ_WRITE, 16*sizeof(float), NULL, &err);
-        Bmobj = clCreateBuffer(context, CL_MEM_READ_WRITE, 16*sizeof(float), NULL, &err);
-        Cmobj = clCreateBuffer(context, CL_MEM_READ_WRITE, 16*sizeof(float), NULL, &err);
- 
-        err = clEnqueueWriteBuffer(command_queue, Amobj, CL_TRUE, 0, 16*sizeof(float), A, 0, NULL, NULL);
+        cl.render_buffer = clCreateBuffer(cl.context, CL_MEM_READ_WRITE, sizeof(render_buffer), NULL, &err);
+        
+        //err = clEnqueueWriteBuffer(command_queue, Amobj, CL_TRUE, 0, 16*sizeof(float), A, 0, NULL, NULL);
 
-        program = clCreateProgramWithSource( context, 1, (const char **) &add_1d, 0, &err );
+        cl.program = clCreateProgramWithSource( cl.context, 1, (const char **) &openclPixelPipeline, 0, &err );
         cl_check( err, "clCreateProgramWithSource" );
 
-        err = clBuildProgram( program, 1, &device_id, NULL, NULL, NULL );
+        err = clBuildProgram( cl.program, 1, &cl.device_id, NULL, NULL, NULL );
+
+        size_t ret_val_size;
+
+        clGetProgramBuildInfo(cl.program, cl.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &ret_val_size);
+
+        if (ret_val_size) {
+            auto build_log = new char[ret_val_size+1];
+
+            clGetProgramBuildInfo(cl.program, cl.device_id, CL_PROGRAM_BUILD_LOG, ret_val_size, build_log, NULL);
+            build_log[ret_val_size] = '\0';
+            printf("OpenCL: %s\n", build_log);
+            delete[] build_log;
+        }
+
         cl_check( err, "clBuildProgram" );
+        
+
 
         // Step 09: Create OpenCL Kernel
-        kernel = clCreateKernel( program, "four_ops", &err );
+        cl.kernel = clCreateKernel( cl.program, "PixelFlush_tsp", &err );
         cl_check( err, "clCreateKernel" );
  
+ #if run
         // Step 10: Set OpenCL kernel argument
         err = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&Amobj);
         err = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&Bmobj);
@@ -730,19 +961,18 @@ struct refcl : refrend
 
         err = clFlush(command_queue);
         err = clFinish(command_queue);
-        err = clReleaseKernel(kernel);
-        err = clReleaseProgram(program);
-        err = clReleaseMemObject(Amobj);
-        err = clReleaseMemObject(Bmobj);
-        err = clReleaseMemObject(Cmobj);
-        err = clReleaseCommandQueue(command_queue);
-        err = clReleaseContext(context);
-
-        free( A );
-        free( B );
-        free( C );
+#endif
 
         return true;
+    }
+
+    ~refcl() {
+        if (cl.kernel) clReleaseKernel(cl.kernel);
+        if (cl.program) clReleaseProgram(cl.program);
+        if (cl.render_buffer) clReleaseMemObject(cl.render_buffer);
+        if (cl.fpu_entries) clReleaseMemObject(cl.fpu_entries);
+        if (cl.command_queue) clReleaseCommandQueue(cl.command_queue);
+        if (cl.context) clReleaseContext(cl.context);
     }
 };
 

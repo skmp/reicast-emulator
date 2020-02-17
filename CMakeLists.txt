@@ -301,6 +301,9 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
     message(FATAL_ERROR "EGL or GLX required")
   endif()
 
+  find_package(OpenCL REQUIRED)
+  target_link_libraries(${TNAME} OpenCL::OpenCL)
+
   find_package(OpenMP)
   if(OpenMP_FOUND)
     target_link_libraries(${TNAME} OpenMP::OpenMP_CXX)

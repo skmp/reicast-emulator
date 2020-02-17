@@ -116,10 +116,33 @@ struct IPs3
 #define ACCUM1_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*4)
 #define ACCUM2_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*5)
 
-#define OPENCL_SHADER(name, ...) static const char* name = #__VA_ARGS__
+#define OPENCL_DEFINE(definition) "#define " #definition "\n"
+#define OPENCL_SHADER(name, delcs, ...) static const char* name = delcs #__VA_ARGS__
+
+#define COMMON_OPENCL_DEFINES \
+    OPENCL_DEFINE(MAX_RENDER_WIDTH 32) \
+    OPENCL_DEFINE(MAX_RENDER_HEIGHT 32) \
+    OPENCL_DEFINE(MAX_RENDER_PIXELS (MAX_RENDER_WIDTH * MAX_RENDER_HEIGHT)) \
+    \
+    OPENCL_DEFINE(STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH) \
+    \
+    OPENCL_DEFINE(PARAM_BUFFER_PIXEL_OFFSET 0) \
+    OPENCL_DEFINE(DEPTH1_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*1)) \
+    OPENCL_DEFINE(DEPTH2_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*2)) \
+    OPENCL_DEFINE(STENCIL_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*3)) \
+    OPENCL_DEFINE(ACCUM1_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*4)) \
+    OPENCL_DEFINE(ACCUM2_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*5))
 
 OPENCL_SHADER(add_1d,
+COMMON_OPENCL_DEFINES,
     __kernel void four_ops( __global float4 *A, __global float4 *B, __global float4 *C )
+    {
+            int gid = get_global_id(0);  // gid'th instance [0, sizeof(A)/4]
+
+            C[gid]=A[gid]+B[gid];
+    }
+
+    __kernel void five_ops( __global float4 *A, __global float4 *B, __global float4 *C )
     {
             int gid = get_global_id(0);  // gid'th instance [0, sizeof(A)/4]
 
@@ -628,7 +651,7 @@ struct refcl : refrend
         _mm_free(p);
     }
 
-    void cl_check(int err, string err_string)
+    void cl_check(int err, const char* err_string)
     {
         if (err != CL_SUCCESS)
         {
@@ -640,6 +663,84 @@ struct refcl : refrend
     bool Init()  {
         if (!refrend::Init())
             return false;
+
+        cl_platform_id platform_id = NULL;
+        cl_device_id device_id = NULL;
+        cl_context context = NULL;
+        cl_command_queue command_queue = NULL;
+        cl_mem Amobj = NULL;
+        cl_mem Bmobj = NULL;
+        cl_mem Cmobj = NULL;
+        cl_program program = NULL;
+        cl_kernel kernel = NULL;
+        cl_uint ret_num_devices;
+        cl_uint ret_num_platforms;
+        cl_int err;
+
+        float *A = (float *) malloc( 16*sizeof(float) );
+        float *B = (float *) malloc( 16*sizeof(float) );
+        float *C = (float *) malloc( 16*sizeof(float) );
+
+        // Step 01: Get platform/device information
+        err = clGetPlatformIDs( 1, &platform_id, &ret_num_platforms );
+        cl_check( err, "clGetPlatformIDs" );
+
+        // Step 02: Get information about the device
+        err = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &ret_num_devices );
+        cl_check( err, "clGetDeviceIDs" );
+ 
+        // Step 03: Create OpenCL Context
+        context = clCreateContext( NULL, 1, &device_id, NULL, NULL, &err );
+        cl_check( err, "clCreateContext" );
+        printf("zero\n");
+ 
+        // Step 04: Create Command Queue
+        command_queue = clCreateCommandQueue( context, device_id, 0, &err );
+        cl_check( err, "clCreateCommandQueue" );
+
+        // Step 05: Create memory objects and tranfer the data to memory buffer
+        Amobj = clCreateBuffer(context, CL_MEM_READ_WRITE, 16*sizeof(float), NULL, &err);
+        Bmobj = clCreateBuffer(context, CL_MEM_READ_WRITE, 16*sizeof(float), NULL, &err);
+        Cmobj = clCreateBuffer(context, CL_MEM_READ_WRITE, 16*sizeof(float), NULL, &err);
+ 
+        err = clEnqueueWriteBuffer(command_queue, Amobj, CL_TRUE, 0, 16*sizeof(float), A, 0, NULL, NULL);
+
+        program = clCreateProgramWithSource( context, 1, (const char **) &add_1d, 0, &err );
+        cl_check( err, "clCreateProgramWithSource" );
+
+        err = clBuildProgram( program, 1, &device_id, NULL, NULL, NULL );
+        cl_check( err, "clBuildProgram" );
+
+        // Step 09: Create OpenCL Kernel
+        kernel = clCreateKernel( program, "four_ops", &err );
+        cl_check( err, "clCreateKernel" );
+ 
+        // Step 10: Set OpenCL kernel argument
+        err = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&Amobj);
+        err = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&Bmobj);
+        err = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&Cmobj);
+ 
+        // Step 11: Execute OpenCL kernel in data parallel
+        size_t worksize[] = { 4, 1, 1 };
+        clEnqueueNDRangeKernel( command_queue, kernel, 1, NULL, worksize, 0, 0, 0, 0 );
+ 
+        // Step 12: Read (Transfer result) from the memory buffer
+        err = clEnqueueReadBuffer(command_queue, Cmobj, CL_TRUE, 0, 16*sizeof(float), C, 0, NULL, NULL);
+
+
+        err = clFlush(command_queue);
+        err = clFinish(command_queue);
+        err = clReleaseKernel(kernel);
+        err = clReleaseProgram(program);
+        err = clReleaseMemObject(Amobj);
+        err = clReleaseMemObject(Bmobj);
+        err = clReleaseMemObject(Cmobj);
+        err = clReleaseCommandQueue(command_queue);
+        err = clReleaseContext(context);
+
+        free( A );
+        free( B );
+        free( C );
 
         return true;
     }

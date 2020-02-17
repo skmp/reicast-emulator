@@ -134,7 +134,24 @@ struct IPs3
     OPENCL_DEFINE(ACCUM2_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*5))
 
 OPENCL_SHADER(openclPixelPipeline,
-COMMON_OPENCL_DEFINES,
+OPENCL_DEFINE(RENDER_MODE %d)
+COMMON_OPENCL_DEFINES
+,
+    typedef char  s8;
+    typedef uchar u8;
+    typedef int   s32;
+    typedef uint  u32;
+    typedef float f32;
+
+    typedef u32 parameter_tag_t;
+
+    typedef enum {
+        RM_OPAQUE,
+        RM_PUNCHTHROUGH,
+        RM_TRANSLUCENT,
+        RM_MODIFIER,
+    } RenderMode_cl;
+
     typedef struct
     {
         float ddx, ddy;
@@ -153,10 +170,10 @@ COMMON_OPENCL_DEFINES,
         return cl->ddx * x + cl->ddy*y + cl->c;
     }
 
-    __kernel void PixelFlush_tsp( __global float* render_buffer, __global const PlaneStepper3_cl* fpu_entries)
+    __kernel void ShadePixels( __global float* render_buffer, __global const PlaneStepper3_cl* fpu_entries)
     {
-            __global uint* pb = (__global uint*)&render_buffer[PARAM_BUFFER_PIXEL_OFFSET];
-            __global uint* cb = (__global uint*)&render_buffer[ACCUM1_BUFFER_PIXEL_OFFSET];
+            __global u32* pb = (__global u32*)&render_buffer[PARAM_BUFFER_PIXEL_OFFSET];
+            __global u32* cb = (__global u32*)&render_buffer[ACCUM1_BUFFER_PIXEL_OFFSET];
 
             int x = get_global_id(0);
             int y = get_global_id(1);
@@ -168,8 +185,79 @@ COMMON_OPENCL_DEFINES,
             //lookup tag         
             // call PixelFlush_tsp_impl
     }
-
 #if 0
+    bool ShadePixel(float x, float y, __gobal u8* pb, parameter_tag_t tag) {
+        return true;
+    }
+
+    void RasterizePixel(float x, float y, __gobal u8* pb, PlaneStepper3_cl &Z, parameter_tag_t tag)
+    {
+        float invW = Z.Ip(x, y);
+        __gobal float* zb = (__gobal float*)&pb [DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        __gobal float* zb2 = (__gobal float*)&pb[DEPTH2_BUFFER_PIXEL_OFFSET * 4];
+        __gobal uint* stencil = (__gobal uint*)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
+
+        switch (RENDER_MODE)
+        {
+            // OPAQ
+            case RM_OPAQUE:
+            {
+                // Z pre-pass only
+                if (invW < *zb)
+                    return;
+
+                *zb = invW;
+                *(parameter_tag_t *)pb = tag;
+            }
+            break;
+
+            case RM_MODIFIER:
+            {
+                // Flip on Z pass
+                if (invW < *zb)
+                    return;
+
+                *stencil ^= 0b10;
+            }
+            break;
+
+            // PT
+            case RM_PUNCHTHROUGH:
+            {
+                // Z + TSP syncronized for alpha test
+                if (invW < *zb)
+                    return;
+
+                if (ShadePixel(x, y, pb, tag))
+                {
+                    *zb = invW;
+                    *(parameter_tag_t *)pb = tag;
+                }
+            }
+            break;
+
+            // Layer Peeling. zb2 holds the reference depth, zb is used to find closest to reference
+            case RM_TRANSLUCENT:
+            {
+                if (invW <= *zb2)
+                    return;
+
+                if (invW > *zb)
+                    return;
+
+                PixelsDrawn++;
+
+                *zb = invW;
+                *(parameter_tag_t *)pb = tag;
+            }
+            break;
+        }
+    }
+
+    void RasterizePixels() {
+
+    }
+
     static bool PixelFlush_tsp_impl(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
     {
         auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
@@ -338,8 +426,8 @@ struct refcl : refrend
         int    fpu_entries_count = 0;
         int    fpu_entries_size = 0;
         cl_mem fpu_entries = NULL;
-        cl_program program = NULL;
-        cl_kernel kernel = NULL;
+        cl_program program[RM_COUNT] = {NULL};
+        cl_kernel shadePixelsKernel[RM_COUNT] = {NULL};
     } cl;
     
     // lookup tables
@@ -410,17 +498,17 @@ struct refcl : refrend
 
      // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
-    void RenderParamTags(int tileX, int tileY) {
+    void RenderParamTags(RenderMode rm, int tileX, int tileY) {
         
         SyncFpuEntries();
 
-        clEnqueueWriteBuffer(cl.command_queue, cl.render_buffer, CL_FALSE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
+        clEnqueueWriteBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, PARAM_BUFFER_PIXEL_OFFSET, MAX_RENDER_PIXELS * 4, render_buffer + PARAM_BUFFER_PIXEL_OFFSET, 0, NULL, NULL);
 
-        clSetKernelArg(cl.kernel, 0, sizeof(cl_mem), (void *)&cl.render_buffer);
-        clSetKernelArg(cl.kernel, 1, sizeof(cl_mem), (void *)&cl.fpu_entries);
+        clSetKernelArg(cl.shadePixelsKernel[rm], 0, sizeof(cl_mem), (void *)&cl.render_buffer);
+        clSetKernelArg(cl.shadePixelsKernel[rm], 1, sizeof(cl_mem), (void *)&cl.fpu_entries);
  
         size_t worksize[] = { MAX_RENDER_WIDTH, MAX_RENDER_HEIGHT };
-        clEnqueueNDRangeKernel( cl.command_queue, cl.kernel, 2, NULL, worksize, 0, 0, 0, 0 );
+        clEnqueueNDRangeKernel( cl.command_queue, cl.shadePixelsKernel[rm], 2, NULL, worksize, 0, 0, 0, 0 );
 
         /*
         auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
@@ -431,10 +519,6 @@ struct refcl : refrend
             }
         }
         */
-        
-        clEnqueueReadBuffer(cl.command_queue, cl.render_buffer, CL_FALSE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
-        clFlush(cl.command_queue);
-        clFinish(cl.command_queue);
     }
 
     // Texture and shade a pixel
@@ -848,6 +932,11 @@ struct refcl : refrend
     vector<FpuEntry> fpu_entires;
     
     virtual u8* GetColorOutputBuffer() {
+
+        clFlush(cl.command_queue);
+        clFinish(cl.command_queue);
+        clEnqueueReadBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, ACCUM1_BUFFER_PIXEL_OFFSET * 4, MAX_RENDER_PIXELS * 4, render_buffer + ACCUM1_BUFFER_PIXEL_OFFSET, 0, NULL, NULL);
+
         return reinterpret_cast<u8*>(render_buffer + ACCUM1_BUFFER_PIXEL_OFFSET);
     }
 
@@ -919,56 +1008,46 @@ struct refcl : refrend
         
         //err = clEnqueueWriteBuffer(command_queue, Amobj, CL_TRUE, 0, 16*sizeof(float), A, 0, NULL, NULL);
 
-        cl.program = clCreateProgramWithSource( cl.context, 1, (const char **) &openclPixelPipeline, 0, &err );
-        cl_check( err, "clCreateProgramWithSource" );
+        for (auto i = 0; i < RM_COUNT; i++) {
+            char* source = new char[strlen(openclPixelPipeline) + 512];
+            sprintf(source, openclPixelPipeline, i);
 
-        err = clBuildProgram( cl.program, 1, &cl.device_id, NULL, NULL, NULL );
+            cl.program[i] = clCreateProgramWithSource( cl.context, 1, (const char **) &source, 0, &err );
+            cl_check( err, "clCreateProgramWithSource" );
 
-        size_t ret_val_size;
+            delete[] source;
 
-        clGetProgramBuildInfo(cl.program, cl.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &ret_val_size);
+            err = clBuildProgram( cl.program[i], 1, &cl.device_id, NULL, NULL, NULL );
 
-        if (ret_val_size) {
-            auto build_log = new char[ret_val_size+1];
+            size_t ret_val_size;
 
-            clGetProgramBuildInfo(cl.program, cl.device_id, CL_PROGRAM_BUILD_LOG, ret_val_size, build_log, NULL);
-            build_log[ret_val_size] = '\0';
-            printf("OpenCL: %s\n", build_log);
-            delete[] build_log;
+            clGetProgramBuildInfo(cl.program[i], cl.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &ret_val_size);
+
+            if (ret_val_size) {
+                auto build_log = new char[ret_val_size+1];
+
+                clGetProgramBuildInfo(cl.program[i], cl.device_id, CL_PROGRAM_BUILD_LOG, ret_val_size, build_log, NULL);
+                build_log[ret_val_size] = '\0';
+                printf("OpenCL: %s\n", build_log);
+                delete[] build_log;
+            }
+
+            cl_check( err, "clBuildProgram" );
+
+            // Step 09: Create OpenCL Kernel
+            cl.shadePixelsKernel[i] = clCreateKernel( cl.program[i], "ShadePixels", &err );
+            cl_check( err, "clCreateKernel" );
         }
-
-        cl_check( err, "clBuildProgram" );
-        
-
-
-        // Step 09: Create OpenCL Kernel
-        cl.kernel = clCreateKernel( cl.program, "PixelFlush_tsp", &err );
-        cl_check( err, "clCreateKernel" );
- 
- #if run
-        // Step 10: Set OpenCL kernel argument
-        err = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&Amobj);
-        err = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&Bmobj);
-        err = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&Cmobj);
- 
-        // Step 11: Execute OpenCL kernel in data parallel
-        size_t worksize[] = { 4, 1, 1 };
-        clEnqueueNDRangeKernel( command_queue, kernel, 1, NULL, worksize, 0, 0, 0, 0 );
- 
-        // Step 12: Read (Transfer result) from the memory buffer
-        err = clEnqueueReadBuffer(command_queue, Cmobj, CL_TRUE, 0, 16*sizeof(float), C, 0, NULL, NULL);
-
-
-        err = clFlush(command_queue);
-        err = clFinish(command_queue);
-#endif
 
         return true;
     }
 
     ~refcl() {
-        if (cl.kernel) clReleaseKernel(cl.kernel);
-        if (cl.program) clReleaseProgram(cl.program);
+        for (auto i = 0; i < RM_COUNT; i++) {
+            if (cl.shadePixelsKernel[i]) clReleaseKernel(cl.shadePixelsKernel[i]);
+            if (cl.program[i]) clReleaseProgram(cl.program[i]);
+        }
+
         if (cl.render_buffer) clReleaseMemObject(cl.render_buffer);
         if (cl.fpu_entries) clReleaseMemObject(cl.fpu_entries);
         if (cl.command_queue) clReleaseCommandQueue(cl.command_queue);

@@ -175,6 +175,7 @@ enum RenderMode {
     RM_PUNCHTHROUGH,
     RM_TRANSLUCENT,
     RM_MODIFIER,
+    RM_COUNT
 };
 
 #if HOST_OS != OS_WINDOWS
@@ -224,7 +225,7 @@ struct RefRendInterface
 
     // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
-    virtual void RenderParamTags(int tileX, int tileY) = 0;
+    virtual void RenderParamTags(RenderMode rm, int tileX, int tileY) = 0;
 
     // RasterizeTriangle for each rendering mode
     #define RasterizeTriangleMode(mode) \
@@ -569,7 +570,7 @@ struct refrend : Renderer, RefRendInterface
 
 
             // Render TAGS to ACCUM
-            RenderParamTags(rect.left, rect.top);
+            RenderParamTags(RM_OPAQUE, rect.left, rect.top);
 
             // layer peeling rendering
             if (!entry.trans.empty) {
@@ -588,7 +589,7 @@ struct refrend : Renderer, RefRendInterface
                     }
 
                     // render TAGS to ACCUM
-                    RenderParamTags(rect.left, rect.top);
+                    RenderParamTags(RM_TRANSLUCENT, rect.left, rect.top);
                 } while (GetPixelsDrawn() != 0);
             }
 

@@ -186,7 +186,7 @@ struct refsw : refrend
 
      // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
-    void RenderParamTags(int tileX, int tileY) {
+    void RenderParamTags(RenderMode rm, int tileX, int tileY) {
 
         auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
 

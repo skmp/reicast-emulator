@@ -101,6 +101,15 @@ struct IPs3
     }
 };
 
+struct TriangleSetup {
+    cl_float4 ddx;
+    cl_float4 ddy;
+    cl_float4 c;
+    PlaneStepper3 Z;
+    parameter_tag_t tag;
+};
+
+
 #define TPL_DECL_pixel template<RenderMode render_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
 
 #define MAX_RENDER_WIDTH 32
@@ -156,46 +165,71 @@ COMMON_OPENCL_DEFINES
     {
         float ddx, ddy;
         float c;
-    } PlaneStepper3_cl;
+    } PlaneStepper3;
 
     typedef struct
     {
-        PlaneStepper3_cl U;
-        PlaneStepper3_cl V;
-        PlaneStepper3_cl Col[4];
-        PlaneStepper3_cl Ofs[4];
-    } IPs3_cl;
+        PlaneStepper3 U;
+        PlaneStepper3 V;
+        PlaneStepper3 Col[4];
+        PlaneStepper3 Ofs[4];
+    } IPs3;
 
-    float Interpolate(__global PlaneStepper3_cl* cl, float x, float y) {
+    typedef struct {
+        float4 ddx;
+        float4 ddy;
+        float4 c;
+        PlaneStepper3 Z;
+        parameter_tag_t tag;
+    } TriangleSetup;
+
+    typedef struct {
+        __global u32* pdata;
+        u32 width;
+        u32 height;
+        u32 textype; // 0 565, 1 1555, 2 4444
+    } text_info;
+
+    typedef struct
+    {
+        u32 isp;
+        u32 tsp;
+        u32 tcw;
+        u32 tsp2;
+        u32 tcw2;
+    } DrawParameters;
+
+    typedef struct
+    {
+        IPs3 ips;
+        DrawParameters params;
+        text_info texture;
+    } FpuEntry;
+
+    float Interpolate(PlaneStepper3* cl, float x, float y) {
         return cl->ddx * x + cl->ddy*y + cl->c;
     }
 
-    __kernel void ShadePixels( __global float* render_buffer, __global const PlaneStepper3_cl* fpu_entries)
-    {
-            __global u32* pb = (__global u32*)&render_buffer[PARAM_BUFFER_PIXEL_OFFSET];
-            __global u32* cb = (__global u32*)&render_buffer[ACCUM1_BUFFER_PIXEL_OFFSET];
-
-            int x = get_global_id(0);
-            int y = get_global_id(1);
-            int offset = y* MAX_RENDER_WIDTH + x;
-            uint tag = pb[offset];
-            if (tag) {
-                cb[offset] = tag*0x07050301;
-            }
-            //lookup tag         
-            // call PixelFlush_tsp_impl
+    float InterpolateGlobal(__global PlaneStepper3* cl, float x, float y) {
+        return cl->ddx * x + cl->ddy*y + cl->c;
     }
-#if 0
-    bool ShadePixel(float x, float y, __gobal u8* pb, parameter_tag_t tag) {
+
+    bool ShadePixel(float x, float y, __global u8* pb, parameter_tag_t tag, __global const FpuEntry* fpuEntries) {
+
+        __global uint* cb = (__global uint*)&pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
+        
+        if (tag) {
+            *cb = tag*0x07050301;
+        }
         return true;
     }
 
-    void RasterizePixel(float x, float y, __gobal u8* pb, PlaneStepper3_cl &Z, parameter_tag_t tag)
+    void RasterizePixel(float x, float y, __global u8* pb, PlaneStepper3* Z, parameter_tag_t tag, __global s32* PixelsDrawn, __global const FpuEntry* fpuEntries)
     {
-        float invW = Z.Ip(x, y);
-        __gobal float* zb = (__gobal float*)&pb [DEPTH1_BUFFER_PIXEL_OFFSET * 4];
-        __gobal float* zb2 = (__gobal float*)&pb[DEPTH2_BUFFER_PIXEL_OFFSET * 4];
-        __gobal uint* stencil = (__gobal uint*)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
+        float invW = Interpolate(Z, x, y);
+        __global float* zb = (__global float*)&pb [DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        __global float* zb2 = (__global float*)&pb[DEPTH2_BUFFER_PIXEL_OFFSET * 4];
+        __global uint* stencil = (__global uint*)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
 
         switch (RENDER_MODE)
         {
@@ -207,7 +241,7 @@ COMMON_OPENCL_DEFINES
                     return;
 
                 *zb = invW;
-                *(parameter_tag_t *)pb = tag;
+                *(__global parameter_tag_t *)pb = tag;
             }
             break;
 
@@ -228,10 +262,10 @@ COMMON_OPENCL_DEFINES
                 if (invW < *zb)
                     return;
 
-                if (ShadePixel(x, y, pb, tag))
+                if (ShadePixel(x, y, pb, tag, fpuEntries))
                 {
                     *zb = invW;
-                    *(parameter_tag_t *)pb = tag;
+                    *(__global parameter_tag_t *)pb = tag;
                 }
             }
             break;
@@ -245,19 +279,98 @@ COMMON_OPENCL_DEFINES
                 if (invW > *zb)
                     return;
 
-                PixelsDrawn++;
+                atomic_inc(PixelsDrawn);
 
                 *zb = invW;
-                *(parameter_tag_t *)pb = tag;
+                *(__global parameter_tag_t *)pb = tag;
             }
             break;
         }
     }
 
-    void RasterizePixels() {
+    __kernel void ClearBuffers(__global float* render_buffer, u32 paramValue, float depthValue, u32 stencilValue)
+    {
+        __global f32* zb = (__global f32*)(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
+        __global u32* stencil = (__global u32*)(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+        __global parameter_tag_t* pb= (__global parameter_tag_t*)(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
 
+        int i = get_global_id(0);
+
+        zb[i] = depthValue;
+        stencil[i] = stencilValue;
+        pb[i] = paramValue;
     }
 
+    __kernel void PeelBuffers(__global float* render_buffer, u32 paramValue, float depthValue, u32 stencilValue)
+    {
+        __global f32* zb = (__global f32*)(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
+        __global f32* zb2 = (__global f32*)(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET);
+        
+        __global u32* stencil = (__global u32*)(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+        __global parameter_tag_t* pb= (__global parameter_tag_t*)(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+
+        int i = get_global_id(0);
+        
+        zb2[i] = zb[i];     // keep old ZB for reference
+        zb[i] = depthValue;    // set the "closest" test to furthest value possible
+        stencil[i] = stencilValue;
+        pb[i] = paramValue;
+    }
+
+    __kernel void SummarizeStencilOr(__global float* render_buffer) {
+        __global u32* stencil = (__global u32*)(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+
+        int i = get_global_id(0);
+        
+        // post movdol merge INSIDE
+        stencil[i] |= (stencil[i] >>1);
+    }
+
+    __kernel void SummarizeStencilAnd(__global float* render_buffer) {
+        __global u32* stencil = (__global u32*)(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
+
+        int i = get_global_id(0);
+        
+        // post movdol merge OUTSIDE
+        stencil[i] &= (stencil[i] >>1);
+    }
+
+    __kernel void RasterizeTriangle(__global float* render_buffer, TriangleSetup setup, float tileX, float tileY, __global s32* pixelsDrawn, __global const FpuEntry* fpuEntries) {
+        int x = get_global_id(0);
+        int y = get_global_id(1);
+        int offset = y * MAX_RENDER_WIDTH + x;
+        
+        float screenX = tileX + x;
+        float screenY = tileY + y;
+
+        float4 planes = setup.ddx * tileX + setup.ddy * tileY + setup.c;
+        
+        if (planes.x >= 0 && planes.y >= 0 && planes.z >= 0 && planes.w >= 0) {
+            //pixel is inside
+            RasterizePixel(screenX, screenY, (__global u8*)render_buffer, &setup.Z, setup.tag, pixelsDrawn, fpuEntries);
+        }
+    }
+
+    __kernel void ShadePixels(__global float* render_buffer, __global const FpuEntry* fpuEntries, float tileX, float tileY)
+    {
+            __global u32* pb = (__global u32*)&render_buffer[PARAM_BUFFER_PIXEL_OFFSET];
+            __global u32* cb = (__global u32*)&render_buffer[ACCUM1_BUFFER_PIXEL_OFFSET];
+
+            int x = get_global_id(0);
+            int y = get_global_id(1);
+
+            int offset = y * MAX_RENDER_WIDTH + x;
+
+            parameter_tag_t tag = pb[offset];
+            if (tag != 0){
+                ShadePixel(tileX + x, tileY + y, (__global u8*)&pb[offset], tag, fpuEntries);
+            }
+            //lookup tag         
+            // call PixelFlush_tsp_impl
+    }
+
+
+#if 0
     static bool PixelFlush_tsp_impl(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
     {
         auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
@@ -430,14 +543,8 @@ struct refcl : refrend
         cl_kernel shadePixelsKernel[RM_COUNT] = {NULL};
     } cl;
     
-    // lookup tables
-    typedef bool(*PixelFlush_tspFn)(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip);
-    PixelFlush_tspFn PixelFlush_tspFns[3][2][2][2][4][2];
-
     refcl(u8* vram) : refrend(vram) {
-        #define PixelFlush_tsp refcl::PixelFlush_tsp_impl
-        #include "refsw_tsp_init.inl"
-        #undef PixelFlush_tsp
+
     }
 
     void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue)
@@ -498,14 +605,20 @@ struct refcl : refrend
 
      // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
-    void RenderParamTags(RenderMode rm, int tileX, int tileY) {
+    void RenderParamTags(RenderMode rm, int tileXi, int tileYi) {
         
         SyncFpuEntries();
 
-        clEnqueueWriteBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, PARAM_BUFFER_PIXEL_OFFSET, MAX_RENDER_PIXELS * 4, render_buffer + PARAM_BUFFER_PIXEL_OFFSET, 0, NULL, NULL);
+        clEnqueueWriteBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
 
+        cl_float tileX = tileXi;
+        cl_float tileY = tileYi;
+
+        //__kernel void ShadePixels(__global float* render_buffer, __global const FpuEntry* fpuEntries, float tileX, float tileY)
         clSetKernelArg(cl.shadePixelsKernel[rm], 0, sizeof(cl_mem), (void *)&cl.render_buffer);
         clSetKernelArg(cl.shadePixelsKernel[rm], 1, sizeof(cl_mem), (void *)&cl.fpu_entries);
+        clSetKernelArg(cl.shadePixelsKernel[rm], 2, sizeof(tileX), (void *)&tileX);
+        clSetKernelArg(cl.shadePixelsKernel[rm], 3, sizeof(tileY), (void *)&tileY);
  
         size_t worksize[] = { MAX_RENDER_WIDTH, MAX_RENDER_HEIGHT };
         clEnqueueNDRangeKernel( cl.command_queue, cl.shadePixelsKernel[rm], 2, NULL, worksize, 0, 0, 0, 0 );
@@ -519,161 +632,8 @@ struct refcl : refrend
             }
         }
         */
-    }
 
-    // Texture and shade a pixel
-    TPL_DECL_pixel 
-    static bool PixelFlush_tsp_impl(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
-    {
-        auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
-        auto stencil = (u32 *)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
-        auto cb = &pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
-
-        float invW = *zb;
-
-        float u = ip.U.Ip(x, y);
-        float v = ip.V.Ip(x, y);
-
-        u = u / invW;
-        v = v / invW;
-
-        u8 rv[4];
-        {
-            {
-                u32 mult = 256;
-                if (*stencil & 1) {
-                    mult = FPU_SHAD_SCALE.scale_factor;
-                }
-
-                rv[0] = ip.Col[2].Ip(x, y) * mult / 256;
-                rv[1] = ip.Col[1].Ip(x, y) * mult / 256;
-                rv[2] = ip.Col[0].Ip(x, y) * mult / 256;
-                rv[3] = ip.Col[3].Ip(x, y) * mult / 256;    
-            }
-            
-
-            if (!pp_UseAlpha)
-            {
-                rv[3] = 255;
-            }
-
-            if (pp_Texture)
-            {
-
-                int ui = u * 256;
-                int vi = v * 256;
-                mem128i px = ((mem128i *)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
-
-                int ublend = ui & 255;
-                int vblend = vi & 255;
-                int nublend = 255 - ublend;
-                int nvblend = 255 - vblend;
-
-                u8 textel[4];
-
-                for (int i = 0; i < 4; i++)
-                {
-                    textel[i] =
-                        (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
-                        (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
-                        (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
-                        (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
-                };
-
-                if (pp_IgnoreTexA)
-                {
-                    textel[3] = 255;
-                }
-
-                if (pp_ShadInstr == 0)
-                {
-                    //color.rgb = texcol.rgb;
-                    //color.a = texcol.a;
-
-                    memcpy(rv, textel, sizeof(rv));
-                }
-                else if (pp_ShadInstr == 1)
-                {
-                    //color.rgb *= texcol.rgb;
-                    //color.a = texcol.a;
-                    for (int i = 0; i < 3; i++)
-                    {
-                        rv[i] = textel[i] * rv[i] / 256;
-                    }
-
-                    rv[3] = textel[3];
-                }
-                else if (pp_ShadInstr == 2)
-                {
-                    //color.rgb=mix(color.rgb,texcol.rgb,texcol.a);
-                    u8 tb = textel[3];
-                    u8 cb = 255 - tb;
-
-                    for (int i = 0; i < 3; i++)
-                    {
-                        rv[i] = (textel[i] * tb + rv[i] * cb) / 256;
-                    }
-
-                    //rv[3] is not affected
-                }
-                else if (pp_ShadInstr == 3)
-                {
-                    //color*=texcol
-                    for (int i = 0; i < 4; i++)
-                    {
-                        rv[i] = textel[i] * rv[i] / 256;
-                    }
-                }
-
-                if (pp_Offset)
-                {
-                    //add offset
-
-                    u32 mult = 256;
-                    if (*stencil & 1) {
-                        mult = FPU_SHAD_SCALE.scale_factor;
-                    }
-
-                    rv[0] += ip.Ofs[2].Ip(x, y) * mult / 256;
-                    rv[1] += ip.Ofs[1].Ip(x, y) * mult / 256;
-                    rv[2] += ip.Ofs[0].Ip(x, y) * mult / 256;
-                    rv[3] += ip.Ofs[3].Ip(x, y);
-                }
-            }
-        }
-
-
-
-        if (render_mode == RM_PUNCHTHROUGH)
-        {
-            if (rv[3] < PT_ALPHA_REF)
-            {
-                memcpy(cb, rv, 4);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else if (render_mode == RM_TRANSLUCENT)
-        {
-            u8 *fb = (u8 *)cb;
-            u8 src_blend = rv[3];
-            u8 dst_blend = 255 - rv[3];
-            for (int j = 0; j < 3; j++)
-            {
-                rv[j] = (rv[j] * src_blend) / 256 + (fb[j] * dst_blend) / 256;
-            }
-
-            memcpy(cb, rv, 4);
-            return true;
-        }
-        else
-        {
-            memcpy(cb, rv, 4);
-            return true;
-        }
+       clEnqueueReadBuffer(cl.command_queue, cl.render_buffer, CL_TRUE, 0, sizeof(render_buffer), render_buffer, 0, NULL, NULL);
     }
 
     parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode)
@@ -688,8 +648,6 @@ struct refcl : refrend
 
         entry.ips.Setup(&entry.texture, vtx[0], vtx[1], vtx[2]);
 
-        entry.shade = PixelFlush_tspFns[render_mode][entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.tsp.IgnoreTexA][entry.params.tsp.ShadInstr][entry.params.isp.Offset];
-
         fpu_entires.push_back(entry);
 
         return fpu_entires.size();
@@ -697,17 +655,6 @@ struct refcl : refrend
 
     void ClearFpuEntries() {
         fpu_entires.clear();
-    }
-
-    // Lookup/create cached TSP parameters, and call PixelFlush_tsp
-    bool PixelFlush_tsp(float x, float y, u8 *pb, parameter_tag_t tag)
-    {
-        if (tag == 0)
-            return false;
-
-        auto entry = &fpu_entires[tag-1];
-        
-        return entry->shade(&entry->texture, x, y, pb, entry->ips);
     }
 
     // Depth processing for a pixel -- render_mode 0: OPAQ, 1: PT, 2: TRANS
@@ -761,7 +708,7 @@ struct refcl : refrend
                 if (invW < *zb)
                     return;
 
-                if (PixelFlush_tsp(x, y, pb, tag))
+                if (true)
                 {
                     *zb = invW;
                     *(parameter_tag_t *)pb = tag;
@@ -926,7 +873,6 @@ struct refcl : refrend
         IPs3 ips;
         DrawParameters params;
         text_info texture;
-        PixelFlush_tspFn shade;
     };
 
     vector<FpuEntry> fpu_entires;

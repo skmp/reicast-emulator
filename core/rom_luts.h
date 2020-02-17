@@ -70,6 +70,7 @@ static struct game_type lut_games[] =
 
    /* Disable DIV matching */
    { "T15112N   ", -1, -1, -1,  -1,  1, 1, 0, 0 },           /* Demolition Racer */
+	{ "T17714D50 ", -1, -1, -1,  -1,  1, 1, 0, 0 },           /* Donald Duck - Goin' Quackers / Quack Attack */
    { "T-8113N   ", -1, -1, -1,  -1,  1, 1, 0, 0 },           /* Ducati World - Racing Challenge (NTSC) */
    { "T-8121D-50", -1, -1, -1,  -1,  1, 1, 0, 0 },           /* Ducati World (PAL) */
    { "T40509D 50", -1, -1, -1,  -1,  1, 1, 0, 0 },           /* Aqua GT */

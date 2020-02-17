@@ -188,11 +188,10 @@ static void LoadSpecialSettings(void)
             settings.rend.RenderToTextureBuffer = lut_games[i].rendertotexturebuffer;
          }
 
-         if (lut_games[i].disable_div != -1 &&
-               settings.dynarec.AutoDivMatching)
+         if (lut_games[i].disable_div != -1)
          {
          	NOTICE_LOG(BOOT, "[Hack]: Applying Disable DIV hack.");
-            settings.dynarec.DisableDivMatching = lut_games[i].disable_div;
+         	settings.dynarec.ForceDisableDivMatching = settings.dynarec.DisableDivMatching = lut_games[i].disable_div;
          }
          if (lut_games[i].extra_depth_scale != 1 && settings.rend.AutoExtraDepthScale)
          {
@@ -296,11 +295,10 @@ static void LoadSpecialSettingsNaomi(const char *name)
             settings.rend.RenderToTextureBuffer = lut_games_naomi[i].rendertotexturebuffer;
          }
 
-         if (lut_games_naomi[i].disable_div != -1 &&
-               settings.dynarec.AutoDivMatching)
+         if (lut_games_naomi[i].disable_div != -1)
          {
          	NOTICE_LOG(BOOT, "[Hack]: Applying Disable DIV hack.");
-            settings.dynarec.DisableDivMatching = lut_games_naomi[i].disable_div;
+         	settings.dynarec.ForceDisableDivMatching = settings.dynarec.DisableDivMatching = lut_games_naomi[i].disable_div;
          }
 
          if (lut_games_naomi[i].jamma_setup != -1)

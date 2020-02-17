@@ -792,21 +792,10 @@ static void update_variables(bool first_startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp("auto", var.value))
-      {
+      if (!strcmp("auto", var.value) && !settings.dynarec.ForceDisableDivMatching)
          settings.dynarec.DisableDivMatching = 0;
-         settings.dynarec.AutoDivMatching = true;
-      }
-      else if (!strcmp("enabled", var.value))
-      {
-         settings.dynarec.DisableDivMatching = 0;
-         settings.dynarec.AutoDivMatching = false;
-      }
-      else if (!strcmp("disabled", var.value))
-      {
+      else
          settings.dynarec.DisableDivMatching = 1;
-         settings.dynarec.AutoDivMatching = false;
-      }
    }
 
    var.key = CORE_OPTION_NAME "_force_wince";

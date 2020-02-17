@@ -537,7 +537,7 @@ struct settings_t
 		bool disable_nvmem;
 		bool disable_vmem32;
       bool DisableDivMatching;
-      bool AutoDivMatching;
+      bool ForceDisableDivMatching;
 	} dynarec;
 	
 	struct

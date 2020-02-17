@@ -454,11 +454,23 @@ void findGLVersion()
          gl.fog_image_format = GL_ALPHA;
       }
    }
-	const char* extensions = (const char *)glGetString(GL_EXTENSIONS);
-	if (strstr(extensions, "GL_EXT_texture_filter_anisotropic"))
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl.max_anisotropy);
-	else
-		gl.max_anisotropy = 1.f;
+	gl.max_anisotropy = 1.f;
+#ifndef HAVE_OPENGLES2
+   if (gl.gl_major >= 3)
+   {
+		for (u32 i = 0; ; i++)
+		{
+			const char* extension = (const char *)glGetStringi(GL_EXTENSIONS, i);
+			if (extension == nullptr)
+				break;
+			if (!strcmp(extension, "GL_EXT_texture_filter_anisotropic"))
+			{
+				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl.max_anisotropy);
+				break;
+			}
+		}
+   }
+#endif
 }
 
 GLuint gl_CompileShader(const char* shader,GLuint type)

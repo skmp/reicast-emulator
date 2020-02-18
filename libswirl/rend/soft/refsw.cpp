@@ -114,7 +114,7 @@ struct IPs3
 #define ACCUM1_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*4)
 #define ACCUM2_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*5)
 
-struct refsw : refrend
+struct refsw : RefRendInterface
 {
     DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 6]; //param pointers + depth1 + depth2 + stencil + acum 1 + acum 2
     
@@ -122,10 +122,15 @@ struct refsw : refrend
     typedef bool(*PixelFlush_tspFn)(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip);
     PixelFlush_tspFn PixelFlush_tspFns[3][2][2][2][4][2];
 
-    refsw(u8* vram) : refrend(vram) {
+    u8* vram;
+    refsw(u8* vram) : vram(vram) {
         #define PixelFlush_tsp refsw::PixelFlush_tsp_impl
         #include "refsw_tsp_init.inl"
         #undef PixelFlush_tsp
+    }
+
+    bool Init() {
+        return true;
     }
 
     void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue)
@@ -618,7 +623,9 @@ struct refsw : refrend
 
 #if FEAT_TA == TA_LLE
 Renderer* rend_refsw(u8* vram) {
-    return new(_mm_malloc(sizeof(refsw), 32)) ::refsw(vram);
+    return new refrend(vram, [=]() { 
+        return (RefRendInterface*) new(_mm_malloc(sizeof(refsw), 32)) ::refsw(vram);
+    });
 }
 
 static auto refrend = RegisterRendererBackend(rendererbackend_t{ "refsw", "RefSW", 0, rend_refsw });

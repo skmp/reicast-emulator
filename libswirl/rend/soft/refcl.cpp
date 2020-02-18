@@ -370,7 +370,7 @@ COMMON_OPENCL_DEFINES
     }
 );
 
-struct refcl : refrend
+struct refcl : RefRendInterface
 {
     DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 6]; //param pointers + depth1 + depth2 + stencil + acum 1 + acum 2
 
@@ -393,7 +393,8 @@ struct refcl : refrend
         cl_kernel summarizeStencilAndKernel = NULL;
     } cl;
     
-    refcl(u8* vram) : refrend(vram) {
+    u8* vram;
+    refcl(u8* vram) : vram(vram) {
 
     }
 
@@ -850,8 +851,6 @@ struct refcl : refrend
     }
 
     bool Init()  {
-        if (!refrend::Init())
-            return false;
 
         cl_uint ret_num_devices;
         cl_uint ret_num_platforms;
@@ -945,7 +944,9 @@ struct refcl : refrend
 
 #if FEAT_TA == TA_LLE
 Renderer* rend_refcl(u8* vram) {
-    return new(_mm_malloc(sizeof(refcl), 32)) ::refcl(vram);
+    return new refrend(vram, [=]() { 
+        return (RefRendInterface*) new(_mm_malloc(sizeof(refcl), 32)) ::refcl(vram);
+    });
 }
 
 static auto refrend = RegisterRendererBackend(rendererbackend_t{ "refcl", "RefCL", 0, rend_refcl });

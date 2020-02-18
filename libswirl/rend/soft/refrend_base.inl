@@ -78,6 +78,8 @@
 #include "rend/gles/gles.h"
 #include "gui/gui.h"
 
+#include <memory>
+
 extern u32 decoded_colors[3][65536];
 
 #pragma pack(push, 1) 
@@ -196,6 +198,9 @@ typedef u32 parameter_tag_t;
 
 struct RefRendInterface
 {
+    // backend specific init
+    virtual bool Init() = 0;
+
     // Clear the buffers
     virtual void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
 
@@ -243,11 +248,16 @@ struct RefRendInterface
 /*
     Main renderer class
 */
-struct refrend : Renderer, RefRendInterface
+struct refrend : Renderer
 {
-    u8* vram;
+    std::function<RefRendInterface*()> createBackend;
 
-    refrend(u8* vram) : vram(vram) { }
+    u8* vram;
+    unique_ptr<RefRendInterface> backend;
+
+    refrend(u8* vram, std::function<RefRendInterface*()> createBackend) : vram(vram), createBackend(createBackend) {
+        backend.reset(createBackend());
+    }
 
     template<RenderMode render_mode>
     void RenderTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
@@ -255,7 +265,7 @@ struct refrend : Renderer, RefRendInterface
         switch(render_mode)
         {
             #define RasterizeTriangleCase(mode) \
-                case RM_##mode: RasterizeTriangle_##mode(params, tag, vertex_offset, v1, v2, v3, area); break
+                case RM_##mode: backend->RasterizeTriangle_##mode(params, tag, vertex_offset, v1, v2, v3, area); break
 
             RasterizeTriangleCase(OPAQUE);
             RasterizeTriangleCase(PUNCHTHROUGH);
@@ -270,11 +280,11 @@ struct refrend : Renderer, RefRendInterface
         {          
             if (params->isp.modvol.VolumeMode == 1 ) 
             {
-                SummarizeStencilOr();
+                backend->SummarizeStencilOr();
             }
             else if (params->isp.modvol.VolumeMode == 2) 
             {
-                SummarizeStencilAnd();
+                backend->SummarizeStencilAnd();
             }
         }
     }
@@ -420,7 +430,7 @@ struct refrend : Renderer, RefRendInterface
             if (obj.tstrip.mask & (1 << (5-i)))
             {
 
-                parameter_tag_t tag = AddFpuEntry(&params, &vtx[i], render_mode);
+                parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode);
 
                 RenderTriangle<render_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], rect);
             }
@@ -448,7 +458,7 @@ struct refrend : Renderer, RefRendInterface
             parameter_tag_t tag = 0;
             if (render_mode != RM_MODIFIER)
             {
-                tag = AddFpuEntry(&params, &vtx[0], render_mode);
+                tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
             }
 
             RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
@@ -472,7 +482,7 @@ struct refrend : Renderer, RefRendInterface
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
             
-            parameter_tag_t tag = AddFpuEntry(&params, &vtx[0], render_mode);
+            parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
 
             //TODO: FIXME
             RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
@@ -533,7 +543,7 @@ struct refrend : Renderer, RefRendInterface
             DrawParameters params;
             Vertex vtx[8];
             decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
-            bgTag = AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
+            bgTag = backend->AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
         }
         
         // Parse region array
@@ -550,7 +560,7 @@ struct refrend : Renderer, RefRendInterface
             // Tile needs clear?
             if (!entry.control.z_keep) {
                 // Clear Param + Z + stencil buffers
-                ClearBuffers(bgTag, ISP_BACKGND_D.f, 0);
+                backend->ClearBuffers(bgTag, ISP_BACKGND_D.f, 0);
             }
 
             // Render OPAQ to TAGS          
@@ -570,16 +580,16 @@ struct refrend : Renderer, RefRendInterface
 
 
             // Render TAGS to ACCUM
-            RenderParamTags(RM_OPAQUE, rect.left, rect.top);
+            backend->RenderParamTags(RM_OPAQUE, rect.left, rect.top);
 
             // layer peeling rendering
             if (!entry.trans.empty) {
 
                 do {
-                    ClearPixelsDrawn();
+                    backend->ClearPixelsDrawn();
 
                     //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
-                    PeelBuffers(0, FLT_MAX, 0);
+                    backend->PeelBuffers(0, FLT_MAX, 0);
 
                     // render to TAGS
                     RenderObjectList<RM_TRANSLUCENT>(entry.trans.ptr_in_words * 4, &rect);
@@ -589,8 +599,8 @@ struct refrend : Renderer, RefRendInterface
                     }
 
                     // render TAGS to ACCUM
-                    RenderParamTags(RM_TRANSLUCENT, rect.left, rect.top);
-                } while (GetPixelsDrawn() != 0);
+                    backend->RenderParamTags(RM_TRANSLUCENT, rect.left, rect.top);
+                } while (backend->GetPixelsDrawn() != 0);
             }
 
 
@@ -614,7 +624,7 @@ struct refrend : Renderer, RefRendInterface
                 auto bpp = 2;
                 auto offset_bytes = entry.control.tilex * 32 * bpp + entry.control.tiley * 32  * FB_W_LINESTRIDE.stride * 8;
 
-                auto src = GetColorOutputBuffer();
+                auto src = backend->GetColorOutputBuffer();
                 for (int y = 0; y<32; y++) {
                     //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
                     auto dst = base + offset_bytes + (y) * FB_W_LINESTRIDE.stride * 8;
@@ -632,7 +642,7 @@ struct refrend : Renderer, RefRendInterface
         } while (!entry.control.last_region);
 
         // clear the tsp cache
-        ClearFpuEntries();
+        backend->ClearFpuEntries();
 
         return false;
     }
@@ -645,6 +655,9 @@ struct refrend : Renderer, RefRendInterface
 
 
     virtual bool Init() {
+
+        if (!backend->Init())
+            return false;
 
         gles_init();
 

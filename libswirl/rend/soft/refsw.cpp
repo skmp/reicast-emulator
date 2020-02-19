@@ -288,7 +288,7 @@ struct refsw : RefRendInterface
         return textel;
     }
 
-    template<bool pp_Texture, bool pp_Offset, bool pp_ShadInstr>
+    template<bool pp_Texture, bool pp_Offset, u32 pp_ShadInstr>
     static Color ColorCombiner(Color base, Color textel, Color offset) {
 
         Color rv = base;
@@ -335,7 +335,8 @@ struct refsw : RefRendInterface
             }
 
             if (pp_Offset) {
-                for (int i = 0; i < 4; i++)
+                // mix only color, saturate
+                for (int i = 0; i < 3; i++)
                 {
                     rv.rgba[i] = min(rv.rgba[i] + offset.rgba[i], 255);
                 }

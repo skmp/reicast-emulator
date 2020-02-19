@@ -79,6 +79,8 @@
 #include "gui/gui.h"
 
 #include <memory>
+#include <atomic>
+#include <queue>
 
 extern u32 decoded_colors[3][65536];
 
@@ -245,6 +247,9 @@ struct RefRendInterface
     
 };
 
+
+#define MAX_CPU_COUNT 64
+
 /*
     Main renderer class
 */
@@ -253,14 +258,70 @@ struct refrend : Renderer
     std::function<RefRendInterface*()> createBackend;
 
     u8* vram;
-    unique_ptr<RefRendInterface> backend;
+    vector<cThread> threads;
+    vector<queue<function<void(RefRendInterface*)>>> queues;
+    atomic<bool> running;
+
+    cMutex queue_lock;
+    
+
+    static void* ThreadPoolEntry(void* func) {
+        auto fn = reinterpret_cast<function<void()>*>(func);
+
+        (*fn)();
+
+        delete fn;
+
+        return nullptr;
+    }
+
+    void EnqueueTile(int tileId, function<void(RefRendInterface*)> fn) {
+        queue_lock.Lock();
+        queues[tileId % queues.size()].push(fn);
+        queue_lock.Unlock();
+    }
 
     refrend(u8* vram, std::function<RefRendInterface*()> createBackend) : vram(vram), createBackend(createBackend) {
-        backend.reset(createBackend());
+        running = true;
+
+        queues.reserve(MAX_CPU_COUNT);
+        threads.reserve(MAX_CPU_COUNT);
+
+        for (int i = 0; i < MAX_CPU_COUNT; i++) {
+            auto func = new function<void()>([=]() {
+                unique_ptr<RefRendInterface> backend;
+
+                backend.reset(createBackend());
+
+                backend->Init();
+
+                while(running) {
+                    queue_lock.Lock();
+                    if (queues[i].size() == 0)
+                    {
+                        queue_lock.Unlock();
+                        SleepMs(1);
+                        continue;    
+                    }
+                    auto item = queues[i].front();
+                    queues[i].pop();
+                    queue_lock.Unlock();
+
+                    item(backend.get());
+                }
+
+                backend.reset();
+            });
+
+            queues.push_back( queue<function<void(RefRendInterface*)>>() );
+            threads.push_back(cThread(ThreadPoolEntry, func));
+
+            threads[threads.size()-1].Start();
+        }
     }
 
     template<RenderMode render_mode>
-    void RenderTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
+    void RenderTriangle(RefRendInterface* backend, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
     {
         switch(render_mode)
         {
@@ -415,7 +476,7 @@ struct refrend : Renderer
 
     // render a triangle strip object list entry
     template<RenderMode render_mode>
-    void RenderTriangleStrip(ObjectListEntry obj, RECT* rect)
+    void RenderTriangleStrip(RefRendInterface* backend, ObjectListEntry obj, RECT* rect)
     {
         Vertex vtx[8];
         DrawParameters params;
@@ -432,7 +493,7 @@ struct refrend : Renderer
 
                 parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode);
 
-                RenderTriangle<render_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], rect);
+                RenderTriangle<render_mode>(backend, &params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], rect);
             }
         }
     }
@@ -440,7 +501,7 @@ struct refrend : Renderer
 
     // render a triangle array object list entry
     template<RenderMode render_mode>
-    void RenderTriangleArray(ObjectListEntry obj, RECT* rect)
+    void RenderTriangleArray(RefRendInterface* backend, ObjectListEntry obj, RECT* rect)
     {
         auto triangles = obj.tarray.prims + 1;
         u32 param_base = PARAM_BASE & 0xF00000;
@@ -461,13 +522,13 @@ struct refrend : Renderer
                 tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
             }
 
-            RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
+            RenderTriangle<render_mode>(backend, &params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
         }
     }
 
     // render a quad array object list entry
     template<RenderMode render_mode>
-    void RenderQuadArray(ObjectListEntry obj, RECT* rect)
+    void RenderQuadArray(RefRendInterface* backend, ObjectListEntry obj, RECT* rect)
     {
         auto quads = obj.qarray.prims + 1;
         u32 param_base = PARAM_BASE & 0xF00000;
@@ -485,14 +546,14 @@ struct refrend : Renderer
             parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
 
             //TODO: FIXME
-            RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
-            RenderTriangle<render_mode>(&params, tag, 1, vtx[0], vtx[3], vtx[2], rect);
+            RenderTriangle<render_mode>(backend, &params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
+            RenderTriangle<render_mode>(backend, &params, tag, 1, vtx[0], vtx[3], vtx[2], rect);
         }
     }
 
     // Render an object list
     template<RenderMode render_mode>
-    void RenderObjectList(pvr32addr_t base, RECT* rect)
+    void RenderObjectList(RefRendInterface* backend, pvr32addr_t base, RECT* rect)
     {
         ObjectListEntry obj;
 
@@ -501,7 +562,7 @@ struct refrend : Renderer
             base += 4;
 
             if (!obj.is_not_triangle_strip) {
-                RenderTriangleStrip<render_mode>(obj, rect);
+                RenderTriangleStrip<render_mode>(backend, obj, rect);
             } else {
                 switch(obj.type) {
                     case 0b111: // link
@@ -512,11 +573,11 @@ struct refrend : Renderer
                         break;
 
                     case 0b100: // triangle array
-                        RenderTriangleArray<render_mode>(obj, rect);
+                        RenderTriangleArray<render_mode>(backend, obj, rect);
                         break;
                     
                     case 0b101: // quad array
-                        RenderQuadArray<render_mode>(obj, rect);
+                        RenderQuadArray<render_mode>(backend, obj, rect);
                         break;
 
                     default:
@@ -536,113 +597,133 @@ struct refrend : Renderer
         RegionArrayEntry entry;
         int tilenum = 1;
 
-        parameter_tag_t bgTag;
-        
-        // register BGPOLY to fpu
-        {
-            DrawParameters params;
-            Vertex vtx[8];
-            decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
-            bgTag = backend->AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
-        }
-        
         // Parse region array
         do {
             base += ReadRegionArrayEntry(base, &entry);
+            EnqueueTile(entry.control.tiley * 64 + entry.control.tilex, [=](RefRendInterface* backend) {
+                RECT rect;
+                rect.top = entry.control.tiley * 32;
+                rect.left = entry.control.tilex * 32;
 
-            RECT rect;
-            rect.top = entry.control.tiley * 32;
-            rect.left = entry.control.tilex * 32;
-            
-            rect.bottom = rect.top + 32;
-            rect.right = rect.left + 32;
+                rect.bottom = rect.top + 32;
+                rect.right = rect.left + 32;
 
-            // Tile needs clear?
-            if (!entry.control.z_keep) {
-                // Clear Param + Z + stencil buffers
-                backend->ClearBuffers(bgTag, ISP_BACKGND_D.f, 0);
-            }
+                parameter_tag_t bgTag;
 
-            // Render OPAQ to TAGS          
-            if (!entry.opaque.empty) {
-                RenderObjectList<RM_OPAQUE>(entry.opaque.ptr_in_words * 4, &rect);
-            }
-
-            // render PT to TAGS
-            if (!entry.puncht.empty) {
-                RenderObjectList<RM_PUNCHTHROUGH>(entry.puncht.ptr_in_words * 4, &rect);
-            }
-
-            //TODO: Render OPAQ modvols
-            if (!entry.opaque_mod.empty) {
-                RenderObjectList<RM_MODIFIER>(entry.opaque_mod.ptr_in_words * 4, &rect);
-            }
-
-
-            // Render TAGS to ACCUM
-            backend->RenderParamTags(RM_OPAQUE, rect.left, rect.top);
-
-            // layer peeling rendering
-            if (!entry.trans.empty) {
-
-                do {
-                    backend->ClearPixelsDrawn();
-
-                    //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
-                    backend->PeelBuffers(0, FLT_MAX, 0);
-
-                    // render to TAGS
-                    RenderObjectList<RM_TRANSLUCENT>(entry.trans.ptr_in_words * 4, &rect);
-
-                    if (!entry.trans_mod.empty) {
-                        RenderObjectList<RM_MODIFIER>(entry.trans_mod.ptr_in_words * 4, &rect);
-                    }
-
-                    // render TAGS to ACCUM
-                    backend->RenderParamTags(RM_TRANSLUCENT, rect.left, rect.top);
-                } while (backend->GetPixelsDrawn() != 0);
-            }
-
-
-            // Copy to vram
-            if (!entry.control.no_writeout) {
-
-                auto field = SCALER_CTL.fieldselect;
-                auto interlace = SCALER_CTL.interlace;
-                
-                auto base = (interlace && field) ? FB_W_SOF2 : FB_W_SOF1;
-
-                // very few configurations supported here
-                verify(SCALER_CTL.hscale == 0);
-                verify(SCALER_CTL.interlace == 0); // write both SOFs
-                auto vscale = SCALER_CTL.vscalefactor;
-                verify(vscale == 0x401 || vscale == 0x400 || vscale == 0x800);
-
-                auto fb_packmode = FB_W_CTRL.fb_packmode;
-                verify(fb_packmode == 0x1); // 565 RGB16
-
-                auto bpp = 2;
-                auto offset_bytes = entry.control.tilex * 32 * bpp + entry.control.tiley * 32  * FB_W_LINESTRIDE.stride * 8;
-
-                auto src = backend->GetColorOutputBuffer();
-                for (int y = 0; y<32; y++) {
-                    //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
-                    auto dst = base + offset_bytes + (y) * FB_W_LINESTRIDE.stride * 8;
-
-                    for (int x = 0; x<32; x++) {
-                        auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | ((src[2] >> 3) & 0x1F);
-                        pvr_write_area1_16(vram, dst, pixel);
-                        
-                        dst += bpp;
-                        src+=4; // skip alpha
-                    }    
+                // register BGPOLY to fpu
+                {
+                    DrawParameters params;
+                    Vertex vtx[8];
+                    decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
+                    bgTag = backend->AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
                 }
-            }
 
+                // Tile needs clear?
+                if (!entry.control.z_keep)
+                {
+                    // Clear Param + Z + stencil buffers
+                    backend->ClearBuffers(bgTag, ISP_BACKGND_D.f, 0);
+                }
+
+                // Render OPAQ to TAGS
+                if (!entry.opaque.empty)
+                {
+                    RenderObjectList<RM_OPAQUE>(backend, entry.opaque.ptr_in_words * 4, &rect);
+                }
+
+                // render PT to TAGS
+                if (!entry.puncht.empty)
+                {
+                    RenderObjectList<RM_PUNCHTHROUGH>(backend, entry.puncht.ptr_in_words * 4, &rect);
+                }
+
+                //TODO: Render OPAQ modvols
+                if (!entry.opaque_mod.empty)
+                {
+                    RenderObjectList<RM_MODIFIER>(backend, entry.opaque_mod.ptr_in_words * 4, &rect);
+                }
+
+                // Render TAGS to ACCUM
+                backend->RenderParamTags(RM_OPAQUE, rect.left, rect.top);
+
+                // layer peeling rendering
+                if (!entry.trans.empty)
+                {
+
+                    do
+                    {
+                        backend->ClearPixelsDrawn();
+
+                        //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
+                        backend->PeelBuffers(0, FLT_MAX, 0);
+
+                        // render to TAGS
+                        RenderObjectList<RM_TRANSLUCENT>(backend, entry.trans.ptr_in_words * 4, &rect);
+
+                        if (!entry.trans_mod.empty)
+                        {
+                            RenderObjectList<RM_MODIFIER>(backend, entry.trans_mod.ptr_in_words * 4, &rect);
+                        }
+
+                        // render TAGS to ACCUM
+                        backend->RenderParamTags(RM_TRANSLUCENT, rect.left, rect.top);
+                    } while (backend->GetPixelsDrawn() != 0);
+                }
+
+                // Copy to vram
+                if (!entry.control.no_writeout)
+                {
+
+                    auto field = SCALER_CTL.fieldselect;
+                    auto interlace = SCALER_CTL.interlace;
+
+                    auto base = (interlace && field) ? FB_W_SOF2 : FB_W_SOF1;
+
+                    // very few configurations supported here
+                    verify(SCALER_CTL.hscale == 0);
+                    verify(SCALER_CTL.interlace == 0); // write both SOFs
+                    auto vscale = SCALER_CTL.vscalefactor;
+                    verify(vscale == 0x401 || vscale == 0x400 || vscale == 0x800);
+
+                    auto fb_packmode = FB_W_CTRL.fb_packmode;
+                    verify(fb_packmode == 0x1); // 565 RGB16
+
+                    auto bpp = 2;
+                    auto offset_bytes = entry.control.tilex * 32 * bpp + entry.control.tiley * 32 * FB_W_LINESTRIDE.stride * 8;
+
+                    auto src = backend->GetColorOutputBuffer();
+                    for (int y = 0; y < 32; y++)
+                    {
+                        //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
+                        auto dst = base + offset_bytes + (y)*FB_W_LINESTRIDE.stride * 8;
+
+                        for (int x = 0; x < 32; x++)
+                        {
+                            auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | ((src[2] >> 3) & 0x1F);
+                            pvr_write_area1_16(vram, dst, pixel);
+
+                            dst += bpp;
+                            src += 4; // skip alpha
+                        }
+                    }
+                }
+                // clear the tsp cache
+                backend->ClearFpuEntries();
+            });
         } while (!entry.control.last_region);
 
-        // clear the tsp cache
-        backend->ClearFpuEntries();
+        for (int i = 0; i < MAX_CPU_COUNT; i++) {
+            for(;;) {
+                queue_lock.Lock();
+                bool empty = queues[i].size() == 0;
+                queue_lock.Unlock();
+
+                if (empty)
+                    break;
+                else
+                    SleepMs(1);
+            }
+        }
 
         return false;
     }
@@ -655,9 +736,6 @@ struct refrend : Renderer
 
 
     virtual bool Init() {
-
-        if (!backend->Init())
-            return false;
 
         gles_init();
 
@@ -704,6 +782,10 @@ struct refrend : Renderer
 
     ~refrend() {
 
+        running = false;
+        for (auto &thread: threads) {
+            thread.WaitToEnd();
+        }
 #if HOST_OS == OS_WINDOWS
         if (hBMP) {
             DeleteObject(SelectObject(hmem, holdBMP));

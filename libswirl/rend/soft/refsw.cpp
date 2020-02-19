@@ -114,12 +114,16 @@ struct IPs3
 #define ACCUM1_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*4)
 #define ACCUM2_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*5)
 
+static cMutex texture_lock;
+
 struct refsw : RefRendInterface
 {
     DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 6]; //param pointers + depth1 + depth2 + stencil + acum 1 + acum 2
     
+    struct FpuEntry;
+
     // lookup tables
-    typedef bool(*PixelFlush_tspFn)(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip);
+    typedef bool(*PixelFlush_tspFn)(const FpuEntry *entry, float x, float y, u8 *pb);
     PixelFlush_tspFn PixelFlush_tspFns[3][2][2][2][4][2];
 
     u8* vram;
@@ -201,135 +205,183 @@ struct refsw : RefRendInterface
             }
         }
     }
-
-    // Texture and shade a pixel
-    TPL_DECL_pixel 
-    static bool PixelFlush_tsp_impl(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
+    
+    // Used for deferred TSP processing lookups
+    struct FpuEntry
     {
-        auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
-        auto stencil = (u32 *)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
-        auto cb = &pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
+        IPs3 ips;
+        DrawParameters params;
+        text_info texture;
+        PixelFlush_tspFn shade;
+    };
 
-        float invW = *zb;
+    /*
+    
+        textel = TextureFetch<pp_Texture, pp_ingoreAlpha, volume, filtering>();
+        baseCol = BaseColor<pp_UseAlpha, cheap shadows>();
+        offsCol = OffsetColor<pp_Texture, pp_Offset, cheap shadows>()
 
-        float u = ip.U.Ip(x, y);
-        float v = ip.V.Ip(x, y);
+        [trilinear, color] = ColorCombiner<pp_Texture, pp_Offset, pp_ShadInstr, bump map> (textel, baseCol, offsCol.rgb);
 
-        u = u / invW;
-        v = v / invW;
+        color.rgba = PostProcess<clamp, trilinear, fog_mode>(color, trilinear, offsCol.a);
 
-        u8 rv[4];
+        BlendUnit<src_buf, dst_buf, src_sel, dst_sel>(color);
+    */
+
+
+    union Color {
+        u32 raw;
+        u8 rgba[4];
+        struct {
+            u8 r;
+            u8 g;
+            u8 b;
+            u8 a;
+        };
+    };
+
+
+    // can be
+    // repeat, filtering, two volumes
+    template<bool pp_IgnoreTexA>
+    static Color TextureFetch(const text_info *texture, float u, float v) {
+
+        int ui = u * 256;
+        int vi = v * 256;
+        mem128i px = ((mem128i *)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
+
+        int ublend = ui & 255;
+        int vblend = vi & 255;
+        int nublend = 255 - ublend;
+        int nvblend = 255 - vblend;
+
+        Color textel;
+
+        for (int i = 0; i < 4; i++)
         {
+            textel.rgba[i] =
+                (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
+                (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
+                (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
+                (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
+        };
+
+        if (pp_IgnoreTexA)
+        {
+            textel.a = 255;
+        }
+
+        return textel;
+    }
+
+    template<bool pp_Texture, bool pp_Offset, bool pp_ShadInstr>
+    static Color ColorCombiner(Color base, Color textel, Color offset) {
+
+        Color rv = base;
+        if (pp_Texture)
+        {
+            if (pp_ShadInstr == 0)
             {
-                u32 mult = 256;
-                if (*stencil & 1) {
-                    mult = FPU_SHAD_SCALE.scale_factor;
+                //color.rgb = texcol.rgb;
+                //color.a = texcol.a;
+
+                rv = textel;
+            }
+            else if (pp_ShadInstr == 1)
+            {
+                //color.rgb *= texcol.rgb;
+                //color.a = texcol.a;
+                for (int i = 0; i < 3; i++)
+                {
+                    rv.rgba[i] = textel.rgba[i] * base.rgba[i] / 256;
                 }
 
-                rv[0] = ip.Col[2].Ip(x, y) * mult / 256;
-                rv[1] = ip.Col[1].Ip(x, y) * mult / 256;
-                rv[2] = ip.Col[0].Ip(x, y) * mult / 256;
-                rv[3] = ip.Col[3].Ip(x, y) * mult / 256;    
+                rv.a = textel.a;
             }
-            
-
-            if (!pp_UseAlpha)
+            else if (pp_ShadInstr == 2)
             {
-                rv[3] = 255;
+                //color.rgb=mix(color.rgb,texcol.rgb,texcol.a);
+                u8 tb = textel.a;
+                u8 cb = 255 - tb;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    rv.rgba[i] = (textel.rgba[i] * tb + base.rgba[i] * cb) / 256;
+                }
+
+                rv.a = base.a;
             }
-
-            if (pp_Texture)
+            else if (pp_ShadInstr == 3)
             {
-
-                int ui = u * 256;
-                int vi = v * 256;
-                mem128i px = ((mem128i *)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
-
-                int ublend = ui & 255;
-                int vblend = vi & 255;
-                int nublend = 255 - ublend;
-                int nvblend = 255 - vblend;
-
-                u8 textel[4];
-
+                //color*=texcol
                 for (int i = 0; i < 4; i++)
                 {
-                    textel[i] =
-                        (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
-                        (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
-                        (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
-                        (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
-                };
-
-                if (pp_IgnoreTexA)
-                {
-                    textel[3] = 255;
+                    rv.rgba[i] = textel.rgba[i] * base.rgba[i] / 256;
                 }
+            }
 
-                if (pp_ShadInstr == 0)
+            if (pp_Offset) {
+                for (int i = 0; i < 4; i++)
                 {
-                    //color.rgb = texcol.rgb;
-                    //color.a = texcol.a;
-
-                    memcpy(rv, textel, sizeof(rv));
-                }
-                else if (pp_ShadInstr == 1)
-                {
-                    //color.rgb *= texcol.rgb;
-                    //color.a = texcol.a;
-                    for (int i = 0; i < 3; i++)
-                    {
-                        rv[i] = textel[i] * rv[i] / 256;
-                    }
-
-                    rv[3] = textel[3];
-                }
-                else if (pp_ShadInstr == 2)
-                {
-                    //color.rgb=mix(color.rgb,texcol.rgb,texcol.a);
-                    u8 tb = textel[3];
-                    u8 cb = 255 - tb;
-
-                    for (int i = 0; i < 3; i++)
-                    {
-                        rv[i] = (textel[i] * tb + rv[i] * cb) / 256;
-                    }
-
-                    //rv[3] is not affected
-                }
-                else if (pp_ShadInstr == 3)
-                {
-                    //color*=texcol
-                    for (int i = 0; i < 4; i++)
-                    {
-                        rv[i] = textel[i] * rv[i] / 256;
-                    }
-                }
-
-                if (pp_Offset)
-                {
-                    //add offset
-
-                    u32 mult = 256;
-                    if (*stencil & 1) {
-                        mult = FPU_SHAD_SCALE.scale_factor;
-                    }
-
-                    rv[0] += ip.Ofs[2].Ip(x, y) * mult / 256;
-                    rv[1] += ip.Ofs[1].Ip(x, y) * mult / 256;
-                    rv[2] += ip.Ofs[0].Ip(x, y) * mult / 256;
-                    rv[3] += ip.Ofs[3].Ip(x, y);
+                    rv.rgba[i] = min(rv.rgba[i] + offset.rgba[i], 255);
                 }
             }
         }
 
+        return rv;
+    }
 
+    template<bool pp_UseAlpha, bool pp_CheapShadows>
+    static Color InterpolateBase(const PlaneStepper3* Col, float x, float y, float invW, u32 stencil) {
+        Color rv;
+        u32 mult = 256;
 
+        if (pp_CheapShadows) {
+            if (stencil & 1) {
+                mult = FPU_SHAD_SCALE.scale_factor;
+            }
+        }
+
+        rv.rgba[0] = Col[2].Ip(x, y) * mult / 256;
+        rv.rgba[1] = Col[1].Ip(x, y) * mult / 256;
+        rv.rgba[2] = Col[0].Ip(x, y) * mult / 256;
+        rv.rgba[3] = Col[3].Ip(x, y) * mult / 256;    
+
+        if (!pp_UseAlpha)
+        {
+            rv.a = 255;
+        }
+
+        return rv;
+    }
+
+    template<bool pp_CheapShadows>
+    static Color InterpolateOffs(const PlaneStepper3* Ofs, float x, float y, float invW, u32 stencil) {
+        Color rv;
+        u32 mult = 256;
+
+        if (pp_CheapShadows) {
+            if (stencil & 1) {
+                mult = FPU_SHAD_SCALE.scale_factor;
+            }
+        }
+
+        rv.rgba[0] = Ofs[2].Ip(x, y) * mult / 256;
+        rv.rgba[1] = Ofs[1].Ip(x, y) * mult / 256;
+        rv.rgba[2] = Ofs[0].Ip(x, y) * mult / 256;
+        rv.rgba[3] = Ofs[3].Ip(x, y);
+
+        return rv;
+    }
+
+    template<RenderMode render_mode>
+    static bool BlendingUnit(Color* cb, Color col)
+    {
         if (render_mode == RM_PUNCHTHROUGH)
         {
-            if (rv[3] < PT_ALPHA_REF)
+            if (col.a > PT_ALPHA_REF)
             {
-                memcpy(cb, rv, 4);
+                *cb = col;
                 return true;
             }
             else
@@ -339,22 +391,53 @@ struct refsw : RefRendInterface
         }
         else if (render_mode == RM_TRANSLUCENT)
         {
-            u8 *fb = (u8 *)cb;
-            u8 src_blend = rv[3];
-            u8 dst_blend = 255 - rv[3];
+            Color fb = *cb;
+            u8 src_blend = col.a;
+            u8 dst_blend = 255 - col.a;
             for (int j = 0; j < 3; j++)
             {
-                rv[j] = (rv[j] * src_blend) / 256 + (fb[j] * dst_blend) / 256;
+                col.rgba[j] = (col.rgba[j] * src_blend) / 256 + (fb.rgba[j] * dst_blend) / 256;
             }
 
-            memcpy(cb, rv, 4);
+            *cb = col;
             return true;
         }
         else
         {
-            memcpy(cb, rv, 4);
+            *cb = col;
             return true;
         }
+    }
+    // Texture and shade a pixel
+    TPL_DECL_pixel 
+    static bool PixelFlush_tsp_impl(const FpuEntry *entry, float x, float y, u8 *pb)
+    {
+        auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        auto stencil = (u32 *)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
+        auto cb = (Color*)&pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
+
+        float invW = *zb;
+
+        Color base, textel, offs;
+
+        base = InterpolateBase<pp_UseAlpha, true>(entry->ips.Col, x, y, invW, *stencil);
+        
+        if (pp_Texture) {
+            float u = entry->ips.U.Ip(x, y);
+            float v = entry->ips.V.Ip(x, y);
+
+            u = u / invW;
+            v = v / invW;
+
+            textel = TextureFetch<pp_IgnoreTexA>(&entry->texture, u, v);
+            if (pp_Offset) {
+                offs = InterpolateOffs<true>(entry->ips.Ofs, x, y, invW, *stencil);
+            }
+        }
+
+        Color col = ColorCombiner<pp_Texture, pp_Offset, pp_ShadInstr>(base, textel, offs);
+        
+        return BlendingUnit<render_mode>(cb, col);
     }
 
     parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode)
@@ -364,7 +447,9 @@ struct refsw : RefRendInterface
         // generate
         if (entry.params.isp.Texture)
         {
+            texture_lock.Lock();
             entry.texture = raw_GetTexture(vram, entry.params.tsp, entry.params.tcw);
+            texture_lock.Unlock();
         }
 
         entry.ips.Setup(&entry.texture, vtx[0], vtx[1], vtx[2]);
@@ -388,7 +473,7 @@ struct refsw : RefRendInterface
 
         auto entry = &fpu_entires[tag-1];
         
-        return entry->shade(&entry->texture, x, y, pb, entry->ips);
+        return entry->shade(entry, x, y, pb);
     }
 
     // Depth processing for a pixel -- render_mode 0: OPAQ, 1: PT, 2: TRANS
@@ -599,16 +684,6 @@ struct refsw : RefRendInterface
             y_ps = y_ps + 1;
         }
     }
-
-
-    // Used for deferred TSP processing lookups
-    struct FpuEntry
-    {
-        IPs3 ips;
-        DrawParameters params;
-        text_info texture;
-        PixelFlush_tspFn shade;
-    };
 
     vector<FpuEntry> fpu_entires;
     

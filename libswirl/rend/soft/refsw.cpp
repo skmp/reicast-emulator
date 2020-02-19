@@ -151,7 +151,7 @@ struct refsw : RefRendInterface
     #define TPL_DECL_pixel template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset >
     PixelFlush_tspFn PixelFlush_tspFns[2][2][2];
 
-    PixelFlush_textureFn PixelFlush_textureFns[2];
+    PixelFlush_textureFn PixelFlush_textureFns[2][2][2][2][2];
     PixelFlush_combinerFn PixelFlush_combinerFns[2][2][4];
     PixelFlush_alphaFn PixelFlush_alphaFns[2][2][2][8][8];
 
@@ -251,15 +251,34 @@ struct refsw : RefRendInterface
         BlendUnit<src_buf, dst_buf, src_sel, dst_sel>(color);
     */
 
+   template<bool pp_Clamp, bool pp_Flip>
+   static int ClampFlip(int coord, int size) {
+        if (pp_Clamp) {
+            if (coord < 0) {
+                coord = 0;
+            } else if (coord >= size) {
+                coord = size-1;
+            }
+        } else if (pp_Flip) {
+            coord &= size*2-1;
+            if (coord & size) {
+                coord ^= size-1;
+            }
+        } else {
+            coord &= size-1;
+        }
+
+        return coord;
+   }
 
     // can be
     // repeat, filtering, two volumes
-    template<bool pp_IgnoreTexA>
+    template<bool pp_IgnoreTexA,  bool pp_ClampU, bool pp_ClampV, bool pp_FlipU, bool pp_FlipV>
     static Color TextureFetch(const text_info *texture, float u, float v) {
 
         int ui = u * 256;
         int vi = v * 256;
-        mem128i px = ((mem128i *)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
+        mem128i px = ((mem128i *)texture->pdata)[ClampFlip<pp_ClampU, pp_FlipU>(ui >> 8, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>(vi >> 8, texture->height) * texture->width];
 
         int ublend = ui & 255;
         int vblend = vi & 255;
@@ -479,7 +498,7 @@ struct refsw : RefRendInterface
         entry.ips.Setup(params, &entry.texture, vtx[0], vtx[1], vtx[2]);
 
         entry.tsp = PixelFlush_tspFns[entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.isp.Offset];
-        entry.textureFetch = PixelFlush_textureFns[entry.params.tsp.IgnoreTexA];
+        entry.textureFetch = PixelFlush_textureFns[entry.params.tsp.IgnoreTexA][entry.params.tsp.ClampU][entry.params.tsp.ClampV][entry.params.tsp.FlipU][entry.params.tsp.FlipV];
         entry.colorCombiner = PixelFlush_combinerFns[entry.params.isp.Texture][entry.params.isp.Offset][entry.params.tsp.ShadInstr];
         entry.blendingUnit = PixelFlush_alphaFns[render_mode == RM_PUNCHTHROUGH ? 1 : 0][entry.params.tsp.SrcSelect][entry.params.tsp.DstSelect][entry.params.tsp.SrcInstr][entry.params.tsp.DstInstr];
 

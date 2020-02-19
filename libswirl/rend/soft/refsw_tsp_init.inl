@@ -24,9 +24,23 @@
     PixelFlush_tspFns[1][1][0] = &PixelFlush_tsp<1, 1, 0>;
     PixelFlush_tspFns[1][1][1] = &PixelFlush_tsp<1, 1, 1>;
 
+#define TEXTURE_FNS(fu, fv) \
+    PixelFlush_textureFns[0][0][0][fu][fv] = &TextureFetch<0, 0, 0, fu, fv>; \
+    PixelFlush_textureFns[0][0][1][fu][fv] = &TextureFetch<0, 0, 1, fu, fv>; \
+    PixelFlush_textureFns[0][1][0][fu][fv] = &TextureFetch<0, 1, 0, fu, fv>; \
+    PixelFlush_textureFns[0][1][1][fu][fv] = &TextureFetch<0, 1, 1, fu, fv>; \
+    PixelFlush_textureFns[1][0][0][fu][fv] = &TextureFetch<1, 0, 0, fu, fv>; \
+    PixelFlush_textureFns[1][0][1][fu][fv] = &TextureFetch<1, 0, 1, fu, fv>; \
+    PixelFlush_textureFns[1][1][0][fu][fv] = &TextureFetch<1, 1, 0, fu, fv>; \
+    PixelFlush_textureFns[1][1][1][fu][fv] = &TextureFetch<1, 1, 1, fu, fv>;
 
-    PixelFlush_textureFns[0] = &TextureFetch<0>;
-    PixelFlush_textureFns[1] = &TextureFetch<1>;
+#define TEXTURE_FNS_fufv() \
+    TEXTURE_FNS(0, 0) \
+    TEXTURE_FNS(0, 1) \
+    TEXTURE_FNS(1, 0) \
+    TEXTURE_FNS(1, 1)
+
+    TEXTURE_FNS_fufv()
 
 #define COMBINER_FNS(c) \
     PixelFlush_combinerFns[0][0][c] = &ColorCombiner<0, 0, c>; \

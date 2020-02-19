@@ -99,8 +99,6 @@ struct IPs3
     }
 };
 
-#define TPL_DECL_pixel template<RenderMode render_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
-
 #define MAX_RENDER_WIDTH 32
 #define MAX_RENDER_HEIGHT 32
 #define MAX_RENDER_PIXELS (MAX_RENDER_WIDTH * MAX_RENDER_HEIGHT)
@@ -122,9 +120,41 @@ struct refsw : RefRendInterface
     
     struct FpuEntry;
 
+    union Color {
+        u8 rgba[4];
+        u32 raw;
+        struct {
+            u8 r;
+            u8 g;
+            u8 b;
+            u8 a;
+        };
+    };
+    
     // lookup tables
     typedef bool(*PixelFlush_tspFn)(const FpuEntry *entry, float x, float y, u8 *pb);
-    PixelFlush_tspFn PixelFlush_tspFns[3][2][2][2][4][2];
+    typedef Color(*PixelFlush_textureFn)(const text_info *texture, float u, float v);
+    typedef Color(*PixelFlush_combinerFn)(Color base, Color textel, Color offset);
+    typedef bool(*PixelFlush_alphaFn)(Color* cb, Color col);
+
+    // Used for deferred TSP processing lookups
+    struct FpuEntry
+    {
+        IPs3 ips;
+        DrawParameters params;
+        text_info texture;
+        PixelFlush_tspFn tsp;
+        PixelFlush_textureFn textureFetch;
+        PixelFlush_combinerFn colorCombiner;
+        PixelFlush_alphaFn blendingUnit;
+    };
+
+    #define TPL_DECL_pixel template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset >
+    PixelFlush_tspFn PixelFlush_tspFns[2][2][2];
+
+    PixelFlush_textureFn PixelFlush_textureFns[2];
+    PixelFlush_combinerFn PixelFlush_combinerFns[2][2][4];
+    PixelFlush_alphaFn PixelFlush_alphaFns[2][2][2][8][8];
 
     u8* vram;
     refsw(u8* vram) : vram(vram) {
@@ -206,14 +236,6 @@ struct refsw : RefRendInterface
         }
     }
     
-    // Used for deferred TSP processing lookups
-    struct FpuEntry
-    {
-        IPs3 ips;
-        DrawParameters params;
-        text_info texture;
-        PixelFlush_tspFn shade;
-    };
 
     /*
     
@@ -227,18 +249,6 @@ struct refsw : RefRendInterface
 
         BlendUnit<src_buf, dst_buf, src_sel, dst_sel>(color);
     */
-
-
-    union Color {
-        u32 raw;
-        u8 rgba[4];
-        struct {
-            u8 r;
-            u8 g;
-            u8 b;
-            u8 a;
-        };
-    };
 
 
     // can be
@@ -374,38 +384,54 @@ struct refsw : RefRendInterface
         return rv;
     }
 
-    template<RenderMode render_mode>
-    static bool BlendingUnit(Color* cb, Color col)
-    {
-        if (render_mode == RM_PUNCHTHROUGH)
-        {
-            if (col.a > PT_ALPHA_REF)
-            {
-                *cb = col;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else if (render_mode == RM_TRANSLUCENT)
-        {
-            Color fb = *cb;
-            u8 src_blend = col.a;
-            u8 dst_blend = 255 - col.a;
-            for (int j = 0; j < 3; j++)
-            {
-                col.rgba[j] = (col.rgba[j] * src_blend) / 256 + (fb.rgba[j] * dst_blend) / 256;
-            }
+/*
 
-            *cb = col;
+*/
+    template<u32 pp_AlphaInst, bool srcOther>
+    static Color BlendCoefs(Color src, Color dst) {
+        Color rv;
+
+        switch(pp_AlphaInst>>1) {
+            // zero
+            case 0: rv.raw = 0; break;
+            // other color
+            case 1: rv = srcOther? src : dst; break;
+            // src alpha
+            case 2: for (int i = 0; i < 4; i++) rv.rgba[i] = src.a; break;
+            // dst alpha
+            case 3: for (int i = 0; i < 4; i++) rv.rgba[i] = dst.a; break;
+        }
+
+        if (pp_AlphaInst & 1) {
+            for (int i = 0; i < 4; i++)
+                rv.rgba[i] = 255 - rv.rgba[i];
+        }
+
+        return rv;
+    }
+
+    template<bool pp_AlphaTest, u32 pp_SrcSel, u32 pp_DstSel, u32 pp_SrcInst, u32 pp_DstInst>
+    static bool BlendingUnit(Color* cb, Color src)
+    {
+        Color rv;
+        Color dst = *cb;
+        
+        Color src_blend = BlendCoefs<pp_SrcInst, false>(src, dst);
+        Color dst_blend = BlendCoefs<pp_DstInst, true>(src, dst);
+
+        for (int j = 0; j < 4; j++)
+        {
+            rv.rgba[j] = min((src.rgba[j] * src_blend.rgba[j] + dst.rgba[j] * dst_blend.rgba[j]) >> 8, 255);
+        }
+
+        if (!pp_AlphaTest || src.a > PT_ALPHA_REF)
+        {
+            *cb = rv;
             return true;
         }
         else
         {
-            *cb = col;
-            return true;
+            return false;
         }
     }
     // Texture and shade a pixel
@@ -429,15 +455,15 @@ struct refsw : RefRendInterface
             u = u / invW;
             v = v / invW;
 
-            textel = TextureFetch<pp_IgnoreTexA>(&entry->texture, u, v);
+            textel = entry->textureFetch(&entry->texture, u, v);
             if (pp_Offset) {
                 offs = InterpolateOffs<true>(entry->ips.Ofs, x, y, invW, *stencil);
             }
         }
 
-        Color col = ColorCombiner<pp_Texture, pp_Offset, pp_ShadInstr>(base, textel, offs);
+        Color col = entry->colorCombiner(base, textel, offs);
         
-        return BlendingUnit<render_mode>(cb, col);
+        return entry->blendingUnit(cb, col);
     }
 
     parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode)
@@ -454,7 +480,10 @@ struct refsw : RefRendInterface
 
         entry.ips.Setup(&entry.texture, vtx[0], vtx[1], vtx[2]);
 
-        entry.shade = PixelFlush_tspFns[render_mode][entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.tsp.IgnoreTexA][entry.params.tsp.ShadInstr][entry.params.isp.Offset];
+        entry.tsp = PixelFlush_tspFns[entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.isp.Offset];
+        entry.textureFetch = PixelFlush_textureFns[entry.params.tsp.IgnoreTexA];
+        entry.colorCombiner = PixelFlush_combinerFns[entry.params.isp.Texture][entry.params.isp.Offset][entry.params.tsp.ShadInstr];
+        entry.blendingUnit = PixelFlush_alphaFns[render_mode == RM_PUNCHTHROUGH ? 1 : 0][entry.params.tsp.SrcSelect][entry.params.tsp.DstSelect][entry.params.tsp.SrcInstr][entry.params.tsp.DstInstr];
 
         fpu_entires.push_back(entry);
 
@@ -473,7 +502,7 @@ struct refsw : RefRendInterface
 
         auto entry = &fpu_entires[tag-1];
         
-        return entry->shade(entry, x, y, pb);
+        return entry->tsp(entry, x, y, pb);
     }
 
     // Depth processing for a pixel -- render_mode 0: OPAQ, 1: PT, 2: TRANS

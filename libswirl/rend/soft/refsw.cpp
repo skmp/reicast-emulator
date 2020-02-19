@@ -53,9 +53,9 @@ struct PlaneStepper3
         return x * ddx + y * ddy + c;
     }
 
-    __forceinline float InStep(float bas) const
+    __forceinline float Ip(float x, float y, float W) const
     {
-        return bas + ddx;
+        return Ip(x, y) * W;
     }
 };
 
@@ -81,16 +81,16 @@ struct IPs3
         V.Setup(v1, v2, v3, v1.v * h * v1.z, v2.v * h * v2.z, v3.v * h * v3.z);
         if (params->isp.Gouraud) {
             for (int i = 0; i < 4; i++)
-                Col[i].Setup(v1, v2, v3, v1.col[i], v2.col[i], v3.col[i]);
+                Col[i].Setup(v1, v2, v3, v1.col[i] * v1.z, v2.col[i] * v2.z, v3.col[i] * v3.z);
 
             for (int i = 0; i < 4; i++)
-                Ofs[i].Setup(v1, v2, v3, v1.spc[i], v2.spc[i], v3.spc[i]);
+                Ofs[i].Setup(v1, v2, v3, v1.spc[i] * v1.z, v2.spc[i] * v2.z, v3.spc[i] * v3.z);
         } else {
             for (int i = 0; i < 4; i++)
-                Col[i].Setup(v1, v2, v3, v3.col[i], v3.col[i], v3.col[i]);
+                Col[i].Setup(v1, v2, v3, v3.col[i] * v1.z, v3.col[i] * v2.z, v3.col[i] * v3.z);
 
             for (int i = 0; i < 4; i++)
-                Ofs[i].Setup(v1, v2, v3, v3.spc[i], v3.spc[i], v3.spc[i]);
+                Ofs[i].Setup(v1, v2, v3, v3.spc[i] * v1.z, v3.spc[i] * v2.z, v3.spc[i] * v3.z);
         }
     }
 };
@@ -128,7 +128,7 @@ struct refsw : RefRendInterface
     };
     // lookup tables
     typedef void(*PixelFlush_ispFn)(refsw* backend, float x, float y, float invW, u8 *pb, parameter_tag_t tag);
-    typedef bool(*PixelFlush_tspFn)(const FpuEntry *entry, float x, float y, u8 *pb);
+    typedef bool(*PixelFlush_tspFn)(const FpuEntry *entry, float x, float y, float invW, u8 *pb);
     typedef Color(*PixelFlush_textureFn)(const text_info *texture, float u, float v);
     typedef Color(*PixelFlush_combinerFn)(Color base, Color textel, Color offset);
     typedef bool(*PixelFlush_alphaFn)(Color* cb, Color col);
@@ -227,11 +227,12 @@ struct refsw : RefRendInterface
     // TAG holds references to triangles, ACCUM is the tile framebuffer
     void RenderParamTags(RenderMode rm, int tileX, int tileY) {
 
-        auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+        auto rb = render_buffer;
 
         for (int y = 0; y < 32; y++) {
             for (int x = 0; x < 32; x++) {
-                PixelFlush_tsp(this, tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
+                PixelFlush_tsp(this, tileX + x, tileY + y, (u8*)rb,  *(f32*)&rb[DEPTH1_BUFFER_PIXEL_OFFSET],  *(parameter_tag_t*)&rb[PARAM_BUFFER_PIXEL_OFFSET]);
+                rb++;
             }
         }
     }
@@ -343,7 +344,7 @@ struct refsw : RefRendInterface
     }
 
     template<bool pp_UseAlpha, bool pp_CheapShadows>
-    static Color InterpolateBase(const PlaneStepper3* Col, float x, float y, float invW, u32 stencil) {
+    static Color InterpolateBase(const PlaneStepper3* Col, float x, float y, float W, u32 stencil) {
         Color rv;
         u32 mult = 256;
 
@@ -353,10 +354,10 @@ struct refsw : RefRendInterface
             }
         }
 
-        rv.rgba[0] = Col[0].Ip(x, y) * mult / 256;
-        rv.rgba[1] = Col[1].Ip(x, y) * mult / 256;
-        rv.rgba[2] = Col[2].Ip(x, y) * mult / 256;
-        rv.rgba[3] = Col[3].Ip(x, y) * mult / 256;    
+        rv.rgba[0] = Col[0].Ip(x, y, W) * mult / 256;
+        rv.rgba[1] = Col[1].Ip(x, y, W) * mult / 256;
+        rv.rgba[2] = Col[2].Ip(x, y, W) * mult / 256;
+        rv.rgba[3] = Col[3].Ip(x, y, W) * mult / 256;    
 
         if (!pp_UseAlpha)
         {
@@ -367,7 +368,7 @@ struct refsw : RefRendInterface
     }
 
     template<bool pp_CheapShadows>
-    static Color InterpolateOffs(const PlaneStepper3* Ofs, float x, float y, float invW, u32 stencil) {
+    static Color InterpolateOffs(const PlaneStepper3* Ofs, float x, float y, float W, u32 stencil) {
         Color rv;
         u32 mult = 256;
 
@@ -377,10 +378,10 @@ struct refsw : RefRendInterface
             }
         }
 
-        rv.rgba[0] = Ofs[0].Ip(x, y) * mult / 256;
-        rv.rgba[1] = Ofs[1].Ip(x, y) * mult / 256;
-        rv.rgba[2] = Ofs[2].Ip(x, y) * mult / 256;
-        rv.rgba[3] = Ofs[3].Ip(x, y);
+        rv.rgba[0] = Ofs[0].Ip(x, y, W) * mult / 256;
+        rv.rgba[1] = Ofs[1].Ip(x, y, W) * mult / 256;
+        rv.rgba[2] = Ofs[2].Ip(x, y, W) * mult / 256;
+        rv.rgba[3] = Ofs[3].Ip(x, y, W);
 
         return rv;
     }
@@ -438,28 +439,23 @@ struct refsw : RefRendInterface
     }
     // Texture and shade a pixel
     TPL_DECL_pixel 
-    static bool PixelFlush_tsp_impl(const FpuEntry *entry, float x, float y, u8 *pb)
+    static bool PixelFlush_tsp_impl(const FpuEntry *entry, float x, float y, float W, u8 *rb)
     {
-        auto zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
-        auto stencil = (u32 *)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
-        auto cb = (Color*)&pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
-
-        float invW = *zb;
+        auto zb = (float *)&rb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        auto stencil = (u32 *)&rb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
+        auto cb = (Color*)&rb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
 
         Color base, textel, offs;
 
-        base = InterpolateBase<pp_UseAlpha, true>(entry->ips.Col, x, y, invW, *stencil);
+        base = InterpolateBase<pp_UseAlpha, true>(entry->ips.Col, x, y, W, *stencil);
         
         if (pp_Texture) {
-            float u = entry->ips.U.Ip(x, y);
-            float v = entry->ips.V.Ip(x, y);
-
-            u = u / invW;
-            v = v / invW;
+            float u = entry->ips.U.Ip(x, y, W);
+            float v = entry->ips.V.Ip(x, y, W);
 
             textel = entry->textureFetch(&entry->texture, u, v);
             if (pp_Offset) {
-                offs = InterpolateOffs<true>(entry->ips.Ofs, x, y, invW, *stencil);
+                offs = InterpolateOffs<true>(entry->ips.Ofs, x, y, W, *stencil);
             }
         }
 
@@ -497,14 +493,14 @@ struct refsw : RefRendInterface
     }
 
     // Lookup/create cached TSP parameters, and call PixelFlush_tsp
-    static bool PixelFlush_tsp(refsw* backend, float x, float y, u8 *pb, parameter_tag_t tag)
+    static bool PixelFlush_tsp(refsw* backend, float x, float y, u8 *rb, float invW, parameter_tag_t tag)
     {
         if (tag == 0)
             return false;
 
         auto entry = &backend->fpu_entires[tag-1];
         
-        return entry->tsp(entry, x, y, pb);
+        return entry->tsp(entry, x, y, 1/invW, rb);
     }
 
     // Depth processing for a pixel -- render_mode 0: OPAQ, 1: PT, 2: TRANS
@@ -579,7 +575,7 @@ struct refsw : RefRendInterface
             {
                 // Z + TSP syncronized for alpha test
 
-                if (PixelFlush_tsp(backend, x, y, pb, tag))
+                if (PixelFlush_tsp(backend, x, y, pb, invW, tag))
                 {
                     *zb = invW;
                     *(parameter_tag_t *)pb = tag;

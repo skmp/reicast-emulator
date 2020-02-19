@@ -446,7 +446,7 @@ struct refsw : RefRendInterface
             rv.rgba[j] = min((src.rgba[j] * src_blend.rgba[j] + dst.rgba[j] * dst_blend.rgba[j]) >> 8, 255);
         }
 
-        if (!pp_AlphaTest || src.a > PT_ALPHA_REF)
+        if (!pp_AlphaTest || src.a >= PT_ALPHA_REF)
         {
             cb[pp_DstSel ? MAX_RENDER_PIXELS : 0] = rv;
             return true;

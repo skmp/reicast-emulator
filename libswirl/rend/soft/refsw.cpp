@@ -357,9 +357,9 @@ struct refsw : RefRendInterface
             }
         }
 
-        rv.rgba[0] = Col[2].Ip(x, y) * mult / 256;
+        rv.rgba[0] = Col[0].Ip(x, y) * mult / 256;
         rv.rgba[1] = Col[1].Ip(x, y) * mult / 256;
-        rv.rgba[2] = Col[0].Ip(x, y) * mult / 256;
+        rv.rgba[2] = Col[2].Ip(x, y) * mult / 256;
         rv.rgba[3] = Col[3].Ip(x, y) * mult / 256;    
 
         if (!pp_UseAlpha)
@@ -381,9 +381,9 @@ struct refsw : RefRendInterface
             }
         }
 
-        rv.rgba[0] = Ofs[2].Ip(x, y) * mult / 256;
+        rv.rgba[0] = Ofs[0].Ip(x, y) * mult / 256;
         rv.rgba[1] = Ofs[1].Ip(x, y) * mult / 256;
-        rv.rgba[2] = Ofs[0].Ip(x, y) * mult / 256;
+        rv.rgba[2] = Ofs[2].Ip(x, y) * mult / 256;
         rv.rgba[3] = Ofs[3].Ip(x, y);
 
         return rv;

@@ -673,7 +673,7 @@ struct refrend : Renderer
 
                         for (int x = 0; x < 32; x++)
                         {
-                            auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | ((src[2] >> 3) & 0x1F);
+                            auto pixel = (((src[0] >> 3) & 0x1F) << 0) | (((src[1] >> 2) & 0x3F) << 5) | (((src[2] >> 3) & 0x1F) << 11);
                             pvr_write_area1_16(vram, dst, pixel);
 
                             dst += bpp;
@@ -740,11 +740,11 @@ struct refrend : Renderer
 
         for (int c = 0; c < 65536; c++) {
             //565
-            decoded_colors[0][c] = 0xFF000000 | (REP_32((c >> 11) % 32) << 16) | (REP_64((c >> 5) % 64) << 8) | (REP_32((c >> 0) % 32) << 0);
+            decoded_colors[0][c] = 0xFF000000 | (REP_32((c >> 11) % 32) << 0) | (REP_64((c >> 5) % 64) << 8) | (REP_32((c >> 0) % 32) << 16);
             //1555
-            decoded_colors[1][c] = ((c >> 0) % 2 * 255 << 24) | (REP_32((c >> 11) % 32) << 16) | (REP_32((c >> 6) % 32) << 8) | (REP_32((c >> 1) % 32) << 0);
+            decoded_colors[1][c] = ((c >> 0) % 2 * 255 << 24) | (REP_32((c >> 11) % 32) << 0) | (REP_32((c >> 6) % 32) << 8) | (REP_32((c >> 1) % 32) << 16);
             //4444
-            decoded_colors[2][c] = (REP_16((c >> 0) % 16) << 24) | (REP_16((c >> 12) % 16) << 16) | (REP_16((c >> 8) % 16) << 8) | (REP_16((c >> 4) % 16) << 0);
+            decoded_colors[2][c] = (REP_16((c >> 0) % 16) << 24) | (REP_16((c >> 12) % 16) << 0) | (REP_16((c >> 8) % 16) << 8) | (REP_16((c >> 4) % 16) << 16);
         }
 
         return true;

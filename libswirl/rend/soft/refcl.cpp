@@ -629,24 +629,11 @@ struct refcl : RefRendInterface
         }
     }
 
-    #define RasterizeTriangleImpl(mode) \
-    void RasterizeTriangle_##mode(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area) { \
-        RasterizeTriangle<RM_##mode>(params, tag, vertex_offset, v1, v2, v3, area); \
-    }
-
-    RasterizeTriangleImpl(OPAQUE)
-    RasterizeTriangleImpl(PUNCHTHROUGH)
-    RasterizeTriangleImpl(TRANSLUCENT)
-    RasterizeTriangleImpl(MODIFIER)
-
-    #undef RasterizeTriangleImpl
-    
     // Used by layer peeling to determine end of processing
     int PixelsDrawn;
 
     // Rasterize a single triangle to ISP (or ISP+TSP for PT)
-    template<RenderMode render_mode>
-    void RasterizeTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
+    void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
     {
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation

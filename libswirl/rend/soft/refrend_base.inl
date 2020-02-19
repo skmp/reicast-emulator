@@ -234,17 +234,8 @@ struct RefRendInterface
     // TAG holds references to triangles, ACCUM is the tile framebuffer
     virtual void RenderParamTags(RenderMode rm, int tileX, int tileY) = 0;
 
-    // RasterizeTriangle for each rendering mode
-    #define RasterizeTriangleMode(mode) \
-        virtual void RasterizeTriangle_##mode(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area) = 0
-
-    RasterizeTriangleMode(OPAQUE);
-    RasterizeTriangleMode(PUNCHTHROUGH);
-    RasterizeTriangleMode(TRANSLUCENT);
-    RasterizeTriangleMode(MODIFIER);
-
-    #undef RasterizeTriangleMode
-    
+    // RasterizeTriangle
+    virtual void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area) = 0;
 };
 
 
@@ -320,22 +311,9 @@ struct refrend : Renderer
         }
     }
 
-    template<RenderMode render_mode>
-    void RenderTriangle(RefRendInterface* backend, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
+    void RenderTriangle(RefRendInterface* backend, RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
     {
-        switch(render_mode)
-        {
-            #define RasterizeTriangleCase(mode) \
-                case RM_##mode: backend->RasterizeTriangle_##mode(params, tag, vertex_offset, v1, v2, v3, area); break
-
-            RasterizeTriangleCase(OPAQUE);
-            RasterizeTriangleCase(PUNCHTHROUGH);
-            RasterizeTriangleCase(TRANSLUCENT);
-            RasterizeTriangleCase(MODIFIER);
-
-            #undef RasterizeTriangleCase
-        }
-        
+        backend->RasterizeTriangle(render_mode, params, tag, vertex_offset, v1, v2, v3, area);
 
         if (render_mode == RM_MODIFIER)
         {          
@@ -475,8 +453,7 @@ struct refrend : Renderer
 
 
     // render a triangle strip object list entry
-    template<RenderMode render_mode>
-    void RenderTriangleStrip(RefRendInterface* backend, ObjectListEntry obj, RECT* rect)
+    void RenderTriangleStrip(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, RECT* rect)
     {
         Vertex vtx[8];
         DrawParameters params;
@@ -493,15 +470,14 @@ struct refrend : Renderer
 
                 parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode);
 
-                RenderTriangle<render_mode>(backend, &params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], rect);
+                RenderTriangle(backend, render_mode, &params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], rect);
             }
         }
     }
 
 
     // render a triangle array object list entry
-    template<RenderMode render_mode>
-    void RenderTriangleArray(RefRendInterface* backend, ObjectListEntry obj, RECT* rect)
+    void RenderTriangleArray(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, RECT* rect)
     {
         auto triangles = obj.tarray.prims + 1;
         u32 param_base = PARAM_BASE & 0xF00000;
@@ -522,13 +498,12 @@ struct refrend : Renderer
                 tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
             }
 
-            RenderTriangle<render_mode>(backend, &params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
+            RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
         }
     }
 
     // render a quad array object list entry
-    template<RenderMode render_mode>
-    void RenderQuadArray(RefRendInterface* backend, ObjectListEntry obj, RECT* rect)
+    void RenderQuadArray(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, RECT* rect)
     {
         auto quads = obj.qarray.prims + 1;
         u32 param_base = PARAM_BASE & 0xF00000;
@@ -546,14 +521,13 @@ struct refrend : Renderer
             parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
 
             //TODO: FIXME
-            RenderTriangle<render_mode>(backend, &params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
-            RenderTriangle<render_mode>(backend, &params, tag, 1, vtx[0], vtx[3], vtx[2], rect);
+            RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
+            RenderTriangle(backend, render_mode, &params, tag, 1, vtx[0], vtx[3], vtx[2], rect);
         }
     }
 
     // Render an object list
-    template<RenderMode render_mode>
-    void RenderObjectList(RefRendInterface* backend, pvr32addr_t base, RECT* rect)
+    void RenderObjectList(RefRendInterface* backend, RenderMode render_mode, pvr32addr_t base, RECT* rect)
     {
         ObjectListEntry obj;
 
@@ -562,7 +536,7 @@ struct refrend : Renderer
             base += 4;
 
             if (!obj.is_not_triangle_strip) {
-                RenderTriangleStrip<render_mode>(backend, obj, rect);
+                RenderTriangleStrip(backend, render_mode, obj, rect);
             } else {
                 switch(obj.type) {
                     case 0b111: // link
@@ -573,11 +547,11 @@ struct refrend : Renderer
                         break;
 
                     case 0b100: // triangle array
-                        RenderTriangleArray<render_mode>(backend, obj, rect);
+                        RenderTriangleArray(backend, render_mode, obj, rect);
                         break;
                     
                     case 0b101: // quad array
-                        RenderQuadArray<render_mode>(backend, obj, rect);
+                        RenderQuadArray(backend, render_mode, obj, rect);
                         break;
 
                     default:
@@ -628,19 +602,19 @@ struct refrend : Renderer
                 // Render OPAQ to TAGS
                 if (!entry.opaque.empty)
                 {
-                    RenderObjectList<RM_OPAQUE>(backend, entry.opaque.ptr_in_words * 4, &rect);
+                    RenderObjectList(backend, RM_OPAQUE, entry.opaque.ptr_in_words * 4, &rect);
                 }
 
                 // render PT to TAGS
                 if (!entry.puncht.empty)
                 {
-                    RenderObjectList<RM_PUNCHTHROUGH>(backend, entry.puncht.ptr_in_words * 4, &rect);
+                    RenderObjectList(backend, RM_PUNCHTHROUGH, entry.puncht.ptr_in_words * 4, &rect);
                 }
 
                 //TODO: Render OPAQ modvols
                 if (!entry.opaque_mod.empty)
                 {
-                    RenderObjectList<RM_MODIFIER>(backend, entry.opaque_mod.ptr_in_words * 4, &rect);
+                    RenderObjectList(backend, RM_MODIFIER, entry.opaque_mod.ptr_in_words * 4, &rect);
                 }
 
                 // Render TAGS to ACCUM
@@ -658,11 +632,11 @@ struct refrend : Renderer
                         backend->PeelBuffers(0, FLT_MAX, 0);
 
                         // render to TAGS
-                        RenderObjectList<RM_TRANSLUCENT>(backend, entry.trans.ptr_in_words * 4, &rect);
+                        RenderObjectList(backend, RM_TRANSLUCENT, entry.trans.ptr_in_words * 4, &rect);
 
                         if (!entry.trans_mod.empty)
                         {
-                            RenderObjectList<RM_MODIFIER>(backend, entry.trans_mod.ptr_in_words * 4, &rect);
+                            RenderObjectList(backend, RM_MODIFIER, entry.trans_mod.ptr_in_words * 4, &rect);
                         }
 
                         // render TAGS to ACCUM

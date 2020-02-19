@@ -130,8 +130,8 @@ struct refsw : RefRendInterface
             u8 a;
         };
     };
-    
     // lookup tables
+    typedef void(*PixelFlush_ispFn)(refsw* backend, float x, float y, float invW, u8 *pb, parameter_tag_t tag);
     typedef bool(*PixelFlush_tspFn)(const FpuEntry *entry, float x, float y, u8 *pb);
     typedef Color(*PixelFlush_textureFn)(const text_info *texture, float u, float v);
     typedef Color(*PixelFlush_combinerFn)(Color base, Color textel, Color offset);
@@ -149,6 +149,9 @@ struct refsw : RefRendInterface
         PixelFlush_alphaFn blendingUnit;
     };
 
+    //RenderMode, DepthInst
+    PixelFlush_ispFn PixelFlush_ispFns[RM_COUNT][8];
+
     #define TPL_DECL_pixel template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset >
     PixelFlush_tspFn PixelFlush_tspFns[2][2][2];
 
@@ -158,6 +161,7 @@ struct refsw : RefRendInterface
 
     u8* vram;
     refsw(u8* vram) : vram(vram) {
+        #define PixelFlush_isp refsw::PixelFlush_isp_impl
         #define PixelFlush_tsp refsw::PixelFlush_tsp_impl
         #include "refsw_tsp_init.inl"
         #undef PixelFlush_tsp
@@ -231,7 +235,7 @@ struct refsw : RefRendInterface
 
         for (int y = 0; y < 32; y++) {
             for (int x = 0; x < 32; x++) {
-                PixelFlush_tsp(tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
+                PixelFlush_tsp(this, tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
             }
         }
     }
@@ -496,21 +500,20 @@ struct refsw : RefRendInterface
     }
 
     // Lookup/create cached TSP parameters, and call PixelFlush_tsp
-    bool PixelFlush_tsp(float x, float y, u8 *pb, parameter_tag_t tag)
+    static bool PixelFlush_tsp(refsw* backend, float x, float y, u8 *pb, parameter_tag_t tag)
     {
         if (tag == 0)
             return false;
 
-        auto entry = &fpu_entires[tag-1];
+        auto entry = &backend->fpu_entires[tag-1];
         
         return entry->tsp(entry, x, y, pb);
     }
 
     // Depth processing for a pixel -- render_mode 0: OPAQ, 1: PT, 2: TRANS
-    template <RenderMode render_mode>
-    void PixelFlush_isp(float x, float y, u8 *pb, PlaneStepper3 &Z, parameter_tag_t tag)
+    template <RenderMode render_mode, u32 depth_mode>
+    static void PixelFlush_isp_impl(refsw* backend, float x, float y, float invW, u8 *pb, parameter_tag_t tag)
     {
-        float invW = Z.Ip(x, y);
         auto zb = (float*)&pb [DEPTH1_BUFFER_PIXEL_OFFSET * 4];
         auto zb2 = (float*)&pb[DEPTH2_BUFFER_PIXEL_OFFSET * 4];
         auto stencil = (u32*)&pb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
@@ -526,14 +529,40 @@ struct refsw : RefRendInterface
     verify((uintptr_t)zb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
 #endif
 
+        auto mode = depth_mode;
+        
+        if (render_mode == RM_PUNCHTHROUGH)
+            mode = 6; // TODO: FIXME
+        else if (render_mode == RM_TRANSLUCENT)
+            mode = 3; // TODO: FIXME
+        else if (render_mode == RM_MODIFIER)
+            mode = 6;
+        
+        switch(mode) {
+            // never
+            case 0: return; break;
+            // less
+            case 1: if (invW >= *zb) return; break;
+            // equal
+            case 2: if (invW != *zb) return; break;
+            // less or equal
+            case 3: if (invW > *zb) return; break;
+            // greater
+            case 4: if (invW <= *zb) return; break;
+            // not equal
+            case 5: if (invW == *zb) return; break;
+            // greater or equal
+            case 6: if (invW < *zb) return; break;
+            // always
+            case 7: break;
+        }
+
         switch (render_mode)
         {
             // OPAQ
             case RM_OPAQUE:
             {
                 // Z pre-pass only
-                if (invW < *zb)
-                    return;
 
                 *zb = invW;
                 *(parameter_tag_t *)pb = tag;
@@ -543,8 +572,6 @@ struct refsw : RefRendInterface
             case RM_MODIFIER:
             {
                 // Flip on Z pass
-                if (invW < *zb)
-                    return;
 
                 *stencil ^= 0b10;
             }
@@ -554,10 +581,8 @@ struct refsw : RefRendInterface
             case RM_PUNCHTHROUGH:
             {
                 // Z + TSP syncronized for alpha test
-                if (invW < *zb)
-                    return;
 
-                if (PixelFlush_tsp(x, y, pb, tag))
+                if (PixelFlush_tsp(backend, x, y, pb, tag))
                 {
                     *zb = invW;
                     *(parameter_tag_t *)pb = tag;
@@ -571,10 +596,7 @@ struct refsw : RefRendInterface
                 if (invW <= *zb2)
                     return;
 
-                if (invW > *zb)
-                    return;
-
-                PixelsDrawn++;
+                backend->PixelsDrawn++;
 
                 *zb = invW;
                 *(parameter_tag_t *)pb = tag;
@@ -582,25 +604,12 @@ struct refsw : RefRendInterface
             break;
         }
     }
-
-    #define RasterizeTriangleImpl(mode) \
-    void RasterizeTriangle_##mode(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area) { \
-        RasterizeTriangle<RM_##mode>(params, tag, vertex_offset, v1, v2, v3, area); \
-    }
-
-    RasterizeTriangleImpl(OPAQUE)
-    RasterizeTriangleImpl(PUNCHTHROUGH)
-    RasterizeTriangleImpl(TRANSLUCENT)
-    RasterizeTriangleImpl(MODIFIER)
-
-    #undef RasterizeTriangleImpl
     
     // Used by layer peeling to determine end of processing
     int PixelsDrawn;
 
     // Rasterize a single triangle to ISP (or ISP+TSP for PT)
-    template<RenderMode render_mode>
-    void RasterizeTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
+    void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
     {
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation
@@ -700,7 +709,8 @@ struct refsw : RefRendInterface
 
                 if (inTriangle)
                 {
-                    PixelFlush_isp<render_mode>(x_ps, y_ps, cb_x, Z, tag);
+                    float invW = Z.Ip(x_ps, y_ps);
+                    PixelFlush_ispFns[render_mode][params->isp.DepthMode](this, x_ps, y_ps, invW, cb_x, tag);
                 }
 
                 cb_x += 4;

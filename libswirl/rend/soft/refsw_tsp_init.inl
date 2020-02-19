@@ -1,4 +1,20 @@
 {
+    #define ISP_FNS(rm) \
+        PixelFlush_ispFns[rm][0] = &PixelFlush_isp<rm, 0>; \
+        PixelFlush_ispFns[rm][1] = &PixelFlush_isp<rm, 1>; \
+        PixelFlush_ispFns[rm][2] = &PixelFlush_isp<rm, 2>; \
+        PixelFlush_ispFns[rm][3] = &PixelFlush_isp<rm, 3>; \
+        PixelFlush_ispFns[rm][4] = &PixelFlush_isp<rm, 4>; \
+        PixelFlush_ispFns[rm][5] = &PixelFlush_isp<rm, 5>; \
+        PixelFlush_ispFns[rm][6] = &PixelFlush_isp<rm, 6>; \
+        PixelFlush_ispFns[rm][7] = &PixelFlush_isp<rm, 7>;
+
+    ISP_FNS(RM_OPAQUE)
+    ISP_FNS(RM_PUNCHTHROUGH)
+    ISP_FNS(RM_TRANSLUCENT)
+    ISP_FNS(RM_MODIFIER)
+
+
     PixelFlush_tspFns[0][0][0] = &PixelFlush_tsp<0, 0, 0>;
     PixelFlush_tspFns[0][0][1] = &PixelFlush_tsp<0, 0, 1>;
     PixelFlush_tspFns[0][1][0] = &PixelFlush_tsp<0, 1, 0>;

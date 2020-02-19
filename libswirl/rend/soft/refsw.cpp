@@ -411,10 +411,11 @@ struct refsw : RefRendInterface
     }
 
     template<bool pp_AlphaTest, u32 pp_SrcSel, u32 pp_DstSel, u32 pp_SrcInst, u32 pp_DstInst>
-    static bool BlendingUnit(Color* cb, Color src)
+    static bool BlendingUnit(Color* cb, Color col)
     {
         Color rv;
-        Color dst = *cb;
+        Color src = pp_SrcSel ? cb[MAX_RENDER_PIXELS] : col;
+        Color dst = cb[pp_DstSel ? MAX_RENDER_PIXELS : 0];
         
         Color src_blend = BlendCoefs<pp_SrcInst, false>(src, dst);
         Color dst_blend = BlendCoefs<pp_DstInst, true>(src, dst);
@@ -426,7 +427,7 @@ struct refsw : RefRendInterface
 
         if (!pp_AlphaTest || src.a > PT_ALPHA_REF)
         {
-            *cb = rv;
+            cb[pp_DstSel ? MAX_RENDER_PIXELS : 0] = rv;
             return true;
         }
         else

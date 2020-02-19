@@ -12,25 +12,17 @@
     PixelFlush_textureFns[0] = &TextureFetch<0>;
     PixelFlush_textureFns[1] = &TextureFetch<1>;
 
-    PixelFlush_combinerFns[0][0][0] = &ColorCombiner<0, 0, 0>;
-    PixelFlush_combinerFns[0][1][0] = &ColorCombiner<0, 1, 0>;
-    PixelFlush_combinerFns[1][0][0] = &ColorCombiner<1, 0, 0>;
-    PixelFlush_combinerFns[1][1][0] = &ColorCombiner<1, 1, 0>;
+#define COMBINER_FNS(c) \
+    PixelFlush_combinerFns[0][0][c] = &ColorCombiner<0, 0, c>; \
+    PixelFlush_combinerFns[0][1][c] = &ColorCombiner<0, 1, c>; \
+    PixelFlush_combinerFns[1][0][c] = &ColorCombiner<1, 0, c>; \
+    PixelFlush_combinerFns[1][1][c] = &ColorCombiner<1, 1, c>;
 
-    PixelFlush_combinerFns[0][0][1] = &ColorCombiner<0, 0, 1>;
-    PixelFlush_combinerFns[0][1][1] = &ColorCombiner<0, 1, 1>;
-    PixelFlush_combinerFns[1][0][1] = &ColorCombiner<1, 0, 1>;
-    PixelFlush_combinerFns[1][1][1] = &ColorCombiner<1, 1, 1>;
-
-    PixelFlush_combinerFns[0][0][2] = &ColorCombiner<0, 0, 2>;
-    PixelFlush_combinerFns[0][1][2] = &ColorCombiner<0, 1, 2>;
-    PixelFlush_combinerFns[1][0][2] = &ColorCombiner<1, 0, 2>;
-    PixelFlush_combinerFns[1][1][2] = &ColorCombiner<1, 1, 2>;
-
-    PixelFlush_combinerFns[0][0][3] = &ColorCombiner<0, 0, 3>;
-    PixelFlush_combinerFns[0][1][3] = &ColorCombiner<0, 1, 3>;
-    PixelFlush_combinerFns[1][0][3] = &ColorCombiner<1, 0, 3>;
-    PixelFlush_combinerFns[1][1][3] = &ColorCombiner<1, 1, 3>;
+    COMBINER_FNS(0)
+    COMBINER_FNS(1)
+    COMBINER_FNS(2)
+    COMBINER_FNS(3)
+    
 
     #define ALPHA_FNS(s,d) \
         PixelFlush_alphaFns[0][0][0][s][d] = &BlendingUnit<0, 0, 0, s, d>; \

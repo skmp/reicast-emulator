@@ -1077,11 +1077,11 @@ static void ta_parse_vertex_block2( union ta_data *data ) {
         vertex->z = 0;
         vertex->detail[0] = 0;
         vertex->detail[1] = 0;
-        ta_status.poly_vertex[0].detail[0] = data[5].i;
+        ta_status.poly_vertex[0].detail[0] = data[7].i;
         ta_status.poly_vertex[0].detail[1] = 0;
         ta_status.poly_vertex[1].detail[0] = data[6].i;
         ta_status.poly_vertex[1].detail[1] = 0;
-        ta_status.poly_vertex[2].detail[0] = data[7].i;
+        ta_status.poly_vertex[2].detail[0] = data[5].i;
         break;
     case TA_VERTEX_MOD_VOLUME:
     case TA_VERTEX_LISTLESS:

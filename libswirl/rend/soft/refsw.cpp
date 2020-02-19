@@ -27,17 +27,6 @@ static float mmax(float a, float b, float c, float d)
     return min(d, rv);
 }
 
-//return true if any is positive
-static __forceinline bool EvalHalfSpaceAll(float cp12, float cp23, float cp31)
-{
-    // test all line equations
-    bool svt = cp12 >= 0;
-    svt &= cp23 >= 0;
-    svt &= cp31 >= 0;
-
-    return svt;
-}
-
 /*
     Surface equation solver
 */
@@ -610,7 +599,7 @@ struct refsw : RefRendInterface
     int PixelsDrawn;
 
     // Rasterize a single triangle to ISP (or ISP+TSP for PT)
-    void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
+    void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, RECT* area)
     {
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation
@@ -620,10 +609,12 @@ struct refsw : RefRendInterface
         const float Y1 = FLUSH_NAN(v1.y);
         const float Y2 = FLUSH_NAN(v2.y);
         const float Y3 = FLUSH_NAN(v3.y);
+        const float Y4 = v4 ? FLUSH_NAN(v4->y) : 0;
 
         const float X1 = FLUSH_NAN(v1.x);
         const float X2 = FLUSH_NAN(v2.x);
         const float X3 = FLUSH_NAN(v3.x);
+        const float X4 = v4 ? FLUSH_NAN(v4->x) : 0;
 
         int sgn = 1;
 
@@ -667,20 +658,24 @@ struct refsw : RefRendInterface
         // Half-edge constants
         const float DX12 = sgn * (X1 - X2);
         const float DX23 = sgn * (X2 - X3);
-        const float DX31 = sgn * (X3 - X1);
+        const float DX31 = v4 ? sgn * (X3 - X4) : sgn * (X3 - X1);
+        const float DX41 = v4 ? sgn * (X4 - X1) : 0;
 
         const float DY12 = sgn * (Y1 - Y2);
         const float DY23 = sgn * (Y2 - Y3);
-        const float DY31 = sgn * (Y3 - Y1);
+        const float DY31 = v4 ? sgn * (Y3 - Y4) : sgn * (Y3 - Y1);
+        const float DY41 = v4 ? sgn * (Y4 - Y1) : 0;
 
         float C1 = DY12 * X1 - DX12 * Y1;
         float C2 = DY23 * X2 - DX23 * Y2;
         float C3 = DY31 * X3 - DX31 * Y3;
+        float C4 = v4 ? DY41 * X4 - DX41 * Y4 : 1;
 
 
         float hs12 = C1 + DX12 * miny - DY12 * minx;
         float hs23 = C2 + DX23 * miny - DY23 * minx;
         float hs31 = C3 + DX31 * miny - DY31 * minx;
+        float hs41 = C4 + DX41 * miny - DY41 * minx;
 
 
         u8* cb_y = (u8*)render_buffer;
@@ -698,6 +693,8 @@ struct refsw : RefRendInterface
             float Xhs12 = hs12;
             float Xhs23 = hs23;
             float Xhs31 = hs31;
+            float Xhs41 = hs41;
+
             u8* cb_x = cb_y;
             float x_ps = minx_ps;
             for (int x = spanx; x > 0; x -= 1)
@@ -705,8 +702,9 @@ struct refsw : RefRendInterface
                 Xhs12 -= DY12;
                 Xhs23 -= DY23;
                 Xhs31 -= DY31;
+                Xhs41 -= DY41;
 
-                bool inTriangle = EvalHalfSpaceAll(Xhs12, Xhs23, Xhs31);
+                bool inTriangle = Xhs12 > 0 && Xhs23 > 0 && Xhs31 > 0 && Xhs41 > 0;
 
                 if (inTriangle)
                 {
@@ -721,6 +719,7 @@ struct refsw : RefRendInterface
             hs12 += DX12;
             hs23 += DX23;
             hs31 += DX31;
+            hs41 += DX41;
             cb_y += stride_bytes;
             y_ps = y_ps + 1;
         }

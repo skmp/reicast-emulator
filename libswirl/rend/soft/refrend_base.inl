@@ -235,7 +235,7 @@ struct RefRendInterface
     virtual void RenderParamTags(RenderMode rm, int tileX, int tileY) = 0;
 
     // RasterizeTriangle
-    virtual void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area) = 0;
+    virtual void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, RECT* area) = 0;
 };
 
 
@@ -311,9 +311,9 @@ struct refrend : Renderer
         }
     }
 
-    void RenderTriangle(RefRendInterface* backend, RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
+    void RenderTriangle(RefRendInterface* backend, RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, RECT* area)
     {
-        backend->RasterizeTriangle(render_mode, params, tag, vertex_offset, v1, v2, v3, area);
+        backend->RasterizeTriangle(render_mode, params, tag, vertex_offset, v1, v2, v3, v4, area);
 
         if (render_mode == RM_MODIFIER)
         {          
@@ -470,7 +470,7 @@ struct refrend : Renderer
 
                 parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode);
 
-                RenderTriangle(backend, render_mode, &params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], rect);
+                RenderTriangle(backend, render_mode, &params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], nullptr, rect);
             }
         }
     }
@@ -498,7 +498,7 @@ struct refrend : Renderer
                 tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
             }
 
-            RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
+            RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], nullptr, rect);
         }
     }
 
@@ -521,8 +521,7 @@ struct refrend : Renderer
             parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
 
             //TODO: FIXME
-            RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
-            RenderTriangle(backend, render_mode, &params, tag, 1, vtx[0], vtx[3], vtx[2], rect);
+            RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], &vtx[3], rect);
         }
     }
 

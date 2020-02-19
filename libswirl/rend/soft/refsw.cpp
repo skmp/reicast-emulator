@@ -69,7 +69,7 @@ struct IPs3
     PlaneStepper3 Col[4];
     PlaneStepper3 Ofs[4];
 
-    void Setup(text_info* texture, const Vertex& v1, const Vertex& v2, const Vertex& v3)
+    void Setup(DrawParameters* params, text_info* texture, const Vertex& v1, const Vertex& v2, const Vertex& v3)
     {
         u32 w = 0, h = 0;
         if (texture) {
@@ -79,12 +79,19 @@ struct IPs3
 
         U.Setup(v1, v2, v3, v1.u * w * v1.z, v2.u * w * v2.z, v3.u * w * v3.z);
         V.Setup(v1, v2, v3, v1.v * h * v1.z, v2.v * h * v2.z, v3.v * h * v3.z);
-        
-        for (int i = 0; i < 4; i++)
-            Col[i].Setup(v1, v2, v3, v1.col[i], v2.col[i], v3.col[i]);
+        if (params->isp.Gouraud) {
+            for (int i = 0; i < 4; i++)
+                Col[i].Setup(v1, v2, v3, v1.col[i], v2.col[i], v3.col[i]);
 
-        for (int i = 0; i < 4; i++)
-            Ofs[i].Setup(v1, v2, v3, v1.spc[i], v2.spc[i], v3.spc[i]);
+            for (int i = 0; i < 4; i++)
+                Ofs[i].Setup(v1, v2, v3, v1.spc[i], v2.spc[i], v3.spc[i]);
+        } else {
+            for (int i = 0; i < 4; i++)
+                Col[i].Setup(v1, v2, v3, v3.col[i], v3.col[i], v3.col[i]);
+
+            for (int i = 0; i < 4; i++)
+                Ofs[i].Setup(v1, v2, v3, v3.spc[i], v3.spc[i], v3.spc[i]);
+        }
     }
 };
 
@@ -473,7 +480,7 @@ struct refsw : RefRendInterface
             texture_lock.Unlock();
         }
 
-        entry.ips.Setup(&entry.texture, vtx[0], vtx[1], vtx[2]);
+        entry.ips.Setup(params, &entry.texture, vtx[0], vtx[1], vtx[2]);
 
         entry.tsp = PixelFlush_tspFns[entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.isp.Offset];
         entry.textureFetch = PixelFlush_textureFns[entry.params.tsp.IgnoreTexA];
@@ -687,6 +694,8 @@ struct refsw : RefRendInterface
         float y_ps = miny;
         float minx_ps = minx;
 
+        auto pixelFlush = PixelFlush_ispFns[render_mode][params->isp.DepthMode];
+
         // Loop through pixels
         for (int y = spany; y > 0; y -= 1)
         {
@@ -709,7 +718,7 @@ struct refsw : RefRendInterface
                 if (inTriangle)
                 {
                     float invW = Z.Ip(x_ps, y_ps);
-                    PixelFlush_ispFns[render_mode][params->isp.DepthMode](this, x_ps, y_ps, invW, cb_x, tag);
+                    pixelFlush(this, x_ps, y_ps, invW, cb_x, tag);
                 }
 
                 cb_x += 4;

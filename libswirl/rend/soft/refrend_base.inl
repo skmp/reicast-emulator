@@ -239,7 +239,7 @@ struct RefRendInterface
 };
 
 
-#define MAX_CPU_COUNT 64
+#define MAX_CPU_COUNT 4
 
 /*
     Main renderer class
@@ -291,7 +291,7 @@ struct refrend : Renderer
                     if (queues[i].size() == 0)
                     {
                         queue_lock.Unlock();
-                        SleepMs(1);
+                        SleepMs(0);
                         continue;    
                     }
                     auto item = queues[i].front();
@@ -672,7 +672,7 @@ struct refrend : Renderer
 
                         for (int x = 0; x < 32; x++)
                         {
-                            auto pixel = (((src[0] >> 3) & 0x1F) << 0) | (((src[1] >> 2) & 0x3F) << 5) | (((src[2] >> 3) & 0x1F) << 11);
+                            auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | (((src[2] >> 3) & 0x1F) << 0);
                             pvr_write_area1_16(vram, dst, pixel);
 
                             dst += bpp;
@@ -694,7 +694,7 @@ struct refrend : Renderer
                 if (empty)
                     break;
                 else
-                    SleepMs(1);
+                    SleepMs(0);
             }
         }
 
@@ -813,9 +813,9 @@ struct refrend : Renderer
                 for (int i = 0; i < width; i++)
                 {
                     u16 src = pvr_read_area1_16(sh4_cpu->vram.data, addr);
-                    *dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-                    *dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
                     *dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
                     *dst++ = 0xFF;
                     addr += bpp;
                 }
@@ -829,9 +829,9 @@ struct refrend : Renderer
                 for (int i = 0; i < width; i++)
                 {
                     u16 src = pvr_read_area1_16(sh4_cpu->vram.data, addr);
-                    *dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-                    *dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
                     *dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
+                    *dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
                     *dst++ = 0xFF;
                     addr += bpp;
                 }
@@ -846,16 +846,16 @@ struct refrend : Renderer
                     if (addr & 1)
                     {
                         u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr - 1);
-                        *dst++ = src >> 16;
-                        *dst++ = src >> 8;
                         *dst++ = src;
+                        *dst++ = src >> 8;
+                        *dst++ = src >> 16;
                     }
                     else
                     {
                         u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr);
-                        *dst++ = src >> 24;
-                        *dst++ = src >> 16;
                         *dst++ = src >> 8;
+                        *dst++ = src >> 16;
+                        *dst++ = src >> 24;
                     }
                     *dst++ = 0xFF;
                     addr += bpp;
@@ -869,9 +869,9 @@ struct refrend : Renderer
                 for (int i = 0; i < width; i++)
                 {
                     u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr);
-                    *dst++ = src >> 16;
-                    *dst++ = src >> 8;
                     *dst++ = src;
+                    *dst++ = src >> 8;
+                    *dst++ = src >> 16;
                     *dst++ = 0xFF;
                     addr += bpp;
                 }

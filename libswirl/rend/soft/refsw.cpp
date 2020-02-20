@@ -137,6 +137,8 @@ struct PixelPipeline {
     virtual TextureFetchFn GetTextureFetch(TSP tsp)= 0;
     virtual ColorCombinerFn GetColorCombiner(ISP_TSP isp, TSP tsp)= 0;
     virtual BlendingUnitFn GetBlendingUnit(RenderMode render_mode, TSP tsp) = 0;
+
+    virtual ~PixelPipeline() { }
 };
 
 // Used for deferred TSP processing lookups

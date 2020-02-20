@@ -236,6 +236,8 @@ struct RefRendInterface
 
     // RasterizeTriangle
     virtual void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, RECT* area) = 0;
+
+    virtual ~RefRendInterface() { };
 };
 
 

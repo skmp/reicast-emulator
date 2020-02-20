@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("com.github.triplet.play")
+    id("com.github.triplet.play") version "2.6.2"
 }
 def getBuildId = { ->
     def build_id = System.getenv("TRAVIS_JOB_ID") ?: "8"

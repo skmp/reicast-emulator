@@ -69,6 +69,12 @@ union ISP_TSP
 		u32 CullMode    : 2;
 		u32 DepthMode   : 3;
 	};
+	struct
+	{
+		u32 res        : 27;
+		u32 CullMode   : 2;
+		u32 VolumeMode : 3;	// 0 normal polygon, 1 inside last, 2 outside last
+	} modvol;
 	u32 full;
 };
 

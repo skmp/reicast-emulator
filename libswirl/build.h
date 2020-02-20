@@ -172,10 +172,18 @@
 #define LICENSE_LGPL 0x50000002
 #define LICENSE_GPL  0x50000003
 
+//FEAT_TA
+#define TA_HLE 0x60000001
+#define TA_LLE 0x60000002
+
 //automatic
 
 #if !defined(TARGET_LICENSE)
 #define TARGET_LICENSE LICENSE_GPL
+#endif
+
+#if !defined(FEAT_TA)
+#define FEAT_TA TA_HLE
 #endif
 
 #ifndef CMAKE_BUILD

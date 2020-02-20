@@ -1418,4 +1418,6 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 #include "hw/pvr/Renderer_if.h"
 
+#if FEAT_TA == TA_HLE
 static auto gles2rend = RegisterRendererBackend(rendererbackend_t{ "gles", "OpenGL ES 2/PC41 (Per Triangle Sort)", 1, [](u8* vram) { return (Renderer*) new glesrend(vram); } });
+#endif

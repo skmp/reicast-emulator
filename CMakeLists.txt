@@ -50,6 +50,7 @@ set(d_core ${reicast_core_path})
 message(${d_core})
 
 file(GLOB_RECURSE hw_SRCS	${d_core}/hw/*.cpp			${d_core}/hw/*.h)
+file(GLOB_RECURSE lxdream_SRCS	${d_core}/gpl/lxdream/*.cpp			${d_core}/gpl/lxdream/*.h)
 
 file(GLOB cfg_SRCS			${d_core}/cfg/*.cpp			${d_core}/cfg/*.h)
 file(GLOB rend_SRCS			${d_core}/rend/*.cpp		${d_core}/rend/*.h)
@@ -77,6 +78,7 @@ if(${HOST_OS} EQUAL ${OS_WINDOWS})
 endif()
 
 set(core_SRCS
+  ${lxdream_SRCS}
   ${hw_SRCS}
   ${cfg_SRCS}
   ${rend_SRCS}

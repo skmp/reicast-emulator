@@ -1682,7 +1682,7 @@ void FillBGP(u8* vram, TA_context* ctx)
 	PolyParam* bgpp=ctx->rend.global_param_op.head();
 	Vertex* cv=ctx->rend.verts.head();
 
-	bool PSVM=FPU_SHAD_SCALE.intensity_shadow!=0; //double parameters for volumes
+	bool PSVM=FPU_SHAD_SCALE.intensity_shadow==0; //double parameters for volumes
 
 	//Get the strip base
 	u32 strip_base=(param_base + ISP_BACKGND_T.tag_address*4) & 0x7FFFFF;	//this is *not* VRAM_MASK on purpose.It fixes naomi bios and quite a few naomi games

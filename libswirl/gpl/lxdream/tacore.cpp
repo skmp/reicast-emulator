@@ -239,7 +239,7 @@ void lxd_ta_init(u8* vram) {
     ta_status.max_vertex = 3;
     ta_status.current_vertex_type = TA_VERTEX_LISTLESS;
     ta_status.poly_vertex_size = 0;
-    memset(&ta_status.poly_context[1], 0, 4);
+    ta_status.poly_context[1] = 0;
     ta_status.last_triangle_bounds.x1 = -1;
     ta_status.accept_vertexes = TRUE;
     ta_status.clip.x1 = 0;
@@ -371,7 +371,7 @@ static void ta_end_list() {
     ta_status.current_list_type = TA_LIST_NONE;
     ta_status.current_vertex_type = TA_VERTEX_LISTLESS;
     ta_status.poly_vertex_size = 0;
-    memset(&ta_status.poly_context[1], 0, 4);
+    ta_status.poly_context[1] = 0;
     ta_status.state = STATE_IDLE;
 }
 

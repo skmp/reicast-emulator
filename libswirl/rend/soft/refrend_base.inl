@@ -240,6 +240,127 @@ struct RefRendInterface
     virtual ~RefRendInterface() { };
 };
 
+struct RefThreadPool {
+    vector<cThread> threads;
+    vector<queue<function<void(RefRendInterface*)>>> queues;
+    vector<cResetEvent> eventHasWork;
+    vector<cResetEvent> eventDoneWork;
+
+    queue<function<void()>> queueMainThread;
+
+    atomic<bool> running = false;
+    cMutex queue_lock;
+
+    void enqueueMainThread(function<void()> fn) {
+        queue_lock.Lock();
+        queueMainThread.push(fn);
+        queue_lock.Unlock();
+    }
+
+    void pumpMainThread() {
+        queue_lock.Lock();
+        while (queueMainThread.size() != 0) {
+            auto fn = queueMainThread.front();
+            queueMainThread.pop();
+            queue_lock.Unlock();
+            fn();
+            queue_lock.Lock();
+        }
+        queue_lock.Unlock();
+    }
+
+    void enqueueWorkThread(int tileId, function<void(RefRendInterface*)> fn) {
+        verify(queues.size() != 0);
+
+        auto queueId = tileId % queues.size();
+        queue_lock.Lock();
+        queues[queueId].push(fn);
+        eventHasWork[queueId].Set();
+        queue_lock.Unlock();
+    }
+
+    static void* ThreadPoolEntry(void* func) {
+        auto fn = reinterpret_cast<function<void()>*>(func);
+
+        (*fn)();
+
+        delete fn;
+
+        return nullptr;
+    }
+
+    bool Init(int threadCount, function<RefRendInterface*()> createBackend) {
+
+        running = true;
+
+        queues.reserve(threadCount);
+        threads.reserve(threadCount);
+        eventHasWork.resize(threadCount); // resize not reserve
+        eventDoneWork.resize(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            auto func = new function<void()>([=]() {
+                unique_ptr<RefRendInterface> backend;
+
+                backend.reset(createBackend());
+
+                backend->Init();
+
+                while (running) {
+                    queue_lock.Lock();
+                    if (queues[i].size() == 0)
+                    {
+                        queue_lock.Unlock();
+                        eventDoneWork[i].Set();
+                        eventHasWork[i].Wait();
+                        continue;
+                    }
+                    auto item = queues[i].front();
+                    queues[i].pop();
+                    queue_lock.Unlock();
+
+                    item(backend.get());
+                }
+
+                backend.reset();
+            });
+
+            queues.push_back(queue<function<void(RefRendInterface*)>>());
+            threads.push_back(cThread(ThreadPoolEntry, func));
+
+            threads[threads.size() - 1].Start();
+        }
+
+        return true;
+    }
+
+    void waitWorkThreads() {
+        for (int i = 0; i < threads.size(); i++) {
+            for (;;) {
+                queue_lock.Lock();
+                bool empty = queues[i].size() == 0;
+                queue_lock.Unlock();
+
+                if (empty)
+                    break;
+                else
+                    eventDoneWork[i].Wait();
+            }
+        }
+    }
+
+    ~RefThreadPool() {
+        running = false;
+
+        for (auto& eventy : eventHasWork) {
+            eventy.Set();
+        }
+
+        for (auto& thread : threads) {
+            thread.WaitToEnd();
+        }
+    }
+};
 
 #define MAX_CPU_COUNT 0
 
@@ -253,75 +374,32 @@ struct refrend : Renderer
     unique_ptr<RefRendInterface> backend;
 
     u8* vram;
-    vector<cThread> threads;
-    vector<queue<function<void(RefRendInterface*)>>> queues;
-    atomic<bool> running;
 
-    cMutex queue_lock;
-    
-
-    static void* ThreadPoolEntry(void* func) {
-        auto fn = reinterpret_cast<function<void()>*>(func);
-
-        (*fn)();
-
-        delete fn;
-
-        return nullptr;
-    }
-
-    void EnqueueTile(int tileId, function<void(RefRendInterface*)> fn) {
-        if (queues.size() == 0) {
-            fn(backend.get());
-        } else {
-            queue_lock.Lock();
-            queues[tileId % queues.size()].push(fn);
-            queue_lock.Unlock();
-        }
-    }
+    RefThreadPool pool;
 
     refrend(u8* vram, std::function<RefRendInterface*()> createBackend) : vram(vram), createBackend(createBackend) {
-        running = true;
-
         if (MAX_CPU_COUNT == 0) {
             backend.reset(createBackend());
 
             backend->Init();
         } else {
-            queues.reserve(MAX_CPU_COUNT);
-            threads.reserve(MAX_CPU_COUNT);
+            pool.Init(MAX_CPU_COUNT, createBackend);
+        }
+    }
 
-            for (int i = 0; i < MAX_CPU_COUNT; i++) {
-                auto func = new function<void()>([=]() {
-                    unique_ptr<RefRendInterface> backend;
+    void EnqueueTile(int tileId, function<void(RefRendInterface*)> fn) {
+        if (!pool.running) {
+            fn(backend.get());
+        } else {
+            pool.enqueueWorkThread(tileId, fn);
+        }
+    }
 
-                    backend.reset(createBackend());
-
-                    backend->Init();
-
-                    while(running) {
-                        queue_lock.Lock();
-                        if (queues[i].size() == 0)
-                        {
-                            queue_lock.Unlock();
-                            SleepMs(0);
-                            continue;    
-                        }
-                        auto item = queues[i].front();
-                        queues[i].pop();
-                        queue_lock.Unlock();
-
-                        item(backend.get());
-                    }
-
-                    backend.reset();
-                });
-
-                queues.push_back( queue<function<void(RefRendInterface*)>>() );
-                threads.push_back(cThread(ThreadPoolEntry, func));
-
-                threads[threads.size()-1].Start();
-            }
+    void EnqueueWriteout(function<void()> fn) {
+        if (!pool.running) {
+            fn();
+        } else {
+            pool.enqueueMainThread(fn);
         }
     }
 
@@ -660,7 +738,6 @@ struct refrend : Renderer
                 // Copy to vram
                 if (!entry.control.no_writeout)
                 {
-
                     auto field = SCALER_CTL.fieldselect;
                     auto interlace = SCALER_CTL.interlace;
 
@@ -694,23 +771,13 @@ struct refrend : Renderer
                         }
                     }
                 }
+
                 // clear the tsp cache
                 backend->ClearFpuEntries();
             });
         } while (!entry.control.last_region);
 
-        for (int i = 0; i < MAX_CPU_COUNT; i++) {
-            for(;;) {
-                queue_lock.Lock();
-                bool empty = queues[i].size() == 0;
-                queue_lock.Unlock();
-
-                if (empty)
-                    break;
-                else
-                    SleepMs(0);
-            }
-        }
+        pool.waitWorkThreads();
 
         return false;
     }
@@ -768,11 +835,6 @@ struct refrend : Renderer
     }
 
     ~refrend() {
-
-        running = false;
-        for (auto &thread: threads) {
-            thread.WaitToEnd();
-        }
 #if HOST_OS == OS_WINDOWS
         if (hBMP) {
             DeleteObject(SelectObject(hmem, holdBMP));

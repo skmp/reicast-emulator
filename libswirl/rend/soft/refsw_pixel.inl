@@ -258,7 +258,7 @@ struct RefPixelPipeline : PixelPipeline {
         auto stencil = (u32 *)&rb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
         auto cb = (Color*)&rb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
 
-        Color base, textel, offs;
+        Color base = { 0 }, textel = { 0 }, offs = { 0 };
 
         base = InterpolateBase<pp_UseAlpha, true>(entry->ips.Col, x, y, W, *stencil);
         

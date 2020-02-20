@@ -417,9 +417,10 @@ struct refsw : RefRendInterface
     }
 };
 
+#if FEAT_TA == TA_LLE
+
 #include "refsw_pixel.inl"
 
-#if FEAT_TA == TA_LLE
 Renderer* rend_refsw(u8* vram) {
     return new refrend(vram, [=]() { 
         return (RefRendInterface*) new(_mm_malloc(sizeof(refsw), 32)) ::refsw(vram, new RefPixelPipeline());

@@ -200,6 +200,10 @@ __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
 		//PowerVR supports also trilinear via two passes, but we ignore that for now
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#ifdef GL_TEXTURE_LOD_BIAS
+		if (!gl.is_gles && gl.gl_major >= 3 && gp->tcw.MipMapped && settings.rend.UseMipmaps)
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
+#endif
 		if (gl.max_anisotropy > 1.f)
 		{
 			if (settings.rend.AnisotropicFiltering > 1)

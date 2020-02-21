@@ -22,6 +22,11 @@ u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 
+// Rough approximation of LoD bias from D adjust param
+const std::array<f32, 16> D_Adjust_LoD_Bias = {
+		0.f, -7.f, -2.75f, -1.f, 0.f, 0.49f, 0.5f, 0.75f, 1.f, 1.5f, 1.5f, 1.5f, 2.f, 3.f, 3.f, 4.f
+};
+
 u32 detwiddle[2][11][1024];
 //input : address in the yyyyyxxxxx format
 //output : address in the xyxyxyxy format
@@ -571,7 +576,7 @@ void BaseTextureCacheData::ComputeHash()
 	if (IsPaletted())
 		texture_hash ^= palette_hash;
 	old_texture_hash = texture_hash;
-	texture_hash ^= tcw.full;
+	texture_hash ^= tcw.full & 0xFC000000;	// everything but texaddr, reserved and stride
 }
 
 void BaseTextureCacheData::Update()
@@ -645,7 +650,7 @@ void BaseTextureCacheData::Update()
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
-	bool mipmapped = IsMipmapped() && settings.rend.UseMipmaps;
+	bool mipmapped = IsMipmapped() && settings.rend.UseMipmaps && !settings.rend.DumpTextures;
 
 	if (texconv32 != NULL && need_32bit_buffer)
 	{

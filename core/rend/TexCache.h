@@ -817,4 +817,5 @@ static inline void MakeFogTexture(u8 *tex_data)
 		tex_data[i + 128] = fog_table[i * 4 + 1];
 	}
 }
+extern const std::array<f32, 16> D_Adjust_LoD_Bias;
 #undef clamp

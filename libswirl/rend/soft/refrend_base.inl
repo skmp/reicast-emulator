@@ -248,8 +248,12 @@ struct RefThreadPool {
 
     queue<function<void()>> queueMainThread;
 
-    atomic<bool> running = false;
+    atomic<bool> running;
     cMutex queue_lock;
+
+    RefThreadPool() : running(false) {
+        
+    }
 
     void enqueueMainThread(function<void()> fn) {
         queue_lock.Lock();
@@ -738,38 +742,45 @@ struct refrend : Renderer
                 // Copy to vram
                 if (!entry.control.no_writeout)
                 {
-                    auto field = SCALER_CTL.fieldselect;
-                    auto interlace = SCALER_CTL.interlace;
+                    auto copy = new u8[32 * 32 * 4];
+                    memcpy(copy, backend->GetColorOutputBuffer(), 32 * 32 * 4);
 
-                    auto base = (interlace && field) ? FB_W_SOF2 : FB_W_SOF1;
+                    EnqueueWriteout([=](){
+                        auto field = SCALER_CTL.fieldselect;
+                        auto interlace = SCALER_CTL.interlace;
 
-                    // very few configurations supported here
-                    verify(SCALER_CTL.hscale == 0);
-                    verify(SCALER_CTL.interlace == 0); // write both SOFs
-                    auto vscale = SCALER_CTL.vscalefactor;
-                    verify(vscale == 0x401 || vscale == 0x400 || vscale == 0x800);
+                        auto base = (interlace && field) ? FB_W_SOF2 : FB_W_SOF1;
 
-                    auto fb_packmode = FB_W_CTRL.fb_packmode;
-                    verify(fb_packmode == 0x1); // 565 RGB16
+                        // very few configurations supported here
+                        verify(SCALER_CTL.hscale == 0);
+                        verify(SCALER_CTL.interlace == 0); // write both SOFs
+                        auto vscale = SCALER_CTL.vscalefactor;
+                        verify(vscale == 0x401 || vscale == 0x400 || vscale == 0x800);
 
-                    auto bpp = 2;
-                    auto offset_bytes = entry.control.tilex * 32 * bpp + entry.control.tiley * 32 * FB_W_LINESTRIDE.stride * 8;
+                        auto fb_packmode = FB_W_CTRL.fb_packmode;
+                        verify(fb_packmode == 0x1); // 565 RGB16
 
-                    auto src = backend->GetColorOutputBuffer();
-                    for (int y = 0; y < 32; y++)
-                    {
-                        //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
-                        auto dst = base + offset_bytes + (y)*FB_W_LINESTRIDE.stride * 8;
+                        auto src = copy;
+                        auto bpp = 2;
+                        auto offset_bytes = entry.control.tilex * 32 * bpp + entry.control.tiley * 32 * FB_W_LINESTRIDE.stride * 8;
 
-                        for (int x = 0; x < 32; x++)
+                        for (int y = 0; y < 32; y++)
                         {
-                            auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | (((src[2] >> 3) & 0x1F) << 0);
-                            pvr_write_area1_16(vram, dst, pixel);
+                            //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
+                            auto dst = base + offset_bytes + (y)*FB_W_LINESTRIDE.stride * 8;
 
-                            dst += bpp;
-                            src += 4; // skip alpha
+                            for (int x = 0; x < 32; x++)
+                            {
+                                auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | (((src[2] >> 3) & 0x1F) << 0);
+                                pvr_write_area1_16(vram, dst, pixel);
+
+                                dst += bpp;
+                                src += 4; // skip alpha
+                            }
                         }
-                    }
+
+                        delete[] copy;
+                    });
                 }
 
                 // clear the tsp cache
@@ -777,7 +788,9 @@ struct refrend : Renderer
             });
         } while (!entry.control.last_region);
 
+        pool.pumpMainThread();
         pool.waitWorkThreads();
+        pool.pumpMainThread();
 
         return false;
     }

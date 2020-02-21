@@ -59,7 +59,7 @@ struct RefPixelPipeline : PixelPipeline {
         } else if (pp_Flip) {
             coord &= size*2-1;
             if (coord & size) {
-                coord ^= size-1;
+                coord ^= size*2-1;
             }
         } else {
             coord &= size-1;
@@ -75,7 +75,9 @@ struct RefPixelPipeline : PixelPipeline {
 
         int ui = u * 256;
         int vi = v * 256;
-        mem128i px = ((mem128i *)texture->pdata)[ClampFlip<pp_ClampU, pp_FlipU>(ui >> 8, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>(vi >> 8, texture->height) * texture->width];
+        auto offset = ClampFlip<pp_ClampU, pp_FlipU>(ui >> 8, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>(vi >> 8, texture->height) * texture->width;
+        
+        mem128i px = ((mem128i *)texture->pdata)[offset];
 
         int ublend = ui & 255;
         int vblend = vi & 255;

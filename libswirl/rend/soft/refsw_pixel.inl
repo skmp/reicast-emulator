@@ -79,7 +79,7 @@ struct RefPixelPipeline : PixelPipeline {
         mem128i px = ((mem128i *)texture->pdata)[offset];
 
         Color textel = {0xAF674839};
-        
+
         if (pp_FilterMode == 0) {
             // Point sampling
             for (int i = 0; i < 4; i++)
@@ -175,7 +175,7 @@ struct RefPixelPipeline : PixelPipeline {
     }
 
     template<bool pp_UseAlpha, bool pp_CheapShadows>
-    static Color InterpolateBase(const PlaneStepper3* Col, float x, float y, float W, u32 stencil) {
+    INLINE static Color InterpolateBase(const PlaneStepper3* Col, float x, float y, float W, u32 stencil) {
         Color rv;
         u32 mult = 256;
 
@@ -199,7 +199,7 @@ struct RefPixelPipeline : PixelPipeline {
     }
 
     template<bool pp_CheapShadows>
-    static Color InterpolateOffs(const PlaneStepper3* Ofs, float x, float y, float W, u32 stencil) {
+    INLINE static Color InterpolateOffs(const PlaneStepper3* Ofs, float x, float y, float W, u32 stencil) {
         Color rv;
         u32 mult = 256;
 
@@ -218,7 +218,7 @@ struct RefPixelPipeline : PixelPipeline {
     }
 
     template<u32 pp_AlphaInst, bool srcOther>
-    static Color BlendCoefs(Color src, Color dst) {
+    INLINE static Color BlendCoefs(Color src, Color dst) {
         Color rv;
 
         switch(pp_AlphaInst>>1) {
@@ -265,30 +265,10 @@ struct RefPixelPipeline : PixelPipeline {
             return false;
         }
     }
-    // Texture and shade a pixel
-    template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset, bool pp_ColorClamp, u32 pp_FogCtrl>
-    static bool PixelFlush_tsp(const FpuEntry *entry, float x, float y, float W, u8 *rb)
-    {
-        auto zb = (float *)&rb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
-        auto stencil = (u32 *)&rb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
-        auto cb = (Color*)&rb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
 
-        Color base = { 0 }, textel = { 0 }, offs = { 0 };
+    template<bool pp_Offset, bool pp_ColorClamp, u32 pp_FogCtrl>
+    INLINE static Color FogUnit(Color col, float invW, u8 offs_a) {
 
-        base = InterpolateBase<pp_UseAlpha, true>(entry->ips.Col, x, y, W, *stencil);
-        
-        if (pp_Texture) {
-            float u = entry->ips.U.Ip(x, y, W);
-            float v = entry->ips.V.Ip(x, y, W);
-
-            textel = entry->textureFetch(&entry->texture, u, v);
-            if (pp_Offset) {
-                offs = InterpolateOffs<true>(entry->ips.Ofs, x, y, W, *stencil);
-            }
-        }
-
-        Color col = entry->colorCombiner(base, textel, offs);
-        
         if (pp_ColorClamp) {
             Color clamp_max = { FOG_CLAMP_MAX };
             Color clamp_min = { FOG_CLAMP_MIN };
@@ -312,7 +292,7 @@ struct RefPixelPipeline : PixelPipeline {
                     
                     float fog_den = fog_den_mant*powf(2.0f,fog_den_exp);
 
-                    f32 fogW = fog_den / W;
+                    f32 fogW = fog_den * invW;
 
                     fogW = max(fogW, 1.0f);
                     fogW = min(fogW, 255.999985f);
@@ -354,7 +334,7 @@ struct RefPixelPipeline : PixelPipeline {
             case 0b01:
                 if (pp_Offset) {
                     Color col_vert = { FOG_COL_VERT };
-                    u8 alpha = offs.a;
+                    u8 alpha = offs_a;
                     u8 inv = 255^alpha;
                   
                     for (int i = 0; i < 3; i++)
@@ -369,6 +349,35 @@ struct RefPixelPipeline : PixelPipeline {
             case 0b10:
                 break;
         }
+
+        return col;
+    }
+
+    // Texture and shade a pixel
+    template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset, bool pp_ColorClamp, u32 pp_FogCtrl>
+    static bool PixelFlush_tsp(const FpuEntry *entry, float x, float y, float W, u8 *rb)
+    {
+        auto zb = (float *)&rb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        auto stencil = (u32 *)&rb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
+        auto cb = (Color*)&rb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
+
+        Color base = { 0 }, textel = { 0 }, offs = { 0 };
+
+        base = InterpolateBase<pp_UseAlpha, true>(entry->ips.Col, x, y, W, *stencil);
+        
+        if (pp_Texture) {
+            float u = entry->ips.U.Ip(x, y, W);
+            float v = entry->ips.V.Ip(x, y, W);
+
+            textel = entry->textureFetch(&entry->texture, u, v);
+            if (pp_Offset) {
+                offs = InterpolateOffs<true>(entry->ips.Ofs, x, y, W, *stencil);
+            }
+        }
+
+        Color col = entry->colorCombiner(base, textel, offs);
+        
+        col = FogUnit<pp_Offset, pp_ColorClamp, pp_FogCtrl>(col, 1/W, offs.a);
 
         return entry->blendingUnit(cb, col);
     }

@@ -366,7 +366,7 @@ struct RefThreadPool {
     }
 };
 
-#define MAX_CPU_COUNT 0
+#define MAX_CPU_COUNT 30
 
 /*
     Main renderer class

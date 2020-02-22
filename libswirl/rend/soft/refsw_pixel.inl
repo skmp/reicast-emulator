@@ -8,7 +8,7 @@ struct RefPixelPipeline : PixelPipeline {
     TspFn PixelFlush_tspFns[2][2][2];
 
     TextureFetchFn PixelFlush_textureFns[2][2][2][2][2];
-    ColorCombinerFn PixelFlush_combinerFns[2][2][4];
+    ColorCombinerFn PixelFlush_combinerFns[2][2][4][2][4];
     BlendingUnitFn PixelFlush_alphaFns[2][2][2][8][8];
 
     RefPixelPipeline() {
@@ -28,7 +28,7 @@ struct RefPixelPipeline : PixelPipeline {
     }
 
     virtual ColorCombinerFn GetColorCombiner(ISP_TSP isp, TSP tsp) {
-        return PixelFlush_combinerFns[isp.Texture][isp.Offset][tsp.ShadInstr];
+        return PixelFlush_combinerFns[isp.Texture][isp.Offset][tsp.ShadInstr][tsp.ColorClamp][tsp.FogCtrl];
     }
     
     virtual BlendingUnitFn GetBlendingUnit(RenderMode render_mode, TSP tsp) {
@@ -76,7 +76,7 @@ struct RefPixelPipeline : PixelPipeline {
         int ui = u * 256;
         int vi = v * 256;
         auto offset = ClampFlip<pp_ClampU, pp_FlipU>(ui >> 8, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>(vi >> 8, texture->height) * texture->width;
-        
+
         mem128i px = ((mem128i *)texture->pdata)[offset];
 
         int ublend = ui & 255;
@@ -103,7 +103,7 @@ struct RefPixelPipeline : PixelPipeline {
         return textel;
     }
 
-    template<bool pp_Texture, bool pp_Offset, u32 pp_ShadInstr>
+    template<bool pp_Texture, bool pp_Offset, u32 pp_ShadInstr, bool pp_ColorClamp, u32 pp_FogCtrl>
     static Color ColorCombiner(Color base, Color textel, Color offset) {
 
         Color rv = base;
@@ -158,6 +158,46 @@ struct RefPixelPipeline : PixelPipeline {
             }
         }
 
+        if (pp_ColorClamp) {
+            Color clamp_max = { FOG_CLAMP_MAX };
+            Color clamp_min = { FOG_CLAMP_MIN };
+
+            for (int i = 0; i < 4; i++)
+            {
+                rv.rgba[i] = min(rv.rgba[i], clamp_max.rgba[i]);
+                rv.rgba[i] = max(rv.rgba[i], clamp_min.rgba[i]);
+            }
+        }
+
+        switch(pp_FogCtrl) {
+            // Look up mode 1
+            case 0b00:
+                break;
+
+            // Per Vertex
+            case 0b01:
+                if (pp_Offset) {
+                    Color col_vert = { FOG_COL_VERT };
+                    u8 alpha = offset.a;
+                    u8 inv = 255^alpha;
+                  
+                    for (int i = 0; i < 3; i++)
+                    {
+                        rv.rgba[i] = (rv.rgba[i] * inv + col_vert.rgba[i] * alpha)>>8;
+                    }
+                }
+                break;
+
+            // look up mode 2
+            case 0b11:
+                break;
+                
+            // No Fog
+            case 0b10:
+                break;
+
+            
+        }
         return rv;
     }
 

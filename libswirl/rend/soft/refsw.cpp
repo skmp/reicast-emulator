@@ -114,8 +114,8 @@ struct refsw;
 struct FpuEntry;
 
 union Color {
-    u8 rgba[4];
     u32 raw;
+    u8 rgba[4];
     struct {
         u8 r;
         u8 g;

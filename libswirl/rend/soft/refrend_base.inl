@@ -888,11 +888,18 @@ struct refrend : Renderer
             bpp = 4;
             break;
         }
-        u32 addr = SPG_CONTROL.interlace && !SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+        u32 addr = SPG_CONTROL.interlace && SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
 
-        PixelBuffer<u32> pb;
-        pb.init(width, height);
+        static PixelBuffer<u32> pb;
+        if (pb.total_pixels != width * (SPG_CONTROL.interlace ? (height * 2 + 1) : height)) {
+            pb.init(width, SPG_CONTROL.interlace ? (height * 2 + 1) : height);
+        }
+
         u8 *dst = (u8 *)pb.data();
+
+        if (SPG_CONTROL.interlace & SPG_STATUS.fieldnum) {
+            dst += width * 4;
+        }
 
         switch (FB_R_CTRL.fb_depth)
         {
@@ -909,6 +916,9 @@ struct refrend : Renderer
                     addr += bpp;
                 }
                 addr += modulus * bpp;
+                if (SPG_CONTROL.interlace) {
+                    dst += width * 4;
+                }
             }
             break;
 
@@ -925,6 +935,10 @@ struct refrend : Renderer
                     addr += bpp;
                 }
                 addr += modulus * bpp;
+
+                if (SPG_CONTROL.interlace) {
+                    dst += width * 4;
+                }
             }
             break;
         case fbde_888: // 888 RGB
@@ -950,6 +964,10 @@ struct refrend : Renderer
                     addr += bpp;
                 }
                 addr += modulus * bpp;
+
+                if (SPG_CONTROL.interlace) {
+                    dst += width * 4;
+                }
             }
             break;
         case fbde_C888: // 0888 RGB
@@ -965,13 +983,17 @@ struct refrend : Renderer
                     addr += bpp;
                 }
                 addr += modulus * bpp;
+                
+                if (SPG_CONTROL.interlace) {
+                    dst += width * 4;
+                }
             }
             break;
         }
         u32 *psrc = pb.data();
 
 #if HOST_OS == OS_WINDOWS
-        SetDIBits(hmem, hBMP, 0, 480, psrc, (BITMAPINFO*)& bi, DIB_RGB_COLORS);
+        SetDIBits(hmem, hBMP, 0, SPG_CONTROL.interlace ? height * 2 : height, psrc, (BITMAPINFO*)& bi, DIB_RGB_COLORS);
 
         RECT clientRect;
 
@@ -993,10 +1015,10 @@ struct refrend : Renderer
         extern int x11_width;
         extern int x11_height;
 
-        XImage* ximage = XCreateImage(x11_disp, x11_vis, 24, ZPixmap, 0, (char*)psrc, width, height, 32, width * 4);
+        XImage* ximage = XCreateImage(x11_disp, x11_vis, 24, ZPixmap, 0, (char*)psrc, width, SPG_CONTROL.interlace ? height * 2 : height, 32, width * 4);
 
         GC gc = XCreateGC(x11_disp, x11_win, 0, 0);
-        XPutImage(x11_disp, x11_win, gc, ximage, 0, 0, (x11_width - width) / 2, (x11_height - height) / 2, width, height);
+        XPutImage(x11_disp, x11_win, gc, ximage, 0, 0, (x11_width - width) / 2, (x11_height - (SPG_CONTROL.interlace ? height * 2 : height)) / 2, width, SPG_CONTROL.interlace ? height * 2 : height);
         XFree(ximage);
         XFreeGC(x11_disp, gc);
 #else

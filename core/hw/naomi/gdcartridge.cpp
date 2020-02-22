@@ -516,7 +516,7 @@ void GDCartridge::device_start()
 		Disc *gdrom = OpenDisc((gdrom_path + ".chd").c_str());
 		if (gdrom == NULL)
 			gdrom = OpenDisc((gdrom_path + ".gdi").c_str());
-		if (gdrom == NULL && g_parent_name != NULL)
+		if (gdrom == NULL && g_parent_name[0] != '\0')
 			gdrom = OpenDisc((std::string(g_roms_dir) + "/" + g_parent_name + "/" + gdrom_name + ".chd").c_str());
 		if (gdrom == NULL)
 		{

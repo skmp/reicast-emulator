@@ -206,7 +206,7 @@ static bool naomi_cart_LoadZip(const char *filename)
 	Archive *parent_archive = NULL;
 	if (game->parent_name != NULL)
 	{
-	   strncpy(g_parent_name, game->parent_name, sizeof(game->parent_name));
+	   strncpy(g_parent_name, game->parent_name, sizeof(g_parent_name));
 	   std::string parent_path(g_roms_dir);
 	   parent_path += path_default_slash();
 	   parent_path += game->parent_name;

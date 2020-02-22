@@ -14,15 +14,25 @@
     ISP_FNS(RM_TRANSLUCENT)
     ISP_FNS(RM_MODIFIER)
 
+#define PIXEL_FNS(cf, fc) \
+    PixelFlush_tspFns[0][0][0][cf][fc] = &PixelFlush_tsp<0, 0, 0, cf, fc>; \
+    PixelFlush_tspFns[0][0][1][cf][fc] = &PixelFlush_tsp<0, 0, 1, cf, fc>; \
+    PixelFlush_tspFns[0][1][0][cf][fc] = &PixelFlush_tsp<0, 1, 0, cf, fc>; \
+    PixelFlush_tspFns[0][1][1][cf][fc] = &PixelFlush_tsp<0, 1, 1, cf, fc>; \
+    PixelFlush_tspFns[1][0][0][cf][fc] = &PixelFlush_tsp<1, 0, 0, cf, fc>; \
+    PixelFlush_tspFns[1][0][1][cf][fc] = &PixelFlush_tsp<1, 0, 1, cf, fc>; \
+    PixelFlush_tspFns[1][1][0][cf][fc] = &PixelFlush_tsp<1, 1, 0, cf, fc>; \
+    PixelFlush_tspFns[1][1][1][cf][fc] = &PixelFlush_tsp<1, 1, 1, cf, fc>;
 
-    PixelFlush_tspFns[0][0][0] = &PixelFlush_tsp<0, 0, 0>;
-    PixelFlush_tspFns[0][0][1] = &PixelFlush_tsp<0, 0, 1>;
-    PixelFlush_tspFns[0][1][0] = &PixelFlush_tsp<0, 1, 0>;
-    PixelFlush_tspFns[0][1][1] = &PixelFlush_tsp<0, 1, 1>;
-    PixelFlush_tspFns[1][0][0] = &PixelFlush_tsp<1, 0, 0>;
-    PixelFlush_tspFns[1][0][1] = &PixelFlush_tsp<1, 0, 1>;
-    PixelFlush_tspFns[1][1][0] = &PixelFlush_tsp<1, 1, 0>;
-    PixelFlush_tspFns[1][1][1] = &PixelFlush_tsp<1, 1, 1>;
+    PIXEL_FNS(0, 0)
+    PIXEL_FNS(0, 1)
+    PIXEL_FNS(0, 2)
+    PIXEL_FNS(0, 3)
+
+    PIXEL_FNS(1, 0)
+    PIXEL_FNS(1, 1)
+    PIXEL_FNS(1, 2)
+    PIXEL_FNS(1, 3)
 
 #define TEXTURE_FNS(fu, fv) \
     PixelFlush_textureFns[0][0][0][fu][fv] = &TextureFetch<0, 0, 0, fu, fv>; \
@@ -42,27 +52,19 @@
 
     TEXTURE_FNS_fufv()
 
-#define COMBINER_FNS(c, cl, fc) \
-    PixelFlush_combinerFns[0][0][c][cl][fc] = &ColorCombiner<0, 0, c, cl, fc>; \
-    PixelFlush_combinerFns[0][1][c][cl][fc] = &ColorCombiner<0, 1, c, cl, fc>; \
-    PixelFlush_combinerFns[1][0][c][cl][fc] = &ColorCombiner<1, 0, c, cl, fc>; \
-    PixelFlush_combinerFns[1][1][c][cl][fc] = &ColorCombiner<1, 1, c, cl, fc>;
+#define COMBINER_FNS(c) \
+    PixelFlush_combinerFns[0][0][c] = &ColorCombiner<0, 0, c>; \
+    PixelFlush_combinerFns[0][1][c] = &ColorCombiner<0, 1, c>; \
+    PixelFlush_combinerFns[1][0][c] = &ColorCombiner<1, 0, c>; \
+    PixelFlush_combinerFns[1][1][c] = &ColorCombiner<1, 1, c>;
 
-#define COMBINER_FNS_C(cl, fc) \
-    COMBINER_FNS(0, cl, fc) \
-    COMBINER_FNS(1, cl, fc) \
-    COMBINER_FNS(2, cl, fc) \
-    COMBINER_FNS(3, cl, fc)
+#define COMBINER_FNS_C() \
+    COMBINER_FNS(0) \
+    COMBINER_FNS(1) \
+    COMBINER_FNS(2) \
+    COMBINER_FNS(3)
     
-    COMBINER_FNS_C(0, 0)
-    COMBINER_FNS_C(0, 1)
-    COMBINER_FNS_C(0, 2)
-    COMBINER_FNS_C(0, 3)
-
-    COMBINER_FNS_C(1, 0)
-    COMBINER_FNS_C(1, 1)
-    COMBINER_FNS_C(1, 2)
-    COMBINER_FNS_C(1, 3)
+    COMBINER_FNS_C()
 
 
     #define ALPHA_FNS(s,d) \

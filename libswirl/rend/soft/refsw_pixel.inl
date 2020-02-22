@@ -4,11 +4,10 @@ struct RefPixelPipeline : PixelPipeline {
     //RenderMode, DepthInst
     IspFn PixelFlush_ispFns[RM_COUNT][8];
 
-    #define TPL_DECL_pixel template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset >
-    TspFn PixelFlush_tspFns[2][2][2];
+    TspFn PixelFlush_tspFns[2][2][2][2][4];
 
     TextureFetchFn PixelFlush_textureFns[2][2][2][2][2];
-    ColorCombinerFn PixelFlush_combinerFns[2][2][4][2][4];
+    ColorCombinerFn PixelFlush_combinerFns[2][2][4];
     BlendingUnitFn PixelFlush_alphaFns[2][2][2][8][8];
 
     RefPixelPipeline() {
@@ -20,7 +19,7 @@ struct RefPixelPipeline : PixelPipeline {
     }
 
     virtual TspFn GetTsp(ISP_TSP isp, TSP tsp) {
-        return PixelFlush_tspFns[tsp.UseAlpha][isp.Texture][isp.Offset];
+        return PixelFlush_tspFns[tsp.UseAlpha][isp.Texture][isp.Offset][tsp.ColorClamp][tsp.FogCtrl];
     }
 
     virtual TextureFetchFn GetTextureFetch(TSP tsp) {
@@ -28,7 +27,7 @@ struct RefPixelPipeline : PixelPipeline {
     }
 
     virtual ColorCombinerFn GetColorCombiner(ISP_TSP isp, TSP tsp) {
-        return PixelFlush_combinerFns[isp.Texture][isp.Offset][tsp.ShadInstr][tsp.ColorClamp][tsp.FogCtrl];
+        return PixelFlush_combinerFns[isp.Texture][isp.Offset][tsp.ShadInstr];
     }
     
     virtual BlendingUnitFn GetBlendingUnit(RenderMode render_mode, TSP tsp) {
@@ -43,7 +42,7 @@ struct RefPixelPipeline : PixelPipeline {
 
         [trilinear, color] = ColorCombiner<pp_Texture, pp_Offset, pp_ShadInstr, bump map> (textel, baseCol, offsCol.rgb);
 
-        color.rgba = PostProcess<clamp, trilinear, fog_mode>(color, trilinear, offsCol.a);
+        color.bgra = PostProcess<clamp, trilinear, fog_mode>(color, trilinear, offsCol.a);
 
         BlendUnit<src_buf, dst_buf, src_sel, dst_sel>(color);
     */
@@ -88,7 +87,7 @@ struct RefPixelPipeline : PixelPipeline {
 
         for (int i = 0; i < 4; i++)
         {
-            textel.rgba[i] =
+            textel.bgra[i] =
                 (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
                 (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
                 (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
@@ -103,7 +102,7 @@ struct RefPixelPipeline : PixelPipeline {
         return textel;
     }
 
-    template<bool pp_Texture, bool pp_Offset, u32 pp_ShadInstr, bool pp_ColorClamp, u32 pp_FogCtrl>
+    template<bool pp_Texture, bool pp_Offset, u32 pp_ShadInstr>
     static Color ColorCombiner(Color base, Color textel, Color offset) {
 
         Color rv = base;
@@ -122,7 +121,7 @@ struct RefPixelPipeline : PixelPipeline {
                 //color.a = texcol.a;
                 for (int i = 0; i < 3; i++)
                 {
-                    rv.rgba[i] = textel.rgba[i] * base.rgba[i] / 256;
+                    rv.bgra[i] = textel.bgra[i] * base.bgra[i] / 256;
                 }
 
                 rv.a = textel.a;
@@ -135,7 +134,7 @@ struct RefPixelPipeline : PixelPipeline {
 
                 for (int i = 0; i < 3; i++)
                 {
-                    rv.rgba[i] = (textel.rgba[i] * tb + base.rgba[i] * cb) / 256;
+                    rv.bgra[i] = (textel.bgra[i] * tb + base.bgra[i] * cb) / 256;
                 }
 
                 rv.a = base.a;
@@ -145,7 +144,7 @@ struct RefPixelPipeline : PixelPipeline {
                 //color*=texcol
                 for (int i = 0; i < 4; i++)
                 {
-                    rv.rgba[i] = textel.rgba[i] * base.rgba[i] / 256;
+                    rv.bgra[i] = textel.bgra[i] * base.bgra[i] / 256;
                 }
             }
 
@@ -153,51 +152,11 @@ struct RefPixelPipeline : PixelPipeline {
                 // mix only color, saturate
                 for (int i = 0; i < 3; i++)
                 {
-                    rv.rgba[i] = min(rv.rgba[i] + offset.rgba[i], 255);
+                    rv.bgra[i] = min(rv.bgra[i] + offset.bgra[i], 255);
                 }
             }
         }
 
-        if (pp_ColorClamp) {
-            Color clamp_max = { FOG_CLAMP_MAX };
-            Color clamp_min = { FOG_CLAMP_MIN };
-
-            for (int i = 0; i < 4; i++)
-            {
-                rv.rgba[i] = min(rv.rgba[i], clamp_max.rgba[i]);
-                rv.rgba[i] = max(rv.rgba[i], clamp_min.rgba[i]);
-            }
-        }
-
-        switch(pp_FogCtrl) {
-            // Look up mode 1
-            case 0b00:
-                break;
-
-            // Per Vertex
-            case 0b01:
-                if (pp_Offset) {
-                    Color col_vert = { FOG_COL_VERT };
-                    u8 alpha = offset.a;
-                    u8 inv = 255^alpha;
-                  
-                    for (int i = 0; i < 3; i++)
-                    {
-                        rv.rgba[i] = (rv.rgba[i] * inv + col_vert.rgba[i] * alpha)>>8;
-                    }
-                }
-                break;
-
-            // look up mode 2
-            case 0b11:
-                break;
-                
-            // No Fog
-            case 0b10:
-                break;
-
-            
-        }
         return rv;
     }
 
@@ -212,10 +171,10 @@ struct RefPixelPipeline : PixelPipeline {
             }
         }
 
-        rv.rgba[0] = Col[0].Ip(x, y, W) * mult / 256;
-        rv.rgba[1] = Col[1].Ip(x, y, W) * mult / 256;
-        rv.rgba[2] = Col[2].Ip(x, y, W) * mult / 256;
-        rv.rgba[3] = Col[3].Ip(x, y, W) * mult / 256;    
+        rv.bgra[0] = Col[2].Ip(x, y, W) * mult / 256;   // FIXME: why is input in RGBA instead of BGRA here?
+        rv.bgra[1] = Col[1].Ip(x, y, W) * mult / 256;
+        rv.bgra[2] = Col[0].Ip(x, y, W) * mult / 256;
+        rv.bgra[3] = Col[3].Ip(x, y, W) * mult / 256;    
 
         if (!pp_UseAlpha)
         {
@@ -236,10 +195,10 @@ struct RefPixelPipeline : PixelPipeline {
             }
         }
 
-        rv.rgba[0] = Ofs[0].Ip(x, y, W) * mult / 256;
-        rv.rgba[1] = Ofs[1].Ip(x, y, W) * mult / 256;
-        rv.rgba[2] = Ofs[2].Ip(x, y, W) * mult / 256;
-        rv.rgba[3] = Ofs[3].Ip(x, y, W);
+        rv.bgra[0] = Ofs[2].Ip(x, y, W) * mult / 256;   // FIXME: why is input in RGBA instead of BGRA here?
+        rv.bgra[1] = Ofs[1].Ip(x, y, W) * mult / 256;
+        rv.bgra[2] = Ofs[0].Ip(x, y, W) * mult / 256;
+        rv.bgra[3] = Ofs[3].Ip(x, y, W);
 
         return rv;
     }
@@ -254,14 +213,14 @@ struct RefPixelPipeline : PixelPipeline {
             // other color
             case 1: rv = srcOther? src : dst; break;
             // src alpha
-            case 2: for (int i = 0; i < 4; i++) rv.rgba[i] = src.a; break;
+            case 2: for (int i = 0; i < 4; i++) rv.bgra[i] = src.a; break;
             // dst alpha
-            case 3: for (int i = 0; i < 4; i++) rv.rgba[i] = dst.a; break;
+            case 3: for (int i = 0; i < 4; i++) rv.bgra[i] = dst.a; break;
         }
 
         if (pp_AlphaInst & 1) {
             for (int i = 0; i < 4; i++)
-                rv.rgba[i] = 255 - rv.rgba[i];
+                rv.bgra[i] = 255 - rv.bgra[i];
         }
 
         return rv;
@@ -279,7 +238,7 @@ struct RefPixelPipeline : PixelPipeline {
 
         for (int j = 0; j < 4; j++)
         {
-            rv.rgba[j] = min((src.rgba[j] * src_blend.rgba[j] + dst.rgba[j] * dst_blend.rgba[j]) >> 8, 255);
+            rv.bgra[j] = min((src.bgra[j] * src_blend.bgra[j] + dst.bgra[j] * dst_blend.bgra[j]) >> 8, 255);
         }
 
         if (!pp_AlphaTest || src.a >= PT_ALPHA_REF)
@@ -293,7 +252,7 @@ struct RefPixelPipeline : PixelPipeline {
         }
     }
     // Texture and shade a pixel
-    TPL_DECL_pixel 
+    template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset, bool pp_ColorClamp, u32 pp_FogCtrl>
     static bool PixelFlush_tsp(const FpuEntry *entry, float x, float y, float W, u8 *rb)
     {
         auto zb = (float *)&rb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
@@ -316,6 +275,87 @@ struct RefPixelPipeline : PixelPipeline {
 
         Color col = entry->colorCombiner(base, textel, offs);
         
+        if (pp_ColorClamp) {
+            Color clamp_max = { FOG_CLAMP_MAX };
+            Color clamp_min = { FOG_CLAMP_MIN };
+
+            for (int i = 0; i < 4; i++)
+            {
+                col.bgra[i] = min(col.bgra[i], clamp_max.bgra[i]);
+                col.bgra[i] = max(col.bgra[i], clamp_min.bgra[i]);
+            }
+        }
+
+        switch(pp_FogCtrl) {
+            // Look up mode 1
+            case 0b00:
+            // look up mode 2
+            case 0b11:
+                {
+                    u8* fog_density=(u8*)&FOG_DENSITY;
+                    float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
+                    s32 fog_den_exp=(s8)fog_density[0];
+                    
+                    float fog_den = fog_den_mant*powf(2.0f,fog_den_exp);
+
+                    f32 fogW = fog_den / W;
+
+                    fogW = max(fogW, 1.0f);
+                    fogW = min(fogW, 255.999985f);
+
+                    union f32_fields {
+                        f32 full;
+                        struct {
+                            u32 m: 23;
+                            u32 e: 8;
+                            u32 s: 1;
+                        };
+                    };
+
+                    f32_fields fog_fields = { fogW };
+
+                    u32 index = (((fog_fields.e +1) & 7) << 4) |  ((fog_fields.m>>19) & 15);
+
+                    auto fog_entry = FOG_TABLE[index];
+
+                    u8 fog_alpha = (fog_entry >> 8) & 255; // TODO: BLEND
+                    u8 fog_inv = 255^fog_alpha;
+
+                    Color col_ram = { FOG_COL_RAM };
+
+                    if (pp_FogCtrl == 0b00) {
+                        for (int i = 0; i < 3; i++) {
+                            col.bgra[i] = (col.bgra[i] * fog_inv + col_ram.bgra[i] * fog_alpha)>>8;
+                        }
+                    } else {
+                        for (int i = 0; i < 3; i++) {
+                            col.bgra[i] = col_ram.bgra[i];
+                        }
+                        col.a = col_ram.a;
+                    }
+                }
+                break;
+
+            // Per Vertex
+            case 0b01:
+                if (pp_Offset) {
+                    Color col_vert = { FOG_COL_VERT };
+                    u8 alpha = offs.a;
+                    u8 inv = 255^alpha;
+                  
+                    for (int i = 0; i < 3; i++)
+                    {
+                        col.bgra[i] = (col.bgra[i] * inv + col_vert.bgra[i] * alpha)>>8;
+                    }
+                }
+                break;
+
+                
+            // No Fog
+            case 0b10:
+                break;
+        }
+
         return entry->blendingUnit(cb, col);
     }
     // Lookup/create cached TSP parameters, and call PixelFlush_tsp

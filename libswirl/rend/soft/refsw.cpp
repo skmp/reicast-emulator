@@ -115,11 +115,11 @@ struct FpuEntry;
 
 union Color {
     u32 raw;
-    u8 rgba[4];
+    u8 bgra[4];
     struct {
-        u8 r;
-        u8 g;
         u8 b;
+        u8 g;
+        u8 r;
         u8 a;
     };
 };

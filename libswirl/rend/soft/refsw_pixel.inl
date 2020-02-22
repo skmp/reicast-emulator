@@ -6,7 +6,7 @@ struct RefPixelPipeline : PixelPipeline {
 
     TspFn PixelFlush_tspFns[2][2][2][2][4];
 
-    TextureFetchFn PixelFlush_textureFns[2][2][2][2][2];
+    TextureFetchFn PixelFlush_textureFns[2][2][2][2][2][4];
     ColorCombinerFn PixelFlush_combinerFns[2][2][4];
     BlendingUnitFn PixelFlush_alphaFns[2][2][2][8][8];
 
@@ -23,7 +23,7 @@ struct RefPixelPipeline : PixelPipeline {
     }
 
     virtual TextureFetchFn GetTextureFetch(TSP tsp) {
-        return PixelFlush_textureFns[tsp.IgnoreTexA][tsp.ClampU][tsp.ClampV][tsp.FlipU][tsp.FlipV];
+        return PixelFlush_textureFns[tsp.IgnoreTexA][tsp.ClampU][tsp.ClampV][tsp.FlipU][tsp.FlipV][tsp.FilterMode];
     }
 
     virtual ColorCombinerFn GetColorCombiner(ISP_TSP isp, TSP tsp) {
@@ -69,7 +69,7 @@ struct RefPixelPipeline : PixelPipeline {
 
     // can be
     // repeat, filtering, two volumes
-    template<bool pp_IgnoreTexA,  bool pp_ClampU, bool pp_ClampV, bool pp_FlipU, bool pp_FlipV>
+    template<bool pp_IgnoreTexA,  bool pp_ClampU, bool pp_ClampV, bool pp_FlipU, bool pp_FlipV, u32 pp_FilterMode>
     static Color TextureFetch(const text_info *texture, float u, float v) {
 
         int ui = u * 256;
@@ -78,21 +78,35 @@ struct RefPixelPipeline : PixelPipeline {
 
         mem128i px = ((mem128i *)texture->pdata)[offset];
 
-        int ublend = ui & 255;
-        int vblend = vi & 255;
-        int nublend = 255 - ublend;
-        int nvblend = 255 - vblend;
+        Color textel = {0xAF674839};
+        
+        if (pp_FilterMode == 0) {
+            // Point sampling
+            for (int i = 0; i < 4; i++)
+            {
+                textel.bgra[i] = px.m128i_u8[0 + i];
+            }
+        } else if (pp_FilterMode == 1) {
+            // Bilinear filtering
+            int ublend = ui & 255;
+            int vblend = vi & 255;
+            int nublend = 255 - ublend;
+            int nvblend = 255 - vblend;
 
-        Color textel;
 
-        for (int i = 0; i < 4; i++)
-        {
-            textel.bgra[i] =
-                (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
-                (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
-                (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
-                (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
-        };
+            for (int i = 0; i < 4; i++)
+            {
+                textel.bgra[i] =
+                    (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
+                    (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
+                    (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
+                    (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
+            };
+        } else {
+            // trilinear filtering A and B
+            die("pp_FilterMode is trilinear");
+        }
+        
 
         if (pp_IgnoreTexA)
         {

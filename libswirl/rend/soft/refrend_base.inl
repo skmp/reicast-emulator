@@ -366,7 +366,7 @@ struct RefThreadPool {
     }
 };
 
-#define MAX_CPU_COUNT 30
+#define MAX_CPU_COUNT settings.pvr.MaxThreads
 
 /*
     Main renderer class

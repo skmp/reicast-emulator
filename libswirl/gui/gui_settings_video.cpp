@@ -97,7 +97,7 @@ void gui_settings_video()
 	    	ImGui::SliderInt("Upscaled Texture Max Size", (int *)&settings.rend.MaxFilteredTextureSize, 8, 1024);
             ImGui::SameLine();
             gui_ShowHelpMarker("Textures larger than this dimension squared will not be upscaled");
-	    	ImGui::SliderInt("Max Threads", (int *)&settings.pvr.MaxThreads, 1, 8);
+	    	ImGui::SliderInt("Max Threads", (int *)&settings.pvr.MaxThreads, 0, 128);
             ImGui::SameLine();
             gui_ShowHelpMarker("Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
 	    	ImGui::Checkbox("Load Custom Textures", &settings.rend.CustomTextures);

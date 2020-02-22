@@ -310,9 +310,13 @@ struct RefPixelPipeline : PixelPipeline {
 
                     u32 index = (((fog_fields.e +1) & 7) << 4) |  ((fog_fields.m>>19) & 15);
 
-                    auto fog_entry = FOG_TABLE[index];
+                    u8 blendFactor = (fog_fields.m>>11) & 255;
+                    u8 blend_inv = 255^blendFactor;
 
-                    u8 fog_alpha = (fog_entry >> 8) & 255; // TODO: BLEND
+                    auto fog_entry = (u8*)&FOG_TABLE[index];
+
+                    u8 fog_alpha = (fog_entry[0] * blendFactor + fog_entry[1] * blend_inv) >> 8;
+                    
                     u8 fog_inv = 255^fog_alpha;
 
                     Color col_ram = { FOG_COL_RAM };

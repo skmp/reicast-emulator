@@ -1,3 +1,8 @@
+/*
+	This file is part of libswirl
+    #include "license/bsd"
+*/
+
 {
     #define ISP_FNS(rm) \
         PixelFlush_ispFns[rm][0] = &PixelFlush_isp<rm, 0>; \

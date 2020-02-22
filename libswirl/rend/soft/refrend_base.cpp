@@ -67,11 +67,6 @@
 #include "oslib/oslib.h"
 #include "rend/TexCache.h"
 
-#include <mmintrin.h>
-#include <xmmintrin.h>
-#include <emmintrin.h>
-#include <smmintrin.h>
-
 #include <cmath>
 #include <float.h>
 
@@ -84,108 +79,7 @@
 
 extern u32 decoded_colors[3][65536];
 
-#pragma pack(push, 1) 
-union RegionArrayEntryControl {
-    struct {
-        u32 res0 : 2;
-        u32 tilex : 6;
-        u32 tiley : 6;
-        u32 res1 : 14;
-        u32 no_writeout : 1;
-        u32 pre_sort : 1;
-        u32 z_keep : 1;
-        u32 last_region : 1;
-    };
-    u32 full;
-};
-
-typedef u32 pvr32addr_t;
-
-union ListPointer {
-    struct
-    {
-        u32 pad0 : 2;
-        u32 ptr_in_words : 22;
-        u32 pad1 : 7;
-        u32 empty : 1;
-    };
-    u32 full;
-};
-
-union ObjectListEntry {
-    struct {
-        u32 pad0 : 31;
-        u32 is_not_triangle_strip : 1;
-    };
-
-    struct {
-        u32 pad1 : 29;
-        u32 type : 3;
-    };
-
-    struct {
-        u32 param_offs_in_words : 21;
-        u32 skip : 3;
-        u32 shadow : 1;
-        u32 mask : 6;
-    } tstrip;
-
-    struct {
-        u32 param_offs_in_words : 21;
-        u32 skip : 3;
-        u32 shadow : 1;
-        u32 prims : 4;
-    } tarray;
-
-    struct {
-        u32 param_offs_in_words : 21;
-        u32 skip : 3;
-        u32 shadow : 1;
-        u32 prims : 4;
-    } qarray;
-
-    struct {
-        u32 pad3 : 2;
-        u32 next_block_ptr_in_words : 22;
-        u32 pad4 : 4;
-        u32 end_of_list : 1;
-    } link;
-
-    u32 full;
-};
-
-#pragma pack(pop)
-
-struct RegionArrayEntry {
-    RegionArrayEntryControl control;
-    ListPointer opaque;
-    ListPointer opaque_mod;
-    ListPointer trans;
-    ListPointer trans_mod;
-    ListPointer puncht;
-};
-
-struct DrawParameters
-{
-    ISP_TSP isp;
-    TSP tsp;
-    TCW tcw;
-    TSP tsp2;
-    TSP tcw2;
-};
-
-enum RenderMode {
-    RM_OPAQUE,
-    RM_PUNCHTHROUGH,
-    RM_TRANSLUCENT,
-    RM_MODIFIER,
-    RM_COUNT
-};
-
 #if HOST_OS != OS_WINDOWS
-struct RECT {
-    int left, top, right, bottom;
-};
 
 #include     <X11/Xlib.h>
 #endif
@@ -194,51 +88,10 @@ struct RECT {
 static BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 #endif
 
+#include "refrend_base.h"
+
 bool gles_init();
 
-typedef u32 parameter_tag_t;
-
-struct RefRendInterface
-{
-    // backend specific init
-    virtual bool Init() = 0;
-
-    // Clear the buffers
-    virtual void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
-
-    // Clear and set DEPTH2 for peeling
-    virtual void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
-
-    // Summarize tile after rendering modvol (inside)
-    virtual void SummarizeStencilOr() = 0;
-    
-    // Summarize tile after rendering modvol (outside)
-    virtual void SummarizeStencilAnd() = 0;
-
-    // Clear the pixel drawn counter
-    virtual void ClearPixelsDrawn() = 0;
-
-    // Get the pixel drawn counter. Used during layer peeling to determine when to stop processing
-    virtual u32 GetPixelsDrawn() = 0;
-
-    // Add an entry to the fpu parameters list
-    virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode) = 0;
-
-    // Clear the fpu parameters list
-    virtual void ClearFpuEntries() = 0;
-
-    // Get the final output of the 32x32 tile. Used to write to the VRAM framebuffer
-    virtual u8* GetColorOutputBuffer() = 0;
-
-    // Render to ACCUM from TAG buffer
-    // TAG holds references to triangles, ACCUM is the tile framebuffer
-    virtual void RenderParamTags(RenderMode rm, int tileX, int tileY) = 0;
-
-    // RasterizeTriangle
-    virtual void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, RECT* area) = 0;
-
-    virtual ~RefRendInterface() { };
-};
 
 struct RefThreadPool {
     vector<cThread> threads;
@@ -381,7 +234,7 @@ struct refrend : Renderer
 
     RefThreadPool pool;
 
-    refrend(u8* vram, std::function<RefRendInterface*()> createBackend) : vram(vram), createBackend(createBackend) {
+    refrend(u8* vram, function<RefRendInterface*()> createBackend) : vram(vram), createBackend(createBackend) {
         if (MAX_CPU_COUNT == 0) {
             backend.reset(createBackend());
 
@@ -407,7 +260,7 @@ struct refrend : Renderer
         }
     }
 
-    void RenderTriangle(RefRendInterface* backend, RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, RECT* area)
+    void RenderTriangle(RefRendInterface* backend, RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, taRECT* area)
     {
         backend->RasterizeTriangle(render_mode, params, tag, vertex_offset, v1, v2, v3, v4, area);
 
@@ -549,7 +402,7 @@ struct refrend : Renderer
 
 
     // render a triangle strip object list entry
-    void RenderTriangleStrip(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, RECT* rect)
+    void RenderTriangleStrip(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, taRECT* rect)
     {
         Vertex vtx[8];
         DrawParameters params;
@@ -573,7 +426,7 @@ struct refrend : Renderer
 
 
     // render a triangle array object list entry
-    void RenderTriangleArray(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, RECT* rect)
+    void RenderTriangleArray(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, taRECT* rect)
     {
         auto triangles = obj.tarray.prims + 1;
         u32 param_base = PARAM_BASE & 0xF00000;
@@ -599,7 +452,7 @@ struct refrend : Renderer
     }
 
     // render a quad array object list entry
-    void RenderQuadArray(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, RECT* rect)
+    void RenderQuadArray(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, taRECT* rect)
     {
         auto quads = obj.qarray.prims + 1;
         u32 param_base = PARAM_BASE & 0xF00000;
@@ -622,7 +475,7 @@ struct refrend : Renderer
     }
 
     // Render an object list
-    void RenderObjectList(RefRendInterface* backend, RenderMode render_mode, pvr32addr_t base, RECT* rect)
+    void RenderObjectList(RefRendInterface* backend, RenderMode render_mode, pvr32addr_t base, taRECT* rect)
     {
         ObjectListEntry obj;
 
@@ -670,7 +523,7 @@ struct refrend : Renderer
         do {
             base += ReadRegionArrayEntry(base, &entry);
             EnqueueTile(entry.control.tiley * 64 + entry.control.tilex, [=](RefRendInterface* backend) {
-                RECT rect;
+                taRECT rect;
                 rect.top = entry.control.tiley * 32;
                 rect.left = entry.control.tilex * 32;
 
@@ -1028,3 +881,6 @@ struct refrend : Renderer
     }
 };
 
+Renderer* rend_refred_base(u8* vram, function<RefRendInterface*()> createBackend) {
+    return new refrend(vram, createBackend);
+}

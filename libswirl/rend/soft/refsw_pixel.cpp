@@ -1,3 +1,30 @@
+/*
+	This file is part of libswirl
+
+    Implemenets Pixel operations (PixelPipeline) for RefSW
+
+    Naive easy-to-read implementation
+*/
+
+#include "license/bsd"
+
+#include "refsw.h"
+
+#include <cmath>
+#include <cfloat>
+
+#include <mmintrin.h>
+#include <xmmintrin.h>
+#include <emmintrin.h>
+#include <smmintrin.h>
+
+union mem128i {
+    uint8_t m128i_u8[16];
+    int8_t m128i_i8[16];
+    int16_t m128i_i16[8];
+    int32_t m128i_i32[4];
+    uint32_t m128i_u32[4];
+};
 
 struct RefPixelPipeline : PixelPipeline {
 
@@ -47,28 +74,28 @@ struct RefPixelPipeline : PixelPipeline {
         BlendUnit<src_buf, dst_buf, src_sel, dst_sel>(color);
     */
 
+    // Clamp and flip a texture coordinate
     template<bool pp_Clamp, bool pp_Flip>
     static int ClampFlip(int coord, int size) {
-        if (pp_Clamp) {
+        if (pp_Clamp) { // clamp
             if (coord < 0) {
                 coord = 0;
             } else if (coord >= size) {
                 coord = size-1;
             }
-        } else if (pp_Flip) {
+        } else if (pp_Flip) { // flip
             coord &= size*2-1;
             if (coord & size) {
                 coord ^= size*2-1;
             }
-        } else {
+        } else { //wrap
             coord &= size-1;
         }
 
         return coord;
     }
 
-    // can be
-    // repeat, filtering, two volumes
+    // Fetch pixels from UVs, interpolate
     template<bool pp_IgnoreTexA,  bool pp_ClampU, bool pp_ClampV, bool pp_FlipU, bool pp_FlipV, u32 pp_FilterMode>
     static Color TextureFetch(const text_info *texture, float u, float v) {
 
@@ -116,6 +143,7 @@ struct RefPixelPipeline : PixelPipeline {
         return textel;
     }
 
+    // Combine Base, Textel and Offset colors
     template<bool pp_Texture, bool pp_Offset, u32 pp_ShadInstr>
     static Color ColorCombiner(Color base, Color textel, Color offset) {
 
@@ -174,6 +202,7 @@ struct RefPixelPipeline : PixelPipeline {
         return rv;
     }
 
+    // Interpolate the base color, also cheap shadows modifier
     template<bool pp_UseAlpha, bool pp_CheapShadows>
     INLINE static Color InterpolateBase(const PlaneStepper3* Col, float x, float y, float W, u32 stencil) {
         Color rv;
@@ -198,6 +227,7 @@ struct RefPixelPipeline : PixelPipeline {
         return rv;
     }
 
+    // Interpolate the offset color, also cheap shadows modifier
     template<bool pp_CheapShadows>
     INLINE static Color InterpolateOffs(const PlaneStepper3* Ofs, float x, float y, float W, u32 stencil) {
         Color rv;
@@ -217,6 +247,7 @@ struct RefPixelPipeline : PixelPipeline {
         return rv;
     }
 
+    // select/calculate blend coefficient for the blend unit
     template<u32 pp_AlphaInst, bool srcOther>
     INLINE static Color BlendCoefs(Color src, Color dst) {
         Color rv;
@@ -240,6 +271,7 @@ struct RefPixelPipeline : PixelPipeline {
         return rv;
     }
 
+    // Blending Unit implementation. Alpha blend, accum buffers and such
     template<bool pp_AlphaTest, u32 pp_SrcSel, u32 pp_DstSel, u32 pp_SrcInst, u32 pp_DstInst>
     static bool BlendingUnit(Color* cb, Color col)
     {
@@ -266,6 +298,7 @@ struct RefPixelPipeline : PixelPipeline {
         }
     }
 
+    // Color Clamp and Fog a pixel
     template<bool pp_Offset, bool pp_ColorClamp, u32 pp_FogCtrl>
     INLINE static Color FogUnit(Color col, float invW, u8 offs_a) {
 
@@ -357,7 +390,7 @@ struct RefPixelPipeline : PixelPipeline {
         return col;
     }
 
-    // Texture and shade a pixel
+    // Implement the full texture/shade pipeline for a pixel
     template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset, bool pp_ColorClamp, u32 pp_FogCtrl>
     static bool PixelFlush_tsp(const FpuEntry *entry, float x, float y, float W, u8 *rb)
     {
@@ -393,7 +426,7 @@ struct RefPixelPipeline : PixelPipeline {
         return entry->tsp(entry, x, y, 1/invW, rb);
     }
 
-// Depth processing for a pixel -- render_mode 0: OPAQ, 1: PT, 2: TRANS
+    // Depth processing for a pixel -- render_mode 0: OPAQ, 1: PT, 2: TRANS
     template <RenderMode render_mode, u32 depth_mode>
     static void PixelFlush_isp(refsw* backend, float x, float y, float invW, u8 *pb, parameter_tag_t tag)
     {
@@ -478,3 +511,7 @@ struct RefPixelPipeline : PixelPipeline {
     }
     
 };
+
+PixelPipeline* Create_RefPixelPipeline() {
+    return new RefPixelPipeline();
+}

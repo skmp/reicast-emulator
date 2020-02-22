@@ -1,12 +1,23 @@
-#include "refrend_base.inl"
+/*
+	This file is part of libswirl
 
-union mem128i {
-    uint8_t m128i_u8[16];
-    int8_t m128i_i8[16];
-    int16_t m128i_i16[8];
-    int32_t m128i_i32[4];
-    uint32_t m128i_u32[4];
-};
+   Implementes the Reference SoftWare renderer (RefRendInterface) backend for refrend_base.
+   This includes buffer operations and rasterization
+
+   Pixel operations are in refsw_pixel.cpp (PixelPipeline interface)
+*/
+#include "license/bsd"
+
+#include <cmath>
+#include <float.h>
+
+#include "refsw.h"
+#include "refsw_pixel.h"
+
+#include <mmintrin.h>
+#include <xmmintrin.h>
+#include <emmintrin.h>
+#include <smmintrin.h>
 
 static __forceinline int iround(float x)
 {
@@ -27,139 +38,15 @@ static float mmax(float a, float b, float c, float d)
     return min(d, rv);
 }
 
-/*
-    Surface equation solver
-*/
-struct PlaneStepper3
-{
-    float ddx, ddy;
-    float c;
-
-    void Setup(const Vertex& v1, const Vertex& v2, const Vertex& v3, float v1_a, float v2_a, float v3_a)
-    {
-        float Aa = ((v3_a - v1_a) * (v2.y - v1.y) - (v2_a - v1_a) * (v3.y - v1.y));
-        float Ba = ((v3.x - v1.x) * (v2_a - v1_a) - (v2.x - v1.x) * (v3_a - v1_a));
-
-        float C = ((v2.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (v2.y - v1.y));
-        
-        ddx = -Aa / C;
-        ddy = -Ba / C;
-
-        c = (v1_a - ddx * v1.x - ddy * v1.y);
-    }
-
-    __forceinline float Ip(float x, float y) const
-    {
-        return x * ddx + y * ddy + c;
-    }
-
-    __forceinline float Ip(float x, float y, float W) const
-    {
-        return Ip(x, y) * W;
-    }
-};
-
-/*
-    Interpolation helper
-*/
-struct IPs3
-{
-    PlaneStepper3 U;
-    PlaneStepper3 V;
-    PlaneStepper3 Col[4];
-    PlaneStepper3 Ofs[4];
-
-    void Setup(DrawParameters* params, text_info* texture, const Vertex& v1, const Vertex& v2, const Vertex& v3)
-    {
-        u32 w = 0, h = 0;
-        if (texture) {
-            w = texture->width - 1;
-            h = texture->height - 1;
-        }
-
-        U.Setup(v1, v2, v3, v1.u * w * v1.z, v2.u * w * v2.z, v3.u * w * v3.z);
-        V.Setup(v1, v2, v3, v1.v * h * v1.z, v2.v * h * v2.z, v3.v * h * v3.z);
-        if (params->isp.Gouraud) {
-            for (int i = 0; i < 4; i++)
-                Col[i].Setup(v1, v2, v3, v1.col[i] * v1.z, v2.col[i] * v2.z, v3.col[i] * v3.z);
-
-            for (int i = 0; i < 4; i++)
-                Ofs[i].Setup(v1, v2, v3, v1.spc[i] * v1.z, v2.spc[i] * v2.z, v3.spc[i] * v3.z);
-        } else {
-            for (int i = 0; i < 4; i++)
-                Col[i].Setup(v1, v2, v3, v3.col[i] * v1.z, v3.col[i] * v2.z, v3.col[i] * v3.z);
-
-            for (int i = 0; i < 4; i++)
-                Ofs[i].Setup(v1, v2, v3, v3.spc[i] * v1.z, v3.spc[i] * v2.z, v3.spc[i] * v3.z);
-        }
-    }
-};
-
-#define MAX_RENDER_WIDTH 32
-#define MAX_RENDER_HEIGHT 32
-#define MAX_RENDER_PIXELS (MAX_RENDER_WIDTH * MAX_RENDER_HEIGHT)
-
-#define STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH
-
-#define PARAM_BUFFER_PIXEL_OFFSET   0
-#define DEPTH1_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*1)
-#define DEPTH2_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*2)
-#define STENCIL_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*3)
-#define ACCUM1_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*4)
-#define ACCUM2_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*5)
-
 static cMutex texture_lock;
 
-struct refsw;
-struct FpuEntry;
-
-union Color {
-    u32 raw;
-    u8 bgra[4];
-    struct {
-        u8 b;
-        u8 g;
-        u8 r;
-        u8 a;
-    };
-};
-
-struct PixelPipeline {
-    // lookup tables
-    typedef void(*IspFn)(refsw* backend, float x, float y, float invW, u8 *pb, parameter_tag_t tag);
-    typedef bool(*TspFn)(const FpuEntry *entry, float x, float y, float invW, u8 *pb);
-    typedef Color(*TextureFetchFn)(const text_info *texture, float u, float v);
-    typedef Color(*ColorCombinerFn)(Color base, Color textel, Color offset);
-    typedef bool(*BlendingUnitFn)(Color* cb, Color col);
-
-    virtual IspFn GetIsp(RenderMode render_mode, ISP_TSP isp)= 0;
-    virtual TspFn GetTsp(ISP_TSP isp, TSP tsp)= 0;
-    virtual TextureFetchFn GetTextureFetch(TSP tsp)= 0;
-    virtual ColorCombinerFn GetColorCombiner(ISP_TSP isp, TSP tsp)= 0;
-    virtual BlendingUnitFn GetBlendingUnit(RenderMode render_mode, TSP tsp) = 0;
-
-    virtual ~PixelPipeline() { }
-};
-
-// Used for deferred TSP processing lookups
-struct FpuEntry
-{
-    IPs3 ips;
-    DrawParameters params;
-    text_info texture;
-    PixelPipeline::TspFn tsp;
-    PixelPipeline::TextureFetchFn textureFetch;
-    PixelPipeline::ColorCombinerFn colorCombiner;
-    PixelPipeline::BlendingUnitFn blendingUnit;
-};
-
-struct refsw : RefRendInterface
+struct refsw_impl : refsw
 {
     DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 6]; //param pointers + depth1 + depth2 + stencil + acum 1 + acum 2
     unique_ptr<PixelPipeline> pixelPipeline;
 
     u8* vram;
-    refsw(u8* vram, PixelPipeline* pixelPipeline) : vram(vram), pixelPipeline(pixelPipeline) {
+    refsw_impl(u8* vram, PixelPipeline* pixelPipeline) : vram(vram), pixelPipeline(pixelPipeline) {
         
     }
 
@@ -276,11 +163,8 @@ struct refsw : RefRendInterface
         return entry->tsp(entry, x, y, 1/invW, rb);
     }
 
-    // Used by layer peeling to determine end of processing
-    int PixelsDrawn;
-
     // Rasterize a single triangle to ISP (or ISP+TSP for PT)
-    void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, RECT* area)
+    void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, taRECT* area)
     {
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation
@@ -407,8 +291,6 @@ struct refsw : RefRendInterface
             y_ps = y_ps + 1;
         }
     }
-
-    vector<FpuEntry> fpu_entires;
     
     virtual u8* GetColorOutputBuffer() {
         return reinterpret_cast<u8*>(render_buffer + ACCUM1_BUFFER_PIXEL_OFFSET);
@@ -421,11 +303,9 @@ struct refsw : RefRendInterface
 
 #if FEAT_TA == TA_LLE
 
-#include "refsw_pixel.inl"
-
 Renderer* rend_refsw(u8* vram) {
-    return new refrend(vram, [=]() { 
-        return (RefRendInterface*) new(_mm_malloc(sizeof(refsw), 32)) ::refsw(vram, new RefPixelPipeline());
+    return rend_refred_base(vram, [=]() { 
+        return (RefRendInterface*) new(_mm_malloc(sizeof(refsw_impl), 32)) ::refsw_impl(vram, Create_RefPixelPipeline());
     });
 }
 

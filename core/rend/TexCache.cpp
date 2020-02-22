@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <array>
 #if defined(HAVE_TEXUPSCALE) && !defined(TARGET_NO_OPENMP)
 #include <omp.h>
 #endif

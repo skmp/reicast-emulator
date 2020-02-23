@@ -298,6 +298,41 @@ struct RefPixelPipeline : PixelPipeline {
         }
     }
 
+    INLINE static u8 LookupFogTable(float invW) {
+        u8* fog_density=(u8*)&FOG_DENSITY;
+        float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
+        s32 fog_den_exp=(s8)fog_density[0];
+        
+        float fog_den = fog_den_mant*powf(2.0f,fog_den_exp);
+
+        f32 fogW = fog_den * invW;
+
+        fogW = max(fogW, 1.0f);
+        fogW = min(fogW, 255.999985f);
+
+        union f32_fields {
+            f32 full;
+            struct {
+                u32 m: 23;
+                u32 e: 8;
+                u32 s: 1;
+            };
+        };
+
+        f32_fields fog_fields = { fogW };
+
+        u32 index = (((fog_fields.e +1) & 7) << 4) |  ((fog_fields.m>>19) & 15);
+
+        u8 blendFactor = (fog_fields.m>>11) & 255;
+        u8 blend_inv = 255^blendFactor;
+
+        auto fog_entry = (u8*)&FOG_TABLE[index];
+
+        u8 fog_alpha = (fog_entry[0] * blendFactor + fog_entry[1] * blend_inv) >> 8;
+
+        return fog_alpha;
+    }
+
     // Color Clamp and Fog a pixel
     template<bool pp_Offset, bool pp_ColorClamp, u32 pp_FogCtrl>
     INLINE static Color FogUnit(Color col, float invW, u8 offs_a) {
@@ -319,36 +354,7 @@ struct RefPixelPipeline : PixelPipeline {
             // look up mode 2
             case 0b11:
                 {
-                    u8* fog_density=(u8*)&FOG_DENSITY;
-                    float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
-                    s32 fog_den_exp=(s8)fog_density[0];
-                    
-                    float fog_den = fog_den_mant*powf(2.0f,fog_den_exp);
-
-                    f32 fogW = fog_den * invW;
-
-                    fogW = max(fogW, 1.0f);
-                    fogW = min(fogW, 255.999985f);
-
-                    union f32_fields {
-                        f32 full;
-                        struct {
-                            u32 m: 23;
-                            u32 e: 8;
-                            u32 s: 1;
-                        };
-                    };
-
-                    f32_fields fog_fields = { fogW };
-
-                    u32 index = (((fog_fields.e +1) & 7) << 4) |  ((fog_fields.m>>19) & 15);
-
-                    u8 blendFactor = (fog_fields.m>>11) & 255;
-                    u8 blend_inv = 255^blendFactor;
-
-                    auto fog_entry = (u8*)&FOG_TABLE[index];
-
-                    u8 fog_alpha = (fog_entry[0] * blendFactor + fog_entry[1] * blend_inv) >> 8;
+                    u8 fog_alpha = LookupFogTable(invW);
                     
                     u8 fog_inv = 255^fog_alpha;
 

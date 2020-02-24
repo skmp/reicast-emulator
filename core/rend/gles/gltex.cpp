@@ -384,8 +384,13 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 		tf->Update();
    else
    {
-	  tf->CheckCustomTexture();
-	  TexCacheHits++;
+      if (tf->IsCustomTextureAvailable())
+      {
+      	glcache.DeleteTextures(1, &tf->texID);
+      	tf->texID = glcache.GenTexture();
+      	tf->CheckCustomTexture();
+      }
+      TexCacheHits++;
    }
 
 	/* Update state for opts/stuff */

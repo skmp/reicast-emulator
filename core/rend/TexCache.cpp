@@ -782,7 +782,7 @@ void BaseTextureCacheData::Update()
 
 void BaseTextureCacheData::CheckCustomTexture()
 {
-	if (custom_load_in_progress == 0 && custom_image_data != NULL)
+	if (IsCustomTextureAvailable())
 	{
 		tex_type = TextureType::_8888;
 		UploadToGPU(custom_width, custom_height, custom_image_data, false);

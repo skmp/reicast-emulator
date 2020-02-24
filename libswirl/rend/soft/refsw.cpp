@@ -300,6 +300,13 @@ Renderer* rend_refsw(u8* vram) {
     });
 }
 
-
 static auto refrend = RegisterRendererBackend(rendererbackend_t{ "refsw", "RefSW", 0, rend_refsw });
+
+Renderer* rend_refsw_debug(u8* vram) {
+    return rend_refred_base(vram, [=]() { 
+        return rend_refred_debug((RefRendInterface*) new(_mm_malloc(sizeof(refsw_impl), 32)) ::refsw_impl(vram, Create_RefPixelPipeline()));
+    });
+}
+
+static auto refrend_debug = RegisterRendererBackend(rendererbackend_t{ "refsw-dbg", "RefSW Debug", 0, rend_refsw_debug });
 #endif

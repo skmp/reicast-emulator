@@ -85,3 +85,5 @@ struct RefRendInterface
 };
 
 Renderer* rend_refred_base(u8* vram, function<RefRendInterface*()> createBackend);
+
+RefRendInterface*  rend_refred_debug(RefRendInterface* backend);

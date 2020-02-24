@@ -74,6 +74,9 @@ struct RefRendInterface
     // Get the final output of the 32x32 tile. Used to write to the VRAM framebuffer
     virtual u8* GetColorOutputBuffer() = 0;
 
+    // Debug-level
+    virtual u8* DebugGetAllBuffers() = 0;
+
     // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
     virtual void RenderParamTags(RenderMode rm, int tileX, int tileY) = 0;

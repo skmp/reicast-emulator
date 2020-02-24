@@ -287,6 +287,10 @@ struct refsw_impl : refsw
         return reinterpret_cast<u8*>(render_buffer + ACCUM1_BUFFER_PIXEL_OFFSET);
     }
 
+    virtual u8* DebugGetAllBuffers() {
+        return reinterpret_cast<u8*>(render_buffer);
+    }
+
     void operator delete(void* p) {
         _mm_free(p);
     }

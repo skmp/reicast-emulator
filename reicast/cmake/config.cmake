@@ -65,10 +65,19 @@ set(COMPILER_GCC   0x30000002)
 set(COMPILER_CLANG 0x30000003)
 set(COMPILER_INTEL 0x30000004)
 
+set(TA_HLE 0x60000001)
+set(TA_LLE 0x60000002)
 
 
+# options
+option(HAS_TA_LLE "Use TA LLE" OFF)
 
 
+if(HAS_TA_LLE)
+  set(FEAT_TA ${TA_LLE})
+else()
+  set(FEAT_TA ${TA_HLE})
+endif()
 
 
 ## These default to host, but are used for cross so make sure not to contaminate
@@ -419,6 +428,8 @@ add_definitions(-DFEAT_SHREC=${FEAT_SHREC})
 add_definitions(-DFEAT_DSPREC=${FEAT_DSPREC})
 
 add_definitions(-DBUILD_COMPILER=${BUILD_COMPILER})
+
+add_definitions(-DFEAT_TA=${FEAT_TA})
 
 add_definitions(-DTARGET_NO_WEBUI)
 add_definitions(-DDEF_CONSOLE)

@@ -67,120 +67,19 @@
 #include "oslib/oslib.h"
 #include "rend/TexCache.h"
 
-#include <mmintrin.h>
-#include <xmmintrin.h>
-#include <emmintrin.h>
-#include <smmintrin.h>
-
 #include <cmath>
 #include <float.h>
 
 #include "rend/gles/gles.h"
 #include "gui/gui.h"
 
+#include <memory>
+#include <atomic>
+#include <queue>
+
 extern u32 decoded_colors[3][65536];
 
-#pragma pack(push, 1) 
-union RegionArrayEntryControl {
-    struct {
-        u32 res0 : 2;
-        u32 tilex : 6;
-        u32 tiley : 6;
-        u32 res1 : 14;
-        u32 no_writeout : 1;
-        u32 pre_sort : 1;
-        u32 z_keep : 1;
-        u32 last_region : 1;
-    };
-    u32 full;
-};
-
-typedef u32 pvr32addr_t;
-
-union ListPointer {
-    struct
-    {
-        u32 pad0 : 2;
-        u32 ptr_in_words : 22;
-        u32 pad1 : 7;
-        u32 empty : 1;
-    };
-    u32 full;
-};
-
-union ObjectListEntry {
-    struct {
-        u32 pad0 : 31;
-        u32 is_not_triangle_strip : 1;
-    };
-
-    struct {
-        u32 pad1 : 29;
-        u32 type : 3;
-    };
-
-    struct {
-        u32 param_offs_in_words : 21;
-        u32 skip : 3;
-        u32 shadow : 1;
-        u32 mask : 6;
-    } tstrip;
-
-    struct {
-        u32 param_offs_in_words : 21;
-        u32 skip : 3;
-        u32 shadow : 1;
-        u32 prims : 4;
-    } tarray;
-
-    struct {
-        u32 param_offs_in_words : 21;
-        u32 skip : 3;
-        u32 shadow : 1;
-        u32 prims : 4;
-    } qarray;
-
-    struct {
-        u32 pad3 : 2;
-        u32 next_block_ptr_in_words : 22;
-        u32 pad4 : 4;
-        u32 end_of_list : 1;
-    } link;
-
-    u32 full;
-};
-
-#pragma pack(pop)
-
-struct RegionArrayEntry {
-    RegionArrayEntryControl control;
-    ListPointer opaque;
-    ListPointer opaque_mod;
-    ListPointer trans;
-    ListPointer trans_mod;
-    ListPointer puncht;
-};
-
-struct DrawParameters
-{
-    ISP_TSP isp;
-    TSP tsp;
-    TCW tcw;
-    TSP tsp2;
-    TSP tcw2;
-};
-
-enum RenderMode {
-    RM_OPAQUE,
-    RM_PUNCHTHROUGH,
-    RM_TRANSLUCENT,
-    RM_MODIFIER,
-};
-
 #if HOST_OS != OS_WINDOWS
-struct RECT {
-    int left, top, right, bottom;
-};
 
 #include     <X11/Xlib.h>
 #endif
@@ -189,91 +88,191 @@ struct RECT {
 static BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 #endif
 
+#include "refrend_base.h"
+
 bool gles_init();
 
-typedef u32 parameter_tag_t;
 
-struct RefRendInterface
-{
-    // Clear the buffers
-    virtual void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
+struct RefThreadPool {
+    vector<cThread> threads;
+    vector<queue<function<void(RefRendInterface*)>>> queues;
+    vector<cResetEvent> eventHasWork;
+    vector<cResetEvent> eventDoneWork;
 
-    // Clear and set DEPTH2 for peeling
-    virtual void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
+    queue<function<void()>> queueMainThread;
 
-    // Summarize tile after rendering modvol (inside)
-    virtual void SummarizeStencilOr() = 0;
-    
-    // Summarize tile after rendering modvol (outside)
-    virtual void SummarizeStencilAnd() = 0;
+    atomic<bool> running;
+    cMutex queue_lock;
 
-    // Clear the pixel drawn counter
-    virtual void ClearPixelsDrawn() = 0;
+    RefThreadPool() : running(false) {
+        
+    }
 
-    // Get the pixel drawn counter. Used during layer peeling to determine when to stop processing
-    virtual u32 GetPixelsDrawn() = 0;
+    void enqueueMainThread(function<void()> fn) {
+        queue_lock.Lock();
+        queueMainThread.push(fn);
+        queue_lock.Unlock();
+    }
 
-    // Add an entry to the fpu parameters list
-    virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode) = 0;
+    void pumpMainThread() {
+        queue_lock.Lock();
+        while (queueMainThread.size() != 0) {
+            auto fn = queueMainThread.front();
+            queueMainThread.pop();
+            queue_lock.Unlock();
+            fn();
+            queue_lock.Lock();
+        }
+        queue_lock.Unlock();
+    }
 
-    // Clear the fpu parameters list
-    virtual void ClearFpuEntries() = 0;
+    void enqueueWorkThread(int tileId, function<void(RefRendInterface*)> fn) {
+        verify(queues.size() != 0);
 
-    // Get the final output of the 32x32 tile. Used to write to the VRAM framebuffer
-    virtual u8* GetColorOutputBuffer() = 0;
+        auto queueId = tileId % queues.size();
+        queue_lock.Lock();
+        queues[queueId].push(fn);
+        eventHasWork[queueId].Set();
+        queue_lock.Unlock();
+    }
 
-    // Render to ACCUM from TAG buffer
-    // TAG holds references to triangles, ACCUM is the tile framebuffer
-    virtual void RenderParamTags(int tileX, int tileY) = 0;
+    static void* ThreadPoolEntry(void* func) {
+        auto fn = reinterpret_cast<function<void()>*>(func);
 
-    // RasterizeTriangle for each rendering mode
-    #define RasterizeTriangleMode(mode) \
-        virtual void RasterizeTriangle_##mode(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area) = 0
+        (*fn)();
 
-    RasterizeTriangleMode(OPAQUE);
-    RasterizeTriangleMode(PUNCHTHROUGH);
-    RasterizeTriangleMode(TRANSLUCENT);
-    RasterizeTriangleMode(MODIFIER);
+        delete fn;
 
-    #undef RasterizeTriangleMode
-    
+        return nullptr;
+    }
+
+    bool Init(int threadCount, function<RefRendInterface*()> createBackend) {
+
+        running = true;
+
+        queues.reserve(threadCount);
+        threads.reserve(threadCount);
+        eventHasWork.resize(threadCount); // resize not reserve
+        eventDoneWork.resize(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            auto func = new function<void()>([=]() {
+                unique_ptr<RefRendInterface> backend;
+
+                backend.reset(createBackend());
+
+                backend->Init();
+
+                while (running) {
+                    queue_lock.Lock();
+                    if (queues[i].size() == 0)
+                    {
+                        queue_lock.Unlock();
+                        eventDoneWork[i].Set();
+                        eventHasWork[i].Wait();
+                        continue;
+                    }
+                    auto item = queues[i].front();
+                    queues[i].pop();
+                    queue_lock.Unlock();
+
+                    item(backend.get());
+                }
+
+                backend.reset();
+            });
+
+            queues.push_back(queue<function<void(RefRendInterface*)>>());
+            threads.push_back(cThread(ThreadPoolEntry, func));
+
+            threads[threads.size() - 1].Start();
+        }
+
+        return true;
+    }
+
+    void waitWorkThreads() {
+        for (int i = 0; i < threads.size(); i++) {
+            for (;;) {
+                queue_lock.Lock();
+                bool empty = queues[i].size() == 0;
+                queue_lock.Unlock();
+
+                if (empty)
+                    break;
+                else
+                    eventDoneWork[i].Wait();
+            }
+        }
+    }
+
+    ~RefThreadPool() {
+        running = false;
+
+        for (auto& eventy : eventHasWork) {
+            eventy.Set();
+        }
+
+        for (auto& thread : threads) {
+            thread.WaitToEnd();
+        }
+    }
 };
+
+#define MAX_CPU_COUNT settings.pvr.MaxThreads
 
 /*
     Main renderer class
 */
-struct refrend : Renderer, RefRendInterface
+struct refrend : Renderer
 {
+    std::function<RefRendInterface*()> createBackend;
+
+    unique_ptr<RefRendInterface> backend;
+
     u8* vram;
 
-    refrend(u8* vram) : vram(vram) { }
+    RefThreadPool pool;
 
-    template<RenderMode render_mode>
-    void RenderTriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, RECT* area)
-    {
-        switch(render_mode)
-        {
-            #define RasterizeTriangleCase(mode) \
-                case RM_##mode: RasterizeTriangle_##mode(params, tag, vertex_offset, v1, v2, v3, area); break
+    refrend(u8* vram, function<RefRendInterface*()> createBackend) : vram(vram), createBackend(createBackend) {
+        if (MAX_CPU_COUNT == 0) {
+            backend.reset(createBackend());
 
-            RasterizeTriangleCase(OPAQUE);
-            RasterizeTriangleCase(PUNCHTHROUGH);
-            RasterizeTriangleCase(TRANSLUCENT);
-            RasterizeTriangleCase(MODIFIER);
-
-            #undef RasterizeTriangleCase
+            backend->Init();
+        } else {
+            pool.Init(MAX_CPU_COUNT, createBackend);
         }
-        
+    }
+
+    void EnqueueTile(int tileId, function<void(RefRendInterface*)> fn) {
+        if (!pool.running) {
+            fn(backend.get());
+        } else {
+            pool.enqueueWorkThread(tileId, fn);
+        }
+    }
+
+    void EnqueueWriteout(function<void()> fn) {
+        if (!pool.running) {
+            fn();
+        } else {
+            pool.enqueueMainThread(fn);
+        }
+    }
+
+    void RenderTriangle(RefRendInterface* backend, RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, taRECT* area)
+    {
+        backend->RasterizeTriangle(render_mode, params, tag, vertex_offset, v1, v2, v3, v4, area);
 
         if (render_mode == RM_MODIFIER)
         {          
             if (params->isp.modvol.VolumeMode == 1 ) 
             {
-                SummarizeStencilOr();
+                backend->SummarizeStencilOr();
             }
             else if (params->isp.modvol.VolumeMode == 2) 
             {
-                SummarizeStencilAnd();
+                backend->SummarizeStencilAnd();
             }
         }
     }
@@ -403,8 +402,7 @@ struct refrend : Renderer, RefRendInterface
 
 
     // render a triangle strip object list entry
-    template<RenderMode render_mode>
-    void RenderTriangleStrip(ObjectListEntry obj, RECT* rect)
+    void RenderTriangleStrip(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, taRECT* rect)
     {
         Vertex vtx[8];
         DrawParameters params;
@@ -419,17 +417,16 @@ struct refrend : Renderer, RefRendInterface
             if (obj.tstrip.mask & (1 << (5-i)))
             {
 
-                parameter_tag_t tag = AddFpuEntry(&params, &vtx[i], render_mode);
+                parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode);
 
-                RenderTriangle<render_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], rect);
+                RenderTriangle(backend, render_mode, &params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], nullptr, rect);
             }
         }
     }
 
 
     // render a triangle array object list entry
-    template<RenderMode render_mode>
-    void RenderTriangleArray(ObjectListEntry obj, RECT* rect)
+    void RenderTriangleArray(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, taRECT* rect)
     {
         auto triangles = obj.tarray.prims + 1;
         u32 param_base = PARAM_BASE & 0xF00000;
@@ -447,16 +444,15 @@ struct refrend : Renderer, RefRendInterface
             parameter_tag_t tag = 0;
             if (render_mode != RM_MODIFIER)
             {
-                tag = AddFpuEntry(&params, &vtx[0], render_mode);
+                tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
             }
 
-            RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
+            RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], nullptr, rect);
         }
     }
 
     // render a quad array object list entry
-    template<RenderMode render_mode>
-    void RenderQuadArray(ObjectListEntry obj, RECT* rect)
+    void RenderQuadArray(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, taRECT* rect)
     {
         auto quads = obj.qarray.prims + 1;
         u32 param_base = PARAM_BASE & 0xF00000;
@@ -471,16 +467,15 @@ struct refrend : Renderer, RefRendInterface
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
             
-            parameter_tag_t tag = AddFpuEntry(&params, &vtx[0], render_mode);
+            parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
 
             //TODO: FIXME
-            RenderTriangle<render_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], rect);
+            RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], &vtx[3], rect);
         }
     }
 
     // Render an object list
-    template<RenderMode render_mode>
-    void RenderObjectList(pvr32addr_t base, RECT* rect)
+    void RenderObjectList(RefRendInterface* backend, RenderMode render_mode, pvr32addr_t base, taRECT* rect)
     {
         ObjectListEntry obj;
 
@@ -489,7 +484,7 @@ struct refrend : Renderer, RefRendInterface
             base += 4;
 
             if (!obj.is_not_triangle_strip) {
-                RenderTriangleStrip<render_mode>(obj, rect);
+                RenderTriangleStrip(backend, render_mode, obj, rect);
             } else {
                 switch(obj.type) {
                     case 0b111: // link
@@ -500,11 +495,11 @@ struct refrend : Renderer, RefRendInterface
                         break;
 
                     case 0b100: // triangle array
-                        RenderTriangleArray<render_mode>(obj, rect);
+                        RenderTriangleArray(backend, render_mode, obj, rect);
                         break;
                     
                     case 0b101: // quad array
-                        RenderQuadArray<render_mode>(obj, rect);
+                        RenderQuadArray(backend, render_mode, obj, rect);
                         break;
 
                     default:
@@ -527,107 +522,128 @@ struct refrend : Renderer, RefRendInterface
         // Parse region array
         do {
             base += ReadRegionArrayEntry(base, &entry);
+            EnqueueTile(entry.control.tiley * 64 + entry.control.tilex, [=](RefRendInterface* backend) {
+                taRECT rect;
+                rect.top = entry.control.tiley * 32;
+                rect.left = entry.control.tilex * 32;
 
-            RECT rect;
-            rect.top = entry.control.tiley * 32;
-            rect.left = entry.control.tilex * 32;
-            
-            rect.bottom = rect.top + 32;
-            rect.right = rect.left + 32;
+                rect.bottom = rect.top + 32;
+                rect.right = rect.left + 32;
 
-            // Tile needs clear?
-            if (!entry.control.z_keep) {
+                parameter_tag_t bgTag;
+
                 // register BGPOLY to fpu
-                DrawParameters params;
-                Vertex vtx[8];
-                decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
-
-                auto bgTag = AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
-
-                // Clear Param + Z + stencil buffers
-                ClearBuffers(bgTag, ISP_BACKGND_D.f, 0);
-            }
-
-            // Render OPAQ to TAGS          
-            if (!entry.opaque.empty) {
-                RenderObjectList<RM_OPAQUE>(entry.opaque.ptr_in_words * 4, &rect);
-            }
-
-            // render PT to TAGS
-            if (!entry.puncht.empty) {
-                RenderObjectList<RM_PUNCHTHROUGH>(entry.puncht.ptr_in_words * 4, &rect);
-            }
-
-            //TODO: Render OPAQ modvols
-            if (!entry.opaque_mod.empty) {
-                RenderObjectList<RM_MODIFIER>(entry.opaque_mod.ptr_in_words * 4, &rect);
-            }
-
-
-            // Render TAGS to ACCUM
-            RenderParamTags(rect.left, rect.top);
-
-            // layer peeling rendering
-            if (!entry.trans.empty) {
-
-                do {
-                    ClearPixelsDrawn();
-
-                    //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
-                    PeelBuffers(0, FLT_MAX, 0);
-
-                    // render to TAGS
-                    RenderObjectList<RM_TRANSLUCENT>(entry.trans.ptr_in_words * 4, &rect);
-
-                    if (!entry.trans_mod.empty) {
-                        RenderObjectList<RM_MODIFIER>(entry.trans_mod.ptr_in_words * 4, &rect);
-                    }
-
-                    // render TAGS to ACCUM
-                    RenderParamTags(rect.left, rect.top);
-                } while (GetPixelsDrawn() != 0);
-            }
-
-
-            // Copy to vram
-            if (!entry.control.no_writeout) {
-
-                auto field = SCALER_CTL.fieldselect;
-                auto interlace = SCALER_CTL.interlace;
-                
-                auto base = (interlace && field) ? FB_W_SOF2 : FB_W_SOF1;
-
-                // very few configurations supported here
-                verify(SCALER_CTL.hscale == 0);
-                verify(SCALER_CTL.interlace == 0); // write both SOFs
-                auto vscale = SCALER_CTL.vscalefactor;
-                verify(vscale == 0x401 || vscale == 0x400 || vscale == 0x800);
-
-                auto fb_packmode = FB_W_CTRL.fb_packmode;
-                verify(fb_packmode == 0x1); // 565 RGB16
-
-                auto bpp = 2;
-                auto offset_bytes = entry.control.tilex * 32 * bpp + entry.control.tiley * 32  * FB_W_LINESTRIDE.stride * 8;
-
-                auto src = GetColorOutputBuffer();
-                for (int y = 0; y<32; y++) {
-                    //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
-                    auto dst = base + offset_bytes + (y) * FB_W_LINESTRIDE.stride * 8;
-
-                    for (int x = 0; x<32; x++) {
-                        auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | ((src[2] >> 3) & 0x1F);
-                        pvr_write_area1_16(vram, dst, pixel);
-                        
-                        dst += bpp;
-                        src+=4; // skip alpha
-                    }    
+                {
+                    DrawParameters params;
+                    Vertex vtx[8];
+                    decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
+                    bgTag = backend->AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
                 }
-            }
 
+                // Tile needs clear?
+                if (!entry.control.z_keep)
+                {
+                    // Clear Param + Z + stencil buffers
+                    backend->ClearBuffers(bgTag, ISP_BACKGND_D.f, 0);
+                }
+
+                // Render OPAQ to TAGS
+                if (!entry.opaque.empty)
+                {
+                    RenderObjectList(backend, RM_OPAQUE, entry.opaque.ptr_in_words * 4, &rect);
+                }
+
+                // render PT to TAGS
+                if (!entry.puncht.empty)
+                {
+                    RenderObjectList(backend, RM_PUNCHTHROUGH, entry.puncht.ptr_in_words * 4, &rect);
+                }
+
+                //TODO: Render OPAQ modvols
+                if (!entry.opaque_mod.empty)
+                {
+                    RenderObjectList(backend, RM_MODIFIER, entry.opaque_mod.ptr_in_words * 4, &rect);
+                }
+
+                // Render TAGS to ACCUM
+                backend->RenderParamTags(RM_OPAQUE, rect.left, rect.top);
+
+                // layer peeling rendering
+                if (!entry.trans.empty)
+                {
+
+                    do
+                    {
+                        backend->ClearPixelsDrawn();
+
+                        //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
+                        backend->PeelBuffers(0, FLT_MAX, 0);
+
+                        // render to TAGS
+                        RenderObjectList(backend, RM_TRANSLUCENT, entry.trans.ptr_in_words * 4, &rect);
+
+                        if (!entry.trans_mod.empty)
+                        {
+                            RenderObjectList(backend, RM_MODIFIER, entry.trans_mod.ptr_in_words * 4, &rect);
+                        }
+
+                        // render TAGS to ACCUM
+                        backend->RenderParamTags(RM_TRANSLUCENT, rect.left, rect.top);
+                    } while (backend->GetPixelsDrawn() != 0);
+                }
+
+                // Copy to vram
+                if (!entry.control.no_writeout)
+                {
+                    auto copy = new u8[32 * 32 * 4];
+                    memcpy(copy, backend->GetColorOutputBuffer(), 32 * 32 * 4);
+
+                    EnqueueWriteout([=](){
+                        auto field = SCALER_CTL.fieldselect;
+                        auto interlace = SCALER_CTL.interlace;
+
+                        auto base = (interlace && field) ? FB_W_SOF2 : FB_W_SOF1;
+
+                        // very few configurations supported here
+                        verify(SCALER_CTL.hscale == 0);
+                        verify(SCALER_CTL.interlace == 0); // write both SOFs
+                        auto vscale = SCALER_CTL.vscalefactor;
+                        verify(vscale == 0x401 || vscale == 0x400 || vscale == 0x800);
+
+                        auto fb_packmode = FB_W_CTRL.fb_packmode;
+                        verify(fb_packmode == 0x1); // 565 RGB16
+
+                        auto src = copy;
+                        auto bpp = 2;
+                        auto offset_bytes = entry.control.tilex * 32 * bpp + entry.control.tiley * 32 * FB_W_LINESTRIDE.stride * 8;
+
+                        for (int y = 0; y < 32; y++)
+                        {
+                            //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
+                            auto dst = base + offset_bytes + (y)*FB_W_LINESTRIDE.stride * 8;
+
+                            for (int x = 0; x < 32; x++)
+                            {
+                                auto pixel = (((src[0] >> 3) & 0x1F) << 0) | (((src[1] >> 2) & 0x3F) << 5) | (((src[2] >> 3) & 0x1F) << 11);
+                                pvr_write_area1_16(vram, dst, pixel);
+
+                                dst += bpp;
+                                src += 4; // skip alpha
+                            }
+                        }
+
+                        delete[] copy;
+                    });
+                }
+
+                // clear the tsp cache
+                backend->ClearFpuEntries();
+            });
         } while (!entry.control.last_region);
 
-        // clear the tsp cache
-        ClearFpuEntries();
+        pool.pumpMainThread();
+        pool.waitWorkThreads();
+        pool.pumpMainThread();
 
         return false;
     }
@@ -685,7 +701,6 @@ struct refrend : Renderer, RefRendInterface
     }
 
     ~refrend() {
-
 #if HOST_OS == OS_WINDOWS
         if (hBMP) {
             DeleteObject(SelectObject(hmem, holdBMP));
@@ -726,11 +741,18 @@ struct refrend : Renderer, RefRendInterface
             bpp = 4;
             break;
         }
-        u32 addr = SPG_CONTROL.interlace && !SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+        u32 addr = SPG_CONTROL.interlace && SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
 
-        PixelBuffer<u32> pb;
-        pb.init(width, height);
+        static PixelBuffer<u32> pb;
+        if (pb.total_pixels != width * (SPG_CONTROL.interlace ? (height * 2 + 1) : height)) {
+            pb.init(width, SPG_CONTROL.interlace ? (height * 2 + 1) : height);
+        }
+
         u8 *dst = (u8 *)pb.data();
+
+        if (SPG_CONTROL.interlace & SPG_STATUS.fieldnum) {
+            dst += width * 4;
+        }
 
         switch (FB_R_CTRL.fb_depth)
         {
@@ -740,13 +762,16 @@ struct refrend : Renderer, RefRendInterface
                 for (int i = 0; i < width; i++)
                 {
                     u16 src = pvr_read_area1_16(sh4_cpu->vram.data, addr);
-                    *dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-                    *dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
                     *dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
                     *dst++ = 0xFF;
                     addr += bpp;
                 }
                 addr += modulus * bpp;
+                if (SPG_CONTROL.interlace) {
+                    dst += width * 4;
+                }
             }
             break;
 
@@ -756,13 +781,17 @@ struct refrend : Renderer, RefRendInterface
                 for (int i = 0; i < width; i++)
                 {
                     u16 src = pvr_read_area1_16(sh4_cpu->vram.data, addr);
-                    *dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-                    *dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
                     *dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
+                    *dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
                     *dst++ = 0xFF;
                     addr += bpp;
                 }
                 addr += modulus * bpp;
+
+                if (SPG_CONTROL.interlace) {
+                    dst += width * 4;
+                }
             }
             break;
         case fbde_888: // 888 RGB
@@ -773,21 +802,25 @@ struct refrend : Renderer, RefRendInterface
                     if (addr & 1)
                     {
                         u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr - 1);
-                        *dst++ = src >> 16;
-                        *dst++ = src >> 8;
                         *dst++ = src;
+                        *dst++ = src >> 8;
+                        *dst++ = src >> 16;
                     }
                     else
                     {
                         u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr);
-                        *dst++ = src >> 24;
-                        *dst++ = src >> 16;
                         *dst++ = src >> 8;
+                        *dst++ = src >> 16;
+                        *dst++ = src >> 24;
                     }
                     *dst++ = 0xFF;
                     addr += bpp;
                 }
                 addr += modulus * bpp;
+
+                if (SPG_CONTROL.interlace) {
+                    dst += width * 4;
+                }
             }
             break;
         case fbde_C888: // 0888 RGB
@@ -796,20 +829,24 @@ struct refrend : Renderer, RefRendInterface
                 for (int i = 0; i < width; i++)
                 {
                     u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr);
-                    *dst++ = src >> 16;
-                    *dst++ = src >> 8;
                     *dst++ = src;
+                    *dst++ = src >> 8;
+                    *dst++ = src >> 16;
                     *dst++ = 0xFF;
                     addr += bpp;
                 }
                 addr += modulus * bpp;
+                
+                if (SPG_CONTROL.interlace) {
+                    dst += width * 4;
+                }
             }
             break;
         }
         u32 *psrc = pb.data();
 
 #if HOST_OS == OS_WINDOWS
-        SetDIBits(hmem, hBMP, 0, 480, psrc, (BITMAPINFO*)& bi, DIB_RGB_COLORS);
+        SetDIBits(hmem, hBMP, 0, SPG_CONTROL.interlace ? height * 2 : height, psrc, (BITMAPINFO*)& bi, DIB_RGB_COLORS);
 
         RECT clientRect;
 
@@ -831,10 +868,10 @@ struct refrend : Renderer, RefRendInterface
         extern int x11_width;
         extern int x11_height;
 
-        XImage* ximage = XCreateImage(x11_disp, x11_vis, 24, ZPixmap, 0, (char*)psrc, width, height, 32, width * 4);
+        XImage* ximage = XCreateImage(x11_disp, x11_vis, 24, ZPixmap, 0, (char*)psrc, width, SPG_CONTROL.interlace ? height * 2 : height, 32, width * 4);
 
         GC gc = XCreateGC(x11_disp, x11_win, 0, 0);
-        XPutImage(x11_disp, x11_win, gc, ximage, 0, 0, (x11_width - width) / 2, (x11_height - height) / 2, width, height);
+        XPutImage(x11_disp, x11_win, gc, ximage, 0, 0, (x11_width - width) / 2, (x11_height - (SPG_CONTROL.interlace ? height * 2 : height)) / 2, width, SPG_CONTROL.interlace ? height * 2 : height);
         XFree(ximage);
         XFreeGC(x11_disp, gc);
 #else
@@ -844,3 +881,6 @@ struct refrend : Renderer, RefRendInterface
     }
 };
 
+Renderer* rend_refred_base(u8* vram, function<RefRendInterface*()> createBackend) {
+    return new refrend(vram, createBackend);
+}

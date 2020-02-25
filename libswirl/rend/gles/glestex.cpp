@@ -146,15 +146,6 @@ void TextureCacheData::PrintTextureName()
 //Create GL texture from tsp/tcw
 void TextureCacheData::Create(bool isGL)
 {
-	//ask GL for texture ID
-	if (isGL) {
-		texID = glcache.GenTexture();
-	}
-	else {
-		texID = 0;
-	}
-
-	pData = 0;
 	tex_type = 0;
 
 	//Reset state info ..
@@ -242,6 +233,25 @@ void TextureCacheData::Create(bool isGL)
 		texconv = NULL;
 		texconv32 = NULL;
 	}
+
+	//ask GL for texture ID
+	if (isGL) {
+		texID = glcache.GenTexture();
+		pData = 0;
+	}
+	else {
+		texID = 0;
+		#if FEAT_HAS_SOFTREND
+			pData = (u16*)_mm_malloc(w * h * 16, 16);
+		#else
+			die("softrend disabled, invalid codepath");
+		#endif
+	}
+
+	if (size == 0) {
+		size = 4;
+	}
+
 }
 
 void TextureCacheData::ComputeHash()
@@ -398,11 +408,7 @@ void TextureCacheData::Update()
 				tex_type = 2;
 
 			u16 *tex_data = (u16 *)temp_tex_buffer;
-			if (pData) {
-				_mm_free(pData);
-			}
 
-			pData = (u16*)_mm_malloc(w * h * 16, 16);
 			for (int y = 0; y < h; y++) {
 				for (int x = 0; x < w; x++) {
 					u32* data = (u32*)&pData[(x + y*w) * 8];

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using Gtk;
 using MonoUITest;
@@ -8,19 +9,25 @@ using MonoUITest;
 public class MyTreeNode : Gtk.TreeNode
 {
 
-    string song_title;
+    public DrawParams param;
+
+    public Vertex v1;
+    public Vertex v2;
+    public Vertex v3;
+    public bool hasV4;
+    public Vertex v4;
+
+    public uint tileLeft, tileTop, tileRight, tileBottom;
+
+    public byte[] buffers;
 
     public MyTreeNode(string artist)
     {
         Artist = artist;
-        this.song_title = "";
     }
 
     [Gtk.TreeNodeValue(Column = 0)]
     public string Artist;
-
-    [Gtk.TreeNodeValue(Column = 1)]
-    public string SongTitle { get { return song_title; } }
 }
 
 public partial class MainWindow : Gtk.Window
@@ -31,6 +38,9 @@ public partial class MainWindow : Gtk.Window
     TcpClient tcpClient;
 
     Thread client;
+
+    Vertex[] vertices;
+    uint tileLeft, tileTop, tileRight, tileBottom;
 
     void CloseSocket()
     {
@@ -85,14 +95,18 @@ public partial class MainWindow : Gtk.Window
                                 var depthValue = ReadF32();
                                 var stencilValue = ReadU32();
 
+                                var buffers = ReadBuffers();
+
                                 Application.Invoke(delegate
                                 {
-                                    store.AddNode(new MyTreeNode(String.Format(
+                                    var node = new MyTreeNode(String.Format(
                                         "ClearBuffers({0}, {1}, {2})",
                                         paramValue,
                                         depthValue,
                                         stencilValue
-                                    )), 0);
+                                    ));
+                                    node.buffers = buffers;
+                                    store.AddNode(node, 0);
                                 });
                             }
                             break;
@@ -102,33 +116,47 @@ public partial class MainWindow : Gtk.Window
                                 var depthValue = ReadF32();
                                 var stencilValue = ReadU32();
 
+                                var buffers = ReadBuffers();
+
                                 Application.Invoke(delegate
                                 {
-                                    store.AddNode(new MyTreeNode(String.Format(
-                                        "RRIBC_PeelBuffers({0}, {1}, {2})",
+                                    var node = new MyTreeNode(String.Format(
+                                        "PeelBuffers({0}, {1}, {2})",
                                         paramValue,
                                         depthValue,
                                         stencilValue
-                                    )), 0);
+                                    ));
+                                    node.buffers = buffers;
+                                    store.AddNode(node, 0);
                                 });
                             }
                             break;
                         case RRI_DebugCommands.RRIBC_SummarizeStencilOr:
-                            Application.Invoke(delegate
                             {
-                                store.AddNode(new MyTreeNode("RRIBC_SummarizeStencilOr"), 0);
-                            });
+                                var buffers = ReadBuffers();
+                                Application.Invoke(delegate
+                                {
+                                    var node = new MyTreeNode("SummarizeStencilOr");
+                                    node.buffers = buffers;
+                                    store.AddNode(node, 0);
+                                });
+                            }
                             break;
                         case RRI_DebugCommands.RRIBC_SummarizeStencilAnd:
-                            Application.Invoke(delegate
                             {
-                                store.AddNode(new MyTreeNode("RRIBC_SummarizeStencilAnd"), 0);
-                            });
+                                var buffers = ReadBuffers();
+                                Application.Invoke(delegate
+                                {
+                                    var node = new MyTreeNode("RRIBC_SummarizeStencilAnd");
+                                    node.buffers = buffers;
+                                    store.AddNode(node, 0);
+                                });
+                            }
                             break;
                         case RRI_DebugCommands.RRIBC_ClearPixelsDrawn:
                             Application.Invoke(delegate
                             {
-                                store.AddNode(new MyTreeNode("RRIBC_ClearPixelsDrawn"), 0);
+                                store.AddNode(new MyTreeNode("ClearPixelsDrawn"), 0);
                             });
                             break;
                         case RRI_DebugCommands.RRIBC_GetPixelsDrawn:
@@ -137,7 +165,7 @@ public partial class MainWindow : Gtk.Window
 
                                 Application.Invoke(delegate
                                 {
-                                    store.AddNode(new MyTreeNode("RRIBC_GetPixelsDrawn = " + rv), 0);
+                                    store.AddNode(new MyTreeNode("GetPixelsDrawn = " + rv), 0);
                                 });
                             }
                             break;
@@ -155,14 +183,22 @@ public partial class MainWindow : Gtk.Window
 
                                 Application.Invoke(delegate
                                 {
-                                    store.AddNode(new MyTreeNode("RRIBC_AddFpuEntry = " + rv), 0);
+                                    var node = new MyTreeNode("AddFpuEntry(rm: " + render_mode + ") =" + rv);
+
+                                    node.param = param;
+                                    node.v1 = v1;
+                                    node.v2 = v2;
+                                    node.v3 = v3;
+                                    node.hasV4 = false;
+
+                                    store.AddNode(node, 0);
                                 });
                             }
                             break;
                         case RRI_DebugCommands.RRIBC_ClearFpuEntries:
                             Application.Invoke(delegate
                             {
-                                store.AddNode(new MyTreeNode("RRIBC_ClearFpuEntries"), 0);
+                                store.AddNode(new MyTreeNode("ClearFpuEntries"), 0);
                             });
                             break;
                         case RRI_DebugCommands.RRIBC_GetColorOutputBuffer:
@@ -171,7 +207,9 @@ public partial class MainWindow : Gtk.Window
 
                                 Application.Invoke(delegate
                                 {
-                                    store.AddNode(new MyTreeNode("RRIBC_GetColorOutputBuffer"), 0);
+                                    var node = new MyTreeNode("GetColorOutputBuffer");
+                                    node.buffers = buffers;
+                                    store.AddNode(node, 0);
                                 });
                             }
                             break;
@@ -180,10 +218,13 @@ public partial class MainWindow : Gtk.Window
                                 var rm = ReadU32();
                                 var tileX = ReadU32();
                                 var tileY = ReadU32();
+                                var buffers = ReadBuffers();
 
                                 Application.Invoke(delegate
                                 {
-                                    store.AddNode(new MyTreeNode("RRIBC_RenderParamTags"), 0);
+                                    var node = new MyTreeNode(String.Format("RenderParamTags(rm: {0}, x: {1}, y: {2})", rm, tileX, tileY));
+                                    node.buffers = buffers;
+                                    store.AddNode(node, 0);
                                 });
                             }
                             break;
@@ -200,9 +241,11 @@ public partial class MainWindow : Gtk.Window
 
                                 var has_v4 = ReadU8();
 
+                                Vertex v4 = new Vertex();
+
                                 if (has_v4 != 0)
                                 {
-                                    var v4 = ReadVertrex();
+                                    v4 = ReadVertrex();
                                 }
 
                                 var left = ReadU32();
@@ -210,9 +253,25 @@ public partial class MainWindow : Gtk.Window
                                 var right = ReadU32();
                                 var bottom = ReadU32();
 
+                                var buffers = ReadBuffers();
+
                                 Application.Invoke(delegate
                                 {
-                                    store.AddNode(new MyTreeNode("RRIBC_RasterizeTriangle"), 0);
+                                    var node = new MyTreeNode(String.Format("RasterizeTriangle(rm: {0}, tag: {1}, vo: {2} area: {3},{4} - {5}, {6})", render_mode, tag, vertex_offset, left, top, right, bottom));
+
+                                    node.param = param;
+                                    node.v1 = v1;
+                                    node.v2 = v2;
+                                    node.v3 = v3;
+                                    node.hasV4 = has_v4 != 0;
+                                    node.v4 = v4;
+                                    node.buffers = buffers;
+
+                                    node.tileLeft = left;
+                                    node.tileTop = top;
+                                    node.tileRight = right;
+                                    node.tileBottom = bottom;
+                                    store.AddNode(node, 0);
                                 });
                             }
                             break;
@@ -359,13 +418,17 @@ public partial class MainWindow : Gtk.Window
     {
         Build();
 
+        nodeview1.NodeSelection.Changed += new System.EventHandler(CoreCommandSelected);
+
         nodeview1.AppendColumn("Command", new Gtk.CellRendererText(), "text", 0);
         nodeview1.ShowAll();
 
         store = new NodeStore(typeof(MyTreeNode));
         nodeview1.NodeStore = store;
 
+
         notebook1.CurrentPage = 3;
+
     }
 
     protected void OnDeleteEvent(object sender, DeleteEventArgs a)
@@ -380,23 +443,6 @@ public partial class MainWindow : Gtk.Window
 
     protected void NextCommand(object sender, EventArgs e)
     {
-        foreach (var img in new Image[] { image3, image4, image5, image6, image7, image8 })
-        {
-            var pixels = new byte[4 * 64 * 64];
-
-
-            for (var i = 0; i < pixels.Length; i++)
-            {
-                pixels[i] = (byte)rand.Next(255);
-            }
-
-            var pixbuf = new Gdk.Pixbuf(pixels, true, 8, 64, 64, 64 * 4);
-
-            img.Pixbuf = pixbuf;
-        }
-
-
-
         /*
         store.AddNode(new MyTreeNode("3x0 (96-127, 0-31)", "ClearBuffers"), 0);
         store.AddNode(new MyTreeNode("3x0 (96-127, 0-31)", "AddFpuEntry"), 0);
@@ -477,6 +523,167 @@ public partial class MainWindow : Gtk.Window
                 corePaused = false;
                 WriteCommand(RRI_DebugCommands.RRIBC_OK);
             }
+        }
+    }
+
+    public ITreeNode SelectedNode(NodeView nv)
+    {
+        TreePath[] paths = nv.Selection.GetSelectedRows();
+        int length = paths.Length;
+
+        if (length > 0)
+        {
+            return store.GetNode(paths[0]);
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    protected void CoreCommandSelected(object o, EventArgs e)
+    {
+
+        NodeSelection selection = (NodeSelection)o;
+
+        if (SelectedNode(selection.NodeView) is MyTreeNode node)
+        {
+            if (node.buffers != null)
+            {
+                var images = new Image[] { image3, image4, image5, image6, image7, image8 };
+
+
+                for (var i = 0; i < images.Length; i++)
+                {
+                    var pixels = new byte[4 * 32 * 32];
+
+
+                    for (var j = 0; j < pixels.Length; j+=4)
+                    {
+                        pixels[j + 3] = node.buffers[i * 32 * 32 * 4 + j + 0];
+                        pixels[j + 0] = node.buffers[i * 32 * 32 * 4 + j + 1];
+                        pixels[j + 1] = node.buffers[i * 32 * 32 * 4 + j + 2];
+                        pixels[j + 2] = node.buffers[i * 32 * 32 * 4 + j + 3];
+
+                    }
+
+                    var pixbuf = new Gdk.Pixbuf(pixels, true, 8, 32, 32, 32 * 4);
+
+                    images[i].Pixbuf = pixbuf;
+                }
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            if (node.hasV4)
+            {
+                vertices = new Vertex[] { node.v1, node.v2, node.v3, node.v4 };
+            }
+            else
+            {
+                vertices = new Vertex[] { node.v1, node.v2, node.v3 };
+            }
+
+            tileLeft = node.tileLeft;
+            tileTop = node.tileTop;
+            tileRight = node.tileRight;
+            tileBottom = node.tileBottom;
+
+            foreach (var vertex in vertices)
+            {
+                sb.AppendLine("vtx {");
+                sb.AppendLine(String.Format("x: {0} y: {1} z: {2}", vertex.x, vertex.y, vertex.z));
+                sb.AppendLine(String.Format("u: {0} v: {1}", vertex.u, vertex.v));
+                sb.AppendLine(String.Format("u1: {0} v1: {1}", vertex.u1, vertex.v1));
+                sb.AppendLine(String.Format("col: {0} spc: {1}", vertex.col, vertex.spc));
+                sb.AppendLine(String.Format("col1: {0} spc1: {1}", vertex.col1, vertex.spc1));
+                sb.AppendLine("}");
+            }
+
+            txtVertexes.Buffer.Text = sb.ToString();
+            daVertexes.QueueDraw();
+
+            sb = new StringBuilder();
+            sb.AppendLine(String.Format("isp/tsp: {0}", node.param.isp));
+            sb.AppendLine(String.Format("tsp: {0}", node.param.tsp));
+            sb.AppendLine(String.Format("tsp1: {0}", node.param.tsp2));
+            sb.AppendLine(String.Format("tcw: {0}", node.param.tcw));
+            sb.AppendLine(String.Format("tcw1: {0}", node.param.tcw2));
+
+            txtIspTsp.Buffer.Text = sb.ToString();
+
+            sb = new StringBuilder();
+            sb.AppendLine(String.Format("tcw: {0}", node.param.tcw));
+            sb.AppendLine(String.Format("tcw1: {0}", node.param.tcw2));
+
+            txtTcw.Buffer.Text = sb.ToString();
+
+        }
+
+
+
+    }
+
+    protected void daVertexes_OnDraw(object sender, ExposeEventArgs args)
+    {
+        if (vertices != null)
+        {
+            DrawingArea area = (DrawingArea)sender;
+            Cairo.Context cr = Gdk.CairoHelper.Create(area.GdkWindow);
+
+            float minX = 0;
+            float minY = 0;
+            float maxX = 640;
+            float maxY = 480;
+
+            foreach (var vtx in vertices)
+            {
+                minX = Math.Min(minX, vtx.x);
+                minY = Math.Min(minY, vtx.y);
+
+                maxX = Math.Max(maxX, vtx.x);
+                maxY = Math.Max(maxY, vtx.y);
+            }
+
+            minX -= 32;
+            minY -= 32;
+
+            maxX += 32;
+            maxY += 32;
+
+            float width = area.Allocation.Width;
+            float height = area.Allocation.Height;
+
+            cr.Scale(width / (maxX - minX), height /  (maxY - minY));
+            cr.Translate(-minX, -minY);
+
+            cr.LineWidth = 1;
+
+            cr.Rectangle(0, 0, 640, 480);
+            cr.StrokePreserve();
+            cr.SetSourceRGB(1, 1, 1);
+            cr.Fill();
+
+            cr.Rectangle(tileLeft, tileTop, tileRight- tileLeft, tileBottom - tileTop);
+            cr.StrokePreserve();
+            cr.SetSourceRGB(0.9, 0.9, 0.9);
+            cr.Fill();
+
+            cr.MoveTo(vertices[0].x, vertices[0].y);
+            foreach(var vtx in vertices)
+            {
+                cr.LineTo(vtx.x, vtx.y);
+            }
+
+            cr.ClosePath();
+
+            cr.StrokePreserve();
+
+            cr.SetSourceRGB(0.3, 0.4, 0.6);
+            cr.Fill();
+
+            ((IDisposable)cr.GetTarget()).Dispose();
+            ((IDisposable)cr).Dispose();
         }
     }
 }

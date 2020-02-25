@@ -168,6 +168,11 @@ struct RefRendDebug: RefRendInterface
         WriteBytes(&data, sizeof(data));
     }
 
+    void WriteBuffers() {
+        WriteBytes(backend->DebugGetAllBuffers(), 32 * 32 * 4 * 6);
+    }
+    
+
     template<typename T>
     T ReadData() {
         if (clientFd != -1) {
@@ -221,6 +226,7 @@ struct RefRendDebug: RefRendInterface
         WriteData(depthValue);
         WriteData(stencilValue);
         
+        WriteBuffers();
         WCE();
 
         WaitForStep();
@@ -236,6 +242,7 @@ struct RefRendDebug: RefRendInterface
         WriteData(depthValue);
         WriteData(stencilValue);
 
+        WriteBuffers();
         WCE();
 
         WaitForStep();
@@ -246,7 +253,7 @@ struct RefRendDebug: RefRendInterface
         backend->SummarizeStencilOr();
 
         WCH(SummarizeStencilOr);
-
+        WriteBuffers();
         WCE();
 
         WaitForStep();
@@ -258,7 +265,7 @@ struct RefRendDebug: RefRendInterface
         backend->SummarizeStencilAnd();
 
         WCH(SummarizeStencilAnd);
-    
+        WriteBuffers();
         WCE();
 
         WaitForStep();
@@ -339,7 +346,7 @@ struct RefRendDebug: RefRendInterface
         
         WCH(GetColorOutputBuffer);
         
-        WriteBytes(backend->DebugGetAllBuffers(), 32 * 32 * 4 * 6);
+        WriteBuffers();
 
         WCE();
 
@@ -359,6 +366,7 @@ struct RefRendDebug: RefRendInterface
         WriteData(tileX);
         WriteData(tileY);
 
+        WriteBuffers();
         WCE();
 
         WaitForStep();
@@ -387,6 +395,7 @@ struct RefRendDebug: RefRendInterface
         WriteData(area->right);
         WriteData(area->bottom);
 
+        WriteBuffers();
         WCE();
 
         WaitForStep();

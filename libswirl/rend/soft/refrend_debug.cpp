@@ -1,13 +1,20 @@
+#include "build.h"
+
+#if HOST_OS == OS_WINDOWS
+#include <Winsock2.h>
+#pragma comment (lib, "wsock32.lib")
+#else
+#include <unistd.h>
+#include <sys/types.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif
 
 #include "refrend_base.h"
 
 #include <memory>
 #include <atomic>
 
-#include <unistd.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 void error(const char *msg)
 {
@@ -46,7 +53,7 @@ struct RefRendDebug: RefRendInterface
     atomic<bool> stepping;
     atomic<bool> sending;
     
-    int sockFd, clientFd;
+    int sockFd = -1, clientFd = -1;
 
     cThread serverThread;
     cMutex socketMutex;
@@ -58,26 +65,32 @@ struct RefRendDebug: RefRendInterface
     }
 
     void* ServerThread() {
+        static bool init = false;
+        if (!init) {
+#if HOST_OS == OS_WINDOWS
+            static WSADATA wsaData;
+            if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
+                die("WSAStartup fail");
+#endif
+            init = true;
+        }
 
         struct sockaddr_in serv_addr, cli_addr;
         sockFd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockFd < 0)
             error("ERROR opening socket");
-        bzero((char *)&serv_addr, sizeof(serv_addr));
+        memset((char *)&serv_addr, 0, sizeof(serv_addr));
         int portno = 8828;
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = INADDR_ANY;
         serv_addr.sin_port = htons(portno);
-        if (bind(sockFd, (struct sockaddr *)&serv_addr,
-                 sizeof(serv_addr)) < 0)
+        if (::bind(sockFd, (sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
             error("ERROR on binding");
         listen(sockFd, 5);
 
-        socklen_t clilen = sizeof(cli_addr);
-
         while(sockFd != -1)
         {
-            int fd = accept(sockFd, (struct sockaddr *) &cli_addr, &clilen);
+            int fd = accept(sockFd, nullptr, nullptr);
             if (fd < 0) 
             {
                 return nullptr;
@@ -141,26 +154,74 @@ struct RefRendDebug: RefRendInterface
     void CloseSocket() {
         auto socket = clientFd;
         clientFd = -1;
-        if (socket != -1) close(socket);
+        if (socket != -1) {
+#if HOST_OS == OS_WINDOWS
+            shutdown(socket, SD_BOTH);
+            closesocket(socket);
+#else
+            shutdown(socket, SHUT_RD);
+            close(socket);
+#endif
+        }
     }
 
     void CloseServer() {
         auto socket = sockFd;
         sockFd = -1;
-        if (socket != -1)  { shutdown(socket, SHUT_RD); close(socket); }
+        if (socket != -1)  { 
+#if HOST_OS == OS_WINDOWS
+            shutdown(socket, SD_BOTH);
+            closesocket(socket);
+#else
+            shutdown(socket, SHUT_RD); 
+            close(socket);
+#endif
+        }
+    }
+
+    bool send_all(const void* data, size_t len) {
+        if (clientFd == -1)
+            return false;
+
+        auto ptr = reinterpret_cast<const char*>(data);
+        auto sz = len;
+
+        do {
+            auto rv = send(clientFd, ptr, sz, 0);
+            if (rv <= 0)
+                return false;
+            ptr += rv;
+            sz -= rv;
+        } while (sz > 0);
+
+        return true;
+    }
+
+    bool recv_all(void* data, size_t len) {
+        if (clientFd == -1)
+            return false;
+
+        auto ptr = reinterpret_cast<char*>(data);
+        auto sz = len;
+
+        do {
+            auto rv = recv(clientFd, ptr, sz, 0);
+            if (rv <= 0)
+                return false;
+            ptr += rv;
+            sz -= rv;
+        } while (sz > 0);
+
+        return true;
     }
 
     void WriteCommand(RRI_DebugCommands command) {
-        if (clientFd != -1) {
-            char cmd = command;
-            write(clientFd, &command, 1);    
-        }
+        char cmd = command;
+        send_all(&cmd, 1);
     }
 
     void WriteBytes(const void* bytes, int count) {
-        if (clientFd != -1) {
-            write(clientFd, bytes, count);
-        }
+        send_all(bytes, count);
     }
 
     template<typename T>
@@ -171,17 +232,14 @@ struct RefRendDebug: RefRendInterface
     void WriteBuffers() {
         WriteBytes(backend->DebugGetAllBuffers(), 32 * 32 * 4 * 6);
     }
-    
 
     template<typename T>
     T ReadData() {
-        if (clientFd != -1) {
-            T rv;
-            read(clientFd, &rv, sizeof(rv));
+        T rv;
+        if (recv_all(&rv, sizeof(rv)))
             return rv;
-        } else {
+        else
             return T();
-        }
     }
 
     RRI_DebugCommands ReadCommand() {

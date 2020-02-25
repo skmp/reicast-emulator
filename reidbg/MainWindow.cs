@@ -647,7 +647,23 @@ public partial class MainWindow : Gtk.Window
     {
         if (texture != null)
         {
-            var pixbuf = new Gdk.Pixbuf(texture.Bytes, true, 8, texture.Width * 2, texture.Height * 2, texture.Width * 2 * 4);
+            var data = new byte[texture.Width * texture.Height * 4];
+
+            for (var y = 0; y < texture.Height; y++)
+            {
+                for (var x = 0; x < texture.Width; x++)
+                {
+                    var offs_src = (x + y * texture.Width) * 4 * 4 + 12;
+                    var offs_dst = (x + y * texture.Width) * 4;
+
+                    data[offs_dst + 0] = texture.Bytes[offs_src + 0];
+                    data[offs_dst + 1] = texture.Bytes[offs_src + 1];
+                    data[offs_dst + 2] = texture.Bytes[offs_src + 2];
+                    data[offs_dst + 3] = texture.Bytes[offs_src + 3];
+                }
+            }
+
+            var pixbuf = new Gdk.Pixbuf(data, true, 8, texture.Width, texture.Height, texture.Width * 4);
 
             imgTcw.Pixbuf = pixbuf;
         }

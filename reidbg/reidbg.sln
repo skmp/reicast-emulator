@@ -1,7 +1,7 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "reibug", "reibug.csproj", "{B6299983-CC2C-4E35-84CD-E200D6807032}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "reidbg", "reidbg.csproj", "{B6299983-CC2C-4E35-84CD-E200D6807032}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

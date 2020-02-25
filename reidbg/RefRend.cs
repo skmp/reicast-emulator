@@ -1,5 +1,5 @@
 ﻿using System;
-namespace MonoUITest
+namespace Reidbg
 {
     // Copied from refrend_debug.cpp
     // Keep in sync

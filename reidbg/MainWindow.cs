@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using Gtk;
-using MonoUITest;
+using Reidbg;
 
 [Gtk.TreeNode(ListOnly = true)]
 public class MyTreeNode : Gtk.TreeNode
@@ -431,13 +431,6 @@ public partial class MainWindow : Gtk.Window
 
     }
 
-    protected void OnDeleteEvent(object sender, DeleteEventArgs a)
-    {
-        CloseSocket();
-
-        Application.Quit();
-        a.RetVal = true;
-    }
 
     static Random rand = new Random();
 
@@ -685,5 +678,18 @@ public partial class MainWindow : Gtk.Window
             ((IDisposable)cr.GetTarget()).Dispose();
             ((IDisposable)cr).Dispose();
         }
+    }
+
+    ~MainWindow()
+    {
+        CloseSocket();
+    }
+
+    protected void Window_OnDelete(object o, DeleteEventArgs args)
+    {
+        CloseSocket();
+
+        Application.Quit();
+        args.RetVal = true;
     }
 }

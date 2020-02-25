@@ -1,7 +1,7 @@
 ﻿using System;
 using Gtk;
 
-namespace Reibug
+namespace Reidbg
 {
     class MainClass
     {

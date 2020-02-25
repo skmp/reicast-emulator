@@ -8,8 +8,9 @@
   </import>
   <widget class="Gtk.Window" id="MainWindow" design-size="1101 718">
     <property name="MemberName" />
-    <property name="Title" translatable="yes">MainWindow</property>
+    <property name="Title" translatable="yes">ReiDBG</property>
     <property name="WindowPosition">CenterOnParent</property>
+    <signal name="DeleteEvent" handler="Window_OnDelete" />
     <child>
       <widget class="Gtk.VBox" id="vbox1">
         <property name="MemberName" />

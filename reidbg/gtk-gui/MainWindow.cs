@@ -206,7 +206,7 @@ public partial class MainWindow
 		global::Stetic.Gui.Initialize(this);
 		// Widget MainWindow
 		this.Name = "MainWindow";
-		this.Title = global::Mono.Unix.Catalog.GetString("MainWindow");
+		this.Title = global::Mono.Unix.Catalog.GetString("ReiDBG");
 		this.WindowPosition = ((global::Gtk.WindowPosition)(4));
 		// Container child MainWindow.Gtk.Container+ContainerChild
 		this.vbox1 = new global::Gtk.VBox();
@@ -1073,6 +1073,7 @@ public partial class MainWindow
 		this.DefaultWidth = 1101;
 		this.DefaultHeight = 718;
 		this.Show();
+		this.DeleteEvent += new global::Gtk.DeleteEventHandler(this.Window_OnDelete);
 		this.button8.Clicked += new global::System.EventHandler(this.Connect);
 		this.button10.Clicked += new global::System.EventHandler(this.Disconnect);
 		this.button7.Clicked += new global::System.EventHandler(this.EnableCoreDebugging);

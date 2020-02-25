@@ -11,6 +11,7 @@
 #endif
 
 #include "refrend_base.h"
+#include "rend/gles/gles.h"
 
 #include <memory>
 #include <atomic>
@@ -30,8 +31,11 @@ enum RRI_DebugCommands {
 
     RRIBC_SetStep,
     RRIBC_GetBufferData,
+    RRIBC_GetTextureData,
 
     RRIBC_StepNotification,
+    RRIBC_TileNotification,
+    RRIBC_FrameNotification,
 
     RRIBC_ClearBuffers,
     RRIBC_PeelBuffers,
@@ -131,6 +135,29 @@ struct RefRendDebug: RefRendInterface
                 case RRIBC_GetBufferData:
                     WriteCommand(RRIBC_OK);
                     WriteBytes(backend->DebugGetAllBuffers(), 32 * 32 * 4 * 6);
+                    break;
+
+                case RRIBC_GetTextureData:
+                    {
+                        TSP tsp; tsp.full = ReadData<u32>();
+                        TCW tcw; tcw.full = ReadData<u32>();
+
+                        WriteCommand(RRIBC_OK);
+
+                        auto texture = raw_GetTexture(nullptr, tsp, tcw);
+
+                        if (texture.pdata)
+                        {
+                            WriteData<u8>(1);
+                            WriteData<u32>(texture.width);
+                            WriteData<u32>(texture.height);
+                            WriteBytes(texture.pdata, texture.width * texture.height * 4 * 4);
+                        }
+                        else
+                        {
+                            WriteData<u8>(0);
+                        }
+                    }
                     break;
 
                 default:
@@ -464,6 +491,19 @@ struct RefRendDebug: RefRendInterface
         die("bebugger inception?");
         
         return nullptr;
+    }
+
+    virtual void DebugOnFrameStart(int frame) {
+        WCH(FrameNotification);
+        WriteData<u32>(frame);
+        WCE();
+    }
+
+    virtual void DebugOnTileStart(int x, int y) {
+        WCH(TileNotification);
+        WriteData<u32>(x);
+        WriteData<u32>(y);
+        WCE();
     }
 
     virtual ~RefRendDebug() {

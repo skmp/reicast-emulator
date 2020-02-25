@@ -790,7 +790,7 @@ text_info raw_GetTexture(u8* vram, TSP tsp, TCW tcw)
 	{
 		tf = &tx->second;
 	}
-	else //create if not existing
+	else if (vram) //create if not existing && have vram
 	{
 		tf = &TexCache[key];
 
@@ -798,6 +798,10 @@ text_info raw_GetTexture(u8* vram, TSP tsp, TCW tcw)
 		tf->tcw = tcw;
 		tf->vram = vram;
 		tf->Create(false);
+	}
+	else
+	{
+		return rv;
 	}
 
 	//update if needed

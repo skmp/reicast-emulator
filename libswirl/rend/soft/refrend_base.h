@@ -74,9 +74,6 @@ struct RefRendInterface
     // Get the final output of the 32x32 tile. Used to write to the VRAM framebuffer
     virtual u8* GetColorOutputBuffer() = 0;
 
-    // Debug-level
-    virtual u8* DebugGetAllBuffers() = 0;
-
     // Render to ACCUM from TAG buffer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
     virtual void RenderParamTags(RenderMode rm, int tileX, int tileY) = 0;
@@ -85,6 +82,12 @@ struct RefRendInterface
     virtual void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, taRECT* area) = 0;
 
     virtual ~RefRendInterface() { };
+
+    // Debug-level
+    virtual u8* DebugGetAllBuffers() = 0;
+
+    virtual void DebugOnFrameStart(int fn) { }
+    virtual void DebugOnTileStart(int x, int y) { }
 };
 
 Renderer* rend_refred_base(u8* vram, function<RefRendInterface*()> createBackend);

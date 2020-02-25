@@ -853,8 +853,9 @@
                                 <property name="MemberName" />
                                 <property name="CanFocus">True</property>
                                 <property name="Type">TextOnly</property>
-                                <property name="Label" translatable="yes">Skip</property>
+                                <property name="Label" translatable="yes">Clear</property>
                                 <property name="UseUnderline">True</property>
+                                <signal name="Clicked" handler="CoreClearList" />
                               </widget>
                               <packing>
                                 <property name="TopAttach">1</property>
@@ -877,8 +878,9 @@
                                 <property name="MemberName" />
                                 <property name="CanFocus">True</property>
                                 <property name="Type">TextOnly</property>
-                                <property name="Label" translatable="yes">Skip Tile</property>
+                                <property name="Label" translatable="yes">Step Tile</property>
                                 <property name="UseUnderline">True</property>
+                                <signal name="Clicked" handler="CoreNextTile" />
                               </widget>
                               <packing>
                                 <property name="TopAttach">1</property>
@@ -901,8 +903,9 @@
                                 <property name="MemberName" />
                                 <property name="CanFocus">True</property>
                                 <property name="Type">TextOnly</property>
-                                <property name="Label" translatable="yes">Skip Frame</property>
+                                <property name="Label" translatable="yes">Step Frame</property>
                                 <property name="UseUnderline">True</property>
+                                <signal name="Clicked" handler="CoreNextFrame" />
                               </widget>
                               <packing>
                                 <property name="TopAttach">1</property>
@@ -1005,7 +1008,7 @@
                       <widget class="Gtk.Notebook" id="notebook2">
                         <property name="MemberName" />
                         <property name="CanFocus">True</property>
-                        <property name="CurrentPage">1</property>
+                        <property name="CurrentPage">2</property>
                         <child>
                           <widget class="Gtk.VBox" id="vbox5">
                             <property name="MemberName" />

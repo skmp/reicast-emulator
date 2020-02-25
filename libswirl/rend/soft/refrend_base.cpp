@@ -233,6 +233,7 @@ struct refrend : Renderer
     u8* vram;
 
     RefThreadPool pool;
+    int numRenders = 0;
 
     refrend(u8* vram, function<RefRendInterface*()> createBackend) : vram(vram), createBackend(createBackend) {
         if (MAX_CPU_COUNT == 0) {
@@ -513,11 +514,16 @@ struct refrend : Renderer
     // Render a frame
     // Called on START_RENDER write
     virtual bool RenderPVR() {
+        numRenders++;
 
         u32 base = REGION_BASE;
 
         RegionArrayEntry entry;
         int tilenum = 1;
+
+        EnqueueTile(0, [=](RefRendInterface* backend){
+            backend->DebugOnFrameStart(numRenders);
+        });
 
         // Parse region array
         do {
@@ -531,6 +537,8 @@ struct refrend : Renderer
                 rect.right = rect.left + 32;
 
                 parameter_tag_t bgTag;
+
+                backend->DebugOnTileStart(rect.top, rect.left);
 
                 // register BGPOLY to fpu
                 {

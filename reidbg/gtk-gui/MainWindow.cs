@@ -811,7 +811,7 @@ public partial class MainWindow
 		this.button11.CanFocus = true;
 		this.button11.Name = "button11";
 		this.button11.UseUnderline = true;
-		this.button11.Label = global::Mono.Unix.Catalog.GetString("Skip");
+		this.button11.Label = global::Mono.Unix.Catalog.GetString("Clear");
 		this.table3.Add(this.button11);
 		global::Gtk.Table.TableChild w62 = ((global::Gtk.Table.TableChild)(this.table3[this.button11]));
 		w62.TopAttach = ((uint)(1));
@@ -825,7 +825,7 @@ public partial class MainWindow
 		this.button12.CanFocus = true;
 		this.button12.Name = "button12";
 		this.button12.UseUnderline = true;
-		this.button12.Label = global::Mono.Unix.Catalog.GetString("Skip Tile");
+		this.button12.Label = global::Mono.Unix.Catalog.GetString("Step Tile");
 		this.table3.Add(this.button12);
 		global::Gtk.Table.TableChild w63 = ((global::Gtk.Table.TableChild)(this.table3[this.button12]));
 		w63.TopAttach = ((uint)(1));
@@ -839,7 +839,7 @@ public partial class MainWindow
 		this.button13.CanFocus = true;
 		this.button13.Name = "button13";
 		this.button13.UseUnderline = true;
-		this.button13.Label = global::Mono.Unix.Catalog.GetString("Skip Frame");
+		this.button13.Label = global::Mono.Unix.Catalog.GetString("Step Frame");
 		this.table3.Add(this.button13);
 		global::Gtk.Table.TableChild w64 = ((global::Gtk.Table.TableChild)(this.table3[this.button13]));
 		w64.TopAttach = ((uint)(1));
@@ -894,7 +894,7 @@ public partial class MainWindow
 		this.notebook2 = new global::Gtk.Notebook();
 		this.notebook2.CanFocus = true;
 		this.notebook2.Name = "notebook2";
-		this.notebook2.CurrentPage = 1;
+		this.notebook2.CurrentPage = 2;
 		// Container child notebook2.Gtk.Notebook+NotebookChild
 		this.vbox5 = new global::Gtk.VBox();
 		this.vbox5.Name = "vbox5";
@@ -1079,6 +1079,9 @@ public partial class MainWindow
 		this.button7.Clicked += new global::System.EventHandler(this.EnableCoreDebugging);
 		this.button4.Clicked += new global::System.EventHandler(this.CoreOnStep);
 		this.button3.Clicked += new global::System.EventHandler(this.DisableCoreDebugging);
+		this.button13.Clicked += new global::System.EventHandler(this.CoreNextFrame);
+		this.button12.Clicked += new global::System.EventHandler(this.CoreNextTile);
+		this.button11.Clicked += new global::System.EventHandler(this.CoreClearList);
 		this.daVertexes.ExposeEvent += new global::Gtk.ExposeEventHandler(this.daVertexes_OnDraw);
 	}
 }

@@ -12,8 +12,11 @@ namespace Reidbg
 
         RRIBC_SetStep,
         RRIBC_GetBufferData,
+        RRIBC_GetTextureData,
 
         RRIBC_StepNotification,
+        RRIBC_TileNotification,
+        RRIBC_FrameNotification,
 
         RRIBC_ClearBuffers,
         RRIBC_PeelBuffers,

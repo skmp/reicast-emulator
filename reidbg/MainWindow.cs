@@ -30,10 +30,23 @@ public class MyTreeNode : Gtk.TreeNode
     public string Artist;
 }
 
+public class NativeTexture
+{
+    public byte Type;
+    public int Width;
+    public int Height;
+    public byte[] Bytes;
+};
+
 public partial class MainWindow : Gtk.Window
 {
     bool hasOK;
+    bool waitingTexture;
     bool corePaused;
+
+    bool waitingTile;
+    bool waitingFrame;
+
 
     TcpClient tcpClient;
 
@@ -62,7 +75,11 @@ public partial class MainWindow : Gtk.Window
         lock(tcpClient)
         {
             hasOK = true;
+            waitingTexture = false;
             corePaused = false;
+
+            waitingTile = false;
+            waitingFrame = false;
         }
 
         if (ReadCommand() != RRI_DebugCommands.RRIBC_Hello)
@@ -84,10 +101,94 @@ public partial class MainWindow : Gtk.Window
                     switch (command)
                     {
                         case RRI_DebugCommands.RRIBC_OK:
-                            hasOK = true;
+                            if (waitingTexture)
+                            {
+                                NativeTexture texture = null;
+
+                                var type = ReadU8();
+
+                                if (type != 0)
+                                {
+                                    texture = new NativeTexture();
+                                    texture.Type = type;
+                                    texture.Width = (int)ReadU32();
+                                    texture.Height = (int)ReadU32();
+
+                                    texture.Bytes = ReadBytes(texture.Width * texture.Height * 4 * 4);
+                                }
+
+                                SetTexture(texture);
+                                waitingTexture = false;
+                            }
+                            else
+                            {
+                                hasOK = true;
+                            }
                             break;
                         case RRI_DebugCommands.RRIBC_StepNotification:
                             corePaused = true;
+                            Application.Invoke(delegate
+                            {
+                                nodeview1.ScrollToCell(TreePath.NewFirst(), null, false, 0, 0);
+                            });
+                            break;
+                        case RRI_DebugCommands.RRIBC_TileNotification:
+                            {
+                                var tileX = ReadU32();
+                                var tileY = ReadU32();
+
+                                Application.Invoke(delegate
+                                {
+                                    var node = new MyTreeNode(String.Format(
+                                        "Tile Start {0}x{1}",
+                                        tileX,
+                                        tileY
+                                    ));
+
+                                    node.tileLeft = tileX;
+                                    node.tileTop = tileY;
+
+                                    node.tileRight = tileX + 32;
+                                    node.tileBottom = tileY + 32;
+
+                                    store.AddNode(node, 0);
+                                });
+
+                                if (waitingTile)
+                                {
+                                    waitingTile = false;
+
+                                    WriteCommand(RRI_DebugCommands.RRIBC_SetStep);
+                                    WriteU8(1); // sending
+                                    WriteU8(1); // stepping
+
+                                    hasOK = false;
+                                }
+                            }
+                            break;
+                        case RRI_DebugCommands.RRIBC_FrameNotification:
+                            {
+                                var frame = ReadU32();
+
+                                Application.Invoke(delegate
+                                {
+                                    var node = new MyTreeNode(String.Format(
+                                        "Frame Start {0}",
+                                        frame
+                                    ));
+                                    store.AddNode(node, 0);
+                                });
+
+                                if (waitingFrame)
+                                {
+                                    waitingFrame = false;
+                                    WriteCommand(RRI_DebugCommands.RRIBC_SetStep);
+                                    WriteU8(1); // sending
+                                    WriteU8(1); // stepping
+
+                                    hasOK = false;
+                                }
+                            }
                             break;
                         case RRI_DebugCommands.RRIBC_ClearBuffers:
                             {
@@ -156,7 +257,8 @@ public partial class MainWindow : Gtk.Window
                         case RRI_DebugCommands.RRIBC_ClearPixelsDrawn:
                             Application.Invoke(delegate
                             {
-                                store.AddNode(new MyTreeNode("ClearPixelsDrawn"), 0);
+                                var node = new MyTreeNode("ClearPixelsDrawn");
+                                store.AddNode(node, 0);
                             });
                             break;
                         case RRI_DebugCommands.RRIBC_GetPixelsDrawn:
@@ -165,7 +267,8 @@ public partial class MainWindow : Gtk.Window
 
                                 Application.Invoke(delegate
                                 {
-                                    store.AddNode(new MyTreeNode("GetPixelsDrawn = " + rv), 0);
+                                    var node = new MyTreeNode("GetPixelsDrawn = " + rv);
+                                    store.AddNode(node, 0);
                                 });
                             }
                             break;
@@ -198,7 +301,8 @@ public partial class MainWindow : Gtk.Window
                         case RRI_DebugCommands.RRIBC_ClearFpuEntries:
                             Application.Invoke(delegate
                             {
-                                store.AddNode(new MyTreeNode("ClearFpuEntries"), 0);
+                                var node = new MyTreeNode("ClearFpuEntries");
+                                store.AddNode(node, 0);
                             });
                             break;
                         case RRI_DebugCommands.RRIBC_GetColorOutputBuffer:
@@ -292,61 +396,37 @@ public partial class MainWindow : Gtk.Window
         }
     }
 
-    byte ReadU8()
+    byte[] ReadBytes(int size)
     {
-        byte[] data = new byte[sizeof(byte)];
+        byte[] data = new byte[size];
 
         var bytes = 0;
-
         do
         {
-            bytes += tcpClient.GetStream().Read(data, 0, data.Length);
+            bytes += tcpClient.GetStream().Read(data, bytes, data.Length - bytes);
         } while (bytes != data.Length);
 
+        return data;
+    }
 
-        return data[0];
+    byte ReadU8()
+    {
+        return ReadBytes(sizeof(byte))[0];
     }
 
     UInt32 ReadU32()
     {
-        byte[] data = new byte[sizeof(UInt32)];
-
-        var bytes = 0;
-
-        do
-        {
-            bytes += tcpClient.GetStream().Read(data, 0, data.Length);
-        } while (bytes != data.Length);
-
-        return BitConverter.ToUInt32(data, 0);
+        return BitConverter.ToUInt32(ReadBytes(sizeof(UInt32)), 0);
     }
 
     float ReadF32()
     {
-        byte[] data = new byte[sizeof(float)];
-
-        var bytes = 0;
-
-        do
-        {
-            bytes += tcpClient.GetStream().Read(data, 0, data.Length);
-        } while (bytes != data.Length);
-
-        return BitConverter.ToSingle(data, 0);
+        return BitConverter.ToSingle(ReadBytes(sizeof(float)), 0);
     }
 
     byte[] ReadBuffers()
     {
-        byte[] data = new byte[32 * 32 * 4 * 6];
-
-        var bytes = 0;
-
-        do
-        {
-            bytes += tcpClient.GetStream().Read(data, 0, data.Length);
-        } while (bytes != data.Length);
-
-        return data;
+        return ReadBytes(32 * 32 * 4 * 6);
     }
 
     RRI_DebugCommands ReadCommand()
@@ -390,11 +470,19 @@ public partial class MainWindow : Gtk.Window
         return rv;
     }
 
+    void WriteBytes(byte[] data)
+    {
+        tcpClient.GetStream().Write(data, 0, data.Length);
+    }
+
     void WriteU8(byte value)
     {
-        byte[] data = new byte[] { value };
+        WriteBytes(new byte[] { value });
+    }
 
-        tcpClient.Client.Send(data);
+    void WriteU32(UInt32 value)
+    {
+        WriteBytes(BitConverter.GetBytes(value));
     }
 
     void WriteCommand(RRI_DebugCommands cmd)
@@ -412,6 +500,27 @@ public partial class MainWindow : Gtk.Window
 
         return rv;
     }
+
+    void GetTexture(UInt32 tsp, UInt32 tcw)
+    {
+        lock (tcpClient)
+        {
+            waitingTexture = true;
+            WriteCommand(RRI_DebugCommands.RRIBC_GetTextureData);
+            WriteU32(tsp);
+            WriteU32(tcw);
+        }
+
+        for (; ; )
+        {
+            lock (tcpClient)
+            {
+                if (!waitingTexture)
+                    break;
+            }
+        }
+    }
+
 
     NodeStore store;
     public MainWindow() : base(Gtk.WindowType.Toplevel)
@@ -534,6 +643,20 @@ public partial class MainWindow : Gtk.Window
         }
     }
 
+    void SetTexture(NativeTexture texture)
+    {
+        if (texture != null)
+        {
+            var pixbuf = new Gdk.Pixbuf(texture.Bytes, true, 8, texture.Width * 2, texture.Height * 2, texture.Width * 2 * 4);
+
+            imgTcw.Pixbuf = pixbuf;
+        }
+        else
+        {
+            imgTcw.Pixbuf = null;
+        }
+    }
+
     protected void CoreCommandSelected(object o, EventArgs e)
     {
 
@@ -588,8 +711,8 @@ public partial class MainWindow : Gtk.Window
                 sb.AppendLine(String.Format("x: {0} y: {1} z: {2}", vertex.x, vertex.y, vertex.z));
                 sb.AppendLine(String.Format("u: {0} v: {1}", vertex.u, vertex.v));
                 sb.AppendLine(String.Format("u1: {0} v1: {1}", vertex.u1, vertex.v1));
-                sb.AppendLine(String.Format("col: {0} spc: {1}", vertex.col, vertex.spc));
-                sb.AppendLine(String.Format("col1: {0} spc1: {1}", vertex.col1, vertex.spc1));
+                sb.AppendLine(String.Format("col: {0} spc: {1}", Convert.ToString(vertex.col,16), Convert.ToString(vertex.spc, 16)));
+                sb.AppendLine(String.Format("col1: {0} spc1: {1}", Convert.ToString(vertex.col1, 16), Convert.ToString(vertex.spc1, 16)));
                 sb.AppendLine("}");
             }
 
@@ -597,20 +720,21 @@ public partial class MainWindow : Gtk.Window
             daVertexes.QueueDraw();
 
             sb = new StringBuilder();
-            sb.AppendLine(String.Format("isp/tsp: {0}", node.param.isp));
-            sb.AppendLine(String.Format("tsp: {0}", node.param.tsp));
-            sb.AppendLine(String.Format("tsp1: {0}", node.param.tsp2));
-            sb.AppendLine(String.Format("tcw: {0}", node.param.tcw));
-            sb.AppendLine(String.Format("tcw1: {0}", node.param.tcw2));
+            sb.AppendLine(String.Format("isp/tsp: {0}", Convert.ToString(node.param.isp, 16)));
+            sb.AppendLine(String.Format("tsp: {0}", Convert.ToString(node.param.tsp, 16)));
+            sb.AppendLine(String.Format("tsp1: {0}", Convert.ToString(node.param.tsp2, 16)));
+            sb.AppendLine(String.Format("tcw: {0}", Convert.ToString(node.param.tcw, 16)));
+            sb.AppendLine(String.Format("tcw1: {0}", Convert.ToString(node.param.tcw2, 16)));
 
             txtIspTsp.Buffer.Text = sb.ToString();
 
             sb = new StringBuilder();
-            sb.AppendLine(String.Format("tcw: {0}", node.param.tcw));
-            sb.AppendLine(String.Format("tcw1: {0}", node.param.tcw2));
+            sb.AppendLine(String.Format("tcw: {0}", Convert.ToString(node.param.tcw, 16)));
+            sb.AppendLine(String.Format("tcw1: {0}", Convert.ToString(node.param.tcw2, 16)));
 
             txtTcw.Buffer.Text = sb.ToString();
 
+            GetTexture(node.param.tsp, node.param.tcw);
         }
 
 
@@ -691,5 +815,72 @@ public partial class MainWindow : Gtk.Window
 
         Application.Quit();
         args.RetVal = true;
+    }
+
+    protected void CoreNextFrame(object sender, EventArgs e)
+    {
+        waitingFrame = true;
+
+        lock (tcpClient)
+        {
+            WriteCommand(RRI_DebugCommands.RRIBC_SetStep);
+            WriteU8(1); // sending
+            WriteU8(0); // stepping
+
+            hasOK = false;
+
+            if (corePaused)
+            {
+                corePaused = false;
+                WriteCommand(RRI_DebugCommands.RRIBC_OK);
+            }
+        }
+
+        for (; ; )
+        {
+            lock (tcpClient)
+            {
+                if (hasOK == true)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    protected void CoreNextTile(object sender, EventArgs e)
+    {
+        waitingTile = true;
+
+        lock (tcpClient)
+        {
+            WriteCommand(RRI_DebugCommands.RRIBC_SetStep);
+            WriteU8(1); // sending
+            WriteU8(0); // stepping
+
+            hasOK = false;
+
+            if (corePaused)
+            {
+                corePaused = false;
+                WriteCommand(RRI_DebugCommands.RRIBC_OK);
+            }
+        }
+
+        for (; ; )
+        {
+            lock (tcpClient)
+            {
+                if (hasOK == true)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    protected void CoreClearList(object sender, EventArgs e)
+    {
+        store.Clear();
     }
 }

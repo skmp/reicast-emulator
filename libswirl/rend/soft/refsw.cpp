@@ -257,21 +257,16 @@ struct refsw_impl : refsw
         // Loop through pixels
         for (int y = spany; y > 0; y -= 1)
         {
-            float Xhs12 = hs12;
-            float Xhs23 = hs23;
-            float Xhs31 = hs31;
-            float Xhs41 = hs41;
-
             u8* cb_x = cb_y;
             float x_ps = minx_ps;
             for (int x = spanx; x > 0; x -= 1)
             {
-                Xhs12 -= DY12;
-                Xhs23 -= DY23;
-                Xhs31 -= DY31;
-                Xhs41 -= DY41;
+                float Xhs12 = C1 + DX12 * y_ps - DY12 * x_ps;
+                float Xhs23 = C2 + DX23 * y_ps - DY23 * x_ps;
+                float Xhs31 = C3 + DX31 * y_ps - DY31 * x_ps;
+                float Xhs41 = C4 + DX41 * y_ps - DY41 * x_ps;
 
-                bool inTriangle = Xhs12 > 0 && Xhs23 > 0 && Xhs31 > 0 && Xhs41 > 0;
+                bool inTriangle = Xhs12 >= 0 && Xhs23 >= 0 && Xhs31 >= 0 && Xhs41 >= 0;
 
                 if (inTriangle)
                 {
@@ -283,10 +278,6 @@ struct refsw_impl : refsw
                 x_ps = x_ps + 1;
             }
         next_y:
-            hs12 += DX12;
-            hs23 += DX23;
-            hs31 += DX31;
-            hs41 += DX41;
             cb_y += stride_bytes;
             y_ps = y_ps + 1;
         }

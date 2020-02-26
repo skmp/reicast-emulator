@@ -351,8 +351,8 @@ struct refrend : Renderer
             if (params->isp.UV_16b)
             {
                 u32 uv=vri(vram, ptr);
-                cv->u = f16((u16)uv);
-                cv->v = f16((u16)(uv >> 16));
+                cv->u = f16((u16)(uv >>16));
+                cv->v = f16((u16)(uv >> 0));
                 ptr+=4;
             }
             else

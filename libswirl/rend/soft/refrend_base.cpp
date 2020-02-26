@@ -538,7 +538,7 @@ struct refrend : Renderer
 
                 parameter_tag_t bgTag;
 
-                backend->DebugOnTileStart(rect.top, rect.left);
+                backend->DebugOnTileStart(rect.left, rect.top);
 
                 // register BGPOLY to fpu
                 {

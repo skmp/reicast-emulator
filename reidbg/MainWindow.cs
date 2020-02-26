@@ -328,6 +328,13 @@ public partial class MainWindow : Gtk.Window
                                 {
                                     var node = new MyTreeNode(String.Format("RenderParamTags(rm: {0}, x: {1}, y: {2})", rm, tileX, tileY));
                                     node.buffers = buffers;
+
+                                    node.tileLeft = tileX;
+                                    node.tileTop = tileY;
+
+                                    node.tileRight = tileX + 32;
+                                    node.tileBottom = tileY + 32;
+
                                     store.AddNode(node, 0);
                                 });
                             }

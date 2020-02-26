@@ -28,6 +28,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/aica/dsp.cpp \
 					$(CORE_DIR)/core/hw/aica/dsp_arm64.cpp \
 					$(CORE_DIR)/core/hw/aica/dsp_interp.cpp \
+					$(CORE_DIR)/core/hw/aica/dsp_x64.cpp \
 					$(CORE_DIR)/core/hw/aica/aica.cpp \
 					$(CORE_DIR)/core/hw/aica/aica_if.cpp \
 					$(CORE_DIR)/core/hw/aica/aica_mem.cpp \

@@ -1094,14 +1094,25 @@
                               </packing>
                             </child>
                             <child>
-                              <widget class="Gtk.Image" id="imgTcw">
+                              <widget class="Gtk.ScrolledWindow" id="GtkScrolledWindow6">
                                 <property name="MemberName" />
+                                <property name="ShadowType">In</property>
+                                <child>
+                                  <widget class="Gtk.Viewport" id="GtkViewport">
+                                    <property name="MemberName" />
+                                    <property name="ShadowType">None</property>
+                                    <child>
+                                      <widget class="Gtk.Image" id="imgTcw">
+                                        <property name="MemberName" />
+                                        <property name="ShowScrollbars">True</property>
+                                      </widget>
+                                    </child>
+                                  </widget>
+                                </child>
                               </widget>
                               <packing>
                                 <property name="Position">1</property>
                                 <property name="AutoSize">True</property>
-                                <property name="Expand">False</property>
-                                <property name="Fill">False</property>
                               </packing>
                             </child>
                           </widget>

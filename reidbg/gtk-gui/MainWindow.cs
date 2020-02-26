@@ -177,6 +177,8 @@ public partial class MainWindow
 
 	private global::Gtk.TextView txtTcw;
 
+	private global::Gtk.ScrolledWindow GtkScrolledWindow6;
+
 	private global::Gtk.Image imgTcw;
 
 	private global::Gtk.Label label5;
@@ -956,16 +958,23 @@ public partial class MainWindow
 		w75.Position = 0;
 		w75.Expand = false;
 		// Container child hbox6.Gtk.Box+BoxChild
+		this.GtkScrolledWindow6 = new global::Gtk.ScrolledWindow();
+		this.GtkScrolledWindow6.Name = "GtkScrolledWindow6";
+		this.GtkScrolledWindow6.ShadowType = ((global::Gtk.ShadowType)(1));
+		// Container child GtkScrolledWindow6.Gtk.Container+ContainerChild
+		global::Gtk.Viewport w76 = new global::Gtk.Viewport();
+		w76.ShadowType = ((global::Gtk.ShadowType)(0));
+		// Container child GtkViewport.Gtk.Container+ContainerChild
 		this.imgTcw = new global::Gtk.Image();
 		this.imgTcw.Name = "imgTcw";
-		this.hbox6.Add(this.imgTcw);
-		global::Gtk.Box.BoxChild w76 = ((global::Gtk.Box.BoxChild)(this.hbox6[this.imgTcw]));
-		w76.Position = 1;
-		w76.Expand = false;
-		w76.Fill = false;
+		w76.Add(this.imgTcw);
+		this.GtkScrolledWindow6.Add(w76);
+		this.hbox6.Add(this.GtkScrolledWindow6);
+		global::Gtk.Box.BoxChild w79 = ((global::Gtk.Box.BoxChild)(this.hbox6[this.GtkScrolledWindow6]));
+		w79.Position = 1;
 		this.notebook2.Add(this.hbox6);
-		global::Gtk.Notebook.NotebookChild w77 = ((global::Gtk.Notebook.NotebookChild)(this.notebook2[this.hbox6]));
-		w77.Position = 2;
+		global::Gtk.Notebook.NotebookChild w80 = ((global::Gtk.Notebook.NotebookChild)(this.notebook2[this.hbox6]));
+		w80.Position = 2;
 		// Notebook tab
 		this.label5 = new global::Gtk.Label();
 		this.label5.Name = "label5";
@@ -983,8 +992,8 @@ public partial class MainWindow
 		this.textview6.Editable = false;
 		this.GtkScrolledWindow7.Add(this.textview6);
 		this.notebook2.Add(this.GtkScrolledWindow7);
-		global::Gtk.Notebook.NotebookChild w79 = ((global::Gtk.Notebook.NotebookChild)(this.notebook2[this.GtkScrolledWindow7]));
-		w79.Position = 3;
+		global::Gtk.Notebook.NotebookChild w82 = ((global::Gtk.Notebook.NotebookChild)(this.notebook2[this.GtkScrolledWindow7]));
+		w82.Position = 3;
 		// Notebook tab
 		this.label4 = new global::Gtk.Label();
 		this.label4.Name = "label4";
@@ -992,14 +1001,14 @@ public partial class MainWindow
 		this.notebook2.SetTabLabel(this.GtkScrolledWindow7, this.label4);
 		this.label4.ShowAll();
 		this.hbox4.Add(this.notebook2);
-		global::Gtk.Box.BoxChild w80 = ((global::Gtk.Box.BoxChild)(this.hbox4[this.notebook2]));
-		w80.Position = 1;
+		global::Gtk.Box.BoxChild w83 = ((global::Gtk.Box.BoxChild)(this.hbox4[this.notebook2]));
+		w83.Position = 1;
 		this.vbox2.Add(this.hbox4);
-		global::Gtk.Box.BoxChild w81 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.hbox4]));
-		w81.Position = 1;
+		global::Gtk.Box.BoxChild w84 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.hbox4]));
+		w84.Position = 1;
 		this.notebook1.Add(this.vbox2);
-		global::Gtk.Notebook.NotebookChild w82 = ((global::Gtk.Notebook.NotebookChild)(this.notebook1[this.vbox2]));
-		w82.Position = 3;
+		global::Gtk.Notebook.NotebookChild w85 = ((global::Gtk.Notebook.NotebookChild)(this.notebook1[this.vbox2]));
+		w85.Position = 3;
 		// Notebook tab
 		this.label1 = new global::Gtk.Label();
 		this.label1.Name = "label1";
@@ -1007,53 +1016,53 @@ public partial class MainWindow
 		this.notebook1.SetTabLabel(this.vbox2, this.label1);
 		this.label1.ShowAll();
 		// Notebook tab
-		global::Gtk.Label w83 = new global::Gtk.Label();
-		w83.Visible = true;
-		this.notebook1.Add(w83);
-		this.label7 = new global::Gtk.Label();
-		this.label7.Name = "label7";
-		this.label7.LabelProp = global::Mono.Unix.Catalog.GetString("CLX2: TA");
-		this.notebook1.SetTabLabel(w83, this.label7);
-		this.label7.ShowAll();
-		// Notebook tab
-		global::Gtk.Label w84 = new global::Gtk.Label();
-		w84.Visible = true;
-		this.notebook1.Add(w84);
-		this.label17 = new global::Gtk.Label();
-		this.label17.Name = "label17";
-		this.label17.LabelProp = global::Mono.Unix.Catalog.GetString("SPG/DVE");
-		this.notebook1.SetTabLabel(w84, this.label17);
-		this.label17.ShowAll();
-		// Notebook tab
-		global::Gtk.Label w85 = new global::Gtk.Label();
-		w85.Visible = true;
-		this.notebook1.Add(w85);
-		this.label24 = new global::Gtk.Label();
-		this.label24.Name = "label24";
-		this.label24.LabelProp = global::Mono.Unix.Catalog.GetString("SCPU: ARM7DI");
-		this.notebook1.SetTabLabel(w85, this.label24);
-		this.label24.ShowAll();
-		// Notebook tab
 		global::Gtk.Label w86 = new global::Gtk.Label();
 		w86.Visible = true;
 		this.notebook1.Add(w86);
-		this.label25 = new global::Gtk.Label();
-		this.label25.Name = "label25";
-		this.label25.LabelProp = global::Mono.Unix.Catalog.GetString("AICA");
-		this.notebook1.SetTabLabel(w86, this.label25);
-		this.label25.ShowAll();
+		this.label7 = new global::Gtk.Label();
+		this.label7.Name = "label7";
+		this.label7.LabelProp = global::Mono.Unix.Catalog.GetString("CLX2: TA");
+		this.notebook1.SetTabLabel(w86, this.label7);
+		this.label7.ShowAll();
 		// Notebook tab
 		global::Gtk.Label w87 = new global::Gtk.Label();
 		w87.Visible = true;
 		this.notebook1.Add(w87);
+		this.label17 = new global::Gtk.Label();
+		this.label17.Name = "label17";
+		this.label17.LabelProp = global::Mono.Unix.Catalog.GetString("SPG/DVE");
+		this.notebook1.SetTabLabel(w87, this.label17);
+		this.label17.ShowAll();
+		// Notebook tab
+		global::Gtk.Label w88 = new global::Gtk.Label();
+		w88.Visible = true;
+		this.notebook1.Add(w88);
+		this.label24 = new global::Gtk.Label();
+		this.label24.Name = "label24";
+		this.label24.LabelProp = global::Mono.Unix.Catalog.GetString("SCPU: ARM7DI");
+		this.notebook1.SetTabLabel(w88, this.label24);
+		this.label24.ShowAll();
+		// Notebook tab
+		global::Gtk.Label w89 = new global::Gtk.Label();
+		w89.Visible = true;
+		this.notebook1.Add(w89);
+		this.label25 = new global::Gtk.Label();
+		this.label25.Name = "label25";
+		this.label25.LabelProp = global::Mono.Unix.Catalog.GetString("AICA");
+		this.notebook1.SetTabLabel(w89, this.label25);
+		this.label25.ShowAll();
+		// Notebook tab
+		global::Gtk.Label w90 = new global::Gtk.Label();
+		w90.Visible = true;
+		this.notebook1.Add(w90);
 		this.label28 = new global::Gtk.Label();
 		this.label28.Name = "label28";
 		this.label28.LabelProp = global::Mono.Unix.Catalog.GetString("DSP");
-		this.notebook1.SetTabLabel(w87, this.label28);
+		this.notebook1.SetTabLabel(w90, this.label28);
 		this.label28.ShowAll();
 		this.vbox1.Add(this.notebook1);
-		global::Gtk.Box.BoxChild w88 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.notebook1]));
-		w88.Position = 1;
+		global::Gtk.Box.BoxChild w91 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.notebook1]));
+		w91.Position = 1;
 		// Container child vbox1.Gtk.Box+BoxChild
 		this.button1 = new global::Gtk.Button();
 		this.button1.CanFocus = true;
@@ -1061,10 +1070,10 @@ public partial class MainWindow
 		this.button1.UseUnderline = true;
 		this.button1.Label = global::Mono.Unix.Catalog.GetString("Quit");
 		this.vbox1.Add(this.button1);
-		global::Gtk.Box.BoxChild w89 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.button1]));
-		w89.Position = 2;
-		w89.Expand = false;
-		w89.Fill = false;
+		global::Gtk.Box.BoxChild w92 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.button1]));
+		w92.Position = 2;
+		w92.Expand = false;
+		w92.Fill = false;
 		this.Add(this.vbox1);
 		if ((this.Child != null))
 		{

@@ -1483,20 +1483,23 @@ int ta_parse_cnt = 0;
 
 static void fix_texture_bleeding(const List<PolyParam> *list)
 {
-	for (const PolyParam *pp = list->head(); pp <= list->LastPtr(); pp++)
+	const PolyParam *pp_end = list->LastPtr(0);
+	const u32 *idx_base = vd_rc.idx.head();
+	Vertex *vtx_base = vd_rc.verts.head();
+	for (const PolyParam *pp = list->head(); pp != pp_end; pp++)
 	{
 		if (!pp->pcw.Texture || pp->count < 3)
 			continue;
 		// Find polygons that are facing the camera (constant z)
 		// and only use 0 and 1 for U and V (some tolerance around 1 for SA2)
 		// then apply a half-pixel correction on U and V.
-		const u32 first = vd_rc.idx.head()[pp->first];
-		const u32 last = vd_rc.idx.head()[pp->first + pp->count - 1];
+		const u32 first = idx_base[pp->first];
+		const u32 last = idx_base[pp->first + pp->count - 1];
 		bool need_fixing = true;
 		float z;
 		for (u32 idx = first; idx <= last && need_fixing; idx++)
 		{
-			Vertex& vtx = vd_rc.verts.head()[idx];
+			Vertex& vtx = vtx_base[idx];
 
 			if (vtx.u != 0.f && (vtx.u <= 0.995f || vtx.u > 1.f))
 				need_fixing = false;
@@ -1513,7 +1516,7 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 		u32 tex_height = 8 << pp->tsp.TexV;
 		for (u32 idx = first; idx <= last; idx++)
 		{
-			Vertex& vtx = vd_rc.verts.head()[idx];
+			Vertex& vtx = vtx_base[idx];
 			if (vtx.u > 0.995f)
 				vtx.u = 1.f;
 			vtx.u = (0.5f + vtx.u * (tex_width - 1)) / tex_width;

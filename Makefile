@@ -141,7 +141,7 @@ ifneq (,$(findstring unix,$(platform)))
 	fpic = -fPIC
 
 	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_AREC
+		CFLAGS += -DTARGET_LINUX_x64
 		SINGLE_PREC_FLAGS=1
 		HAVE_GENERIC_JIT = 0
 	else ifeq ($(WITH_DYNAREC), x86)
@@ -623,7 +623,7 @@ else ifneq (,$(findstring osx,$(platform)))
         fpic += -mmacosx-version-min=10.7
 	LDFLAGS += -stdlib=libc++
 	fpic = -fPIC
-	CFLAGS += -D TARGET_NO_AREC -DHAVE_GLSYM_PRIVATE
+	CFLAGS += -DHAVE_GLSYM_PRIVATE
 	SINGLE_PREC_FLAGS=1
 	PLATCFLAGS += -D__MACOSX__ -DOSX
 	GL_LIB := -framework OpenGL
@@ -810,8 +810,6 @@ else
 ifeq ($(WITH_DYNAREC), x86)
 	LDFLAGS += -m32
 	CFLAGS += -m32
-else
-	CFLAGS += -D TARGET_NO_AREC
 endif
 	HAVE_VULKAN = 1
 

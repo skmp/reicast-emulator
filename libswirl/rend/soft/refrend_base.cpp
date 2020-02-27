@@ -79,9 +79,8 @@
 
 extern u32 decoded_colors[3][65536];
 
-#if HOST_OS != OS_WINDOWS
-
-#include     <X11/Xlib.h>
+#if HOST_OS != OS_WINDOWS && HOST_OS != OS_DARWIN
+#include <X11/Xlib.h>
 #endif
 
 #if HOST_OS == OS_WINDOWS

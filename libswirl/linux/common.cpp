@@ -14,6 +14,7 @@
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
 	#include <TargetConditionals.h>
+    #include <dlfcn.h>
 #endif
 #if !defined(TARGET_NACL32)
 #include <poll.h>
@@ -51,8 +52,10 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	
     rei_host_context_t ctx;
     
-    context_from_segfault(&ctx, segfault_ctx);
-
+    // TODO: BEN fix this properly
+    //context_from_segfault(&ctx, segfault_ctx);
+    context_from_segfault(&ctx);
+    
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
 	

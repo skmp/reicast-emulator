@@ -7,6 +7,10 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
+#if HOST_OS==OS_DARWIN
+#include <signal.h>
+#endif
+
 #if HOST_OS==OS_LINUX
 #include <poll.h>
 #include <termios.h>

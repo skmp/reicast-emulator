@@ -42,12 +42,13 @@ extern u32 decoded_colors[3][65536];
 static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
 
 #if HOST_OS != OS_WINDOWS
+    struct RECT {
+        int left, top, right, bottom;
+    };
 
-struct RECT {
-    int left, top, right, bottom;
-};
-
-#include     <X11/Xlib.h>
+    #if HOST_OS != OS_DARWIN
+        #include     <X11/Xlib.h>
+    #endif
 #endif
 
 union mem128i {

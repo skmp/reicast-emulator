@@ -3,8 +3,6 @@
 */
 #include "license/bsd"
 
-
-
 #include "oslib/threading.h"
 #include "build.h"
 #include <unistd.h>

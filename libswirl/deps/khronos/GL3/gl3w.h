@@ -1,5 +1,5 @@
 #pragma once
-#include "kronos/GL3/gl3.h"
+#include <GL3/gl3.h>
 
 #ifdef __cplusplus
 extern "C" {

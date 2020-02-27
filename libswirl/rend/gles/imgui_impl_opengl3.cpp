@@ -134,13 +134,15 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     // Backup GL state
     glActiveTexture(GL_TEXTURE0);
     bool clip_origin_lower_left = true;
-
+    
+#if HOST_OS != OS_DARWIN
     if (gl.gl_major >= 4 && glClipControl != NULL)
     {
 		GLenum last_clip_origin = 0; glGetIntegerv(GL_CLIP_ORIGIN, (GLint*)&last_clip_origin); // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
 		if (last_clip_origin == GL_UPPER_LEFT)
 			clip_origin_lower_left = false;
     }
+#endif
 
     if (save_background)
     {

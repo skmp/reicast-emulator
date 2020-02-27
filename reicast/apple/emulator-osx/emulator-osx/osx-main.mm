@@ -16,6 +16,10 @@
 #include "osx_keyboard.h"
 #include "osx_gamepad.h"
 
+int main(int argc, char *argv[]) {
+    return NSApplicationMain(argc,  (const char **) argv);
+}
+
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
 static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
@@ -89,6 +93,7 @@ void gl_swap() {
 void common_linux_setup();
 int reicast_init(int argc, char* argv[]);
 
+void dc_exit();
 void dc_resume();
 void rend_init_renderer();
 
@@ -108,7 +113,7 @@ bool rend_framePending();
 
 extern "C" bool emu_frame_pending()
 {
-	return rend_framePending() || gui_is_open();
+    return rend_framePending() || g_GUI->IsOpen();
 }
 
 extern "C" int emu_single_frame(int w, int h) {
@@ -148,7 +153,8 @@ extern "C" void emu_gles_init(int width, int height) {
 	NSDictionary *description = [screen deviceDescription];
 	NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
 	CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
-	screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
+    // TODO: BEN maybe we need this?
+	//screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
 	screen_width = width;
 	screen_height = height;
 

@@ -1,14 +1,18 @@
 //
-//  osx-main-Bridging-Header.h
+//  osx-main.h
 //  emulator-osx
 //
 //  Created by admin on 8/5/15.
 //  Copyright (c) 2015 reicast. All rights reserved.
 //
 
-#ifndef emulator_osx_osx_main_Bridging_Header_h
-#define emulator_osx_osx_main_Bridging_Header_h
+#ifndef emulator_osx_osx_main_h
+#define emulator_osx_osx_main_h
 #include <MacTypes.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void emu_dc_exit();
 int emu_single_frame(int w, int h);
@@ -25,4 +29,9 @@ extern int mo_y_abs;
 extern float mo_x_delta;
 extern float mo_y_delta;
 extern float mo_wheel_delta;
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

@@ -171,8 +171,8 @@ enum HollyInterruptID
 		//bit 0 = RENDER : ISP out of Cache(Buffer over flow)
 		//bit 1 = RENDER : Hazard Processing of Strip Buffer
 		holly_PRIM_NOMEM = holly_err | 0x02,	//bit 2 = TA : ISP/TSP Parameter Overflow
-		holly_MATR_NOMEM = holly_err | 0x03		//bit 3 = TA : Object List Pointer Overflow
-		//bit 4 = TA : Illegal Parameter
+		holly_MATR_NOMEM = holly_err | 0x03,	//bit 3 = TA : Object List Pointer Overflow
+		holly_ILLEGAL_PARAM = holly_err | 0x04 //bit 4 = TA : Illegal Parameter
 		//bit 5 = TA : FIFO Overflow
 		//bit 6 = PVRIF : Illegal Address set
 		//bit 7 = PVRIF : DMA over run

@@ -571,6 +571,8 @@ struct settings_t
 
 	struct {
 		bool SerialConsole;
+		bool VirtualSerialPort;
+		string VirtualSerialPortFile;
 	} debug;
 
 	struct {

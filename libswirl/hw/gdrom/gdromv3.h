@@ -276,7 +276,9 @@ extern char szExDT[8][32];
 #define ATA_EXEC_DIAG    0x90
 #define ATA_SPI_PACKET   0xA0
 #define ATA_IDENTIFY_DEV 0xA1
+#define ATA_IDENTIFY     0xEC
 #define ATA_SET_FEATURES 0xEF
+
 
 
 // SPI Packet Commands

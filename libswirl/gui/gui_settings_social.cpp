@@ -22,36 +22,42 @@ void gui_settings_social()
 
 		#if !defined(_ANDROID) // Google doesn't like us having donate links
 			if (ImGui::Button("Donate / Support Reicast (via emudev.org)")) {
-		    	os_LaunchFromURL("http://donate.emudev.org");
+		    	os_LaunchFromURL("https://donate.emudev.org");
 		    }
 	    #endif
 
-		if (ImGui::Button("Patreon (emudev.org)")) {
-	    	os_LaunchFromURL("http://patreon.emudev.org");
+
+        if (ImGui::Button("Reicast Homepage")) {
+            os_LaunchFromURL("https://reicast.com");
+        }
+		ImGui::SameLine();
+		if (ImGui::Button("Official Reicast Forum")) {
+		    os_LaunchFromURL("https://forum.reicast.com");
+		}
+		ImGui::NextColumn();
+		if (ImGui::Button("Reicast Guide")) {
+		    os_LaunchFromURL("https://reicast.com/guide/");
+		}
+		ImGui::SameLine();
+        if (ImGui::Button("Patreon (emudev.org)")) {
+            os_LaunchFromURL("https://patreon.emudev.org");
+        }
+        ImGui::NextColumn();
+        ImGui::Separator();
+        if (ImGui::Button("Discord")) {
+	    	os_LaunchFromURL("https://chat.reicast.com");
 	    }
-
-		ImGui::Separator();
-
-		if (ImGui::Button("Discord")) {
-	    	os_LaunchFromURL("http://chat.reicast.com");
-	    }
-
+        ImGui::SameLine();
 		if (ImGui::Button("Facebook")) {
-	    	os_LaunchFromURL("http://facebook.com/reicastdc");
+	    	os_LaunchFromURL("https://facebook.com/reicastdc");
 	    }
-
+		ImGui::NextColumn();
+        ImGui::SameLine();
 		if (ImGui::Button("Twitter")) {
 	    	os_LaunchFromURL("https://twitter.com/reicastdc");
 	    }
-
-		if (ImGui::Button("Official Forum")) {
-	    	os_LaunchFromURL("http://forum.reicast.com");
-	    }
-
-
-		if (ImGui::Button("Homepage")) {
-	    	os_LaunchFromURL("http://reicast.com");
-	    }
+        ImGui::NextColumn();
+		ImGui::Separator();
 
 		ImGui::EndTabItem();
 	}

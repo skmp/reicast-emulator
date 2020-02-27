@@ -25,10 +25,12 @@ class PixelBuffer
 	pixel_type* p_buffer_start;
 	pixel_type* p_current_line;
 	pixel_type* p_current_pixel;
-
 	u32 pixels_per_line;
 
 public:
+	u32 total_pixels;
+	
+
 	PixelBuffer()
 	{
 		p_buffer_start = p_current_line = p_current_pixel = NULL;
@@ -43,6 +45,7 @@ public:
 	{
 		deinit();
 		p_buffer_start = p_current_line = p_current_pixel = (pixel_type *)malloc(width * height * sizeof(pixel_type));
+		this->total_pixels = width * height;
 		this->pixels_per_line = width;
 	}
 

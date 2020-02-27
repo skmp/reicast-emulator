@@ -52,7 +52,7 @@ static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
 #endif
 
 union mem128i {
-    int8_t m128i_u8[16];
+    uint8_t m128i_u8[16];
     int8_t m128i_i8[16];
     int16_t m128i_i16[8];
     int32_t m128i_i32[4];
@@ -819,8 +819,10 @@ struct slowsoftrend : Renderer
     }
 };
 
+#if FEAT_TA == TA_HLE
 Renderer* rend_slowsoftrend(u8* vram) {
     return new(_mm_malloc(sizeof(slowsoftrend), 32)) ::slowsoftrend(vram);
 }
 
 static auto slowsoftrend = RegisterRendererBackend(rendererbackend_t{ "slow", "Slow Software Renderer", 0, rend_slowsoftrend });
+#endif

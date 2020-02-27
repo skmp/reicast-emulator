@@ -17,10 +17,10 @@
 #include "pvr_sb_regs.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "ta.h"
+#include "gpl/lxdream/tacore.h"
 #include "pvr_regs.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
-#include "ta.h"
 #include "spg.h"
 #include "pvr_yuv.h"
 
@@ -248,7 +248,11 @@ struct PVRDevice : MMIODevice {
 
             link_addr = ea_ptr[0x1C >> 2];//Next link
             //transfer global param
+            #if FEAT_TA == TA_HLE
             ta_vtx_data(ea_ptr, ea_ptr[0x18 >> 2]);
+            #else
+            lxd_ta_write((u8*)ea_ptr, ea_ptr[0x18 >> 2]);
+            #endif
             if (link_addr == 2)
             {
                 link_addr = calculate_start_link_addr();
@@ -310,9 +314,16 @@ struct PVRDevice : MMIODevice {
 
         if (addr == TA_LIST_INIT_addr)
         {
+            // FIXME: Fuller TA implementation
+            // This is needed because of how KOS sets the bgpoly
+            TA_ISP_CURRENT = TA_ISP_BASE;
             if (data >> 31)
             {
+                #if FEAT_TA == TA_HLE
                 ta_vtx_ListInit();
+                #else
+                lxd_ta_init(vram);
+                #endif
                 data = 0;
             }
         }
@@ -322,7 +333,11 @@ struct PVRDevice : MMIODevice {
             if (data != 0)
             {
                 if (data & 1)
+                    #if FEAT_TA == TA_HLE
                     ta_vtx_SoftReset();
+                    #else
+                    lxd_ta_reset();
+                    #endif
                 data = 0;
             }
         }
@@ -330,7 +345,11 @@ struct PVRDevice : MMIODevice {
         if (addr == TA_LIST_CONT_addr)
         {
             //a write of anything works ?
+            #if FEAT_TA == TA_HLE
             ta_vtx_ListCont();
+            #else
+            verify(false);
+            #endif
         }
 
         if (addr == SPG_CONTROL_addr || addr == SPG_LOAD_addr)

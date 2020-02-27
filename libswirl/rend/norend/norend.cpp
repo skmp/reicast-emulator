@@ -36,6 +36,8 @@ struct norend : Renderer
 
 #include "hw/pvr/Renderer_if.h"
 
+#if FEAT_TA == TA_HLE
 Renderer* rend_norend(u8* vram) { return new ::norend(); }
 
 static auto norend = RegisterRendererBackend(rendererbackend_t{ "none", "No PVR Rendering", -2, rend_norend });
+#endif

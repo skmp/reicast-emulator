@@ -205,12 +205,15 @@ static bool rend_frame(u8* vram, TA_context* ctx) {
         rend_init_renderer(vram);
     }
 
-    bool proc = renderer->Process(ctx);
+    bool proc = true;
 
-	if (!proc || !ctx->rend.isRTT) {
-		// If rendering to texture, continue locking until the frame is rendered
-		pend_rend = false;
-		re.Set();
+	if (ctx) {
+		proc = renderer->Process(ctx);
+		if (!proc || !ctx->rend.isRTT) {
+			// If rendering to texture, continue locking until the frame is rendered
+			pend_rend = false;
+			re.Set();
+		}
 	}
 
     bool do_swp = proc && renderer->RenderPVR();
@@ -336,7 +339,17 @@ void rend_resize(int width, int height) {
 void rend_start_render(u8* vram)
 {
 	render_called = true;
-	pend_rend = false;
+
+	#if FEAT_TA == TA_HLE
+		pend_rend = false;
+	#else
+		// make sure no fb write is pending
+		if (pend_rend) {
+			re.Wait();
+			pend_rend = false;
+		}
+	#endif
+	
 	TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
 
 	if (ctx)
@@ -448,6 +461,24 @@ void rend_start_render(u8* vram)
 			tactx_Recycle(ctx);
 		}
 	}
+	else
+	{
+		SetREP(nullptr);
+		g_GUIRenderer->QueueEmulatorFrame([=](){
+			bool do_swp = rend_frame(vram, nullptr);
+
+			//pend_rend = false;
+			re.Set();
+
+			//clear up & free data ..
+			FinishRender(nullptr);
+
+			return do_swp;
+		});
+
+		pend_rend = true;
+		rs.Set();
+	}
 }
 
 void rend_end_render()
@@ -462,20 +493,38 @@ void rend_end_render()
 
 	if (pend_rend) {
 		re.Wait();
+		#if FEAT_TA == TA_LLE
+			pend_rend = false;
+		#endif
 	}
 }
 
 void rend_vblank()
 {
-	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
+	#if FEAT_TA == TA_HLE
+		if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
+	#else
+		fb_dirty = true;
+		if (fb_dirty && FB_R_CTRL.fb_enable)
+	#endif
 	{
         fb_dirty = false;
+		#if FEAT_TA == TA_LLE
+		if (pend_rend) {
+			re.Wait();
+			pend_rend = false;
+		}
+		pend_rend = true;
+		#endif
 
         g_GUIRenderer->QueueEmulatorFrame([] () {
+			#if FEAT_TA == TA_LLE
+				re.Set();
+			#endif
 			// TODO: FIXME Actually check and re init this. Better yet, refactor
             if (renderer)
 			{
-                renderer->RenderFramebuffer();
+                return renderer->RenderFramebuffer();
             }
             return true;
         });

@@ -394,6 +394,31 @@ struct GDRomV3_impl final : MMIODevice {
             gd_spi_pio_end((u8*)&reply_a1[packet_cmd.data_8[2] >> 1], packet_cmd.data_8[4]);
             break;
 
+        case ATA_IDENTIFY:
+            printf_ata("ATA_IDENTIFY\n");
+
+            // Set Signature
+            DriveSel &= 0xf0;
+
+            SecCount.full = 1;
+            SecNumber.full = 1;
+            ByteCount.low = 0x14;
+            ByteCount.hi = 0xeb;
+
+            // where did this come from?
+            //GDStatus.DRQ = 0;
+            
+            // ABORT command
+            Error.full = 0x4;
+            
+            GDStatus.full = 0;
+            GDStatus.DRDY = 1;
+            GDStatus.CHECK = 1;
+
+            asic->RaiseInterrupt(holly_GDROM_CMD);
+            gd_set_state(gds_waitcmd);
+            break;
+
         case ATA_SET_FEATURES:
             printf_ata("ATA_SET_FEATURES\n");
 
@@ -878,11 +903,13 @@ struct GDRomV3_impl final : MMIODevice {
     {
         switch (Addr)
         {
+        //ATA_IOPORT_WR_CYLINDER_LOW
         case GD_BYCTLLO:
             printf_rm("GDROM: Write to GD_BYCTLLO = %X, Size:%X\n", data, sz);
             ByteCount.low = (u8)data;
             break;
 
+        //ATA_IOPORT_WR_CYLINDER_HIGH
         case GD_BYCTLHI:
             printf_rm("GDROM: Write to GD_BYCTLHI = %X, Size:%X\n", data, sz);
             ByteCount.hi = (u8)data;
@@ -920,6 +947,7 @@ struct GDRomV3_impl final : MMIODevice {
             printf("GDROM: Write GD_DEVCTRL (Not implemented on Dreamcast)\n");
             break;
 
+        //ATA_IOPORT_WR_DEVICE_HEAD
         case GD_DRVSEL:
             if (data != 0) {
                 printf("GDROM: Write to GD_DRVSEL, !=0. Value is: %02X\n", data);

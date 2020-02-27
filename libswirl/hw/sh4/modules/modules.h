@@ -25,6 +25,6 @@ DEFAULT_MOD(Ubc)
 DEFAULT_MOD(Tmu)
 DEFAULT_MOD(Ccn)
 
-void MMU_init();
+void MMU_init(SuperH4Mmr* sh4mmr);
 void MMU_reset();
 void MMU_term();

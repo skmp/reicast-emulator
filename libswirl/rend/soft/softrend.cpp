@@ -53,7 +53,7 @@ DECL_ALIGN(32) u32 pixels[MAX_RENDER_PIXELS];
 
 union m128i {
 	__m128i mm;
-	int8_t m128i_u8[16];
+	uint8_t m128i_u8[16];
 	int8_t m128i_i8[16];
 	int16_t m128i_i16[8];
 	int32_t m128i_i32[4];
@@ -1260,8 +1260,10 @@ struct softrend : Renderer
 	}
 };
 
+#if FEAT_TA == TA_HLE
 Renderer* rend_softrend(u8* vram) {
 	return new(_mm_malloc(sizeof(softrend), 32)) ::softrend(vram);
 }
 
 static auto softrend = RegisterRendererBackend(rendererbackend_t{ "soft", "Fast Software Renderer", 0, rend_softrend });
+#endif

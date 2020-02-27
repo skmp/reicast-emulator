@@ -863,7 +863,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				} 
 				else 
 				{
-					MOV32(r0,op->rs1._imm);
+					MOV32(r0, (uintptr_t)sh4_cpu);
+					MOV32(r1,op->rs1._imm);
 
 					switch(optp)
 					{

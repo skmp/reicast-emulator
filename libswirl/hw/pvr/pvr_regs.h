@@ -396,7 +396,7 @@ union TA_YUV_TEX_CTRL_type
 #define TA_OL_LIMIT_addr        0x0000012C // RW  Start address of next Object Pointer Block
 #define TA_ISP_LIMIT_addr       0x00000130 // RW  Current ISP/TSP Parameter write address
 #define TA_NEXT_OPB_addr        0x00000134 // R   Global Tile clip control
-#define TA_ITP_CURRENT_addr     0x00000138 // R   Current ISP/TSP Parameter write address
+#define TA_ISP_CURRENT_addr     0x00000138 // R   Current ISP/TSP Parameter write address
 #define TA_GLOB_TILE_CLIP_addr  0x0000013C // RW  Global Tile clip control
 #define TA_ALLOC_CTRL_addr      0x00000140 // RW  Object list control
 #define TA_LIST_INIT_addr       0x00000144 // RW  TA initialization
@@ -496,7 +496,7 @@ union TA_YUV_TEX_CTRL_type
 #define TA_OL_LIMIT       PvrReg(TA_OL_LIMIT_addr,u32)       // RW Start address of next Object Pointer Block
 #define TA_ISP_LIMIT      PvrReg(TA_ISP_LIMIT_addr,u32)      // RW Current ISP/TSP Parameter write address
 #define TA_NEXT_OPB       PvrReg(TA_NEXT_OPB_addr,u32)       // R  Global Tile clip control
-#define TA_ITP_CURRENT    PvrReg(TA_ITP_CURRENT_addr,u32)    // R  Current ISP/TSP Parameter write address
+#define TA_ISP_CURRENT    PvrReg(TA_ISP_CURRENT_addr,u32)    // R  Current ISP/TSP Parameter write address
 #define TA_GLOB_TILE_CLIP PvrReg(TA_GLOB_TILE_CLIP_addr, TA_GLOB_TILE_CLIP_type) // RW Global Tile clip control
 #define TA_ALLOC_CTRL     PvrReg(TA_ALLOC_CTRL_addr,u32)     // RW Object list control
 #define TA_LIST_INIT      PvrReg(TA_LIST_INIT_addr,u32)      // RW TA initialization

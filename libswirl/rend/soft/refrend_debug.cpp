@@ -37,6 +37,7 @@ enum RRI_DebugCommands {
     RRIBC_FrameNotification,
 
     RRIBC_ClearBuffers,
+    RRIBC_ClearParamBuffer,
     RRIBC_PeelBuffers,
     RRIBC_SummarizeStencilOr,
     RRIBC_SummarizeStencilAnd,
@@ -320,13 +321,24 @@ struct RefRendDebug: RefRendInterface
         WaitForStep();
     }
 
+    // Clear only the param buffer (used for peeling)
+    virtual void ClearParamBuffer(u32 paramValue) {
+        backend->ClearParamBuffer(paramValue);
+
+        WCH(ClearParamBuffer);
+
+        WriteData(paramValue);
+
+        WriteBuffers();
+        WCE();
+    }
+
     // Clear and set DEPTH2 for peeling
-    virtual void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue) {
-        backend->PeelBuffers(paramValue, depthValue, stencilValue);
+    virtual void PeelBuffers(float depthValue, u32 stencilValue) {
+        backend->PeelBuffers(depthValue, stencilValue);
 
         WCH(PeelBuffers);
 
-        WriteData(paramValue);
         WriteData(depthValue);
         WriteData(stencilValue);
 

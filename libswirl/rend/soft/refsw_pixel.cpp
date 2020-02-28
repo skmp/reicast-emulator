@@ -520,7 +520,7 @@ struct RefPixelPipeline : PixelPipeline {
                     }
                     else
                     {
-                        if (tag > tagExisting)
+                        if (tag >= tagExisting)
                             return;
                     }
                 }

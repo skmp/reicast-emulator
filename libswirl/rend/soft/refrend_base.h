@@ -51,8 +51,11 @@ struct RefRendInterface
     // Clear the buffers
     virtual void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
 
+    // Clear only the param buffer (used for peeling)
+    virtual void ClearParamBuffer(u32 paramValue) = 0;
+
     // Clear and set DEPTH2 for peeling
-    virtual void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
+    virtual void PeelBuffers(float depthValue, u32 stencilValue) = 0;
 
     // Summarize tile after rendering modvol (inside)
     virtual void SummarizeStencilOr() = 0;

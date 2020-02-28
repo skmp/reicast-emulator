@@ -19,6 +19,7 @@ namespace Reidbg
         RRIBC_FrameNotification,
 
         RRIBC_ClearBuffers,
+        RRIBC_ClearParamBuffer,
         RRIBC_PeelBuffers,
         RRIBC_SummarizeStencilOr,
         RRIBC_SummarizeStencilAnd,

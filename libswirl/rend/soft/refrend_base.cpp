@@ -597,13 +597,14 @@ struct refrend : Renderer
                 // layer peeling rendering
                 if (!entry.trans.empty)
                 {
+                    backend->ClearParamBuffer(TAG_INVALID);
 
                     do
                     {
                         backend->ClearPixelsDrawn();
 
                         //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
-                        backend->PeelBuffers(TAG_INVALID, FLT_MAX, 0);
+                        backend->PeelBuffers(FLT_MAX, 0);
 
                         // render to TAGS
                         RenderObjectList(backend, RM_TRANSLUCENT, entry.trans.ptr_in_words * 4, &rect);

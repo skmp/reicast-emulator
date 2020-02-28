@@ -67,18 +67,24 @@ struct refsw_impl : refsw
         }
     }
 
-    void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue)
+    void ClearParamBuffer(u32 paramValue) {
+        auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+
+        for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+            pb[i] = paramValue;
+        }
+    }
+
+    void PeelBuffers(float depthValue, u32 stencilValue)
     {
         auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
         auto zb2 = reinterpret_cast<float*>(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET);
         auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
-        auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
 
         for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
             zb2[i] = zb[i];     // keep old ZB for reference
             zb[i] = depthValue;    // set the "closest" test to furthest value possible
             stencil[i] = stencilValue;
-            //pb[i] = paramValue;
         }
     }
 

@@ -211,9 +211,25 @@ public partial class MainWindow : Gtk.Window
                                 });
                             }
                             break;
-                        case RRI_DebugCommands.RRIBC_PeelBuffers:
+                        case RRI_DebugCommands.RRIBC_ClearParamBuffer:
                             {
                                 var paramValue = ReadU32();
+
+                                var buffers = ReadBuffers();
+
+                                Application.Invoke(delegate
+                                {
+                                    var node = new MyTreeNode(String.Format(
+                                        "ClearParamBuffer({0})",
+                                        paramValue
+                                    ));
+                                    node.buffers = buffers;
+                                    store.AddNode(node, 0);
+                                });
+                            }
+                            break;
+                        case RRI_DebugCommands.RRIBC_PeelBuffers:
+                            {
                                 var depthValue = ReadF32();
                                 var stencilValue = ReadU32();
 
@@ -222,8 +238,7 @@ public partial class MainWindow : Gtk.Window
                                 Application.Invoke(delegate
                                 {
                                     var node = new MyTreeNode(String.Format(
-                                        "PeelBuffers({0}, {1}, {2})",
-                                        paramValue,
+                                        "PeelBuffers({0}, {1})",
                                         depthValue,
                                         stencilValue
                                     ));

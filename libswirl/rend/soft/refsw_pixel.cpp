@@ -403,6 +403,9 @@ struct RefPixelPipeline : PixelPipeline {
         auto zb = (float *)&rb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
         auto stencil = (u32 *)&rb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
         auto cb = (Color*)&rb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
+        auto pb = (parameter_tag_t*)&rb[PARAM_BUFFER_PIXEL_OFFSET * 4];
+
+        *pb |= TAG_INVALID;
 
         Color base = { 0 }, textel = { 0 }, offs = { 0 };
 
@@ -504,8 +507,23 @@ struct RefPixelPipeline : PixelPipeline {
             // Layer Peeling. zb2 holds the reference depth, zb is used to find closest to reference
             case RM_TRANSLUCENT:
             {
-                if (invW <= *zb2)
+                if (invW < *zb2)
                     return;
+
+                if (invW == *zb || invW == *zb2) {
+                    auto tagExisting = *(parameter_tag_t *)pb;
+
+                    if (tagExisting & TAG_INVALID)
+                    {
+                        if (tag < tagExisting)
+                            return;
+                    }
+                    else
+                    {
+                        if (tag > tagExisting)
+                            return;
+                    }
+                }
 
                 backend->PixelsDrawn++;
 

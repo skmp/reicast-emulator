@@ -20,7 +20,6 @@
 void error(const char *msg)
 {
     perror(msg);
-    exit(1);
 }
 
 enum RRI_DebugCommands {
@@ -81,15 +80,19 @@ struct RefRendDebug: RefRendInterface
 
         struct sockaddr_in serv_addr, cli_addr;
         sockFd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockFd < 0)
+        if (sockFd < 0) {
             error("ERROR opening socket");
+            return 0;
+        }
         memset((char *)&serv_addr, 0, sizeof(serv_addr));
         int portno = 8828;
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = INADDR_ANY;
         serv_addr.sin_port = htons(portno);
-        if (::bind(sockFd, (sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+        if (::bind(sockFd, (sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
             error("ERROR on binding");
+            return 0;
+        }
         listen(sockFd, 5);
 
         while(sockFd != -1)
@@ -392,8 +395,8 @@ struct RefRendDebug: RefRendInterface
     }
 
     // Add an entry to the fpu parameters list
-    virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode) {
-        auto rv = backend->AddFpuEntry(params, vtx, render_mode);
+    virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode, ISP_BACKGND_T_type core_tag) {
+        auto rv = backend->AddFpuEntry(params, vtx, render_mode, core_tag);
         
         WCH(AddFpuEntry);
 
@@ -404,6 +407,8 @@ struct RefRendDebug: RefRendInterface
         WriteData(vtx[2]);
 
         WriteData(render_mode);
+        
+        WriteData(core_tag);
 
         WriteData(rv);
 

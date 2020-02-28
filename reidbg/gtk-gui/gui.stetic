@@ -830,7 +830,7 @@
                             <child>
                               <widget class="Gtk.NodeView" id="nodeview1">
                                 <property name="MemberName" />
-                                <property name="WidthRequest">300</property>
+                                <property name="WidthRequest">380</property>
                                 <property name="CanFocus">True</property>
                                 <property name="ShowScrollbars">True</property>
                               </widget>

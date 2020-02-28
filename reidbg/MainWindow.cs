@@ -281,12 +281,13 @@ public partial class MainWindow : Gtk.Window
                                 var v3 = ReadVertrex();
 
                                 var render_mode = ReadU32();
+                                var core_tag = ReadU32();
 
                                 var rv = ReadU32();
 
                                 Application.Invoke(delegate
                                 {
-                                    var node = new MyTreeNode("AddFpuEntry(rm: " + render_mode + ") =" + rv);
+                                    var node = new MyTreeNode("AddFpuEntry(rm: " + render_mode + ", core_tag: " + core_tag + ") = " + rv);
 
                                     node.param = param;
                                     node.v1 = v1;

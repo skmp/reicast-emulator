@@ -35,6 +35,7 @@ enum RenderMode {
     RM_COUNT
 };
 
+#define TAG_INVALID 1
 
 typedef u32 parameter_tag_t;
 
@@ -66,7 +67,7 @@ struct RefRendInterface
     virtual u32 GetPixelsDrawn() = 0;
 
     // Add an entry to the fpu parameters list
-    virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode) = 0;
+    virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode, ISP_BACKGND_T_type core_tag) = 0;
 
     // Clear the fpu parameters list
     virtual void ClearFpuEntries() = 0;

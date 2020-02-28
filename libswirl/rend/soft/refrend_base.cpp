@@ -401,6 +401,17 @@ struct refrend : Renderer
         return base;
     }
 
+    ISP_BACKGND_T_type CoreTagFromDesc(u32 cache_bypass, u32 shadow, u32 skip, u32 tag_address, u32 tag_offset) {
+        ISP_BACKGND_T_type rv;
+        
+        rv.cache_bypass = cache_bypass;
+        rv.shadow = shadow;
+        rv.skip = skip;
+        rv.tag_address = tag_address;
+        rv.tag_offset = tag_offset;
+
+        return rv;
+    }
 
     // render a triangle strip object list entry
     void RenderTriangleStrip(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, taRECT* rect)
@@ -410,7 +421,9 @@ struct refrend : Renderer
 
         u32 param_base = PARAM_BASE & 0xF00000;
 
-        decode_pvr_vetrices(&params, param_base + obj.tstrip.param_offs_in_words * 4, obj.tstrip.skip, obj.tstrip.shadow, vtx, 8);
+        u32 tag_address = param_base + obj.tstrip.param_offs_in_words * 4;
+
+        decode_pvr_vetrices(&params, tag_address, obj.tstrip.skip, obj.tstrip.shadow, vtx, 8);
 
 
         for (int i = 0; i < 6; i++)
@@ -418,7 +431,8 @@ struct refrend : Renderer
             if (obj.tstrip.mask & (1 << (5-i)))
             {
 
-                parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode);
+                auto core_tag = CoreTagFromDesc(params.isp.CacheBypass, obj.tstrip.shadow, obj.tstrip.skip, tag_address, i);
+                parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode, core_tag);
 
                 RenderTriangle(backend, render_mode, &params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], nullptr, rect);
             }
@@ -440,12 +454,14 @@ struct refrend : Renderer
             DrawParameters params;
             Vertex vtx[3];
 
-            param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.tarray.skip, obj.tarray.shadow, vtx, 3);
+            u32 tag_address = param_ptr;
+            param_ptr = decode_pvr_vetrices(&params, tag_address, obj.tarray.skip, obj.tarray.shadow, vtx, 3);
             
             parameter_tag_t tag = 0;
             if (render_mode != RM_MODIFIER)
             {
-                tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
+                auto core_tag = CoreTagFromDesc(params.isp.CacheBypass, obj.tstrip.shadow, obj.tstrip.skip, tag_address, 0);
+                tag = backend->AddFpuEntry(&params, &vtx[0], render_mode, core_tag);
             }
 
             RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], nullptr, rect);
@@ -466,9 +482,11 @@ struct refrend : Renderer
             DrawParameters params;
             Vertex vtx[4];
 
-            param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
+            u32 tag_address = param_ptr;
+            param_ptr = decode_pvr_vetrices(&params, tag_address, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
             
-            parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
+            auto core_tag = CoreTagFromDesc(params.isp.CacheBypass, obj.tstrip.shadow, obj.tstrip.skip, tag_address, 0);
+            parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode, core_tag);
 
             //TODO: FIXME
             RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], &vtx[3], rect);
@@ -545,7 +563,7 @@ struct refrend : Renderer
                     DrawParameters params;
                     Vertex vtx[8];
                     decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
-                    bgTag = backend->AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
+                    bgTag = backend->AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE, ISP_BACKGND_T);
                 }
 
                 // Tile needs clear?
@@ -585,7 +603,7 @@ struct refrend : Renderer
                         backend->ClearPixelsDrawn();
 
                         //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
-                        backend->PeelBuffers(0, FLT_MAX, 0);
+                        backend->PeelBuffers(TAG_INVALID, FLT_MAX, 0);
 
                         // render to TAGS
                         RenderObjectList(backend, RM_TRANSLUCENT, entry.trans.ptr_in_words * 4, &rect);

@@ -339,7 +339,6 @@
 		5317CF4A24086456008A1850 /* posix_vmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8B24081FE500C67C85 /* posix_vmem.cpp */; };
 		5317CF4B24086456008A1850 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8D24081FE500C67C85 /* context.cpp */; };
 		5317CF4C24086456008A1850 /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC9024081FE500C67C85 /* nixprof.cpp */; };
-		5317CF4D2408657B008A1850 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CF1424081FE600C67C85 /* main.cpp */; };
 		5317CF4F2408674A008A1850 /* libomp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4E2408674A008A1850 /* libomp.dylib */; };
 		5381D6D5240887FD0078E797 /* tacore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D65A240887FC0078E797 /* tacore.cpp */; };
 		5381D6D8240887FD0078E797 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D663240887FC0078E797 /* xbrz.cpp */; };
@@ -3522,7 +3521,6 @@
 				5312D01B24081FE600C67C85 /* lopcodes.c in Sources */,
 				5312CF7624081FE600C67C85 /* mapping.cpp in Sources */,
 				5312D08024081FE700C67C85 /* zip_delete.c in Sources */,
-				5317CF4D2408657B008A1850 /* main.cpp in Sources */,
 				5312D0A624081FE700C67C85 /* LzmaLib.c in Sources */,
 				5312D07724081FE700C67C85 /* zip_get_archive_flag.c in Sources */,
 				5312D04624081FE700C67C85 /* lpc_intrin_sse2.c in Sources */,

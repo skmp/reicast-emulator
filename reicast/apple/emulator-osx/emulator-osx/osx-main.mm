@@ -45,6 +45,12 @@ u8 rt[4],lt[4];
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
 
+// TODO: BEN This was copied directly from the Linux main.cpp file, no idea if it works on macOS
+void os_LaunchFromURL(const string& url) {
+    auto cmd = "xdg-open " + url;
+    auto rv = system(cmd.c_str());
+}
+
 void os_SetWindowText(const char * text) {
     puts(text);
 }
@@ -78,15 +84,15 @@ void* libPvr_GetRenderSurface() {
 
 }
 
-bool gl_init(void*, void*) {
+bool os_gl_init(void*, void*) {
     return true;
 }
 
-void gl_term() {
+void os_gl_term() {
 
 }
 
-void gl_swap() {
+void os_gl_swap() {
 
 }
 

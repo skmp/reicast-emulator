@@ -729,13 +729,17 @@ TextureCacheData *getTextureCacheData(u8* vram, TSP tsp, TCW tcw) {
 		// Needed if the texture is updated
 		tf->tcw.StrideSel = tcw.StrideSel;
 	}
-	else //create if not existing
+	else if (vram) //create if not existing
 	{
 		tf=&TexCache[key];
 
 		tf->tsp = tsp;
 		tf->tcw = tcw;
 		tf->vram = vram;
+	}
+	else
+	{
+		tf = nullptr;
 	}
 
 	return tf;
@@ -780,43 +784,31 @@ text_info raw_GetTexture(u8* vram, TSP tsp, TCW tcw)
 {
 	text_info rv = { 0 };
 
-	//lookup texture
-	TextureCacheData* tf;
-	u64 key = ((u64)(tcw.full & TCWTextureCacheMask.full) << 32) | (tsp.full & TSPTextureCacheMask.full);
+	TextureCacheData* tf = getTextureCacheData(vram, tsp, tcw);
 
-	TexCacheIter tx = TexCache.find(key);
-
-	if (tx != TexCache.end())
-	{
-		tf = &tx->second;
-	}
-	else if (vram) //create if not existing && have vram
-	{
-		tf = &TexCache[key];
-
-		tf->tsp = tsp;
-		tf->tcw = tcw;
-		tf->vram = vram;
-		tf->Create(false);
-	}
-	else
-	{
+	if (!tf)
 		return rv;
-	}
+
+	if (tf->pData == 0)
+		tf->Create(false);
 
 	//update if needed
 	if (tf->NeedsUpdate())
 		tf->Update();
+	else
+	{
+		tf->CheckCustomTexture();
+		TexCacheHits++;
+	}
 
 	//update state for opts/stuff
 	tf->Lookups++;
 
-	//return gl texture
+	//return raw texture
 	rv.height = tf->h;
 	rv.width = tf->w;
 	rv.pdata = tf->pData;
 	rv.textype = tf->tex_type;
-	
 	
 	return rv;
 }

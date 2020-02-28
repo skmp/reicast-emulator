@@ -108,8 +108,6 @@ extern "C" u8* generic_fault_handler ()
 	return trap_ptr_fault;
 }
 
-
-
 naked void re_raise_fault()
 {
 	__asm__ __volatile__(
@@ -117,10 +115,14 @@ naked void re_raise_fault()
 	        "movl %0, %%esp\n"
 	        "call generic_fault_handler\n"
 	        "movb $0, (%%eax)"
-		#elif HOST_CPU == CPU_X64
+		#elif HOST_CPU == CPU_X64 && HOST_OS == OS_DARWIN
 	        "movq %0, %%rsp\n"
-	        "call generic_fault_handler\n"
+	        "call _generic_fault_handler\n"
 	        "movb $0, (%%rax)"
+        #elif HOST_CPU == CPU_X64
+            "movq %0, %%rsp\n"
+            "call generic_fault_handler\n"
+            "movb $0, (%%rax)"
         #elif HOST_CPU == CPU_ARM
 			"mov sp, %0\n"
 	        "bl generic_fault_handler\n"

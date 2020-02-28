@@ -99,18 +99,11 @@ void os_gl_swap() {
 void common_linux_setup();
 int reicast_init(int argc, char* argv[]);
 
-void dc_exit();
-void dc_resume();
 void rend_init_renderer();
 
 extern "C" void emu_dc_exit()
 {
-    dc_exit();
-}
-
-extern "C" void emu_dc_resume()
-{
-	dc_resume();
+    // TODO: BEN probably do some cleanup here
 }
 
 extern int screen_width,screen_height;

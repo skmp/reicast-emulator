@@ -99,7 +99,7 @@ struct RefPixelPipeline : PixelPipeline {
     template<bool pp_IgnoreTexA,  bool pp_ClampU, bool pp_ClampV, bool pp_FlipU, bool pp_FlipV, u32 pp_FilterMode>
     static Color TextureFetch(const text_info *texture, float u, float v) {
         
-        int halfpixel = HALF_OFFSET.texure_pixel_half_offset ? -128 : 0;
+        int halfpixel = HALF_OFFSET.texure_pixel_half_offset ? -127 : 0;
         
         int ui = u * 256 + halfpixel;
         int vi = v * 256 + halfpixel;

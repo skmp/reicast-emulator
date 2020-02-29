@@ -68,8 +68,8 @@ struct IPs3
     {
         u32 w = 0, h = 0;
         if (texture) {
-            w = texture->width - 1;
-            h = texture->height - 1;
+            w = texture->width;
+            h = texture->height;
         }
 
         U.Setup(v1, v2, v3, v1.u * w * v1.z, v2.u * w * v2.z, v3.u * w * v3.z);

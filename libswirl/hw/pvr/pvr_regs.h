@@ -362,6 +362,17 @@ union FPU_SHAD_SCALE_type
 	u32 full;
 };
 
+union HALF_OFFSET_type
+{
+	struct
+	{
+		u32 fpu_pixel_half_offset : 1;
+		u32 tsp_pixel_half_offset : 1;
+		u32 texure_pixel_half_offset : 1;
+	};
+	u32 full;
+};
+
 union TA_GLOB_TILE_CLIP_type
 {
 	struct
@@ -451,7 +462,7 @@ union TA_YUV_TEX_CTRL_type
 #define FPU_SHAD_SCALE    PvrReg(FPU_SHAD_SCALE_addr,FPU_SHAD_SCALE_type) // RW  Intensity Volume mode
 #define FPU_CULL_VAL      PvrReg(FPU_CULL_VAL_addr,f32)                   // RW  Comparison value for culling
 #define FPU_PARAM_CFG     PvrReg(FPU_PARAM_CFG_addr,u32)                  // RW  Parameter read control
-#define HALF_OFFSET       PvrReg(HALF_OFFSET_addr,u32)                    // RW  Pixel sampling control
+#define HALF_OFFSET       PvrReg(HALF_OFFSET_addr,HALF_OFFSET_type)                    // RW  Pixel sampling control
 #define FPU_PERP_VAL      PvrReg(FPU_PERP_VAL_addr,u32)                   // RW  Comparison value for perpendicular polygons
 #define ISP_BACKGND_D     PvrReg(ISP_BACKGND_D_addr,ISP_BACKGND_D_type)   // RW  Background surface depth
 #define ISP_BACKGND_T     PvrReg(ISP_BACKGND_T_addr,ISP_BACKGND_T_type)   // RW  Background surface tag

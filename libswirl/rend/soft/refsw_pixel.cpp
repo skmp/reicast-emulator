@@ -98,12 +98,27 @@ struct RefPixelPipeline : PixelPipeline {
     // Fetch pixels from UVs, interpolate
     template<bool pp_IgnoreTexA,  bool pp_ClampU, bool pp_ClampV, bool pp_FlipU, bool pp_FlipV, u32 pp_FilterMode>
     static Color TextureFetch(const text_info *texture, float u, float v) {
+        
+        int halfpixel = HALF_OFFSET.texure_pixel_half_offset ? -128 : 0;
+        
+        int ui = u * 256 + halfpixel;
+        int vi = v * 256 + halfpixel;
 
-        int ui = u * 256;
-        int vi = v * 256;
-        auto offset = ClampFlip<pp_ClampU, pp_FlipU>(ui >> 8, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>(vi >> 8, texture->height) * texture->width;
+        #if FULL_FILTERING
+            auto offset00 = ClampFlip<pp_ClampU, pp_FlipU>((ui >> 8) + 1, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>((vi >> 8) + 1, texture->height) * texture->width;
+            auto offset01 = ClampFlip<pp_ClampU, pp_FlipU>((ui >> 8) + 0, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>((vi >> 8) + 1, texture->height) * texture->width;
+            auto offset10 = ClampFlip<pp_ClampU, pp_FlipU>((ui >> 8) + 1, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>((vi >> 8) + 0, texture->height) * texture->width;
+            auto offset11 = ClampFlip<pp_ClampU, pp_FlipU>((ui >> 8) + 0, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>((vi >> 8) + 0, texture->height) * texture->width;
 
-        mem128i px = ((mem128i *)texture->pdata)[offset];
+            mem128i px;
+            px.m128i_u32[0] =  ((mem128i *)texture->pdata)[offset00].m128i_u32[3];
+            px.m128i_u32[1] =  ((mem128i *)texture->pdata)[offset01].m128i_u32[3];
+            px.m128i_u32[2] =  ((mem128i *)texture->pdata)[offset10].m128i_u32[3];
+            px.m128i_u32[3] =  ((mem128i *)texture->pdata)[offset11].m128i_u32[3];
+        #else
+            auto offset = ClampFlip<pp_ClampU, pp_FlipU>(ui >> 8, texture->width) + ClampFlip<pp_ClampV, pp_FlipV>(vi >> 8, texture->height) * texture->width;
+            mem128i px = ((mem128i *)texture->pdata)[offset];
+        #endif
 
         Color textel = {0xAF674839};
 
@@ -111,7 +126,7 @@ struct RefPixelPipeline : PixelPipeline {
             // Point sampling
             for (int i = 0; i < 4; i++)
             {
-                textel.bgra[i] = px.m128i_u8[0 + i];
+                textel.bgra[i] = px.m128i_u8[12 + i];
             }
         } else if (pp_FilterMode == 1) {
             // Bilinear filtering
@@ -119,7 +134,6 @@ struct RefPixelPipeline : PixelPipeline {
             int vblend = vi & 255;
             int nublend = 255 - ublend;
             int nvblend = 255 - vblend;
-
 
             for (int i = 0; i < 4; i++)
             {

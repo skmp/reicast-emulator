@@ -227,7 +227,6 @@
 		5312D05724081FE700C67C85 /* elf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE4124081FE600C67C85 /* elf.cpp */; };
 		5312D05824081FE700C67C85 /* elf32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE4424081FE600C67C85 /* elf32.cpp */; };
 		5312D05924081FE700C67C85 /* xxhash.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE4724081FE600C67C85 /* xxhash.c */; };
-		5312D05A24081FE700C67C85 /* gl3w.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE5F24081FE600C67C85 /* gl3w.c */; };
 		5312D05B24081FE700C67C85 /* zip_memdup.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE6624081FE600C67C85 /* zip_memdup.c */; };
 		5312D05C24081FE700C67C85 /* zip_add.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE6824081FE600C67C85 /* zip_add.c */; };
 		5312D05D24081FE700C67C85 /* zip_filerange_crc.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE6924081FE600C67C85 /* zip_filerange_crc.c */; };
@@ -334,7 +333,6 @@
 		5317CF4024083020008A1850 /* glesdraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CEEE24081FE600C67C85 /* glesdraw.cpp */; };
 		5317CF4124083020008A1850 /* glesrend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CEF024081FE600C67C85 /* glesrend.cpp */; };
 		5317CF4624086353008A1850 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4524086353008A1850 /* Cocoa.framework */; };
-		5317CF4824086368008A1850 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4724086368008A1850 /* OpenGL.framework */; };
 		5317CF4924086456008A1850 /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8A24081FE500C67C85 /* common.cpp */; };
 		5317CF4A24086456008A1850 /* posix_vmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8B24081FE500C67C85 /* posix_vmem.cpp */; };
 		5317CF4B24086456008A1850 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8D24081FE500C67C85 /* context.cpp */; };
@@ -368,6 +366,7 @@
 		5381D7102408886B0078E797 /* refsw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D7092408886B0078E797 /* refsw.cpp */; };
 		5381D7112408886B0078E797 /* softrend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70B2408886B0078E797 /* softrend.cpp */; settings = {COMPILER_FLAGS = "-msse4.1"; }; };
 		5381D7122408886B0078E797 /* refsw_pixel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70C2408886B0078E797 /* refsw_pixel.cpp */; };
+		539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4724086368008A1850 /* OpenGL.framework */; };
 		84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BA1B1CDD3E000166C0 /* Images.xcassets */; };
 		84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BC1B1CDD3E000166C0 /* MainMenu.xib */; };
 		84B7BF831B727AD700F9733F /* osx-main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* osx-main.mm */; };
@@ -1288,7 +1287,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5317CF4824086368008A1850 /* OpenGL.framework in Frameworks */,
+				539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */,
 				5317CF4624086353008A1850 /* Cocoa.framework in Frameworks */,
 				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
@@ -3540,7 +3539,6 @@
 				5381D6EE240887FD0078E797 /* pico_frame.c in Sources */,
 				5381D6FD240887FD0078E797 /* pico_dns_common.c in Sources */,
 				5312D06B24081FE700C67C85 /* zip_add_dir.c in Sources */,
-				5312D05A24081FE700C67C85 /* gl3w.c in Sources */,
 				5312D08E24081FE700C67C85 /* zip_fopen.c in Sources */,
 				5312CF2E24081FE600C67C85 /* sh4_mem.cpp in Sources */,
 				5312CFDE24081FE600C67C85 /* imgui.cpp in Sources */,

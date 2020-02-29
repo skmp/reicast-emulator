@@ -7,16 +7,18 @@
 //
 #import <Carbon/Carbon.h>
 #import <AppKit/AppKit.h>
-#include <OpenGL/gl3.h>
-#include <sys/stat.h>
+#import <OpenGL/gl3.h>
+#import <sys/stat.h>
 
-#include "types.h"
-#include "hw/maple/maple_cfg.h"
-#include "gui/gui.h"
-#include "osx_keyboard.h"
-#include "osx_gamepad.h"
+#import "libswirl.h"
+#import "types.h"
+#import "hw/maple/maple_cfg.h"
+#import "gui/gui.h"
+#import "osx_keyboard.h"
+#import "osx_gamepad.h"
 
 int main(int argc, char *argv[]) {
+    NSLog(@"main called");
     return NSApplicationMain(argc,  (const char **) argv);
 }
 
@@ -89,7 +91,7 @@ bool os_gl_init(void*, void*) {
 }
 
 void os_gl_term() {
-
+    reicast_term();
 }
 
 void os_gl_swap() {
@@ -99,7 +101,7 @@ void os_gl_swap() {
 void common_linux_setup();
 int reicast_init(int argc, char* argv[]);
 
-void rend_init_renderer();
+//void rend_init_renderer();
 
 extern "C" void emu_dc_exit()
 {
@@ -107,7 +109,7 @@ extern "C" void emu_dc_exit()
 }
 
 extern int screen_width,screen_height;
-bool rend_single_frame();
+//bool rend_single_frame();
 bool rend_framePending();
 
 extern "C" bool emu_frame_pending()
@@ -121,7 +123,9 @@ extern "C" int emu_single_frame(int w, int h) {
     screen_width = w;
     screen_height = h;
 
-    return rend_single_frame();
+    // TODO: BEN
+    //return rend_single_frame();
+    return 0;
 }
 
 extern "C" void emu_gles_init(int width, int height) {
@@ -157,13 +161,21 @@ extern "C" void emu_gles_init(int width, int height) {
 	screen_width = width;
 	screen_height = height;
 
-	rend_init_renderer();
+	//rend_init_renderer();
 }
 
 extern "C" int emu_reicast_init()
 {
 	common_linux_setup();
 	return reicast_init(0, NULL);
+}
+
+extern "C" void emu_start_ui_loop() {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void) {
+        NSLog(@"Starting UI Loop");
+        reicast_ui_loop();
+        NSLog(@"UI Loop ended");
+    });
 }
 
 extern "C" void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {

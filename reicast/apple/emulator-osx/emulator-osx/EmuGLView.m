@@ -23,9 +23,10 @@
     
     [self.openGLContext makeCurrentContext];
     
-    if (emu_single_frame(dirtyRect.size.width, dirtyRect.size.height) != 0) {
-        [self.openGLContext flushBuffer];
-    }
+    // TODO: BEN implement this correctly
+//    if (emu_single_frame(dirtyRect.size.width, dirtyRect.size.height) != 0) {
+//        [self.openGLContext flushBuffer];
+//    }
 }
 
 - (void)awakeFromNib {
@@ -57,6 +58,8 @@
         alert.messageText = @"Reicast initialization failed";
         [alert runModal];
     }
+    
+    emu_start_ui_loop();
 }
 
 - (void)timerTick {

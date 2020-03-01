@@ -360,7 +360,8 @@ using namespace std;
 #endif
 
 
-#if DEBUG
+// NOTE: Always inline for macOS builds or it causes duplicate symbol linker errors
+#if DEBUG && HOST_OS != OS_DARWIN
 //force
 #define INLINE
 //sugest

@@ -7,9 +7,16 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "EmuGLView.h"
 
-@interface AppDelegate : NSObject
+@interface AppDelegate : NSObject <NSWindowDelegate>
 
 @property (weak) IBOutlet NSWindow *window;
+@property (weak) IBOutlet EmuGLView *glView;
+
+@property CGFloat backingScaleFactor;
+@property CGSize glViewSize;
+
++ (AppDelegate *)sharedInstance;
 
 @end

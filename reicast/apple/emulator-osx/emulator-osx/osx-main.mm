@@ -16,6 +16,12 @@
 #import "gui/gui.h"
 #import "osx_keyboard.h"
 #import "osx_gamepad.h"
+#import "AppDelegate.h"
+#import "EmuGLView.h"
+
+//void common_linux_setup();
+void rend_resize(int width, int height);
+extern int screen_width, screen_height;
 
 int main(int argc, char *argv[]) {
     NSLog(@"main called");
@@ -78,15 +84,18 @@ void os_SetupInput() {
 }
 
 void* libPvr_GetRenderTarget() {
-    return 0;
+    return (__bridge void*)AppDelegate.sharedInstance.window;
 }
 
 void* libPvr_GetRenderSurface() {
-    return 0;
-
+    EmuGLView *glView = (EmuGLView*)AppDelegate.sharedInstance.glView;
+    return (__bridge void*)glView.openGLContext;
 }
 
-bool os_gl_init(void*, void*) {
+bool os_gl_init(void* hwnd, void* hdc) {
+    // Handled in EmuGLView wakeFromNib method
+    EmuGLView *glView = (EmuGLView*)AppDelegate.sharedInstance.glView;
+    [glView.openGLContext makeCurrentContext];
     return true;
 }
 
@@ -94,12 +103,22 @@ void os_gl_term() {
     reicast_term();
 }
 
-void os_gl_swap() {
-
+bool os_gl_swap() {
+    AppDelegate *appDelegate = AppDelegate.sharedInstance;
+    EmuGLView *glView = appDelegate.glView;
+    
+    [glView.openGLContext makeCurrentContext];
+    [glView.openGLContext flushBuffer];
+    
+    // Handle HDPI (possibly don't do this on every swap and just set it once when they change?)
+    CGFloat screenScale = appDelegate.backingScaleFactor;
+    CGSize glViewSize = appDelegate.glViewSize;
+    rend_resize(glViewSize.width * screenScale, glViewSize.height * screenScale);
+    return true;
 }
 
-void common_linux_setup();
-int reicast_init(int argc, char* argv[]);
+
+//int reicast_init(int argc, char* argv[]);
 
 //void rend_init_renderer();
 
@@ -108,7 +127,6 @@ extern "C" void emu_dc_exit()
     // TODO: BEN probably do some cleanup here
 }
 
-extern int screen_width,screen_height;
 //bool rend_single_frame();
 bool rend_framePending();
 
@@ -166,7 +184,8 @@ extern "C" void emu_gles_init(int width, int height) {
 
 extern "C" int emu_reicast_init()
 {
-	common_linux_setup();
+	//common_linux_setup();
+    settings.profile.run_counts=0;
 	return reicast_init(0, NULL);
 }
 
@@ -176,6 +195,8 @@ extern "C" void emu_start_ui_loop() {
         reicast_ui_loop();
         NSLog(@"UI Loop ended");
     });
+    
+//   reicast_ui_loop();
 }
 
 extern "C" void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {

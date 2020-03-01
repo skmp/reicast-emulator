@@ -58,8 +58,6 @@
         alert.messageText = @"Reicast initialization failed";
         [alert runModal];
     }
-    
-    emu_start_ui_loop();
 }
 
 - (void)timerTick {

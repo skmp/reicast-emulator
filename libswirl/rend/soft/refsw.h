@@ -68,8 +68,8 @@ struct IPs3
     {
         u32 w = 0, h = 0;
         if (texture) {
-            w = texture->width - 1;
-            h = texture->height - 1;
+            w = texture->width;
+            h = texture->height;
         }
 
         U.Setup(v1, v2, v3, v1.u * w * v1.z, v2.u * w * v2.z, v3.u * w * v3.z);
@@ -136,6 +136,7 @@ struct FpuEntry
 struct refsw : RefRendInterface
 {
     vector<FpuEntry> fpu_entires;
+    map<u32, parameter_tag_t> fpu_entires_lookup;
 
     // Used by layer peeling to determine end of processing
     int PixelsDrawn;

@@ -464,6 +464,7 @@ void rend_start_render(u8* vram)
 	else
 	{
 		SetREP(nullptr);
+		palette_update();
 		g_GUIRenderer->QueueEmulatorFrame([=](){
 			bool do_swp = rend_frame(vram, nullptr);
 

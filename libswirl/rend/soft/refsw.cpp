@@ -67,18 +67,24 @@ struct refsw_impl : refsw
         }
     }
 
-    void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue)
+    void ClearParamBuffer(u32 paramValue) {
+        auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+
+        for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+            pb[i] = paramValue;
+        }
+    }
+
+    void PeelBuffers(float depthValue, u32 stencilValue)
     {
         auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
         auto zb2 = reinterpret_cast<float*>(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET);
         auto stencil = reinterpret_cast<u32*>(render_buffer + STENCIL_BUFFER_PIXEL_OFFSET);
-        auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
 
         for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
             zb2[i] = zb[i];     // keep old ZB for reference
             zb[i] = depthValue;    // set the "closest" test to furthest value possible
             stencil[i] = stencilValue;
-            pb[i] = paramValue;
         }
     }
 
@@ -115,17 +121,23 @@ struct refsw_impl : refsw
     void RenderParamTags(RenderMode rm, int tileX, int tileY) {
 
         auto rb = render_buffer;
+        float halfpixel = HALF_OFFSET.tsp_pixel_half_offset ? 0.5f : 0;
 
         for (int y = 0; y < 32; y++) {
             for (int x = 0; x < 32; x++) {
-                PixelFlush_tsp(this, tileX + x, tileY + y, (u8*)rb,  *(f32*)&rb[DEPTH1_BUFFER_PIXEL_OFFSET],  *(parameter_tag_t*)&rb[PARAM_BUFFER_PIXEL_OFFSET]);
+                PixelFlush_tsp(this, tileX + x + halfpixel, tileY + y + halfpixel, (u8*)rb,  *(f32*)&rb[DEPTH1_BUFFER_PIXEL_OFFSET],  *(parameter_tag_t*)&rb[PARAM_BUFFER_PIXEL_OFFSET]);
                 rb++;
             }
         }
     }
 
-    parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode)
+    parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode, ISP_BACKGND_T_type core_tag)
     {
+        auto cache = fpu_entires_lookup.find(core_tag.full);
+        if (cache != fpu_entires_lookup.end()) {
+            return cache->second;
+        }
+
         FpuEntry entry;
         entry.params = *params;
         // generate
@@ -145,20 +157,25 @@ struct refsw_impl : refsw
 
         fpu_entires.push_back(entry);
 
-        return fpu_entires.size();
+        parameter_tag_t tag = fpu_entires.size() << 1;
+
+        fpu_entires_lookup[core_tag.full] = tag;
+
+        return tag;
     }
 
     void ClearFpuEntries() {
         fpu_entires.clear();
+        fpu_entires_lookup.clear();
     }
 
     // Lookup/create cached TSP parameters, and call PixelFlush_tsp
     static bool PixelFlush_tsp(refsw* backend, float x, float y, u8 *rb, float invW, parameter_tag_t tag)
     {
-        if (tag == 0)
+        if (tag & TAG_INVALID)
             return false;
 
-        auto entry = &backend->fpu_entires[tag-1];
+        auto entry = &backend->fpu_entires[(tag>>1) - 1];
         
         return entry->tsp(entry, x, y, 1/invW, rb);
     }
@@ -210,11 +227,11 @@ struct refsw_impl : refsw
         }
 
         // Bounding rectangle
-        int minx = iround(mmin(X1, X2, X3, area->left));
-        int miny = iround(mmin(Y1, Y2, Y3, area->top));
+        int minx = mmin(X1, X2, X3, area->left);
+        int miny = mmin(Y1, Y2, Y3, area->top);
 
-        int spanx = iround(mmax(X1, X2, X3, area->right - 1)) - minx + 1;
-        int spany = iround(mmax(Y1, Y2, Y3, area->bottom - 1)) - miny + 1;
+        int spanx = mmax(X1+1, X2+1, X3+1, area->right - 1) - minx + 1;
+        int spany = mmax(Y1+1, Y2+1, Y3+1, area->bottom - 1) - miny + 1;
 
         //Inside scissor area?
         if (spanx < 0 || spany < 0)
@@ -237,20 +254,15 @@ struct refsw_impl : refsw
         float C4 = v4 ? DY41 * X4 - DX41 * Y4 : 1;
 
 
-        float hs12 = C1 + DX12 * miny - DY12 * minx;
-        float hs23 = C2 + DX23 * miny - DY23 * minx;
-        float hs31 = C3 + DX31 * miny - DY31 * minx;
-        float hs41 = C4 + DX41 * miny - DY41 * minx;
-
-
         u8* cb_y = (u8*)render_buffer;
         cb_y += (miny - area->top) * stride_bytes + (minx - area->left) * 4;
 
         PlaneStepper3 Z;
         Z.Setup(v1, v2, v3, v1.z, v2.z, v3.z);
 
-        float y_ps = miny;
-        float minx_ps = minx;
+        float halfpixel = HALF_OFFSET.fpu_pixel_half_offset ? 0.5f : 0;
+        float y_ps = miny + halfpixel;
+        float minx_ps = minx + halfpixel;
 
         auto pixelFlush = pixelPipeline->GetIsp(render_mode, params->isp);
 
@@ -287,6 +299,10 @@ struct refsw_impl : refsw
         return reinterpret_cast<u8*>(render_buffer + ACCUM1_BUFFER_PIXEL_OFFSET);
     }
 
+    virtual u8* DebugGetAllBuffers() {
+        return reinterpret_cast<u8*>(render_buffer);
+    }
+
     void operator delete(void* p) {
         _mm_free(p);
     }
@@ -300,6 +316,13 @@ Renderer* rend_refsw(u8* vram) {
     });
 }
 
-
 static auto refrend = RegisterRendererBackend(rendererbackend_t{ "refsw", "RefSW", 0, rend_refsw });
+
+Renderer* rend_refsw_debug(u8* vram) {
+    return rend_refred_base(vram, [=]() { 
+        return rend_refred_debug((RefRendInterface*) new(_mm_malloc(sizeof(refsw_impl), 32)) ::refsw_impl(vram, Create_RefPixelPipeline()));
+    });
+}
+
+static auto refrend_debug = RegisterRendererBackend(rendererbackend_t{ "refsw-dbg", "RefSW Debug", 0, rend_refsw_debug });
 #endif

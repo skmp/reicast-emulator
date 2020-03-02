@@ -19,7 +19,7 @@
 #import "AppDelegate.h"
 #import "EmuGLView.h"
 
-//void common_linux_setup();
+void common_linux_setup();
 void rend_resize(int width, int height);
 extern int screen_width, screen_height;
 
@@ -184,8 +184,7 @@ extern "C" void emu_gles_init(int width, int height) {
 
 extern "C" int emu_reicast_init()
 {
-	//common_linux_setup();
-    settings.profile.run_counts=0;
+	common_linux_setup();
 	return reicast_init(0, NULL);
 }
 

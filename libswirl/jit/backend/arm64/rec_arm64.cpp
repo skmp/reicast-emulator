@@ -371,7 +371,7 @@ public:
 				break;
 #define CANONICAL_FALLBACK 0
 
-#if CANONICAL_FALLBACK
+#if CANONICAL_FALLBACK == 0
 			case shop_sync_sr:
 				GenCallRuntime(UpdateSR);
 				break;
@@ -549,6 +549,8 @@ public:
 					B(&not_sqw, ne);
 					Mov(w0, regalloc.MapRegister(op.rs1));
 
+					auto sh4mmr = sh4_cpu->sh4mmr.get();
+					
 					if (CCN_MMUCR.AT)
 					{
 						Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));

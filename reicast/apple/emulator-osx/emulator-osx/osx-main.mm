@@ -21,7 +21,7 @@
 
 void common_linux_setup();
 void rend_resize(int width, int height);
-extern int screen_width, screen_height;
+extern int screen_width, screen_height, screen_dpi;
 
 int main(int argc, char *argv[]) {
     NSLog(@"main called");
@@ -169,15 +169,33 @@ extern "C" void emu_gles_init(int width, int height) {
     CFRelease(resourcesURL);
     CFRelease(mainBundle);
 
-	// Calculate screen DPI
+    // Calculate screen DPI
+    // TODO: BEN This should be done from the EmuGLView so we get the correct screen
+    // TODO: BEN Also this should properly handle the case where the window is moved to another screen
 	NSScreen *screen = [NSScreen mainScreen];
 	NSDictionary *description = [screen deviceDescription];
 	NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
+    // Must multiply by the scale factor to account for retina displays
+    displayPixelSize.width *= screen.backingScaleFactor;
+    displayPixelSize.height *= screen.backingScaleFactor;
 	CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
-    // TODO: BEN maybe we need this?
-	//screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
+	screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
+    NSLog(@"displayPixelSize: %@  displayPhysicalSize: %@  screen_dpi: %d", NSStringFromSize(displayPixelSize), NSStringFromSize(displayPhysicalSize), screen_dpi);
 	screen_width = width;
 	screen_height = height;
+    
+    /*
+    // Calculate screen DPI
+    // Set the DPI so that libswirl calculates the scaling to match the NSScreen.backingScaleFactor
+    // TODO: BEN This should be done from the EmuGLView so we get the correct screen
+    // TODO: BEN Also this should properly handle the case where the window is moved to another screen
+    CGFloat scaleFactor = NSScreen.mainScreen.backingScaleFactor;
+    CGFloat noScalingDPI = 133.33;
+    screen_dpi = (int)(noScalingDPI * scaleFactor);
+    NSLog(@"scaleFactor: %f, noScalingDPI: %f, screen_dpi: %d", scaleFactor, noScalingDPI, screen_dpi);
+    screen_width = width;
+    screen_height = height;
+     */
 
 	//rend_init_renderer();
 }

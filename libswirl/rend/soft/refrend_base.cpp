@@ -57,7 +57,8 @@
 
     OBJECTS are first rendered by ISP in the depth and tag buffers, using a depth pass and a depth test buffer. SPAN SORTER collects spans with
     the same tag and sends them to TSP for shading processing. The process repeats itself until all layers have been indepedently rendered. On
-    each pass, only the pixels with the lowest depth value that pass the depth pass buffer are rendered.
+    each pass, only the pixels with the lowest depth value that pass the depth pass buffer are rendered. In case of identical depth values, the
+    tag buffer is used to sort the pixels by tag as well as depth in order to support co-planar polygons.
 */
 
 
@@ -245,6 +246,7 @@ struct refrend : Renderer
         }
     }
 
+    //queue a tile to the correct thread, or render it immediately if threading is disabled 
     void EnqueueTile(int tileId, function<void(RefRendInterface*)> fn) {
         if (!pool.running) {
             fn(backend.get());
@@ -253,6 +255,7 @@ struct refrend : Renderer
         }
     }
 
+    //queue a tile writeout the main thread, or do it immediatelly if threading is disabled
     void EnqueueWriteout(function<void()> fn) {
         if (!pool.running) {
             fn();
@@ -367,7 +370,7 @@ struct refrend : Renderer
         vert_packed_color_(cv->col,col);
         if (params->isp.Offset)
         {
-            //Intensity color (can be missing too ;p)
+            //Intensity color
             u32 col=vri(vram, ptr);ptr+=4;
             vert_packed_color_(cv->spc,col);
         }
@@ -597,13 +600,15 @@ struct refrend : Renderer
                 // layer peeling rendering
                 if (!entry.trans.empty)
                 {
+                    // clear the param buffer
                     backend->ClearParamBuffer(TAG_INVALID);
 
                     do
                     {
+                        // prepare for a new pass
                         backend->ClearPixelsDrawn();
 
-                        //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
+                        // copy depth test to depth reference buffer, clear depth test buffer, clear stencil
                         backend->PeelBuffers(FLT_MAX, 0);
 
                         // render to TAGS
@@ -615,6 +620,7 @@ struct refrend : Renderer
                         }
 
                         // render TAGS to ACCUM
+                        // also marks TAGS as invalid, but keeps the index for coplanar sorting
                         backend->RenderParamTags(RM_TRANSLUCENT, rect.left, rect.top);
                     } while (backend->GetPixelsDrawn() != 0);
                 }

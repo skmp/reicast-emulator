@@ -8,6 +8,7 @@
 
 #import "AppDelegate.h"
 #import "libswirl.h"
+#import "gui/gui_renderer.h"
 
 #ifdef FEAT_HAS_SERIAL_TTY
 #import <util.h>
@@ -188,14 +189,31 @@ static CGSize _glViewSize;
 #endif
 }
 
+static BOOL _isShuttingDownEmulator = NO;
 - (void)shutdownEmulator {
+    if (_isShuttingDownEmulator) {
+        return;
+    }
+    _isShuttingDownEmulator = YES;
+    
 #ifdef FEAT_HAS_SERIAL_TTY
     if (cleanup_pty_symlink) {
         unlink(settings.debug.VirtualSerialPortFile.c_str());
     }
 #endif
-        
-    reicast_term();
+    
+    // Shut down emulator
+    if (virtualDreamcast && sh4_cpu->IsRunning()) {
+        virtualDreamcast->Stop([] {
+            g_GUIRenderer->Stop();
+            reicast_term();
+            _isShuttingDownEmulator = NO;
+        });
+    } else {
+        g_GUIRenderer->Stop();
+        reicast_term();
+        _isShuttingDownEmulator = NO;
+    }
 }
 
 - (void)alertAndTerminateWithMessage:(NSString *)message {

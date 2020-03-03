@@ -148,6 +148,11 @@ bool ParseCommandLine(int argc,wchar* argv[])
 				cfgSetVirtual("config", "reios.enabled", "1");
 				cfgSetVirtual("reios", "ElfFile", *arg);
 			}
+			else if (stricmp(*arg, "nodisk") == 0)
+			{
+				printf("Starting without cd image\n");
+				cfgSetVirtual("config", "image", "nodisk");
+			}
 			else
 			{
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE

@@ -115,7 +115,7 @@ int GetFile(char* szFileName)
 {
     cfgLoadStr("config", "image", szFileName, "");
 
-    return szFileName[0] != '\0' ? 1 : 0;
+    return stricmp(szFileName, "nodisk") != 0;
 }
 
 

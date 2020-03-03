@@ -155,35 +155,27 @@ static CGSize _glViewSize;
         int slave;
         char slave_name[2048];
         pty_master = -1;
-        if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0)
-        {
+        if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0) {
             // Turn ECHO off, we don't want to loop-back
             struct termios tp;
             tcgetattr(pty_master, &tp);
             tp.c_lflag &= ~ECHO;
             tcsetattr(pty_master, TCSAFLUSH, &tp);
+            NSLog(@"Serial: Created virtual serial port at %s", slave_name);
 
-            printf("Serial: Created virtual serial port at %s\n", slave_name);
-
-            if (settings.debug.VirtualSerialPortFile.size())
-            {
-                if (symlink(slave_name, settings.debug.VirtualSerialPortFile.c_str()) == 0)
-                {
+            if (settings.debug.VirtualSerialPortFile.size()) {
+                if (symlink(slave_name, settings.debug.VirtualSerialPortFile.c_str()) == 0) {
                     cleanup_pty_symlink = true;
-                    printf("Serial: Created symlink to %s\n",  settings.debug.VirtualSerialPortFile.c_str());
-                }
-                else
-                {
-                    printf("Serial: Failed to create symlink to %s, %d\n", settings.debug.VirtualSerialPortFile.c_str(), errno);
+                    NSLog(@"Serial: Created symlink to %s", settings.debug.VirtualSerialPortFile.c_str());
+                } else {
+                    NSLog(@"Serial: Failed to create symlink to %s, %d", settings.debug.VirtualSerialPortFile.c_str(), errno);
                 }
             }
             // not for us to use, we use master
             // do not close to avoid EIO though
             // close(slave);
-        }
-        else
-        {
-            printf("Serial: Failed to create PTY: %d\n", errno);
+        } else {
+            NSLog(@"Serial: Failed to create PTY: %d", errno);
         }
     }
 #endif

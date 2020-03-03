@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5312C07024080EDA00C67C85 /* EmuGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312C06F24080EDA00C67C85 /* EmuGLView.m */; };
-		5312C07424081C3800C67C85 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312C07324081C3800C67C85 /* AppDelegate.m */; };
+		5312C07424081C3800C67C85 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5312C07324081C3800C67C85 /* AppDelegate.mm */; };
 		5312C07824081DEE00C67C85 /* emulator_osxTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312C07624081DE100C67C85 /* emulator_osxTests.m */; };
 		5312CF2024081FE600C67C85 /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CB5724081FE500C67C85 /* serialize.cpp */; };
 		5312CF2124081FE600C67C85 /* lua_loader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CB5A24081FE500C67C85 /* lua_loader.cpp */; };
@@ -366,10 +366,11 @@
 		5381D7102408886B0078E797 /* refsw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D7092408886B0078E797 /* refsw.cpp */; };
 		5381D7112408886B0078E797 /* softrend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70B2408886B0078E797 /* softrend.cpp */; settings = {COMPILER_FLAGS = "-msse4.1"; }; };
 		5381D7122408886B0078E797 /* refsw_pixel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70C2408886B0078E797 /* refsw_pixel.cpp */; };
+		53836184240EDBE2006AE5B4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 53836183240EDBE2006AE5B4 /* main.m */; };
 		539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4724086368008A1850 /* OpenGL.framework */; };
 		84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BA1B1CDD3E000166C0 /* Images.xcassets */; };
 		84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BC1B1CDD3E000166C0 /* MainMenu.xib */; };
-		84B7BF831B727AD700F9733F /* osx-main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* osx-main.mm */; };
+		84B7BF831B727AD700F9733F /* input.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* input.mm */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
 /* End PBXBuildFile section */
@@ -388,7 +389,7 @@
 		5312C06F24080EDA00C67C85 /* EmuGLView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EmuGLView.m; sourceTree = "<group>"; };
 		5312C07124080F0200C67C85 /* EmuGLView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EmuGLView.h; sourceTree = "<group>"; };
 		5312C07224081C3800C67C85 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		5312C07324081C3800C67C85 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		5312C07324081C3800C67C85 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		5312C07524081DE100C67C85 /* emulator_osxTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = emulator_osxTests.h; sourceTree = "<group>"; };
 		5312C07624081DE100C67C85 /* emulator_osxTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = emulator_osxTests.m; sourceTree = "<group>"; };
 		5312CB5724081FE500C67C85 /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serialize.cpp; sourceTree = "<group>"; };
@@ -1268,16 +1269,17 @@
 		5381D70A2408886B0078E797 /* refsw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = refsw.h; sourceTree = "<group>"; };
 		5381D70B2408886B0078E797 /* softrend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = softrend.cpp; sourceTree = "<group>"; };
 		5381D70C2408886B0078E797 /* refsw_pixel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = refsw_pixel.cpp; sourceTree = "<group>"; };
+		53836183240EDBE2006AE5B4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		84A388B31B1CDD3E000166C0 /* Reicast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Reicast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		84A388BD1B1CDD3E000166C0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		84A388C31B1CDD3F000166C0 /* reicast-osxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "reicast-osxTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388C81B1CDD3F000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		84B7BF821B727AD700F9733F /* osx-main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "osx-main.mm"; sourceTree = "<group>"; };
-		84B7BF841B72821900F9733F /* osx-main.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "osx-main.h"; sourceTree = "<group>"; };
-		AE60BD9F22256E2500FA8A5B /* osx_keyboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_keyboard.h; sourceTree = "<group>"; };
-		AE60BDA02225725800FA8A5B /* osx_gamepad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_gamepad.h; sourceTree = "<group>"; };
+		84B7BF821B727AD700F9733F /* input.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = input.mm; sourceTree = "<group>"; };
+		84B7BF841B72821900F9733F /* input.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = input.h; sourceTree = "<group>"; };
+		AE60BD9F22256E2500FA8A5B /* OSXKeyboardDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = OSXKeyboardDevice.hpp; sourceTree = "<group>"; };
+		AE60BDA02225725800FA8A5B /* OSXGamepadDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = OSXGamepadDevice.hpp; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		EBDF37521BB969F8001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -3070,17 +3072,17 @@
 		84A388B51B1CDD3E000166C0 /* reicast-osx */ = {
 			isa = PBXGroup;
 			children = (
-				84A388BA1B1CDD3E000166C0 /* Images.xcassets */,
 				84A388BC1B1CDD3E000166C0 /* MainMenu.xib */,
-				84A388B61B1CDD3E000166C0 /* Supporting Files */,
-				84B7BF821B727AD700F9733F /* osx-main.mm */,
-				84B7BF841B72821900F9733F /* osx-main.h */,
-				AE60BD9F22256E2500FA8A5B /* osx_keyboard.h */,
-				AE60BDA02225725800FA8A5B /* osx_gamepad.h */,
-				5312C06F24080EDA00C67C85 /* EmuGLView.m */,
-				5312C07124080F0200C67C85 /* EmuGLView.h */,
+				84A388BA1B1CDD3E000166C0 /* Images.xcassets */,
 				5312C07224081C3800C67C85 /* AppDelegate.h */,
-				5312C07324081C3800C67C85 /* AppDelegate.m */,
+				5312C07324081C3800C67C85 /* AppDelegate.mm */,
+				5312C07124080F0200C67C85 /* EmuGLView.h */,
+				5312C06F24080EDA00C67C85 /* EmuGLView.m */,
+				AE60BD9F22256E2500FA8A5B /* OSXKeyboardDevice.hpp */,
+				AE60BDA02225725800FA8A5B /* OSXGamepadDevice.hpp */,
+				84B7BF841B72821900F9733F /* input.h */,
+				84B7BF821B727AD700F9733F /* input.mm */,
+				84A388B61B1CDD3E000166C0 /* Supporting Files */,
 			);
 			name = "reicast-osx";
 			path = "emulator-osx";
@@ -3090,6 +3092,7 @@
 			isa = PBXGroup;
 			children = (
 				84A388B71B1CDD3E000166C0 /* Info.plist */,
+				53836183240EDBE2006AE5B4 /* main.m */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -3389,7 +3392,7 @@
 				5312CF3C24081FE600C67C85 /* tmu.cpp in Sources */,
 				5312D02D24081FE600C67C85 /* ldblib.c in Sources */,
 				5312CFB924081FE600C67C85 /* logic-aarch64.cc in Sources */,
-				5312C07424081C3800C67C85 /* AppDelegate.m in Sources */,
+				5312C07424081C3800C67C85 /* AppDelegate.mm in Sources */,
 				5312D07B24081FE700C67C85 /* zip_rename.c in Sources */,
 				5312CFB524081FE600C67C85 /* instrument-aarch64.cc in Sources */,
 				5312CF6324081FE600C67C85 /* SoundCPU.cpp in Sources */,
@@ -3501,8 +3504,9 @@
 				5312CFA524081FE600C67C85 /* gui_settings_general.cpp in Sources */,
 				5312CF5424081FE600C67C85 /* naomi.cpp in Sources */,
 				5312D09F24081FE700C67C85 /* Delta.c in Sources */,
+				53836184240EDBE2006AE5B4 /* main.m in Sources */,
 				5317CF4A24086456008A1850 /* posix_vmem.cpp in Sources */,
-				84B7BF831B727AD700F9733F /* osx-main.mm in Sources */,
+				84B7BF831B727AD700F9733F /* input.mm in Sources */,
 				5312CF3924081FE600C67C85 /* ccn.cpp in Sources */,
 				5312CFBD24081FE600C67C85 /* operands-aarch64.cc in Sources */,
 				5312CF2A24081FE600C67C85 /* decoder.cpp in Sources */,

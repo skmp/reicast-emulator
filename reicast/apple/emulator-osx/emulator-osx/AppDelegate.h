@@ -6,16 +6,13 @@
 //  Copyright © 2020 reicast. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <AppKit/AppKit.h>
 #import "EmuGLView.h"
 
 @interface AppDelegate : NSObject <NSWindowDelegate>
 
-@property (weak) IBOutlet NSWindow *window;
-@property (weak) IBOutlet EmuGLView *glView;
-
-@property CGFloat backingScaleFactor;
-@property CGSize glViewSize;
+@property (strong) NSWindow *window;
+@property (strong) EmuGLView *glView;
 
 + (AppDelegate *)sharedInstance;
 

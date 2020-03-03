@@ -7,34 +7,17 @@
 //
 
 #import "EmuGLView.h"
-#import "osx-main.h"
+#import "input.h"
 
 @implementation EmuGLView {
     int32_t mouse_prev_x;
     int32_t mouse_prev_y;
 }
 
-- (BOOL)acceptsFirstResponder {
-    return YES;
-}
-
-- (void)drawRect:(NSRect)dirtyRect {
-    [super drawRect:dirtyRect];
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
     
-    [self.openGLContext makeCurrentContext];
-    
-    // TODO: BEN implement this correctly
-//    if (emu_single_frame(dirtyRect.size.width, dirtyRect.size.height) != 0) {
-//        [self.openGLContext flushBuffer];
-//    }
-}
-
-- (void)awakeFromNib {
-    NSTimer *renderTimer = [NSTimer scheduledTimerWithTimeInterval:0.001 target:self selector:@selector(timerTick) userInfo:nil repeats:YES];
-    
-    [NSRunLoop.currentRunLoop addTimer:renderTimer forMode:NSDefaultRunLoopMode];
-    [NSRunLoop.currentRunLoop addTimer:renderTimer forMode:NSEventTrackingRunLoopMode];
-        
+    NSLog(@"initWithFrame");
     NSOpenGLPixelFormatAttribute attrs[] = {
         NSOpenGLPFADoubleBuffer,
         NSOpenGLPFADepthSize, 24,
@@ -48,22 +31,12 @@
 
     self.pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
     self.openGLContext = [[NSOpenGLContext alloc] initWithFormat:self.pixelFormat shareContext:nil];
-
-    [self.openGLContext makeCurrentContext];
-    emu_gles_init(self.frame.size.width, self.frame.size.height);
-
-    if (emu_reicast_init() != 0) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.alertStyle = NSCriticalAlertStyle;
-        alert.messageText = @"Reicast initialization failed";
-        [alert runModal];
-    }
+    
+    return self;
 }
 
-- (void)timerTick {
-    if (emu_frame_pending()) {
-        self.needsDisplay = YES;
-    }
+- (BOOL)acceptsFirstResponder {
+    return YES;
 }
 
 - (void)keyDown:(NSEvent *)event {
@@ -148,16 +121,6 @@
         // 0.1 per wheel notch
         mo_wheel_delta -= event.scrollingDeltaY * 160;
     }
-}
-
-- (void)viewDidMoveToWindow {
-    [super viewDidMoveToWindow];
-    self.window.delegate = self;
-    self.window.acceptsMouseMovedEvents = YES;
-}
-
-- (void)windowWillClose:(NSNotification *)notification {
-    emu_dc_exit();
 }
 
 @end

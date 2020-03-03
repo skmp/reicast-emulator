@@ -19,6 +19,10 @@
 #import "AppDelegate.h"
 #import "EmuGLView.h"
 
+#ifdef FEAT_HAS_SERIAL_TTY
+#import <util.h>
+#endif
+
 void common_linux_setup();
 void rend_resize(int width, int height);
 extern int screen_width, screen_height, screen_dpi;
@@ -52,6 +56,11 @@ u8 rt[4],lt[4];
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
+
+#ifdef FEAT_HAS_SERIAL_TTY
+bool cleanup_pty_symlink = false;
+int pty_master;
+#endif
 
 // TODO: BEN This was copied directly from the Linux main.cpp file, no idea if it works on macOS
 void os_LaunchFromURL(const string& url) {
@@ -124,7 +133,14 @@ bool os_gl_swap() {
 
 extern "C" void emu_dc_exit()
 {
-    // TODO: BEN probably do some cleanup here
+#ifdef FEAT_HAS_SERIAL_TTY
+    if (cleanup_pty_symlink)
+    {
+        unlink(settings.debug.VirtualSerialPortFile.c_str());
+    }
+#endif
+    
+    reicast_term();
 }
 
 //bool rend_single_frame();
@@ -203,7 +219,51 @@ extern "C" void emu_gles_init(int width, int height) {
 extern "C" int emu_reicast_init()
 {
 	common_linux_setup();
-	return reicast_init(0, NULL);
+    int initResult = reicast_init(0, NULL);
+    if (initResult != 0) {
+        // Failed to initialize
+        return initResult;
+    }
+    
+#ifdef FEAT_HAS_SERIAL_TTY
+    if (settings.debug.VirtualSerialPort) {
+        int slave;
+        char slave_name[2048];
+        pty_master = -1;
+        if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0)
+        {
+            // Turn ECHO off, we don't want to loop-back
+            struct termios tp;
+            tcgetattr(pty_master, &tp);
+            tp.c_lflag &= ~ECHO;
+            tcsetattr(pty_master, TCSAFLUSH, &tp);
+
+            printf("Serial: Created virtual serial port at %s\n", slave_name);
+
+            if (settings.debug.VirtualSerialPortFile.size())
+            {
+                if (symlink(slave_name, settings.debug.VirtualSerialPortFile.c_str()) == 0)
+                {
+                    cleanup_pty_symlink = true;
+                    printf("Serial: Created symlink to %s\n",  settings.debug.VirtualSerialPortFile.c_str());
+                }
+                else
+                {
+                    printf("Serial: Failed to create symlink to %s, %d\n", settings.debug.VirtualSerialPortFile.c_str(), errno);
+                }
+            }
+            // not for us to use, we use master
+            // do not close to avoid EIO though
+            // close(slave);
+        }
+        else
+        {
+            printf("Serial: Failed to create PTY: %d\n", errno);
+        }
+    }
+#endif
+    
+    return initResult;
 }
 
 extern "C" void emu_start_ui_loop() {
@@ -212,8 +272,6 @@ extern "C" void emu_start_ui_loop() {
         reicast_ui_loop();
         NSLog(@"UI Loop ended");
     });
-    
-//   reicast_ui_loop();
 }
 
 extern "C" void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {

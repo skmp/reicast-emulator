@@ -22,6 +22,7 @@ SCIF_SCFDR2_type SCIF_SCFDR2;
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 extern int pty_master;
 #endif
 

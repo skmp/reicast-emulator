@@ -23,7 +23,9 @@ static AppDelegate *_sharedInstance;
 static CGFloat _backingScaleFactor;
 static CGSize _glViewSize;
 
-@implementation AppDelegate
+@implementation AppDelegate {
+    NSThread *_uiThread;
+}
 
 #pragma mark - Delegate Methods -
 
@@ -63,19 +65,23 @@ static CGSize _glViewSize;
     [self setupWindow];
     [self setupScreenSize];
     [self setupPaths];
-    
     common_linux_setup();
     if (reicast_init(0, NULL) != 0) {
         [self alertAndTerminateWithMessage:@"Reicast initialization failed"];
     }
     [self setupSerialPort];
-    
-    // Start UI Loop
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void) {
+    [self setupUIThread];
+}
+
+- (void)setupUIThread {
+    _uiThread = [[NSThread alloc] initWithBlock:^{
         NSLog(@"Starting UI Loop");
         reicast_ui_loop();
         NSLog(@"UI Loop ended");
-    });
+    }];
+    _uiThread.threadPriority = 1.0;
+    _uiThread.qualityOfService = NSQualityOfServiceUserInteractive;
+    [_uiThread start];
 }
 
 - (void)setupWindow {

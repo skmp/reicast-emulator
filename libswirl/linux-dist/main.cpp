@@ -432,8 +432,6 @@ int main(int argc, wchar* argv[])
 		add_system_data_dir(dirs[i]);
 	}
 	add_system_data_dir(find_user_data_dir());
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
 	#if defined(USE_SDL)
 		if (SDL_Init(0) != 0)

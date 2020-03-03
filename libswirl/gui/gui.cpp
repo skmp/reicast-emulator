@@ -731,7 +731,8 @@ struct ReicastUI_impl : GUI {
 
         virtualDreamcast->Init();
 
-        int rc = virtualDreamcast->StartGame(path.empty() ? NULL : path.c_str());
+        int rc = virtualDreamcast->StartGame(path);
+        
         if (rc != 0)
         {
             gui_state = Main;
@@ -910,11 +911,10 @@ struct ReicastUI_impl : GUI {
             }
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-            ImGui::PushID("bios");
+            ImGui::PushID("nodisk");
             if (ImGui::Selectable("Dreamcast BIOS"))
             {
-                cfgSetVirtual("config", "image", "");
-                if (gui_start_game(""))
+                if (gui_start_game("nodisk"))
                     gui_state = Closed;
             }
             ImGui::PopID();

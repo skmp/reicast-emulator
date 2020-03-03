@@ -810,10 +810,9 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->aica_ram.Zero();
     }
 
-    int StartGame(const char* path)
+    int StartGame(const string& path)
     {
-        if (path != NULL)
-            cfgSetVirtual("config", "image", path);
+        cfgSetVirtual("config", "image", path.c_str());
 
         if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
         {

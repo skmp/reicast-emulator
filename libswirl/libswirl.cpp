@@ -115,7 +115,7 @@ int GetFile(char* szFileName)
 {
     cfgLoadStr("config", "image", szFileName, "");
 
-    return szFileName[0] != '\0' ? 1 : 0;
+    return stricmp(szFileName, "nodisk") != 0;
 }
 
 
@@ -615,6 +615,9 @@ int reicast_init(int argc, char* argv[])
     {
         return 69;
     }
+    printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
+	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
+
     InitSettings();
     bool showOnboarding = false;
     if (!cfgOpen())
@@ -807,10 +810,9 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->aica_ram.Zero();
     }
 
-    int StartGame(const char* path)
+    int StartGame(const string& path)
     {
-        if (path != NULL)
-            cfgSetVirtual("config", "image", path);
+        cfgSetVirtual("config", "image", path.c_str());
 
         if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
         {

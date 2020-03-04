@@ -259,7 +259,6 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
 # option SUPPORT_X11
 # option FEAT_HAS_NIXPROF
 # option EMSCripten
-  add_definitions(-DUSES_HOMEDIR)
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

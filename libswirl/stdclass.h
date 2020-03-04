@@ -171,6 +171,7 @@ void set_user_config_dir(const string& dir);
 void set_user_data_dir(const string& dir);
 void add_system_config_dir(const string& dir);
 void add_system_data_dir(const string& dir);
+void clear_dirs();
 
 //subpath format: /data/fsca-table.bit
 string get_writable_config_path(const string& filename);

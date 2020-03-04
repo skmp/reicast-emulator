@@ -39,6 +39,11 @@
     return YES;
 }
 
+- (void)reshape {
+    [super reshape];
+    [_delegate emuGLViewIsResizing:self];
+}
+
 - (void)keyDown:(NSEvent *)event {
     if (!event.isARepeat) {
         emu_key_input(event.keyCode, true, event.modifierFlags & NSDeviceIndependentModifierFlagsMask);

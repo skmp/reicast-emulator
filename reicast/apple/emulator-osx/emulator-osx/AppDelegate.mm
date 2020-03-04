@@ -18,11 +18,12 @@ int pty_master;
 
 void common_linux_setup();
 void rend_resize(int width, int height);
-extern int screen_width, screen_height, screen_dpi;
+extern int screen_dpi;
 
 static AppDelegate *_sharedInstance;
 static CGFloat _backingScaleFactor;
 static CGSize _glViewSize;
+static void gl_resize();
 
 @implementation AppDelegate {
     NSThread *_uiThread;
@@ -47,8 +48,12 @@ static CGSize _glViewSize;
     return YES;
 }
 
+// TODO: BEN This works while in BIOS or game, but doesn't correctly update the DPI for ImGUI
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
+    // Handle DPI changes dragging between monitors
     _backingScaleFactor = _window.screen.backingScaleFactor;
+    [self setupScreenDPI];
+    gl_resize();
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
@@ -56,15 +61,16 @@ static CGSize _glViewSize;
     [self shutdownEmulator];
 }
 
-- (void)glViewFrameDidChange:(NSNotification *)notification {
-    _glViewSize = _glView.frame.size;
+- (void)emuGLViewIsResizing:(EmuGLView *)emuGLView {
+    _glViewSize = emuGLView.frame.size;
+    gl_resize();
 }
 
 #pragma mark - Setup Methods -
 
 - (void)mainSetup {
     [self setupWindow];
-    [self setupScreenSize];
+    [self setupScreenDPI];
     [self setupPaths];
     common_linux_setup();
     if (reicast_init(0, NULL) != 0) {
@@ -86,8 +92,12 @@ static CGSize _glViewSize;
 }
 
 - (void)setupWindow {
-    // Create the Window
+    // Create the OpenGL view and context
+    // TODO: BEN See why background color is red when resizing window tall
     _glView = [[EmuGLView alloc] init];
+    _glView.delegate = self;
+    
+    // Create the Window
     NSWindowStyleMask styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
     _window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 640, 480) styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
     _window.delegate = self;
@@ -99,10 +109,6 @@ static CGSize _glViewSize;
     // Set initial scale factor and view size
     _backingScaleFactor = _window.screen.backingScaleFactor;
     _glViewSize = _glView.bounds.size;
-    
-    // Watch for frame changes
-    _glView.postsFrameChangedNotifications = true;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(glViewFrameDidChange:) name:NSViewFrameDidChangeNotification object:_glView];
 }
 
 - (void)setupPaths {
@@ -132,11 +138,9 @@ static CGSize _glViewSize;
     add_system_data_dir(data_dir);
 }
 
-- (void)setupScreenSize {
+- (void)setupScreenDPI {
     // Calculate screen DPI
-    // TODO: BEN This should be done from the EmuGLView so we get the correct screen
-    // TODO: BEN Also this should properly handle the case where the window is moved to another screen
-    NSScreen *screen = [NSScreen mainScreen];
+    NSScreen *screen = _window.screen;
     NSDictionary *description = [screen deviceDescription];
     NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
     // Must multiply by the scale factor to account for retina displays
@@ -145,8 +149,6 @@ static CGSize _glViewSize;
     CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
     screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
     NSLog(@"displayPixelSize: %@  displayPhysicalSize: %@  screen_dpi: %d", NSStringFromSize(displayPixelSize), NSStringFromSize(displayPhysicalSize), screen_dpi);
-    screen_width = _glView.frame.size.width;
-    screen_height = _glView.frame.size.height;
 }
 
 - (void)setupSerialPort {
@@ -234,7 +236,6 @@ void os_DoEvents() {
     // Left empty on purpose as we have nothing to run here
 }
 
-
 // Handle controller input
 void UpdateInputState(u32 port) {
     // TODO: BEN not sure what, if anything, we need here
@@ -245,10 +246,19 @@ void os_CreateWindow() {
     // Left empty on purpose as we have nothing to run here
 }
 
+// Called by libswirl when OpenGL is initialized
 bool os_gl_init(void* hwnd, void* hdc) {
-    // OpenGL is initialized in EmuGLView wakeFromNib method
-    // All we need to do here is make the GLView's context the current context on this thread
     [_sharedInstance.glView.openGLContext makeCurrentContext];
+    gl_resize();
+    return true;
+}
+
+// Called on every frame to swap the buffer
+bool os_gl_swap() {
+    NSOpenGLContext *glContext = _sharedInstance.glView.openGLContext;
+    [glContext makeCurrentContext];
+    [glContext flushBuffer];
+    
     return true;
 }
 
@@ -258,15 +268,9 @@ void os_gl_term() {
     reicast_term();
 }
 
-// Called on every frame to swap the buffer
-bool os_gl_swap() {
-    NSOpenGLContext *glContext = _sharedInstance.glView.openGLContext;
-    [glContext makeCurrentContext];
-    [glContext flushBuffer];
-    
-    // Handle HDPI (possibly don't do this on every swap and just set it once when they change?)
+static void gl_resize() {
+    // Handle HDPI by multiplying the scale factor
     rend_resize(_glViewSize.width * _backingScaleFactor, _glViewSize.height * _backingScaleFactor);
-    return true;
 }
 
 void* libPvr_GetRenderTarget() {

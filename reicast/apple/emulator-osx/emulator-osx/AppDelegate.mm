@@ -221,10 +221,9 @@ static BOOL _isShuttingDownEmulator = NO;
 
 #pragma mark - Reicast OS Functions -
 
-// TODO: BEN This was copied directly from the Linux main.cpp file, no idea if it works on macOS
 void os_LaunchFromURL(const string& url) {
-    auto cmd = "xdg-open " + url;
-    auto rv = system(cmd.c_str());
+    NSString *urlString = [NSString stringWithUTF8String:url.c_str()];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:urlString]];
 }
 
 void os_SetWindowText(const char * text) {

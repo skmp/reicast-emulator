@@ -314,8 +314,10 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 				CCN_PTEH_type t;
 				t.reg_data = data;
 
+#ifndef NO_MMU
 				u32 va = t.VPN << 10;
-
+#endif
+                
 				for (int i = 0; i < 64; i++)
 				{
 #ifndef NO_MMU

@@ -290,7 +290,7 @@ void reios_sys_flashrom() {
 			case 3:	//FLASHROM_DELETE  
 			{			
 				u32 offs = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
+				//u32 dest = Sh4cntx.r[5];
 
 				u32 part = 5;
 

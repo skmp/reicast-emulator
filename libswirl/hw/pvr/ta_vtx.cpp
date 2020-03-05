@@ -1357,7 +1357,7 @@ public:
 			AB_x=B.x-A.x,AB_y=B.y-A.y,AB_z=B.z-A.z,
 			AP_x=P.x-A.x,AP_y=P.y-A.y;
 
-		float P_y=P.y,P_x=P.x,P_z=P.z,A_x=A.x,A_y=A.y,A_z=A.z;
+		float P_y=P.y,P_x=P.x,A_x=A.x,A_y=A.y,A_z=A.z;
 
 		float AB_v=B.v-A.v,AB_u=B.u-A.u,
 			AC_v=C.v-A.v,AC_u=C.u-A.u;
@@ -1732,7 +1732,6 @@ void FillBGP(u8* vram, TA_context* ctx)
 		vertex_ptr+=strip_vs;
 	}
 
-	float ZV=0;
 	f32 bg_depth = ISP_BACKGND_D.f;
 	reinterpret_cast<u32&>(bg_depth) &= 0xFFFFFFF0;	// ISP_BACKGND_D has only 28 bits
 

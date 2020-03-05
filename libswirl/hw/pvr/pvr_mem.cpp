@@ -182,7 +182,7 @@ void pvr_mem_Init(SystemBus* sb) {
 u32 pvr_map32(u32 offset32)
 {
 	//64b wide bus is achieved by interleaving the banks every 32 bits
-	const u32 bank_bit = VRAM_BANK_BIT;
+	//const u32 bank_bit = VRAM_BANK_BIT;
 	const u32 static_bits = (VRAM_MASK - (VRAM_BANK_BIT * 2 - 1)) | 3;
 	const u32 offset_bits = (VRAM_BANK_BIT - 1) & ~3;
 

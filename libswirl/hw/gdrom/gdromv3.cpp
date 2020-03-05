@@ -797,7 +797,7 @@ struct GDRomV3_impl final : MMIODevice {
                 //2 X
                 data_q[2] = 1;//gap #1 (main track)
                 //3-5   Elapsed FAD within track
-                u32 FAD_el = cdda.CurrAddr.FAD - cdda.StartAddr.FAD;
+                //u32 FAD_el = cdda.CurrAddr.FAD - cdda.StartAddr.FAD;
                 data_q[3] = 0;//(u8)(FAD_el>>16);
                 data_q[4] = 0;//(u8)(FAD_el>>8);
                 data_q[5] = 0;//(u8)(FAD_el>>0);

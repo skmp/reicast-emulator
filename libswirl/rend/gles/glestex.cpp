@@ -701,7 +701,7 @@ void ReadRTTBuffer(u8* vram) {
 
 static int TexCacheLookups;
 static int TexCacheHits;
-static float LastTexCacheStats;
+//static float LastTexCacheStats;
 
 // Only use TexU and TexV from TSP in the cache key
 //     TexV : 7, TexU : 7

@@ -370,7 +370,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 				__m128i tex_00 = _mm_cvtepu8_epi32(px);
 				__m128i tex_01 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 1)));
 				__m128i tex_10 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 2)));
-				__m128i tex_11 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 3)));
+				//__m128i tex_11 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 3)));
 
 				tex_00 = _mm_add_epi32(_mm_mullo_epi32(tex_00, mufi_), _mm_mullo_epi32(tex_01, mufi_n));
 				tex_10 = _mm_add_epi32(_mm_mullo_epi32(tex_10, mufi_), _mm_mullo_epi32(tex_10, mufi_n));

@@ -1455,7 +1455,6 @@ chd_error chd_open(const char *filename, int mode, chd_file *parent, chd_file **
 {
 	chd_error err;
 	core_file *file = NULL;
-	UINT32 openflags;
 
 	/* choose the proper mode */
 	switch(mode)

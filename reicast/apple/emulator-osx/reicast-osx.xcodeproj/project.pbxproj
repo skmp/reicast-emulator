@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		53084854241081AB0057AB8A /* refrend_debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53084853241081AA0057AB8A /* refrend_debug.cpp */; };
+		530C8E6C2410B87E00940D64 /* arm7_interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBEA24081FE500C67C85 /* arm7_interpreter.cpp */; };
+		530C8E6D2410B88100940D64 /* arm7_jit_virt_arm32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBEE24081FE500C67C85 /* arm7_jit_virt_arm32.cpp */; };
 		5312C07024080EDA00C67C85 /* EmuGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312C06F24080EDA00C67C85 /* EmuGLView.m */; };
 		5312C07424081C3800C67C85 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5312C07324081C3800C67C85 /* AppDelegate.mm */; };
 		5312C07824081DEE00C67C85 /* emulator_osxTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312C07624081DE100C67C85 /* emulator_osxTests.m */; };
@@ -70,9 +72,7 @@
 		5312CF5924081FE600C67C85 /* picoppp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBE124081FE500C67C85 /* picoppp.cpp */; };
 		5312CF5B24081FE600C67C85 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBE624081FE500C67C85 /* modem.cpp */; };
 		5312CF5C24081FE600C67C85 /* dns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBE724081FE500C67C85 /* dns.cpp */; };
-		5312CF5D24081FE600C67C85 /* arm7_interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBEA24081FE500C67C85 /* arm7_interpreter.cpp */; };
 		5312CF5E24081FE600C67C85 /* arm7.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBEC24081FE500C67C85 /* arm7.cpp */; };
-		5312CF5F24081FE600C67C85 /* arm7_jit_virt_arm32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBEE24081FE500C67C85 /* arm7_jit_virt_arm32.cpp */; };
 		5312CF6024081FE600C67C85 /* arm7_jit_virt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBEF24081FE500C67C85 /* arm7_jit_virt.cpp */; };
 		5312CF6124081FE600C67C85 /* arm7_jit_virt_x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBF224081FE500C67C85 /* arm7_jit_virt_x86.cpp */; };
 		5312CF6224081FE600C67C85 /* virt_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CBF324081FE500C67C85 /* virt_arm.cpp */; };
@@ -3340,7 +3340,6 @@
 				5312D04524081FE700C67C85 /* bitreader.c in Sources */,
 				5312CF2724081FE600C67C85 /* blockmanager-extras.cpp in Sources */,
 				5312CF4124081FE600C67C85 /* gdrom_response.cpp in Sources */,
-				5312CF5D24081FE600C67C85 /* arm7_interpreter.cpp in Sources */,
 				5312CF8624081FE600C67C85 /* cfg.cpp in Sources */,
 				5312D09E24081FE700C67C85 /* 7zStream.c in Sources */,
 				5312D02524081FE600C67C85 /* lundump.c in Sources */,
@@ -3356,6 +3355,7 @@
 				5312D07124081FE700C67C85 /* zip_get_num_files.c in Sources */,
 				5312CF7E24081FE600C67C85 /* gl3w-es.cpp in Sources */,
 				5312D0D024081FE700C67C85 /* reios.cpp in Sources */,
+				530C8E6C2410B87E00940D64 /* arm7_interpreter.cpp in Sources */,
 				5312D06024081FE700C67C85 /* zip_fopen_index.c in Sources */,
 				5381D70E2408886B0078E797 /* refrend_base.cpp in Sources */,
 				5312D0A424081FE700C67C85 /* 7zCrcOpt.c in Sources */,
@@ -3435,7 +3435,6 @@
 				5312CF6124081FE600C67C85 /* arm7_jit_virt_x86.cpp in Sources */,
 				5312D02024081FE600C67C85 /* lvm.c in Sources */,
 				5312CF7524081FE600C67C85 /* gamepad_device.cpp in Sources */,
-				5312CF5F24081FE600C67C85 /* arm7_jit_virt_arm32.cpp in Sources */,
 				5312D09124081FE700C67C85 /* Lzma2Dec.c in Sources */,
 				5312D01924081FE600C67C85 /* lauxlib.c in Sources */,
 				5312CF7C24081FE600C67C85 /* ioctl.cpp in Sources */,
@@ -3473,6 +3472,7 @@
 				5312D09324081FE700C67C85 /* Bcj2.c in Sources */,
 				5312CF3E24081FE600C67C85 /* sci.cpp in Sources */,
 				5312CF7824081FE600C67C85 /* gdi.cpp in Sources */,
+				530C8E6D2410B88100940D64 /* arm7_jit_virt_arm32.cpp in Sources */,
 				5312CF7324081FE600C67C85 /* archive.cpp in Sources */,
 				5312D04724081FE700C67C85 /* fixed.c in Sources */,
 				5312CF6924081FE600C67C85 /* aica.cpp in Sources */,

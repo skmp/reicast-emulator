@@ -66,7 +66,10 @@ void map_area3_init()
 void map_area3(SuperH4* sh4, u32 base)
 {
 	//32x2 or 16x4
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
 	_vmem_map_block_mirror(sh4->mram.data,0x0C | base,0x0F | base,RAM_SIZE);
+#pragma clang diagnostic pop
 }
 
 //AREA 4

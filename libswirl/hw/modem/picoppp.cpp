@@ -195,8 +195,6 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 
 static void tcp_callback(uint16_t ev, struct pico_socket *s)
 {
-	int r = 0;
-
 	if (ev & PICO_SOCK_EV_RD)
 	{
 		auto it = tcp_sockets.find(s);
@@ -213,7 +211,6 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 
 	if (ev & PICO_SOCK_EV_CONN)
 	{
-		uint32_t ka_val = 0;
 		struct pico_ip4 orig;
 		uint16_t port;
 		char peer[30];

@@ -692,7 +692,6 @@ struct maple_sega_vmu: maple_base
 
 					case MFID_2_LCD:
 					{
-						u32 wat=r32();
 						rptr(lcd_data,192);
 
 						u8 white=0xff,black=0x00;
@@ -2381,8 +2380,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			LOGJVS("JVS Node %d: ", node_id);
 			PlainJoystickState pjs;
 			parent->config->GetInput(&pjs);
-			u32 keycode = ~kcode[0];
-			u32 keycode2 = ~kcode[1];
 
 			JVS_STATUS1();	// status
 			for (int cmdi = 0; cmdi < length_in; )

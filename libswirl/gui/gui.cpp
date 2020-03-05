@@ -53,10 +53,10 @@ float scaling = 1;
 GuiState gui_state = Welcome;
 
 bool settings_opening;
+#ifdef _ANDROID
 static bool touch_up;
+#endif
 
-static void render_vmus();
-static void term_vmus();
 extern bool subfolders_read;
 
 static double last_render;

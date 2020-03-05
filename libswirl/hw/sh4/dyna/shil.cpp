@@ -369,7 +369,7 @@ void rw_related(RuntimeBlockInfo* blk)
 
 	if (memtotal)
 	{
-		u32 lookups=memtotal-total;
+		//u32 lookups=memtotal-total;
 
 		//printf("rw_related total: %d/%d -- %.2f:1\n",total,memtotal,memtotal/(float)lookups);
 	}
@@ -531,7 +531,7 @@ void constprop(RuntimeBlockInfo* blk)
 		//WE NEED PROPER PAGELOCKS
 		if (op->op==shop_readm && op->rs1.is_imm() && op->rd.is_r32i() && op->rd._reg<16 && op->flags==0x4 && op->rs3.is_null())
 		{
-			u32 baddr=blk->addr&0x0FFFFFFF;
+			//u32 baddr=blk->addr&0x0FFFFFFF;
 
 			if (/*baddr==0xC158400 &&*/ blk->addr/PAGE_SIZE == op->rs1._imm/PAGE_SIZE)
 			{

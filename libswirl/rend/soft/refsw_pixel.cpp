@@ -414,7 +414,7 @@ struct RefPixelPipeline : PixelPipeline {
     template<bool pp_UseAlpha, bool pp_Texture, bool pp_Offset, bool pp_ColorClamp, u32 pp_FogCtrl>
     static bool PixelFlush_tsp(const FpuEntry *entry, float x, float y, float W, u8 *rb)
     {
-        auto zb = (float *)&rb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        //auto zb = (float *)&rb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
         auto stencil = (u32 *)&rb[STENCIL_BUFFER_PIXEL_OFFSET * 4];
         auto cb = (Color*)&rb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
         auto pb = (parameter_tag_t*)&rb[PARAM_BUFFER_PIXEL_OFFSET * 4];

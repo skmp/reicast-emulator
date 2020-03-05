@@ -79,7 +79,6 @@ extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
-static GLuint g_previous_frame_tex;
 
 s32 SetTileClip(u32 val, GLint uniform)
 {
@@ -532,7 +531,6 @@ void GenSorted(int first, int count)
 	PolyParam* pp = pp_base;
 	PolyParam* pp_end = pp + count;
 	
-	Vertex* vtx_arr=vtx_base+idx_base[pp->first];
 	vtx_sort_base=vtx_base;
 
 	static u32 vtx_cnt;
@@ -569,7 +567,7 @@ void GenSorted(int first, int count)
 			u32 flip=0;
 			while(vtx!=vtx_end)
 			{
-				Vertex* v0, * v1, * v2, * v3, * v4, * v5;
+				Vertex* v0, * v1, * v2;
 
 				if (flip)
 				{
@@ -584,6 +582,8 @@ void GenSorted(int first, int count)
 					v2=&vtx[2];
 				}
 #if 0
+                Vertex* v3, * v4, * v5;
+                
 				if (settings.pvr.subdivide_transp)
 				{
 					u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;

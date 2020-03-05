@@ -773,10 +773,8 @@ struct slowsoftrend : Renderer
 
     virtual void Present() {
 
-        u32* psrc = (u32*)render_buffer;
-        
-
 #if HOST_OS == OS_WINDOWS
+        u32* psrc = (u32*)render_buffer;
         SetDIBits(hmem, hBMP, 0, 480, psrc, (BITMAPINFO*)& bi, DIB_RGB_COLORS);
 
         RECT clientRect;
@@ -802,6 +800,7 @@ struct slowsoftrend : Renderer
         extern int x11_width;
         extern int x11_height;
 
+        u32* psrc = (u32*)render_buffer;
         XImage* ximage = XCreateImage(x11_disp, x11_vis, 24, ZPixmap, 0, (char*)psrc, width, height, 32, width * 4);
 
         GC gc = XCreateGC(x11_disp, x11_win, 0, 0);

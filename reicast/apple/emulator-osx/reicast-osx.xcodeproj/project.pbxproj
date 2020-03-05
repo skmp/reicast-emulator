@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		53084854241081AB0057AB8A /* refrend_debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53084853241081AA0057AB8A /* refrend_debug.cpp */; };
 		5312C07024080EDA00C67C85 /* EmuGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312C06F24080EDA00C67C85 /* EmuGLView.m */; };
 		5312C07424081C3800C67C85 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5312C07324081C3800C67C85 /* AppDelegate.mm */; };
 		5312C07824081DEE00C67C85 /* emulator_osxTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5312C07624081DE100C67C85 /* emulator_osxTests.m */; };
@@ -386,6 +387,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		53084853241081AA0057AB8A /* refrend_debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = refrend_debug.cpp; sourceTree = "<group>"; };
 		5312C06F24080EDA00C67C85 /* EmuGLView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EmuGLView.m; sourceTree = "<group>"; };
 		5312C07124080F0200C67C85 /* EmuGLView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EmuGLView.h; sourceTree = "<group>"; };
 		5312C07224081C3800C67C85 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -2727,6 +2729,7 @@
 			children = (
 				5381D7052408886A0078E797 /* refrend_base.cpp */,
 				5381D7042408886A0078E797 /* refrend_base.h */,
+				53084853241081AA0057AB8A /* refrend_debug.cpp */,
 				5381D7072408886A0078E797 /* refrend_regs.h */,
 				5381D70C2408886B0078E797 /* refsw_pixel.cpp */,
 				5381D7062408886A0078E797 /* refsw_pixel.h */,
@@ -3305,6 +3308,7 @@
 				5312CFA224081FE600C67C85 /* gui_util.cpp in Sources */,
 				5312D06424081FE700C67C85 /* zip_source_file.c in Sources */,
 				5312D06524081FE700C67C85 /* zip_set_name.c in Sources */,
+				53084854241081AB0057AB8A /* refrend_debug.cpp in Sources */,
 				5312D01E24081FE600C67C85 /* lmathlib.c in Sources */,
 				5312CF6424081FE600C67C85 /* arm7_jit_virt_arm64.cpp in Sources */,
 				5312D01824081FE600C67C85 /* coreio.cpp in Sources */,

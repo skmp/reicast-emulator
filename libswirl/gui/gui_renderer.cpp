@@ -258,10 +258,12 @@ void gl_free_osd_resources()
 
 static vector<Vertex> osd_vertices;
 
-//static const float vjoy_sz[2][14] = {
-//        { 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-//        { 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
-//};
+#ifdef _ANDROID
+static const float vjoy_sz[2][14] = {
+        { 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
+        { 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
+};
+#endif
 
 void HideOSD()
 {

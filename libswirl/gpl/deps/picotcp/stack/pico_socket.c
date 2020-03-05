@@ -1092,8 +1092,11 @@ static int pico_socket_xmit_one(struct pico_socket *s, const void *buf, const in
         dev = pico_ipv6_link_find(src);
     }
 #endif
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunreachable-code"
     else if (IS_SOCK_IPV6(s) && ep) {
         dev = pico_ipv6_source_dev_find(&ep->remote_addr.ip6);
+#pragma clang diagnostic pop
     } else if (IS_SOCK_IPV4(s) && ep) {
         dev = pico_ipv4_source_dev_find(&ep->remote_addr.ip4);
     } else {

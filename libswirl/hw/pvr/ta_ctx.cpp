@@ -149,7 +149,7 @@ bool QueueRender(TA_context* ctx)
  	//Try to limit speed to a "sane" level
  	//Speed is also limited via audio, but audio
  	//is sometimes not accurate enough (android, vista+)
- 	u32 cycle_span = sh4_sched_now64() - last_cyces;
+ 	u32 cycle_span = (u32)(sh4_sched_now64() - last_cyces);
  	last_cyces = sh4_sched_now64();
  	double time_span = os_GetSeconds() - last_frame;
  	last_frame = os_GetSeconds();
@@ -328,7 +328,7 @@ void tactx_write_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref
     //append to it
     fseek(fw, 0, SEEK_END);
 
-    u32 bytes = ctx->tad.End() - ctx->tad.thd_root;
+    u32 bytes = (u32)(ctx->tad.End() - ctx->tad.thd_root);
 
     fwrite("TAFRAME4", 1, 8, fw);
 
@@ -376,7 +376,7 @@ void tactx_write_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref
 
     fwrite(&ctx->tad.render_pass_count, 1, sizeof(u32), fw);
     for (int i = 0; i < ctx->tad.render_pass_count; i++) {
-        u32 offset = ctx->tad.render_passes[i] - ctx->tad.thd_root;
+        u32 offset = (u32)(ctx->tad.render_passes[i] - ctx->tad.thd_root);
         fwrite(&offset, 1, sizeof(offset), fw);
     }
 

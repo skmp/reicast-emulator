@@ -156,7 +156,7 @@ _zip_readcdir(FILE *fp, unsigned char *buf, unsigned char *eocd, int buflen,
     int i, comlen, nentry;
     unsigned int left;
 
-    comlen = buf + buflen - eocd - EOCDLEN;
+    comlen = (int)(buf + buflen - eocd - EOCDLEN);
     if (comlen < 0) {
 	/* not enough bytes left for comment */
 	_zip_error_set(error, ZIP_ER_NOZIP, 0);
@@ -490,7 +490,7 @@ _zip_find_central_dir(FILE *fp, int flags, int *zep, off_t len)
     }
 
     clearerr(fp);
-    buflen = fread(buf, 1, CDBUFSIZE, fp);
+    buflen = (int)fread(buf, 1, CDBUFSIZE, fp);
 
     if (ferror(fp)) {
 	set_error(zep, NULL, ZIP_ER_READ);
@@ -503,7 +503,7 @@ _zip_find_central_dir(FILE *fp, int flags, int *zep, off_t len)
     match = buf;
     _zip_error_set(&zerr, ZIP_ER_NOZIP, 0);
 
-    while ((match=_zip_memmem(match, buflen-(match-buf)-18,
+    while ((match=_zip_memmem(match, (int)(buflen-(match-buf)-18),
 			      (const unsigned char *)EOCD_MAGIC, 4))!=NULL) {
 	/* found match -- check, if good */
 	/* to avoid finding the same match all over again */

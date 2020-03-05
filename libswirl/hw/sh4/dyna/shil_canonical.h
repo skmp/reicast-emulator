@@ -295,7 +295,7 @@ u64,f1,(u32 r1,u32 r2,u32 C),
 	u64 res=(u64)r1+r2+C;
 
 	u64 rv;
-	((u32*)&rv)[0]=res;
+	((u32*)&rv)[0]=(u32)res;
 	((u32*)&rv)[1]=res>>32;
 
 	/*
@@ -329,7 +329,7 @@ u64,f1,(u32 r1,u32 r2,u32 C),
 	u64 res=(u64)r1-r2-C;
 
 	u64 rv;
-	((u32*)&rv)[0]=res;
+	((u32*)&rv)[0]=(u32)res;
 	((u32*)&rv)[1]=(res>>32)&1; //alternatively: res>>63
 
 	/*

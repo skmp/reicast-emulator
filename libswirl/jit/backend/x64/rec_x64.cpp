@@ -104,7 +104,7 @@ public:
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
 	{
 		regalloc.DoAlloc(block);
-		regalloc.current_opid = opid;
+		regalloc.current_opid = (u32)opid;
 	}
 
 	void compile_trampolines() {
@@ -125,7 +125,7 @@ public:
 			ret();
 		}
 		ready();
-		emit_Skip(getSize());
+		emit_Skip((u32)getSize());
 	}
 
 	//TODO: FIXME THIS DOES NOT CONFORM TO NGEN SPEC AROUND INTERRUPT HANDLING
@@ -189,7 +189,7 @@ public:
 			nop();
 
 		ready();
-		emit_Skip(getSize());
+		emit_Skip((u32)getSize());
 	}
 
 	void compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
@@ -218,7 +218,7 @@ public:
 		{
 			shil_opcode& op  = block->oplist[i];
 
-			regalloc.OpBegin(&op, i);
+			regalloc.OpBegin(&op, (int)i);
 
 			switch (op.op) {
 
@@ -834,9 +834,9 @@ public:
 		ready();
 
 		block->code = (DynarecCodeEntryPtr)getCode();
-		block->host_code_size = getSize();
+		block->host_code_size = (u32)getSize();
 
-		emit_Skip(getSize());
+		emit_Skip((u32)getSize());
 	}
 
 	void GenReadMemoryImmediate(const shil_opcode& op) {
@@ -912,7 +912,7 @@ public:
 		add(rax, temp_reg);   // 6-10 bytes
 
 		void *inst_ptr = ((char*)getCode()) + getSize();
-		unsigned prologue_size = getSize() - initial_size;
+		unsigned prologue_size = (unsigned)(getSize() - initial_size);
 
 		// Memory access is at least 3 bytes long
 		u32 size = op.flags & 0x7f;
@@ -950,13 +950,13 @@ public:
 		}
 
 		// Store ptr to start of load/store, opid and size of the whole thing in bytes.
-		unsigned code_size = getSize() - initial_size;
+		unsigned code_size = (unsigned)(getSize() - initial_size);
 		verify(code_size < 256 && prologue_size < 256);
 		block->memory_accesses[inst_ptr] = { (uint16_t)opid, (uint8_t)prologue_size, (uint8_t)code_size };
 	}
 
 	void GenReadMemorySlow(const shil_opcode& op, unsigned pad_to_bytes = 0) {
-		unsigned initial_size = getSize();
+		unsigned initial_size = (unsigned)getSize();
 
 		u32 size = op.flags & 0x7f;
 		if (size == 1) {
@@ -1001,7 +1001,7 @@ public:
 	}
 
 	void GenWriteMemorySlow(const shil_opcode& op, unsigned pad_to_bytes = 0) {
-		unsigned initial_size = getSize();
+		unsigned initial_size = (unsigned)getSize();
 		u32 size = op.flags & 0x7f;
 		if (size == 1)
 			call(mem_handlers[4]);
@@ -1033,7 +1033,7 @@ public:
 		add(rax, temp_reg);   // 6-10 bytes
 
 		void *inst_ptr = ((char*)getCode()) + getSize();
-		unsigned prologue_size = getSize() - initial_size;
+		unsigned prologue_size = (unsigned)(getSize() - initial_size);
 
 		u32 size = op.flags & 0x7f;
 		if (size == 1)
@@ -1049,7 +1049,7 @@ public:
 		}
 
 		// Store ptr to start of load/store, opid and size of the whole thing in bytes.
-		unsigned code_size = getSize() - initial_size;
+		unsigned code_size = (unsigned)(getSize() - initial_size);
 		verify(code_size < 256 && prologue_size < 256);
 		block->memory_accesses[inst_ptr] = { (uint16_t)opid, (uint8_t)prologue_size, (uint8_t)code_size };
 	}
@@ -1103,7 +1103,7 @@ public:
 		int regused = 0;
 		int xmmused = 0;
 
-		for (int i = CC_pars.size(); i-- > 0;)
+		for (size_t i = CC_pars.size(); i-- > 0;)
 		{
 			verify(xmmused < 4 && regused < 4);
 			const shil_param& prm = *CC_pars[i].prm;

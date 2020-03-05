@@ -95,7 +95,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 	}
 	else
 	{
-		const u32 id = iirf;
+		const u32 id = (u32)iirf;
 		if (sz == 1)
 		{
 			return (T)_vmem_RF8[id / 4](_vmem_CTX[id / 4], addr);
@@ -139,7 +139,7 @@ INLINE void DYNACALL _vmem_writet(u32 addr, T data)
 	}
 	else
 	{
-		const u32 id = iirf;
+		const u32 id = (u32)iirf;
 		if (sz == 1)
 		{
 			_vmem_WF8[id / 4](_vmem_CTX[id / 4], addr, data);

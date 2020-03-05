@@ -511,9 +511,9 @@ static vector<SortTrigDrawParam>	pidx_sort;
 
 void fill_id(u32* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
 {
-	d[0]=v0-vb;
-	d[1]=v1-vb;
-	d[2]=v2-vb;
+	d[0]=(u32)(v0-vb);
+	d[1]=(u32)(v1-vb);
+	d[2]=(u32)(v2-vb);
 }
 
 void GenSorted(int first, int count)
@@ -558,7 +558,7 @@ void GenSorted(int first, int count)
 
 	while(pp!=pp_end)
 	{
-		u32 ppid=(pp-pp_base);
+		u32 ppid=(u32)(pp-pp_base);
 
 		if (pp->count>2)
 		{
@@ -780,7 +780,7 @@ void GenSorted(int first, int count)
 			static List<u16> short_vidx;
 			if (short_vidx.daty != NULL)
 				short_vidx.Free();
-			short_vidx.Init(vidx_sort.size(), &overrun, NULL);
+			short_vidx.Init((int)vidx_sort.size(), &overrun, NULL);
 			for (int i = 0; i < vidx_sort.size(); i++)
 				*(short_vidx.Append()) = vidx_sort[i];
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.bytes(), short_vidx.head(), GL_STREAM_DRAW);
@@ -798,7 +798,7 @@ void DrawSorted(bool multipass)
 	//if any drawing commands, draw them
 	if (pidx_sort.size())
 	{
-		u32 count=pidx_sort.size();
+		u32 count=(u32)pidx_sort.size();
 		
 		{
 			//set some 'global' modes for all primitives
@@ -1027,10 +1027,13 @@ void DrawModVols(int first, int count)
 
 	if(0)
 	{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunreachable-code"
 		//simply draw the volumes -- for debugging
 		SetCull(0);
 		glDrawArrays(GL_TRIANGLES, first, count * 3);
 		SetupMainVBO();
+#pragma clang diagnostic pop
 	}
 	else
 	{

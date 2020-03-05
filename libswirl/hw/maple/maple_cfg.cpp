@@ -206,6 +206,8 @@ void mcfg_CreateDevices()
 			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
 				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
 			break;
+        default:
+            break;
 		}
 	}
 }

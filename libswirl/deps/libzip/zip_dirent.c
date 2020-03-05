@@ -126,14 +126,14 @@ _zip_cdir_write(struct zip_cdir *cd, FILE *fp, struct zip_error *error)
 {
     int i;
 
-    cd->offset = ftello(fp);
+    cd->offset = (unsigned int)ftello(fp);
 
     for (i=0; i<cd->nentry; i++) {
 	if (_zip_dirent_write(cd->entry+i, fp, 0, error) != 0)
 	    return -1;
     }
 
-    cd->size = ftello(fp) - cd->offset;
+    cd->size = (unsigned int)(ftello(fp) - cd->offset);
     
     /* clearerr(fp); */
     fwrite(EOCD_MAGIC, 1, 4, fp);

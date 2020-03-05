@@ -461,7 +461,7 @@ void *lzma_fast_alloc(void *p, size_t size)
 	}
 
 	/* set the low bit of the size so we don't match next time */
-	*addr = size | 1;
+	*addr = (uint32_t)(size | 1);
 	return addr + 1;
 }
 
@@ -1718,7 +1718,7 @@ chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, 
 	/* read the metadata */
 	outputlen = MIN(outputlen, metaentry.length);
 	core_fseek(chd->file, metaentry.offset + METADATA_HEADER_SIZE, SEEK_SET);
-	count = core_fread(chd->file, output, outputlen);
+	count = (UINT32)core_fread(chd->file, output, outputlen);
 	if (count != outputlen)
 		return CHDERR_READ_ERROR;
 
@@ -1870,7 +1870,7 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 
 	/* seek and read */
 	core_fseek(chd->file, 0, SEEK_SET);
-	count = core_fread(chd->file, rawheader, sizeof(rawheader));
+	count = (UINT32)core_fread(chd->file, rawheader, sizeof(rawheader));
 	if (count != sizeof(rawheader))
 		return CHDERR_READ_ERROR;
 
@@ -1962,7 +1962,7 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 		header->mapoffset       = get_bigendian_uint64(&rawheader[40]);
 		header->metaoffset      = get_bigendian_uint64(&rawheader[48]);
 		header->hunkbytes       = get_bigendian_uint32(&rawheader[56]);
-		header->hunkcount       = (header->logicalbytes + header->hunkbytes - 1) / header->hunkbytes;
+		header->hunkcount       = (UINT32)((header->logicalbytes + header->hunkbytes - 1) / header->hunkbytes);
 		header->unitbytes       = get_bigendian_uint32(&rawheader[60]);
 		header->unitcount       = (header->logicalbytes + header->unitbytes - 1) / header->unitbytes;
 		memcpy(header->sha1, &rawheader[84], CHD_SHA1_BYTES);
@@ -2048,7 +2048,7 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 
 				/* read it into the decompression buffer */
 				core_fseek(chd->file, entry->offset, SEEK_SET);
-				bytes = core_fread(chd->file, chd->compressed, entry->length);
+                bytes = (UINT32)core_fread(chd->file, chd->compressed, entry->length);
 				if (bytes != entry->length)
 					return CHDERR_READ_ERROR;
 
@@ -2064,7 +2064,7 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 			/* uncompressed data */
 			case V34_MAP_ENTRY_TYPE_UNCOMPRESSED:
 				core_fseek(chd->file, entry->offset, SEEK_SET);
-				bytes = core_fread(chd->file, dest, chd->header.hunkbytes);
+				bytes = (UINT32)core_fread(chd->file, dest, chd->header.hunkbytes);
 				if (bytes != chd->header.hunkbytes)
 					return CHDERR_READ_ERROR;
 				break;
@@ -2080,11 +2080,11 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 			case V34_MAP_ENTRY_TYPE_SELF_HUNK:
 				if (chd->cachehunk == entry->offset && dest == chd->cache)
 					break;
-				return hunk_read_into_memory(chd, entry->offset, dest);
+				return hunk_read_into_memory(chd, (UINT32)entry->offset, dest);
 
 			/* parent-referenced data */
 			case V34_MAP_ENTRY_TYPE_PARENT_HUNK:
-				err = hunk_read_into_memory(chd->parent, entry->offset, dest);
+				err = hunk_read_into_memory(chd->parent, (UINT32)entry->offset, dest);
 				if (err != CHDERR_NONE)
 					return err;
 				break;
@@ -2169,7 +2169,7 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 				return CHDERR_NONE;
 
 			case COMPRESSION_SELF:
-				return hunk_read_into_memory(chd, blockoffs, dest);
+				return hunk_read_into_memory(chd, (UINT32)blockoffs, dest);
 
 			case COMPRESSION_PARENT:
 #if 0
@@ -2221,7 +2221,7 @@ static chd_error map_read(chd_file *chd)
 
 		/* read that many */
 		core_fseek(chd->file, fileoffset, SEEK_SET);
-		count = core_fread(chd->file, raw_map_entries, entries * entrysize);
+		count = (UINT32)core_fread(chd->file, raw_map_entries, entries * entrysize);
 		if (count != entries * entrysize)
 		{
 			err = CHDERR_READ_ERROR;
@@ -2250,7 +2250,7 @@ static chd_error map_read(chd_file *chd)
 
 	/* verify the cookie */
 	core_fseek(chd->file, fileoffset, SEEK_SET);
-	count = core_fread(chd->file, &cookie, entrysize);
+	count = (UINT32)core_fread(chd->file, &cookie, entrysize);
 	if (count != entrysize || memcmp(&cookie, END_OF_LIST_COOKIE, entrysize))
 	{
 		err = CHDERR_INVALID_FILE;
@@ -2294,7 +2294,7 @@ static chd_error metadata_find_entry(chd_file *chd, UINT32 metatag, UINT32 metai
 
 		/* read the raw header */
 		core_fseek(chd->file, metaentry->offset, SEEK_SET);
-		count = core_fread(chd->file, raw_meta_header, sizeof(raw_meta_header));
+		count = (UINT32)core_fread(chd->file, raw_meta_header, sizeof(raw_meta_header));
 		if (count != sizeof(raw_meta_header))
 			break;
 

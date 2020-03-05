@@ -340,7 +340,7 @@ struct slowsoftrend : Renderer
                     return;
 
                 if (pp->isp.CullMode >= 2) {
-                    u32 mode = vertex_offset ^ pp->isp.CullMode & 1;
+                    u32 mode = vertex_offset ^ (pp->isp.CullMode & 1);
 
                     if (
                         (mode == 0 && area < 0) ||

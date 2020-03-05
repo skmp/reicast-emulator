@@ -391,7 +391,7 @@ INLINE void sh4_sr_SetFull(u32 value)
 template<typename T>
 s32 rcb_noffs(T* ptr)  
 { 
-	s32 rv= (u8*)ptr - (u8*)p_sh4rcb-sizeof(Sh4RCB); 
+	s32 rv= (s32)((u8*)ptr - (u8*)p_sh4rcb-sizeof(Sh4RCB)); 
 	verify(rv<0);
 
 	return rv;

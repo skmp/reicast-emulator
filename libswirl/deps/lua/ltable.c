@@ -95,8 +95,8 @@ static const Node dummynode_ = {
 */
 #if !defined(l_hashfloat)
 static int l_hashfloat (lua_Number n) {
-  int i;
-  lua_Integer ni;
+  int i = 0;
+  lua_Integer ni = 0;
   n = l_mathop(frexp)(n, &i) * -cast_num(INT_MIN);
   if (!lua_numbertointeger(n, &ni)) {  /* is 'n' inf/-inf/NaN? */
     lua_assert(luai_numisnan(n) || l_mathop(fabs)(n) == cast_num(HUGE_VAL));

@@ -53,15 +53,15 @@ struct PvrTexInfo
 };
 
 PvrTexInfo format[8]=
-{	// name     bpp GL format				   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)
-	{"1555", 	16,	GL_UNSIGNED_SHORT_5_5_5_1, tex1555_PL,	tex1555_TW,  tex1555_VQ,	tex1555_PL32,  tex1555_TW32,  tex1555_VQ32 },	//1555
-	{"565", 	16, GL_UNSIGNED_SHORT_5_6_5,   tex565_PL,	tex565_TW,   tex565_VQ, 	tex565_PL32,   tex565_TW32,   tex565_VQ32 },	//565
-	{"4444", 	16, GL_UNSIGNED_SHORT_4_4_4_4, tex4444_PL,	tex4444_TW,  tex4444_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 },	//4444
-	{"yuv", 	16, GL_UNSIGNED_BYTE,          NULL, 		NULL, 		 NULL,			texYUV422_PL,  texYUV422_TW,  texYUV422_VQ },	//yuv
-	{"bumpmap", 16, GL_UNSIGNED_SHORT_4_4_4_4, texBMP_PL,	texBMP_TW,	 texBMP_VQ, 	NULL},											//bump map
-	{"pal4", 	4,	0,						   0,			texPAL4_TW,  0, 			NULL, 		   texPAL4_TW32,  NULL },			//pal4
-	{"pal8", 	8,	0,						   0,			texPAL8_TW,  0, 			NULL, 		   texPAL8_TW32,  NULL },			//pal8
-	{"ns/1555", 0},																														// Not supported (1555)
+{	// name     bpp GL format				           Planar		           Twiddled                VQ                      Planar(32b)                 Twiddled(32b)                VQ (32b)
+	{"1555",    16, (GLuint)GL_UNSIGNED_SHORT_5_5_5_1, (TexConvFP*)tex1555_PL, (TexConvFP*)tex1555_TW, (TexConvFP*)tex1555_VQ, (TexConvFP32*)tex1555_PL32, (TexConvFP32*)tex1555_TW32, (TexConvFP32*)tex1555_VQ32},  //1555
+	{"565",     16, (GLuint)GL_UNSIGNED_SHORT_5_6_5,   (TexConvFP*)tex565_PL,  (TexConvFP*)tex565_TW,  (TexConvFP*)tex565_VQ,  (TexConvFP32*)tex565_PL32,  (TexConvFP32*)tex565_TW32,  (TexConvFP32*)tex565_VQ32},   //565
+	{"4444",    16, (GLuint)GL_UNSIGNED_SHORT_4_4_4_4, (TexConvFP*)tex4444_PL, (TexConvFP*)tex4444_TW, (TexConvFP*)tex4444_VQ, (TexConvFP32*)tex4444_PL32, (TexConvFP32*)tex4444_TW32, (TexConvFP32*)tex4444_VQ32},  //4444
+	{"yuv",     16, (GLuint)GL_UNSIGNED_BYTE,          (TexConvFP*)NULL,       (TexConvFP*)NULL,       (TexConvFP*)NULL,       (TexConvFP32*)texYUV422_PL, (TexConvFP32*)texYUV422_TW, (TexConvFP32*)texYUV422_VQ},  //yuv
+	{"bumpmap", 16, (GLuint)GL_UNSIGNED_SHORT_4_4_4_4, (TexConvFP*)texBMP_PL,  (TexConvFP*)texBMP_TW,  (TexConvFP*)texBMP_VQ,  (TexConvFP32*)NULL},                                                                  //bump map
+	{"pal4",    4,  (GLuint)0,                         (TexConvFP*)0,          (TexConvFP*)texPAL4_TW, (TexConvFP*)0,          (TexConvFP32*)NULL,         (TexConvFP32*)texPAL4_TW32, (TexConvFP32*)NULL},          //pal4
+	{"pal8",    8,  (GLuint)0,                         (TexConvFP*)0,          (TexConvFP*)texPAL8_TW, (TexConvFP*)0,          (TexConvFP32*)NULL,         (TexConvFP32*)texPAL8_TW32,  (TexConvFP32*)NULL},         //pal8
+	{"ns/1555", 0},                                                                                                                                                                                                  // Not supported (1555)
 };
 
 const u32 MipPoint[8] =

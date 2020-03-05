@@ -233,7 +233,7 @@ bool GamepadDevice::find_mapping(const char *custom_mapping /* = NULL */)
 int GamepadDevice::GetGamepadCount()
 {
 	_gamepads_mutex.Lock();
-	int count = _gamepads.size();
+	int count = (int)_gamepads.size();
 	_gamepads_mutex.Unlock();
 	return count;
 }

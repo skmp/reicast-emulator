@@ -238,7 +238,7 @@ static void DiscGetDriveToc(u32* to,DiskArea area)
 	//GDROM: area0 is 1 .. 2, area1 is 3 ... tc
 
 	u32 first_track=1;
-	u32 last_track=disc->tracks.size();
+	u32 last_track=(u32)(disc->tracks.size());
 	if (area==DoubleDensity)
 		first_track=3;
 	else if (disc->type==GdRom)

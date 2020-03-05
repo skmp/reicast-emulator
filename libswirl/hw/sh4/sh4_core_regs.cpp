@@ -260,7 +260,7 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 u32 sh4context_offset_u32(u32 sh4_reg)
 {
 	void* addr=Sh4_int_GetRegisterPtr((Sh4RegType)sh4_reg);
-	u32 offs=(u8*)addr-(u8*)&Sh4cntx;
+	u32 offs=(u32)((u8*)addr-(u8*)&Sh4cntx);
 	verify(offs<sizeof(Sh4cntx));
 
 	return offs;

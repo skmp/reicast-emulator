@@ -24,7 +24,7 @@ void RegReadInfo(shil_param p,size_t ord)
 	if (p.is_reg())
 	{
 		for (u32 i=0; i<p.count(); i++)
-			RegisterRead[p._reg+i]=ord;
+			RegisterRead[p._reg+i]=(u32)ord;
 	}
 }
 void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
@@ -38,7 +38,7 @@ void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
 				printf("DEAD OPCODE %d %zd!\n",RegisterWrite[p._reg+i],ord);
 				ops[RegisterWrite[p._reg+i]].Flow=1; //the last write was unused
 			}
-			RegisterWrite[p._reg+i]=ord;
+			RegisterWrite[p._reg+i]=(u32)ord;
 		}
 	}
 }
@@ -137,13 +137,13 @@ void sq_pref(RuntimeBlockInfo* blk)
 //Read Groups
 void rdgrp(RuntimeBlockInfo* blk)
 {
-	int started=-1;
-	Sh4RegType reg;
-	Sh4RegType regd;
-	u32 stride;
-	bool pend_add;
-	u32 rdc;
-	u32 addv;
+	size_t started=-1;
+	Sh4RegType reg=NoReg;
+	Sh4RegType regd=NoReg;
+	u32 stride=0;
+	bool pend_add=false;
+	u32 rdc=0;
+	u32 addv=0;
 
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
@@ -215,13 +215,13 @@ void rdgrp(RuntimeBlockInfo* blk)
 //Write Groups
 void wtgrp(RuntimeBlockInfo* blk)
 {
-	int started=-1;
-	Sh4RegType reg;
-	Sh4RegType regd;
-	u32 stride;
-	bool pend_add;
-	u32 rdc;
-	u32 addv;
+	size_t started=-1;
+	Sh4RegType reg=NoReg;
+	Sh4RegType regd=NoReg;
+	u32 stride=0;
+	bool pend_add=false;
+	u32 rdc=0;
+	u32 addv=0;
 
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
@@ -554,8 +554,8 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 	
 	int state=0;
 	int st_sta=0;
-	Sh4RegType reg_a;
-	Sh4RegType reg_fb;
+	Sh4RegType reg_a=NoReg;
+	Sh4RegType reg_fb=NoReg;
 
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
@@ -571,7 +571,7 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 			{
 				reg_a=op->rs1._reg;
 				reg_fb=op->rd._reg;
-				st_sta=i;
+				st_sta=(int)i;
 				goto _next_st;
 			}
 			goto _fail;
@@ -689,9 +689,6 @@ _end:
 //dejcond
 void dejcond(RuntimeBlockInfo* blk)
 {
-	u32 rv[16];
-	bool isi[16]={0};
-
 	if (!blk->has_jcond) return;
 
 	bool found=false;
@@ -712,7 +709,7 @@ void dejcond(RuntimeBlockInfo* blk)
 		if (op->op==shop_jcond)
 		{
 			found=true;
-			jcondp=i;
+			jcondp=(u32)i;
 		}
 	}
 
@@ -726,7 +723,7 @@ void dejcond(RuntimeBlockInfo* blk)
 //detect bswaps and talk about them
 void enswap(RuntimeBlockInfo* blk)
 {
-	Sh4RegType r;
+	Sh4RegType r=NoReg;
 	int state=0;
 	
 	for (size_t i=0;i<blk->oplist.size();i++)
@@ -789,9 +786,6 @@ void enswap(RuntimeBlockInfo* blk)
 //This is temporary til that limitation is fixed on the reg alloc logic
 void enjcond(RuntimeBlockInfo* blk)
 {
-	u32 rv[16];
-	bool isi[16]={0};
-
 	if (!blk->has_jcond && (blk->BlockType==BET_Cond_0||blk->BlockType==BET_Cond_1))
 	{
 		shil_opcode jcnd;
@@ -810,7 +804,7 @@ void enjcond(RuntimeBlockInfo* blk)
 void constlink(RuntimeBlockInfo* blk)
 {
 	Sh4RegType def=NoReg;
-	s32 val;
+	s32 val=0;
 
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
@@ -864,7 +858,7 @@ void srt_waw(RuntimeBlockInfo* blk)
 			}
 
 			found=true;
-			srtw=i;
+			srtw=(u32)i;
 		}
 	}
 
@@ -874,9 +868,9 @@ void srt_waw(RuntimeBlockInfo* blk)
 //Seems to be working
 void AnalyseBlock(RuntimeBlockInfo* blk)
 {
-
+    /*
 	u32 st[sh4_reg_count]={0};
-	/*
+
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
 		shil_opcode* op=&blk->oplist[i];
@@ -959,6 +953,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 	//rw_related(blk);
 
 	return;	//disbled to be on the safe side ..
+    /*
 	memset(RegisterWrite,-1,sizeof(RegisterWrite));
 	memset(RegisterRead,-1,sizeof(RegisterRead));
 
@@ -1004,6 +999,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 
 	//printf("%d FB, %d native, %.2f%% || %d removed ops!\n",fallback_blocks,total_blocks-fallback_blocks,fallback_blocks*100.f/total_blocks,REMOVED_OPS);
 	//printf("\nBlock: %d affecter regs %d c\n",affregs,blk->guest_cycles);
+    */
 }
 
 void UpdateFPSCR();

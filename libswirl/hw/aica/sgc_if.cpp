@@ -1441,7 +1441,7 @@ struct SGC_impl : SGC {
 
 		for (i = 0; i < 64; i++)
 		{
-			addr = Chans[i].SA - Chans[i].aica_ram;
+			addr = (int)(Chans[i].SA - Chans[i].aica_ram);
 			REICAST_S(addr);
 
 			REICAST_S(Chans[i].CA);
@@ -1456,7 +1456,7 @@ struct SGC_impl : SGC {
 			REICAST_S(Chans[i].VolMix.DRAtt);
 			REICAST_S(Chans[i].VolMix.DSPAtt);
 
-			addr = Chans[i].VolMix.DSPOut - (&(dsp->MIXS[0]));
+			addr = (int)(Chans[i].VolMix.DSPOut - (&(dsp->MIXS[0])));
 			REICAST_S(addr);
 
 			REICAST_S(Chans[i].AEG.val);

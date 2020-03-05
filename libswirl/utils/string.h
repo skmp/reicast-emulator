@@ -12,7 +12,7 @@ static vector<string> SplitString(string s, string delim)
 {
 	vector<string> rv;
 
-	auto start = 0U;
+	auto start = 0UL;
     auto end = s.find(delim);
 
     while (end != std::string::npos)

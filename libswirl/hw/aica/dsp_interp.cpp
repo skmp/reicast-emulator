@@ -70,7 +70,7 @@ struct DSPInterpreter_impl : DSPBackend {
 				s64 v = ((s64)X * (s64)Y) >> 10;
 				v <<= 6;	// 26 bits only
 				v >>= 6;
-				ACC = v + X;
+				ACC = (s32)(v + X);
 				ACC <<= 6;	// 26 bits only
 				ACC >>= 6;
 
@@ -217,7 +217,7 @@ struct DSPInterpreter_impl : DSPBackend {
 			s64 v = ((s64)X * (s64)Y) >> 10;	// magic value from dynarec. 1 sign bit + 24-1 bits + 13-1 bits -> 26 bits?
 			v <<= 6;	// 26 bits only
 			v >>= 6;
-			ACC = v + B;
+			ACC = (s32)(v + B);
 			ACC <<= 6;	// 26 bits only
 			ACC >>= 6;
 

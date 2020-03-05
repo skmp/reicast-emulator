@@ -255,13 +255,9 @@ struct ModemDevice_impl : MMIODevice {
 
 			case CONNECTED:
 #ifndef RELEASE
-				bool mem_dumped;
-				if (!mem_dumped)
-				{
-					mem_dumped = true;
-					for (int i = 0; i < sizeof(modem_regs); i++)
-						LOG("modem_regs %02x == %02x", i, modem_regs.ptr[i]);
-				}
+                for (int i = 0; i < sizeof(modem_regs); i++) {
+                    LOG("modem_regs %02x == %02x", i, modem_regs.ptr[i]);
+                }
 #endif
 				if (!modem_regs.reg1e.RDBF)
 				{

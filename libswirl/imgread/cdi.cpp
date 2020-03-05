@@ -88,7 +88,7 @@ Disc* cdi_parse(const wchar* file)
 				{
 					ft=false;
 					Session s;
-					s.StartFAD=track.pregap_length + track.start_lba;
+					s.StartFAD=(u32)(track.pregap_length + track.start_lba);
 					s.FirstTrack=track.global_current_track;
 					rv->sessions.push_back(s);
 				}
@@ -106,9 +106,9 @@ Disc* cdi_parse(const wchar* file)
 				t.ADDR=1;//hmm is that ok ?
 
 				t.CTRL=track.mode==0?0:4;
-				t.StartFAD=track.start_lba+track.pregap_length;
-				t.EndFAD=t.StartFAD+track.length-1;
-				t.file = new RawTrackFile(core_fopen(file),track.position + track.pregap_length * track.sector_size,t.StartFAD,track.sector_size);
+				t.StartFAD=(u32)(track.start_lba+track.pregap_length);
+				t.EndFAD=(u32)(t.StartFAD+track.length-1);
+				t.file = new RawTrackFile(core_fopen(file),(u32)(track.position + track.pregap_length * track.sector_size),(u32)t.StartFAD,(u32)track.sector_size);
 
 				rv->tracks.push_back(t);
 
@@ -141,7 +141,7 @@ Disc* cdi_parse(const wchar* file)
 						//savetrack(fsource, &image, &track, &opts, &flags);
 						track.position = core_ftell(fsource);
 
-						rv->EndFAD=track.start_lba +track.total_length;
+						rv->EndFAD=(u32)(track.start_lba +track.total_length);
 						// Generate cuesheet entries
 
 						//if (flags.create_cuesheet && !(track.mode == 2 && flags.do_convert))  // Do not generate input if converted (obsolete)

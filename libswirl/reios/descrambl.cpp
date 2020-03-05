@@ -57,7 +57,7 @@ void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
 	for (i = 0; i < sz; i++)
 		idx[i] = i;
 
-	for (i = sz - 1; i >= 0; --i)
+	for (i = (int)(sz - 1); i >= 0; --i)
 	{
 		/* Select a replacement index */
 		int x = (my_rand() * i) >> 16;
@@ -82,7 +82,7 @@ void descrambl_buffer(u8* src, unsigned char *dst, unsigned long filesz)
 {
 	unsigned long chunksz;
 
-	my_srand(filesz);
+	my_srand((unsigned int)filesz);
 
 	/* Descramble 2 meg blocks for as long as possible, then
 	gradually reduce the window down to 32 bytes (1 slice) */

@@ -125,7 +125,7 @@ static int emu_read_main(lua_State* L) {
 	else
 	{
 		size_t num_results = (size_t)lua_tointeger(L, 2);
-		lua_createtable(L, num_results, 0);
+		lua_createtable(L, (int)num_results, 0);
 		for (size_t i = 0; i < num_results; i++) {
 			T mem = _read_main<T>(addr);
 			lua_pushinteger(L, mem);
@@ -192,7 +192,7 @@ static int emu_read_sound(lua_State* L) {
 	else
 	{
 		size_t num_results = (size_t)lua_tointeger(L, 2);
-		lua_createtable(L, num_results, 0);
+		lua_createtable(L, (int)num_results, 0);
 		for (size_t i = 0; i < num_results; i++) {
 			T mem = _read_sound<T>(addr);
 			lua_pushinteger(L, mem);

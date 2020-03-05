@@ -29,5 +29,5 @@ ArchiveFile* ZipArchive::OpenFile(const char* name)
 
 u32 ZipArchiveFile::Read(void* buffer, u32 length)
 {
-	return zip_fread(zip_file, buffer, length);
+	return (u32)zip_fread(zip_file, buffer, length);
 }

@@ -480,7 +480,7 @@ struct ReicastUI_impl : GUI {
             ImGui_Impl_NewFrame();
             ImGui::NewFrame();
 
-            ImGui::PlotLines("Render Times", &render_times[0], render_times.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
+            ImGui::PlotLines("Render Times", &render_times[0], (int)render_times.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
 
             // Render dear imgui into screen
             ImGui::Render();

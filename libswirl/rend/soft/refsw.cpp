@@ -157,7 +157,7 @@ struct refsw_impl : refsw
 
         fpu_entires.push_back(entry);
 
-        parameter_tag_t tag = fpu_entires.size() << 1;
+        parameter_tag_t tag = (parameter_tag_t)(fpu_entires.size() << 1);
 
         fpu_entires_lookup[core_tag.full] = tag;
 
@@ -215,7 +215,7 @@ struct refsw_impl : refsw
                     return;
 
                 if (params->isp.CullMode >= 2) {
-                    u32 mode = vertex_offset ^ params->isp.CullMode & 1;
+                    u32 mode = vertex_offset ^ (params->isp.CullMode & 1);
 
                     if (
                         (mode == 0 && area < 0) ||

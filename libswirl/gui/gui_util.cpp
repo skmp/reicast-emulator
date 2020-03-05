@@ -89,7 +89,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
 		std::string path = select_current_directory;
-		int last_sep = path.find_last_of(separators);
+		int last_sep = (int)path.find_last_of(separators);
 		if (last_sep == path.size() - 1)
 			path.pop_back();
 

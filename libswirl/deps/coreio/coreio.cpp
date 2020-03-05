@@ -161,7 +161,7 @@ int core_fread(core_file* fc, void* buff, size_t len)
 
 	f->seek_ptr += rv;
 
-	return rv;
+	return (int)rv;
 }
 
 int core_fclose(core_file* fc)

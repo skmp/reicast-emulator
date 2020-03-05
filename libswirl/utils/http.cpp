@@ -190,12 +190,12 @@ _data:
 			u32 chunk_remaining = chunk_max;
 
 			if (chunk_remaining > len)
-				chunk_remaining = len;
+				chunk_remaining = (u32)len;
 
 			u8* ptr = pdata;
 			do
 			{
-				int rcv = recv(sock, (char*)ptr, chunk_remaining, 0);
+				int rcv = (int)recv(sock, (char*)ptr, chunk_remaining, 0);
 				//printf("%d > %d\n", chunk_remaining, rcv);
 				verify(rcv >= 0);
 				verify(chunk_remaining > 0 && chunk_remaining>= rcv);

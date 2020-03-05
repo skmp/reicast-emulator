@@ -75,7 +75,7 @@ zip_fread(struct zip_file *zf, void *outbuf, size_t toread)
     }
     
     zf->zstr->next_out = (Bytef *)outbuf;
-    zf->zstr->avail_out = toread;
+    zf->zstr->avail_out = (uInt)toread;
     out_before = zf->zstr->total_out;
     
     /* endless loop until something has been accomplished */
@@ -99,7 +99,7 @@ zip_fread(struct zip_file *zf, void *outbuf, size_t toread)
 	    len = zf->zstr->total_out - out_before;
 	    if (len >= zf->bytes_left || len >= toread) {
 		if (zf->flags & ZIP_ZF_CRC)
-		    zf->crc = crc32(zf->crc, (Bytef *)outbuf, len);
+		    zf->crc = crc32(zf->crc, (Bytef *)outbuf, (uInt)len);
 		zf->bytes_left -= len;
 	        return len;
 	    }

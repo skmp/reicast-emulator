@@ -237,7 +237,7 @@ void GDCartridge::permutate(u32 &a, u32 &b, u32 m, int shift)
 void GDCartridge::des_generate_subkeys(const u64 key, u32 *subkeys)
 {
 	u32 l = key >> 32;
-	u32 r = key;
+	u32 r = (u32)key;
 
 	permutate(r, l, 0x0f0f0f0f, 4);
 	permutate(r, l, 0x10101010, 0);

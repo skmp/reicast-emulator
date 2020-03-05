@@ -404,7 +404,7 @@ void os_gl_term()
 }
 
 void common_linux_setup();
-#if FEAT_HAS_SERIAL_TTY
+#ifdef FEAT_HAS_SERIAL_TTY
 bool common_serial_pty_setup();
 #endif
 
@@ -445,7 +445,7 @@ int main(int argc, wchar* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
     
-    #if FEAT_HAS_SERIAL_TTY
+    #ifdef FEAT_HAS_SERIAL_TTY
     bool cleanup_pty_symlink = common_serial_pty_setup();
     #endif
 
@@ -454,7 +454,7 @@ int main(int argc, wchar* argv[])
 	#endif
 	
 	reicast_ui_loop();
-#if FEAT_HAS_SERIAL_TTY
+#ifdef FEAT_HAS_SERIAL_TTY
 	if (cleanup_pty_symlink)
 	{
 		unlink(settings.debug.VirtualSerialPortFile.c_str());

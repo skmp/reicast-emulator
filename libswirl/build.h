@@ -324,8 +324,8 @@
 	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
 
-#ifndef FEAT_HAS_SERIAL_TTY
-    #define FEAT_HAS_SERIAL_TTY ((HOST_OS == OS_LINUX && !defined(_ANDROID)) || (HOST_OS == OS_DARWIN && !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR))
+#if !defined(FEAT_HAS_SERIAL_TTY) && ((HOST_OS == OS_LINUX && !defined(_ANDROID)) || (HOST_OS == OS_DARWIN && !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR))
+    #define FEAT_HAS_SERIAL_TTY
 #endif
 
 //Depricated build configs

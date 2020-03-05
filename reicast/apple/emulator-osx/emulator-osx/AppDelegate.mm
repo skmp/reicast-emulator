@@ -11,12 +11,13 @@
 #import "gui/gui_renderer.h"
 
 #ifdef FEAT_HAS_SERIAL_TTY
-#import <util.h>
-bool cleanup_pty_symlink = false;
-int pty_master;
+#include <util.h>
+#include <sys/stat.h>
+bool common_serial_pty_setup();
 #endif
 
 void common_linux_setup();
+bool common_serial_pty_setup();
 void rend_resize(int width, int height);
 extern int screen_dpi;
 
@@ -27,6 +28,7 @@ static void gl_resize();
 
 @implementation AppDelegate {
     NSThread *_uiThread;
+    BOOL _removePTYSymlink;
 }
 
 #pragma mark - Delegate Methods -
@@ -57,7 +59,6 @@ static void gl_resize();
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
-    NSLog(@"windowWillClose");
     [self shutdownEmulator];
 }
 
@@ -76,7 +77,7 @@ static void gl_resize();
     if (reicast_init(0, NULL) != 0) {
         [self alertAndTerminateWithMessage:@"Reicast initialization failed"];
     }
-    [self setupSerialPort];
+    _removePTYSymlink = common_serial_pty_setup();
     [self setupUIThread];
 }
 
@@ -151,38 +152,6 @@ static void gl_resize();
     NSLog(@"displayPixelSize: %@  displayPhysicalSize: %@  screen_dpi: %d", NSStringFromSize(displayPixelSize), NSStringFromSize(displayPhysicalSize), screen_dpi);
 }
 
-- (void)setupSerialPort {
-#ifdef FEAT_HAS_SERIAL_TTY
-    if (settings.debug.VirtualSerialPort) {
-        int slave;
-        char slave_name[2048];
-        pty_master = -1;
-        if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0) {
-            // Turn ECHO off, we don't want to loop-back
-            struct termios tp;
-            tcgetattr(pty_master, &tp);
-            tp.c_lflag &= ~ECHO;
-            tcsetattr(pty_master, TCSAFLUSH, &tp);
-            NSLog(@"Serial: Created virtual serial port at %s", slave_name);
-
-            if (settings.debug.VirtualSerialPortFile.size()) {
-                if (symlink(slave_name, settings.debug.VirtualSerialPortFile.c_str()) == 0) {
-                    cleanup_pty_symlink = true;
-                    NSLog(@"Serial: Created symlink to %s", settings.debug.VirtualSerialPortFile.c_str());
-                } else {
-                    NSLog(@"Serial: Failed to create symlink to %s, %d", settings.debug.VirtualSerialPortFile.c_str(), errno);
-                }
-            }
-            // not for us to use, we use master
-            // do not close to avoid EIO though
-            // close(slave);
-        } else {
-            NSLog(@"Serial: Failed to create PTY: %d", errno);
-        }
-    }
-#endif
-}
-
 static BOOL _isShuttingDownEmulator = NO;
 - (void)shutdownEmulator {
     if (_isShuttingDownEmulator) {
@@ -191,7 +160,7 @@ static BOOL _isShuttingDownEmulator = NO;
     _isShuttingDownEmulator = YES;
     
 #ifdef FEAT_HAS_SERIAL_TTY
-    if (cleanup_pty_symlink) {
+    if (_removePTYSymlink) {
         unlink(settings.debug.VirtualSerialPortFile.c_str());
     }
 #endif
@@ -263,8 +232,7 @@ bool os_gl_swap() {
 
 // Called when the application terminates
 void os_gl_term() {
-    NSLog(@"os_gl_term");
-    reicast_term();
+    [_sharedInstance shutdownEmulator];
 }
 
 static void gl_resize() {

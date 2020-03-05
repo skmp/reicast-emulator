@@ -63,10 +63,6 @@ void os_SetupInput() {
 	GamepadDevice::Register(kb_gamepad);
 	mouse_gamepad = std::make_shared<OSXMouseGamepadDevice>(0);
 	GamepadDevice::Register(mouse_gamepad);
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_CreateDevices();
-#endif
 }
 
 void* libPvr_GetRenderTarget() {
@@ -92,7 +88,7 @@ void gl_swap() {
 
 void common_linux_setup();
 int reicast_init(int argc, char* argv[]);
-void dc_exit();
+
 void dc_resume();
 void rend_init_renderer();
 

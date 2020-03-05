@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Sh4 register storage/functions/utilities
 */
 
@@ -8,7 +14,8 @@
 
 
 Sh4RCB* p_sh4rcb;
-sh4_if  sh4_cpu;
+SuperH4* sh4_cpu;
+
 u8* sh4_dyna_rcb;
 
 INLINE void ChangeGPR()
@@ -132,8 +139,10 @@ void SetFloatStatusReg()
                 : "r"(off_mask), "r"(on_mask)
             );
     #else
-        printf("SetFloatStatusReg: Unsupported platform\n");
-    #endif
+		#if !defined(TARGET_EMSCRIPTEN)
+			printf("SetFloatStatusReg: Unsupported platform\n");
+		#endif
+	#endif
 #endif
 
 	}

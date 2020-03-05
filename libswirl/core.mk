@@ -10,7 +10,7 @@ VERSION_HEADER := $(RZDCY_SRC_DIR)/version.h
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/cdipsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
+ deps/libelf/ deps/cdipsr/ arm_emitter/ rend/ reios/ deps/libpng/ gpl/deps/xbrz/ \
  deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/ utils/ utils/glwrap/ gui/
 
 ifdef SCRIPTING
@@ -41,7 +41,7 @@ ifdef X64_REC
 endif
 
 ifdef ARM32_REC
-    RZDCY_MODULES += jit/backend/arm32/ jit/emitter/arm/
+    RZDCY_MODULES += jit/backend/arm32/ jit/emitter/arm/ deps/vixl/ deps/vixl/aarch32/
 endif
 
 ifdef ARM64_REC
@@ -87,6 +87,11 @@ ifdef SUPPORT_SDL
 	RZDCY_MODULES += utils/glinit/sdl/
 endif
 
+ifdef USE_SDL
+	RZDCY_CFLAGS  += 
+	RZDCY_MODULES += sdl/
+endif
+
 ifndef NO_NIXPROF
     RZDCY_MODULES += linux/nixprof/
 endif
@@ -112,8 +117,8 @@ RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DI
 		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos
 
 ifdef USE_MODEM
-	RZDCY_CFLAGS += -DENABLE_MODEM -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
-	RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
+	RZDCY_CFLAGS += -DENABLE_MODEM -I$(RZDCY_SRC_DIR)/gpl/deps/picotcp/include -I$(RZDCY_SRC_DIR)/gpl/deps/picotcp/modules
+	RZDCY_MODULES += hw/modem/ gpl/deps/picotcp/modules/ gpl/deps/picotcp/stack/
 endif
 
 ifdef NO_REC

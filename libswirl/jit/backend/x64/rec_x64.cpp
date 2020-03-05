@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "build.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
@@ -122,6 +128,7 @@ public:
 		emit_Skip(getSize());
 	}
 
+	//TODO: FIXME THIS DOES NOT CONFORM TO NGEN SPEC AROUND INTERRUPT HANDLING
 	void build_mainloop() {
 		Xbyak::Label run_loop, slice_loop, end_loop;
 		// Store callee saved registers (64 bytes) + align stack
@@ -860,7 +867,8 @@ public:
 		else
 		{
 			// Not RAM: the returned pointer is a memory handler
-			mov(call_regs[0], op.rs1._imm);
+			mov(call_regs[0].cvt64(), (uintptr_t)sh4_cpu);
+			mov(call_regs[1], op.rs1._imm);
 
 			switch(size) {
 			case 2:
@@ -1379,6 +1387,13 @@ struct X64NGenBackend : NGenBackend
 		//printf("ngen_Rewrite pc %p\n", host_pc);
 		void *host_pc_rw = (void*)CC_RX2RW(ctx->pc);
 		RuntimeBlockInfo *block = bm_GetBlock((void*)ctx->pc);
+		
+		if (block == NULL)
+		{
+			printf("ngen_Rewrite: trying stale block for %p \n", (void *)ctx->pc);
+			block = bm_GetStaleBlock((void*)ctx->pc);
+		}
+
 		if (block == NULL)
 		{
 			printf("ngen_Rewrite: Block at %p not found\n", (void *)ctx->pc);

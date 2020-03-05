@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	Emitter.h
  *
  *		ARMv7 ISA Emitter for code generation.
@@ -121,8 +127,4 @@ namespace ARM
 //#include "H_fp.h"
 
 
-
-
-
-
-
+#undef I

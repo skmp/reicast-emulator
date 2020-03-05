@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 #include "interpr/sh4_opcodes.h"
 #include "sh4_opcode_list.h"

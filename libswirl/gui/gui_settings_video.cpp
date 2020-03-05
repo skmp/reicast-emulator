@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 #include "gui.h"
 #include "stdclass.h"
@@ -37,9 +43,12 @@ void gui_settings_video()
 		}
 	    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
 	    {
+			ImGui::Checkbox("Force GLESv2 Context", &settings.pvr.ForceGLES2);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Avoid using GLESv3. Works around old Adreno driver bugs");
 	    	ImGui::Checkbox("Synchronous Rendering", &settings.pvr.SynchronousRender);
             ImGui::SameLine();
-            gui_ShowHelpMarker("Reduce frame skipping by pausing the CPU when possible. Recommended for most platforms");
+            gui_ShowHelpMarker("Reduce frame skipping by pausing the CPU when possible. Recommended for powerful devices");
 	    	ImGui::Checkbox("Clipping", &settings.rend.Clipping);
             ImGui::SameLine();
             gui_ShowHelpMarker("Enable clipping. May produce graphical errors when disabled");
@@ -88,7 +97,7 @@ void gui_settings_video()
 	    	ImGui::SliderInt("Upscaled Texture Max Size", (int *)&settings.rend.MaxFilteredTextureSize, 8, 1024);
             ImGui::SameLine();
             gui_ShowHelpMarker("Textures larger than this dimension squared will not be upscaled");
-	    	ImGui::SliderInt("Max Threads", (int *)&settings.pvr.MaxThreads, 1, 8);
+	    	ImGui::SliderInt("Max Threads", (int *)&settings.pvr.MaxThreads, 0, 128);
             ImGui::SameLine();
             gui_ShowHelpMarker("Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
 	    	ImGui::Checkbox("Load Custom Textures", &settings.rend.CustomTextures);

@@ -1,9 +1,12 @@
 /*
+	This file is part of libswirl
+	
 	Command line parsing
 	~yay~
 
 	Nothing too interesting here, really
 */
+#include "license/bsd"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -104,6 +107,7 @@ int showhelp(wchar** arg,int cl)
 	printf("\nAvailable commands :\n");
 
 	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.\n");
+	printf("-portable: look for data and discs in the current directory\n");
 	printf("\n-help: show help info\n");
 
 	return 0;
@@ -127,6 +131,16 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			cl-=as;
 			arg+=as;
 		}
+		else if (stricmp(*arg,"-portable")==0 || stricmp(*arg,"--portable")==0)
+		{
+			clear_dirs();
+
+			//portable mode uses relative paths to CWD
+			set_user_config_dir(".");
+			set_user_data_dir(".");
+			add_system_config_dir(".");
+			add_system_data_dir(".");
+		}
 		else
 		{
 			char* extension = strrchr(*arg, '.');
@@ -144,6 +158,11 @@ bool ParseCommandLine(int argc,wchar* argv[])
 				printf("Using '%s' as reios elf file\n", *arg);
 				cfgSetVirtual("config", "reios.enabled", "1");
 				cfgSetVirtual("reios", "ElfFile", *arg);
+			}
+			else if (stricmp(*arg, "nodisk") == 0)
+			{
+				printf("Starting without cd image\n");
+				cfgSetVirtual("config", "image", "nodisk");
 			}
 			else
 			{

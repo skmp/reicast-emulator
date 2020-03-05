@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include <unordered_map>
 #include <atomic>
@@ -64,12 +70,6 @@ struct gl_ctx
 
 	struct
 	{
-		GLuint program;
-		GLuint scale;
-	} OSD_SHADER;
-
-	struct
-	{
 		GLuint geometry,modvols,idxs,idxs2;
 		GLuint vao;
 	} vbo;
@@ -111,7 +111,7 @@ extern gl_ctx gl;
 extern GLuint fbTextureId;
 extern float fb_scale_x, fb_scale_y;
 
-GLuint gl_GetTexture(TSP tsp,TCW tcw);
+GLuint gl_GetTexture(u8* vram, TSP tsp,TCW tcw);
 struct text_info {
 	u16* pdata;
 	u32 width;
@@ -120,13 +120,11 @@ struct text_info {
 };
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
-void gl_load_osd_resources();
-void gl_free_osd_resources();
-bool ProcessFrame(TA_context* ctx);
-void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
-void findGLVersion();
 
-text_info raw_GetTexture(TSP tsp, TCW tcw);
+bool ProcessFrame(Renderer* renderer, u8* vram, TA_context* ctx);
+void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
+
+text_info raw_GetTexture(u8* vram, TSP tsp, TCW tcw);
 void killtex();
 void CollectCleanup();
 void DoCleanup();
@@ -136,15 +134,13 @@ s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
-void ReadRTTBuffer();
+void ReadRTTBuffer(u8* vram);
 void RenderFramebuffer();
 void DrawFramebuffer(float w, float h);
 GLuint init_output_framebuffer(int width, int height);
 bool render_output_framebuffer();
 void free_output_framebuffer();
 
-void HideOSD();
-void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
@@ -209,6 +205,7 @@ struct TextureCacheData
 {
 	TSP tsp;        //dreamcast texture parameters
 	TCW tcw;
+	u8* vram;
 	
 	GLuint texID;   //gl texture
 	u16* pData;

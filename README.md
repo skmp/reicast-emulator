@@ -32,7 +32,9 @@ Contributing
 
 Before you work on something major, make sure to check the issue tracker to coordinate with other contributors, and open an issue to get feedback before doing big changes/PRs. It is always polite to check the history of the code you're working on and collaborate with the people that have worked on it. You can introduce yourself in [Meet the team](https://github.com/reicast/reicast-emulator/issues/1113).
 
-Everything goes to master via PRs. Test builds are run automatically for both internal and external PRs, and generally should pass unless there's a really good reason for breakage.  You might want to check our [CLA](https://gist.github.com/skmp/920357e9d3a7733234ade1eb465367cc), which is required to have your changes merged.
+Everything goes to master via PRs. Test builds are run automatically for both internal and external PRs, and generally should pass unless there's a really good reason for breakage.
+
+Please understand that the code you submit will be licensed under BSD3, unless you specify otherwise. We no longer require a CLA.
 
 If you are looking for somewhere to start, look for issues marked [good first issue](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [help wanted](https://github.com/reicast/reicast-emulator/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 
@@ -118,10 +120,15 @@ Building for Linux
 	* libasound2-dev
 	* mesa-common-dev
 	* libgl1-mesa-dev
+	* libudev-dev
+	* libpulse-dev (optional for using Pulseaudio)
 
 - From project root directory:
 ```
 cd reicast/linux
+
+# if you wish to use Pulseaudio, uncomment the following line
+# export USE_PULSEAUDIO=1
 
 make
 ```

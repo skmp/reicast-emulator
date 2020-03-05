@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <math.h>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
@@ -492,7 +498,7 @@ void gl4_delete_shaders()
 	gl4.modvol_shader.program = 0;
 }
 
-static void gles_term(void)
+static void gl41_term(void)
 {
 	glDeleteBuffers(1, &gl4.vbo.geometry);
 	gl4.vbo.geometry = 0;
@@ -503,8 +509,6 @@ static void gles_term(void)
 	gl4_delete_shaders();
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
 	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
-
-	os_gl_term();
 }
 
 static void create_modvol_shader()
@@ -519,13 +523,11 @@ static void create_modvol_shader()
 	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
 }
 
-static bool gl_create_resources()
+static bool gl4_create_resources()
 {
 	if (gl4.vbo.geometry != 0)
 		// Assume the resources have already been created
 		return true;
-
-	findGLVersion();
 
 	//create vao
 	glGenVertexArrays(1, &gl4.vbo.main_vao);
@@ -542,10 +544,6 @@ static bool gl_create_resources()
 
 	create_modvol_shader();
 
-	gl_load_osd_resources();
-
-	gui_init();
-
 	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);
 	// Bind it
@@ -560,13 +558,8 @@ static bool gl_create_resources()
 //setup
 extern void initABuffer();
 
-static bool gles_init()
+static bool gl41_init()
 {
-
-	if (!os_gl_init((void*)libPvr_GetRenderTarget(),
-		         (void*)libPvr_GetRenderSurface()))
-			return false;
-
 	int major = 0;
 	int minor = 0;
 	glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -578,23 +571,20 @@ static bool gles_init()
 	}
 	printf("Per-pixel sorting enabled\n");
 
-	glcache.DisableCache();
+	glcache.EnableCache();
 
-	if (!gl_create_resources())
+	if (!gl4_create_resources())
 		return false;
 
-//    glEnable(GL_DEBUG_OUTPUT);
-//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-//    glDebugMessageCallback(gl_DebugOutput, NULL);
-//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+	//    glEnable(GL_DEBUG_OUTPUT);
+	//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	//    glDebugMessageCallback(gl_DebugOutput, NULL);
+	//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
-
-	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	os_gl_swap();
 
 	initABuffer();
+
+	gl4_CreateSamplers();
 
 	if (settings.rend.TextureUpscale > 1)
 	{
@@ -608,17 +598,40 @@ static bool gles_init()
 	return true;
 }
 
-static bool RenderFrame()
+static bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 {
-	static int old_screen_width, old_screen_height, old_screen_scaling;
-	if (screen_width != old_screen_width || screen_height != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
-		rend_resize(screen_width, screen_height);
-		old_screen_width = screen_width;
-		old_screen_height = screen_height;
-		old_screen_scaling = settings.rend.ScreenScaling;
-	}
 	DoCleanup();
 	create_modvol_shader();
+
+	{
+		GLuint output_fbo;
+
+		float screen_scaling = settings.rend.ScreenScaling / 100.f;
+		float screen_stretching = settings.rend.ScreenStretching / 100.f;
+
+
+		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
+		{
+			output_fbo = init_output_framebuffer(screen_width * screen_scaling + 0.5f, screen_height * screen_scaling + 0.5f);
+		}
+		else
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glViewport(0, 0, screen_width, screen_height);
+			output_fbo = 0;
+		}
+
+		if (isRenderFramebuffer) {
+			RenderFramebuffer();
+			glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+
+			glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			gl4DrawFramebuffer(640, 480);
+			return true;
+		}
+	}
 
 	bool is_rtt=pvrrc.isRTT;
 
@@ -650,7 +663,7 @@ static bool RenderFrame()
 
 	float scissoring_scale_x = 1;
 
-	if (!is_rtt && !pvrrc.isRenderFramebuffer)
+	if (!is_rtt && isRenderFramebuffer)
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
@@ -705,11 +718,16 @@ static bool RenderFrame()
 		}
 		else
 		{
-			dc2s_scale_h = screen_height / 480.0;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
-			//-1 -> too much to left
+			dc2s_scale_h = screen_height / dc_height;
+			ds2s_offs_x = (screen_width - dc2s_scale_h * dc_width * screen_stretching) / 2;
+
+			if (ds2s_offs_x < 0) {
+				dc2s_scale_h = screen_width / dc_width;
+				ds2s_offs_x = 0;
+			}
+
 			gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+			gl4ShaderUniforms.scale_coefs[1] = -2.0f / (screen_height / dc2s_scale_h);
 			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
 			gl4ShaderUniforms.scale_coefs[3] = -1;
 		}
@@ -828,7 +846,7 @@ static bool RenderFrame()
 
 	//move vertex to gpu
 
-	if (!pvrrc.isRenderFramebuffer)
+	if (!isRenderFramebuffer)
 	{
 		//Main VBO
 		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
@@ -920,6 +938,7 @@ static bool RenderFrame()
 	}
 	else
 	{
+        RenderFramebuffer();
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
@@ -933,7 +952,7 @@ static bool RenderFrame()
 	KillTex=false;
 
 	if (is_rtt)
-		ReadRTTBuffer();
+		ReadRTTBuffer(vram);
 	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		gl4_render_output_framebuffer();
 
@@ -945,11 +964,62 @@ void termABuffer();
 
 struct gl4rend : Renderer
 {
-	bool Init() { return gles_init(); }
+	u8* vram;
+	bool hasInited = false;
+	int old_screen_width = -1, old_screen_height = -1 , old_screen_scaling = -1;
+
+	gl4rend(u8* vram) : vram(vram) { }
+
+	bool Init() { return (hasInited = gl41_init()); }
 	void Resize(int w, int h)
 	{
-		screen_width=w;
-		screen_height=h;
+		glViewport(0, 0, w, h);
+
+    	if (w != old_screen_width || h != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
+
+    	    if (stencilTexId != 0)
+            {
+                glcache.DeleteTextures(1, &stencilTexId);
+                stencilTexId = 0;
+            }
+            if (depthTexId != 0)
+            {
+                glcache.DeleteTextures(1, &depthTexId);
+                depthTexId = 0;
+            }
+            if (opaqueTexId != 0)
+            {
+                glcache.DeleteTextures(1, &opaqueTexId);
+                opaqueTexId = 0;
+            }
+            if (depthSaveTexId != 0)
+            {
+                glcache.DeleteTextures(1, &depthSaveTexId);
+                depthSaveTexId = 0;
+            }
+            reshapeABuffer(w, h);
+
+    		old_screen_width = w;
+    		old_screen_height = h;
+    		old_screen_scaling = settings.rend.ScreenScaling;
+    	}
+	}
+
+	void SetFBScale(float x, float y)
+	{
+		fb_scale_x = x;
+		fb_scale_y = y;
+	}
+
+	~gl4rend()
+	{
+		if (!hasInited)
+			return;
+
+		gl4_DestroySamplers();
+
+		termABuffer();
+		
 		if (stencilTexId != 0)
 		{
 			glcache.DeleteTextures(1, &stencilTexId);
@@ -970,67 +1040,29 @@ struct gl4rend : Renderer
 			glcache.DeleteTextures(1, &depthSaveTexId);
 			depthSaveTexId = 0;
 		}
-		reshapeABuffer(w, h);
+		if (KillTex)
+			killtex();
+
+		CollectCleanup();
+
+		free_output_framebuffer();
+		gl41_term();
 	}
 
-	void SetFBScale(float x, float y)
-	{
-		fb_scale_x = x;
-		fb_scale_y = y;
-	}
-
-	void Term()
-	{
-		termABuffer();
-	   if (stencilTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &stencilTexId);
-		  stencilTexId = 0;
-	   }
-	   if (depthTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthTexId);
-		  depthTexId = 0;
-	   }
-	   if (opaqueTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &opaqueTexId);
-		  opaqueTexId = 0;
-	   }
-	   if (depthSaveTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthSaveTexId);
-		  depthSaveTexId = 0;
-	   }
-	   if (KillTex)
-		  killtex();
-
-	   CollectCleanup();
-
-	   gl_free_osd_resources();
-	   free_output_framebuffer();
-	   gles_term();
-	}
-
-	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool Render() { return RenderFrame(); }
+	bool Process(TA_context* ctx) { return ProcessFrame(this, vram, ctx); }
+	bool RenderPVR() { return RenderFrame(vram, false); }
+    bool RenderFramebuffer() { return RenderFrame(vram, true); }
 	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
 
 	void Present() { os_gl_swap(); }
 
-	void DrawOSD(bool clear_screen)
-	{
-		glBindVertexArray(gl4.vbo.main_vao);
-		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
-
-		OSD_DRAW(clear_screen);
-	}
-
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
-		return gl_GetTexture(tsp, tcw);
+		return gl_GetTexture(vram, tsp, tcw);
 	}
 };
 
 #include "hw/pvr/Renderer_if.h"
 
-static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1 (Per Pixel Sort)", 2, [](){ return (Renderer*) new gl4rend(); } });
+#if FEAT_TA == TA_HLE
+static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1 (Per Pixel Sort)", 2, [](u8* vram){ return (Renderer*) new gl4rend(vram); } });
+#endif

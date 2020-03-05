@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl, likely derived from MAME
+*/
+#include "license/lgpl"
+
+
 #include "naomi_cart.h"
 #include "naomi_regs.h"
 #include "cfg/cfg.h"

@@ -1,4 +1,12 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #if defined(SUPPORT_X11)
+#include <imgui/imgui.h>
+
 #include <map>
 #include <memory>
 #include <X11/Xlib.h>
@@ -6,10 +14,14 @@
 #include <X11/Xutil.h>
 
 #include "types.h"
+#include "libswirl.h"
 #include "cfg/cfg.h"
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
 #include "gui/gui.h"
+#include "gui/gui_renderer.h"
+#include "gui/gui_partials.h"
+
 #include "input/gamepad.h"
 
 #if FEAT_HAS_NIXPROF
@@ -55,7 +67,7 @@ public:
 	}
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (g_GUI && g_GUI->IsOpen())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
@@ -81,8 +93,6 @@ Atom wmDeleteMessage;
 void* x11_vis;
 
 extern bool dump_frame_switch;
-
-void dc_exit(void);
 
 enum
 {
@@ -117,8 +127,18 @@ void event_x11_handle()
 		XNextEvent((Display *)x11_disp, &event);
 
 		if (event.type == ClientMessage &&
-				event.xclient.data.l[0] == wmDeleteMessage)
-			dc_exit();
+			event.xclient.data.l[0] == wmDeleteMessage)
+		{
+			if (virtualDreamcast && sh4_cpu->IsRunning()) {
+				virtualDreamcast->Stop([] {
+					g_GUIRenderer->Stop();
+					});
+			}
+			else
+			{
+				g_GUIRenderer->Stop();
+			}
+		}
 		else if (event.type == ConfigureNotify)
 		{
 			x11_width = event.xconfigure.width;

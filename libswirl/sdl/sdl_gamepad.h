@@ -1,6 +1,13 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "../input/gamepad_device.h"
 #include "oslib/oslib.h"
 #include "sdl.h"
+#include "gui/gui.h"
 
 class DefaultInputMapping : public InputMapping
 {
@@ -216,7 +223,7 @@ public:
 	virtual ~SDLMouseGamepadDevice() {}
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (g_GUI->IsOpen())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic

@@ -71,6 +71,7 @@ public class Emulator extends Application {
 
     public void LaunchFromUrl(String url) {
         Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(i);
     }
 

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 
 // for gl binding before GLX
 #include "utils/glwrap/gl3w.h"
@@ -132,7 +138,7 @@ bool glx_Init(void* wind, void* disp)
 
 
 
-void glx_Swap()
+bool glx_Swap()
 {
 	glXSwapBuffers(x11Display, (GLXDrawable)x11Window);
 
@@ -145,6 +151,8 @@ void glx_Swap()
 	//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
 
 	rend_resize(new_w, new_h);
+
+	return true;
 }
 
 void glx_Term()

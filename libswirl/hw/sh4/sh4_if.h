@@ -1,5 +1,13 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "types.h"
+#include <memory>
+#include "sh4_mmr.h"
 
 enum Sh4RegType
 {
@@ -223,28 +231,78 @@ typedef void InitFP();
 typedef void TermFP();
 typedef bool IsCpuRunningFP();
 
-typedef void sh4_int_RaiseExeptionFP(u32 ExeptionCode,u32 VectorAddress);
-
 /*
 	The interface stuff should be replaced with something nicer
 */
 //sh4 interface
-struct sh4_if
-{
-	RunFP* Run;
-	StopFP* Stop;
-	StepFP* Step;
-	SkipFP* Skip;
-	ResetFP* Reset;
-	InitFP* Init;
-	TermFP* Term;
 
-	TermFP* ResetCache;
+struct MMIODevice;
+struct SystemBus;
+struct SuperH4Mmr;
 
-	IsCpuRunningFP* IsCpuRunning;
-	StartFP* Start;
+enum SuperH4Backends {
+    SH4BE_INTERPRETER,
+    SH4BE_DYNAREC
 };
 
+
+enum Area0Hanlders {
+	A0H_BIOS,
+	A0H_FLASH,
+	A0H_GDROM,
+	A0H_SB,
+	A0H_PVR,
+	A0H_EXTDEV_006,
+	A0H_AICA,
+	A0H_RTC,
+	A0H_EXTDEV_010,
+
+	A0H_MAPLE,
+	A0H_ASIC,
+	A0H_SPG,
+	A0H_SCPU,
+	A0H_DSP,
+
+	A0H_MAX
+};
+
+struct SuperH4 {
+	VLockedMemory mram;
+	VLockedMemory vram;
+	VLockedMemory aica_ram;
+	unique_ptr<SuperH4Mmr> sh4mmr;
+
+	virtual void SetA0Handler(Area0Hanlders slot, MMIODevice* dev) = 0;
+	virtual MMIODevice* GetA0Handler(Area0Hanlders slot) = 0;
+
+	template<class T>
+	T* GetA0H(Area0Hanlders slot) {
+		return dynamic_cast<T*>(GetA0Handler(slot));
+	}
+
+    virtual bool setBackend(SuperH4Backends backend) = 0;
+
+    virtual bool Init() = 0;
+    virtual void Reset(bool Manual) = 0;
+    virtual void Term() = 0;
+
+    virtual void Run() = 0;
+    virtual void Stop() = 0;
+    virtual void Start() = 0;
+    virtual void Step() = 0;
+    virtual void Skip() = 0;
+
+    virtual bool IsRunning() = 0;
+
+    virtual void ResetCache() = 0;
+
+	virtual ~SuperH4() { }
+
+	virtual void serialize(void** data, unsigned int* total_size) { }
+	virtual void unserialize(void** data, unsigned int* total_size) { }
+
+	static SuperH4* Create();
+};
 
 struct Sh4Context
 {
@@ -351,8 +409,16 @@ s32 rcb_poffs(T* ptr)
 #define sh4rcb (*p_sh4rcb)
 #define Sh4cntx (sh4rcb.cntx)
 
+struct SuperH4Backend {
+    virtual bool Init() = 0;
+    virtual void Loop() = 0;
+    virtual void ClearCache() = 0;
+
+	virtual ~SuperH4Backend() {  }
+};
+
 //Get an interface to sh4 interpreter
-void Get_Sh4Interpreter(sh4_if* cpu);
-void Get_Sh4Recompiler(sh4_if* cpu);
+SuperH4Backend* Get_Sh4Interpreter();
+SuperH4Backend* Get_Sh4Recompiler();
 
 u32* GetRegPtr(u32 reg);

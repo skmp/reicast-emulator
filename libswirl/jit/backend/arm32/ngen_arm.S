@@ -1,3 +1,7 @@
+@	This file is part of libswirl
+@ #include "license/bsd"
+
+
 @@
 
 #include "build.h"
@@ -48,8 +52,11 @@ BCC     CSYM(_Z13ta_vtx_data32Pv)	@TA write?
 CSYM(TAWriteSQ_yuv):
 CMP     R3, #0x1000000	@Yuv write ?
 BCS     CSYM(TAWriteSQ_vram)
+# calculate vram ptr from sq
+ADD     R2, R1, #512
+ADD     R2, R1, #0x04000000
 MOV     R1, #1
-B       CSYM(_Z8YUV_dataPjj)
+B       CSYM(_Z8YUV_dataPjjPh)
 
 CSYM(TAWriteSQ_vram):				@vram write ..
 #ifdef TARGET_IPHONE
@@ -202,6 +209,8 @@ bx lr
 end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
+@ to be moved to vixl codegen
+#if 0 
 #if FEAT_AREC == DYNAREC_JIT
 .global CSYM(arm_compilecode)
 HIDDEN(arm_compilecode)
@@ -243,9 +252,10 @@ HIDDEN(arm_dispatch)
 CSYM(arm_dispatch):
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
 
-#if ARAM_SIZE == 2*1024*1024
+	@ TODO: FIX THIS TO NOT BE STATIC / CODEGEN on INIT
+#if INTERNAL_ARAM_SIZE == 2*1024*1024
 	ubfx r2,r0,#2,#19		@ assuming 2 MB address space max (21 bits)
-#elif ARAM_SIZE == 8*1024*1024
+#elif INTERNAL_ARAM_SIZE == 8*1024*1024
 	ubfx r2,r0,#2,#21		@ assuming 8 MB address space max (23 bits)
 #else
 #error Unsupported AICA RAM size
@@ -267,6 +277,8 @@ CSYM(arm_exit):
 	pop {r4,r5,r8,r11,pc}
 #else
 	pop {r4,r5,r8,r9,pc}
+#endif
+
 #endif
 
 @@@@@@

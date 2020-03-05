@@ -30,8 +30,12 @@
         android:name="android.hardware.gamepad" 
         android:required="false"/>
     <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false"/>
+    <uses-feature
         android:name="android.software.leanback" 
         android:required="false" />
+
 
     <application
         android:name="com.reicast.emulator.Emulator"
@@ -48,7 +52,6 @@
         <activity
             android:name="com.reicast.emulator.NativeGLActivity"
             android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
-            android:screenOrientation="sensorLandscape"
             android:exported="true"/>
         <activity-alias
             android:name="com.reicast.emulator.MainActivity"

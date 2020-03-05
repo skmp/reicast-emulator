@@ -1,18 +1,22 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
-#include "drkPvr.h"
 
-bool spg_Init();
-void spg_Term();
-void spg_Reset(bool Manual);
+#include "hw/sh4/sh4_mmio.h"
 
-//#define Frame_Cycles (DCclock/60)
+struct ASIC;
+struct SPG : MMIODevice {
+    
+    virtual void CalculateSync() = 0;
+    virtual void read_lightgun_position(int x, int y) = 0;
+    
+    virtual ~SPG() { }
 
-//need to replace 511 with correct value
-//#define Line_Cycles (Frame_Cycles/511)
+    static SPG* Create(ASIC* asic);
+};
 
-void spgUpdatePvr(u32 cycles);
-bool spg_Init();
-void spg_Term();
-void spg_Reset(bool Manual);
-void CalculateSync();
 void read_lightgun_position(int x, int y);

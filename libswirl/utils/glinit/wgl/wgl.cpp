@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #define NOMINMAX 1
 
 #include <windows.h>
@@ -7,7 +13,6 @@
 
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
-#include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 
@@ -166,10 +171,10 @@ bool wgl_Init(void* hwnd, void* hdc)
 	return rv;
 }
 
-void wgl_Swap()
+bool wgl_Swap()
 {
-	wglSwapLayerBuffers(ourWindowHandleToDeviceContext, WGL_SWAP_MAIN_PLANE);
-	//SwapBuffers(ourWindowHandleToDeviceContext);
+	SwapBuffers(ourWindowHandleToDeviceContext);
+	return true;
 }
 
 void wgl_Term()

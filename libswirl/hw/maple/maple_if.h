@@ -1,3 +1,15 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "types.h"
 #include "types.h"
@@ -5,9 +17,10 @@
 
 extern maple_device* MapleDevices[4][6];
 
-void maple_Init();
-void maple_Reset(bool Manual);
-void maple_Term();
+struct SystemBus;
+struct ASIC;
+MMIODevice* Create_MapleDevice(SystemBus* sb, ASIC* asic);
+
 void maple_ReconnectDevices();
 
 void maple_vblank();

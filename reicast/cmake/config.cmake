@@ -65,10 +65,19 @@ set(COMPILER_GCC   0x30000002)
 set(COMPILER_CLANG 0x30000003)
 set(COMPILER_INTEL 0x30000004)
 
+set(TA_HLE 0x60000001)
+set(TA_LLE 0x60000002)
 
 
+# options
+option(HAS_TA_LLE "Use TA LLE" OFF)
 
 
+if(HAS_TA_LLE)
+  set(FEAT_TA ${TA_LLE})
+else()
+  set(FEAT_TA ${TA_HLE})
+endif()
 
 
 ## These default to host, but are used for cross so make sure not to contaminate
@@ -87,20 +96,25 @@ set(COMPILER_INTEL 0x30000004)
 #
 #
 
+if(MSVC)
+    set(CMAKE_SYSTEM_PROCESSOR ${MSVC_CXX_ARCHITECTURE_ID})
+endif()
 
 
 
 ## strings are used to append to path/file names, and to filter multiple possibilities down to one 
 #		AMD64/x86_64:x64, i*86:x86, ppc/powerpc[64][b|l]e:ppc[64] etc 
 #
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")    # todo: check MATCHES "i.86" ?
+if(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686") OR
+   ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "X86"))   # todo: check MATCHES "i.86" ?
   set(host_arch "x86")
   set(HOST_CPU ${CPU_X86})
 #
 elseif(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64") OR
-       ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64"))
+       ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64") OR
+       ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x64"))
   set(host_arch "x64")
-  set(HOST_CPU ${CPU_X64})
+  set(HOST_CPU ${CPU_X64}) 
 #
 elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
   set(host_arch "arm64")
@@ -176,20 +190,32 @@ endif()
 
 
 
-## Dynarec avail on x86,x64,arm and aarch64 in arm.32 compat 
-#
+## Main CPU Dynarec
 if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}) OR
    (${HOST_CPU} EQUAL ${CPU_ARM}) OR (${HOST_CPU} EQUAL ${CPU_A64}))
-#
-  message("Dynarec Features Available")
-  
+  message("SH4 Dynarec Features Available")
   set(FEAT_SHREC  ${DYNAREC_JIT})
-  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
+else()
+  message("SH4 Dynarec Features Missing")
+  set(FEAT_SHREC  ${DYNAREC_CPP})
+endif()
+
+# Sound CPU dynarec
+if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_A64}))
+  message("ARM7 Dynarec Features Available")
+  set(FEAT_AREC  ${DYNAREC_JIT})
+else()
+  message("ARM7 Dynarec Features Missing")
+  set(FEAT_AREC ${DYNAREC_NONE})
+endif()
+
+# Sound DSP dynarec
+if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_A64}))
+  message("DSP Dynarec Features Available")
+  set(FEAT_DSPREC  ${DYNAREC_JIT})
 #
 else()
-  set(FEAT_SHREC  ${DYNAREC_CPP})
-  set(FEAT_AREC   ${DYNAREC_NONE})
+  message("DSP Dynarec Features Missing")
   set(FEAT_DSPREC ${DYNAREC_NONE})
 endif()
 
@@ -202,7 +228,6 @@ if(TARGET_NO_REC)
 endif()
 
 if(TARGET_NO_AREC)
-  set(FEAT_SHREC  ${DYNAREC_JIT})
   set(FEAT_AREC   ${DYNAREC_NONE})
   set(FEAT_DSPREC ${DYNAREC_NONE})
 endif()
@@ -402,6 +427,8 @@ add_definitions(-DFEAT_SHREC=${FEAT_SHREC})
 add_definitions(-DFEAT_DSPREC=${FEAT_DSPREC})
 
 add_definitions(-DBUILD_COMPILER=${BUILD_COMPILER})
+
+add_definitions(-DFEAT_TA=${FEAT_TA})
 
 add_definitions(-DTARGET_NO_WEBUI)
 add_definitions(-DDEF_CONSOLE)

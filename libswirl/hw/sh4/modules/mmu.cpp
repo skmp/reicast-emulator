@@ -1,4 +1,11 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "mmu.h"
+#include "mmu_impl.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
@@ -44,7 +51,7 @@ void mmu_set_state()
 {
 }
 
-void MMU_init()
+void MMU_init(SuperH4Mmr* sh4mmr)
 {
 
 }
@@ -78,6 +85,7 @@ defining NO_MMU disables the full mmu emulation
 
 #include "hw/mem/_vmem.h"
 
+SuperH4Mmr* sh4mmr;
 template<bool internal = false>
 u32 mmu_full_lookup(u32 va, u32& idx, u32& rv);
 
@@ -586,8 +594,9 @@ void mmu_set_state()
 	}
 }
 
-void MMU_init()
+void MMU_init(SuperH4Mmr* sh4mmr)
 {
+	::sh4mmr = sh4mmr;
 	memset(ITLB_LRU_USE, 0xFF, sizeof(ITLB_LRU_USE));
 	for (u32 e = 0; e<4; e++)
 	{

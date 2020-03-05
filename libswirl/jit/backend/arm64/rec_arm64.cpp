@@ -1,21 +1,9 @@
 /*
-	Copyright 2019 flyinghead
+	This file is part of libswirl
+*/
+#include "license/bsd"
 
-	This file is part of reicast.
 
-    reicast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
-
-    reicast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
- */
 
 #include "types.h"
 
@@ -25,6 +13,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <map>
+#include "hw/sh4/sh4_mem.h"
 
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
@@ -37,7 +26,6 @@ using namespace vixl::aarch64;
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/dyna/ngen.h"
-#include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
 #include "arm64_regalloc.h"
 
@@ -383,7 +371,7 @@ public:
 				break;
 #define CANONICAL_FALLBACK 0
 
-#if CANONICAL_FALLBACK
+#if CANONICAL_FALLBACK == 0
 			case shop_sync_sr:
 				GenCallRuntime(UpdateSR);
 				break;
@@ -561,6 +549,8 @@ public:
 					B(&not_sqw, ne);
 					Mov(w0, regalloc.MapRegister(op.rs1));
 
+					auto sh4mmr = sh4_cpu->sh4mmr.get();
+					
 					if (CCN_MMUCR.AT)
 					{
 						Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
@@ -1089,7 +1079,8 @@ private:
 		else
 		{
 			// Not RAM
-			Mov(w0, op.rs1._imm);
+			Mov(x0, (uintptr_t)sh4_cpu);
+			Mov(w1, op.rs1._imm);
 
 			switch(size)
 			{
@@ -1503,6 +1494,13 @@ struct Arm64NGenBackend: NGenBackend
 		//printf("ngen_Rewrite pc %p\n", host_pc);
 		void *host_pc_rw = (void*)CC_RX2RW(ctx->pc);
 		RuntimeBlockInfo *block = bm_GetBlock((void*)ctx->pc);
+		
+		if (block == NULL)
+		{
+			printf("ngen_Rewrite: trying stale block for %p \n", (void*)ctx->pc);
+			block = bm_GetStaleBlock((void*)ctx->pc);
+		}
+
 		if (block == NULL)
 		{
 			printf("ngen_Rewrite: Block at %p not found\n", (void *)ctx->pc);

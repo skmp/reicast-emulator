@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <string.h>
 #include <vector>
 #include <sys/types.h>
@@ -50,6 +56,14 @@ void add_system_config_dir(const string& dir)
 void add_system_data_dir(const string& dir)
 {
 	system_data_dirs.push_back(dir);
+}
+
+void clear_dirs()
+{
+	system_config_dirs.clear();
+	system_data_dirs.clear();
+	user_data_dir = "";
+	user_config_dir = "";
 }
 
 string get_writable_config_path(const string& filename)

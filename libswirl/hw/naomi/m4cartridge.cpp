@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  * m4cartridge.cpp
  *
  *  Created on: Nov 5, 2018
@@ -9,6 +15,7 @@
  */
 
 #include "m4cartridge.h"
+#include "serialize.h"
 
 
 // Decoder for M4-type NAOMI cart encryption

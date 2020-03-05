@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 
 	This is a header file that can create 
 	a) Shil opcode enums
@@ -43,7 +49,7 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 	#define shil_opc(name) struct shil_opcl_##name { 
 	#define shil_opc_end() };
 
-	#define shil_canonical(rv,name,args,code) struct name { static rv impl args { code } };
+	#define shil_canonical(rv,name,args,code) struct name { static INLINE rv impl args { code } };
 	
 	#define shil_cf_arg_u32(x) rdv_ngen->CC_Param(op,&op->x,CPT_u32);
 	#define shil_cf_arg_f32(x) rdv_ngen->CC_Param(op,&op->x,CPT_f32);
@@ -63,7 +69,7 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 	#define shil_opc(name) struct shil_opcl_##name { 
 	#define shil_opc_end() };
 
-	#define shil_canonical(rv,name,args,code) struct name { static rv impl args; };
+	#define shil_canonical(rv,name,args,code) struct name { static INLINE rv impl args; };
 	#define shil_compile(code) static void compile(shil_opcode* op);
 #elif  SHIL_MODE==3
 	//generate struct list ...
@@ -735,6 +741,7 @@ void,f2,(u32 r1),
 shil_compile
 (
 	shil_cf_arg_u32(rs1);
+	auto sh4mmr = sh4_cpu->sh4mmr.get();
 	if (CCN_MMUCR.AT)
 	{
 		shil_cf(f1);

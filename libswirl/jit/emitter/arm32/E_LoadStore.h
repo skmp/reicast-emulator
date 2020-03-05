@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	E_LoadStore.h
  *
  *	LDR|STR{<cond>}{B}{T} Rd, <addressing_mode>

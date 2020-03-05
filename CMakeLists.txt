@@ -50,6 +50,7 @@ set(d_core ${reicast_core_path})
 message(${d_core})
 
 file(GLOB_RECURSE hw_SRCS	${d_core}/hw/*.cpp			${d_core}/hw/*.h)
+file(GLOB_RECURSE lxdream_SRCS	${d_core}/gpl/lxdream/*.cpp			${d_core}/gpl/lxdream/*.h)
 
 file(GLOB cfg_SRCS			${d_core}/cfg/*.cpp			${d_core}/cfg/*.h)
 file(GLOB rend_SRCS			${d_core}/rend/*.cpp		${d_core}/rend/*.h)
@@ -77,6 +78,7 @@ if(${HOST_OS} EQUAL ${OS_WINDOWS})
 endif()
 
 set(core_SRCS
+  ${lxdream_SRCS}
   ${hw_SRCS}
   ${cfg_SRCS}
   ${rend_SRCS}
@@ -107,14 +109,15 @@ if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME*
   list(APPEND core_SRCS ${archive_SRCS})
 endif()
 
-if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
+if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT}) 
 #
   if(${HOST_CPU} EQUAL ${CPU_X86})
     list(APPEND core_SRCS 
       ${d_core}/jit/backend/x86/rec_x86_driver.cpp
-      ${d_core}/jit/backend/x86/rec_x86_il.cpp
       ${d_core}/jit/backend/x86/rec_x86_asm.cpp	# change for linux , rec_lin86_asm.S
 	  ${d_core}/jit/backend/x86/rec_x86_ngen.h
+
+      ${d_core}/jit/emitter/x86/x86_emitter.cpp
      )
   elseif(${HOST_CPU} EQUAL ${CPU_ARM})
     list(APPEND core_SRCS 
@@ -134,10 +137,10 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
   endif()
 #
 elseif(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
-    list(APPEND core_SRCS ${d_core}/rec-cpp/rec_cpp.cpp)
+    list(APPEND core_SRCS ${d_core}/jit/backend/cpp/rec_cpp.cpp)
 endif()
 
-add_definitions(/DFEAT_HAS_SOFTREND=0)
+add_definitions(/DFEAT_HAS_SOFTREND=1)
 
 if(${HOST_OS} EQUAL ${OS_LINUX})
   add_definitions(-DLUA_USE_LINUX)
@@ -146,9 +149,11 @@ endif()
 ### deps.cmake #################################################################################
 
 set(d_deps ${reicast_core_path}/deps)
+set(gpl_deps ${reicast_core_path}/gpl/deps)
+
 include_directories ("${d_deps}")
-include_directories ("${d_deps}/picotcp/include")
-include_directories ("${d_deps}/picotcp/modules")
+include_directories ("${gpl_deps}/picotcp/include")
+include_directories ("${gpl_deps}/picotcp/modules")
 
 file(GLOB xbyak_H	${d_deps}/xbyak/*.h)		# include headers into cmake target/project view 
 
@@ -165,8 +170,8 @@ file(GLOB crypt_SRCS ${d_deps}/crypto/*.cpp)
 file(GLOB imgui_SRCS ${d_deps}/imgui/*.cpp)
 file(GLOB lua_SRCS   ${d_deps}/lua/*.c)
 
-file(GLOB picoModS   ${d_deps}/picotcp/modules/*.c)
-file(GLOB picoStkS   ${d_deps}/picotcp/stack/*.c)
+file(GLOB picoModS   ${gpl_deps}/picotcp/modules/*.c)
+file(GLOB picoStkS   ${gpl_deps}/picotcp/stack/*.c)
 set(pico_SRCS ${picoModS} ${picoStkS})
 
 set(deps_SRCS
@@ -178,7 +183,7 @@ set(deps_SRCS
   ${crypt_SRCS}
   ${imgui_SRCS}
   ${lua_SRCS}
-  ${d_deps}/xbrz/xbrz.cpp
+  ${gpl_deps}/xbrz/xbrz.cpp
   ${d_deps}/xxhash/xxhash.c
   ${d_deps}/cdipsr/cdipsr.cpp
   ${d_deps}/coreio/coreio.cpp
@@ -269,7 +274,12 @@ set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
 add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
 
+target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
+
 if(${HOST_OS} EQUAL ${OS_LINUX})
+  # needed for opentty
+  target_link_libraries(${TNAME} -lutil)
+
   find_package(ALSA)
   if(ALSA_FOUND)
     target_compile_definitions(${TNAME} PUBLIC USE_ALSA)

@@ -1,5 +1,11 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
-#include "drkPvr.h"
+#include "types.h"
 
 #define pvr_RegSize (0x8000)
 #define pvr_RegMask (pvr_RegSize-1)
@@ -7,9 +13,6 @@
 #define PvrReg(x,t) (*(t*)&pvr_regs[(x) & pvr_RegMask])
 
 extern u8 pvr_regs[pvr_RegSize];
-
-void Regs_Reset(bool Manual);
-
 
 #define ID_addr                 0x00000000 // R   Device ID
 #define REVISION_addr           0x00000004 // R   Revision number
@@ -359,6 +362,17 @@ union FPU_SHAD_SCALE_type
 	u32 full;
 };
 
+union HALF_OFFSET_type
+{
+	struct
+	{
+		u32 fpu_pixel_half_offset : 1;
+		u32 tsp_pixel_half_offset : 1;
+		u32 texure_pixel_half_offset : 1;
+	};
+	u32 full;
+};
+
 union TA_GLOB_TILE_CLIP_type
 {
 	struct
@@ -393,7 +407,7 @@ union TA_YUV_TEX_CTRL_type
 #define TA_OL_LIMIT_addr        0x0000012C // RW  Start address of next Object Pointer Block
 #define TA_ISP_LIMIT_addr       0x00000130 // RW  Current ISP/TSP Parameter write address
 #define TA_NEXT_OPB_addr        0x00000134 // R   Global Tile clip control
-#define TA_ITP_CURRENT_addr     0x00000138 // R   Current ISP/TSP Parameter write address
+#define TA_ISP_CURRENT_addr     0x00000138 // R   Current ISP/TSP Parameter write address
 #define TA_GLOB_TILE_CLIP_addr  0x0000013C // RW  Global Tile clip control
 #define TA_ALLOC_CTRL_addr      0x00000140 // RW  Object list control
 #define TA_LIST_INIT_addr       0x00000144 // RW  TA initialization
@@ -448,7 +462,7 @@ union TA_YUV_TEX_CTRL_type
 #define FPU_SHAD_SCALE    PvrReg(FPU_SHAD_SCALE_addr,FPU_SHAD_SCALE_type) // RW  Intensity Volume mode
 #define FPU_CULL_VAL      PvrReg(FPU_CULL_VAL_addr,f32)                   // RW  Comparison value for culling
 #define FPU_PARAM_CFG     PvrReg(FPU_PARAM_CFG_addr,u32)                  // RW  Parameter read control
-#define HALF_OFFSET       PvrReg(HALF_OFFSET_addr,u32)                    // RW  Pixel sampling control
+#define HALF_OFFSET       PvrReg(HALF_OFFSET_addr,HALF_OFFSET_type)                    // RW  Pixel sampling control
 #define FPU_PERP_VAL      PvrReg(FPU_PERP_VAL_addr,u32)                   // RW  Comparison value for perpendicular polygons
 #define ISP_BACKGND_D     PvrReg(ISP_BACKGND_D_addr,ISP_BACKGND_D_type)   // RW  Background surface depth
 #define ISP_BACKGND_T     PvrReg(ISP_BACKGND_T_addr,ISP_BACKGND_T_type)   // RW  Background surface tag
@@ -493,7 +507,7 @@ union TA_YUV_TEX_CTRL_type
 #define TA_OL_LIMIT       PvrReg(TA_OL_LIMIT_addr,u32)       // RW Start address of next Object Pointer Block
 #define TA_ISP_LIMIT      PvrReg(TA_ISP_LIMIT_addr,u32)      // RW Current ISP/TSP Parameter write address
 #define TA_NEXT_OPB       PvrReg(TA_NEXT_OPB_addr,u32)       // R  Global Tile clip control
-#define TA_ITP_CURRENT    PvrReg(TA_ITP_CURRENT_addr,u32)    // R  Current ISP/TSP Parameter write address
+#define TA_ISP_CURRENT    PvrReg(TA_ISP_CURRENT_addr,u32)    // R  Current ISP/TSP Parameter write address
 #define TA_GLOB_TILE_CLIP PvrReg(TA_GLOB_TILE_CLIP_addr, TA_GLOB_TILE_CLIP_type) // RW Global Tile clip control
 #define TA_ALLOC_CTRL     PvrReg(TA_ALLOC_CTRL_addr,u32)     // RW Object list control
 #define TA_LIST_INIT      PvrReg(TA_LIST_INIT_addr,u32)      // RW TA initialization

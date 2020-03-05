@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "context.h"
 
 #define fault_printf(...)
@@ -18,14 +24,14 @@
 
 //////
 
-#define UCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
+#define UCTX(p) (((ucontext_t *)(segfault_ctx)) p)
 
 #if HOST_OS == OS_DARWIN
-	#define UCTX_type mcontext_t
+	#define UCTX_type ucontext_t
 	#define UCTX_data (UCTX())
 #else
-	#define UCTX_type mcontext_t
-	#define UCTX_data (&UCTX())
+	#define UCTX_type ucontext_t
+	#define UCTX_data (UCTX())
 #endif
 
 template <typename Ta, typename Tb>
@@ -45,7 +51,7 @@ void segfault_store(void* segfault_ctx) {
 #if !defined(TARGET_NO_EXCEPTIONS)
 	memcpy(&segfault_copy, UCTX_data, sizeof(segfault_copy));
 
-	fault_printf("sgctx stored, %d pc: %p\n", sizeof(segfault_copy), segfault_copy.gregs[REG_RIP]);
+	fault_printf("sgctx stored, %d\n", sizeof(segfault_copy));
 #endif
 }
 
@@ -53,11 +59,11 @@ void segfault_load(void* segfault_ctx) {
 #if !defined(TARGET_NO_EXCEPTIONS)
 	memcpy(UCTX_data, &segfault_copy, sizeof(*UCTX_data));
 
-	fault_printf("sgctx loaded, %d pc: %p\n", sizeof(*UCTX_data), UCTX_data->gregs[REG_RIP]);
+	fault_printf("sgctx loaded, %d\n", sizeof(*UCTX_data));
 #endif
 }
 
-#define MCTX(p) ((*(UCTX_type*)segfault_ctx) p)
+#define MCTX(p) (((UCTX_type*)segfault_ctx)->uc_mcontext p)
 
 void context_segfault_bicopy(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault) {
 
@@ -139,8 +145,24 @@ void segfault_set_pc(void* segfault_ctx, unat new_pc, unat* old_pc)
 	fault_printf("segfault_set_pc: old pc: %lx\n", ctx.pc);
 
 	*old_pc = ctx.pc;
-	ctx.pc = new_pc;
 
+#if HOST_CPU == CPU_ARM
+	// if THUMB, store the pointer in BX-compatible format
+	if (MCTX(.arm_cpsr) & (1<<5))
+		*old_pc += 1;
+
+	ctx.pc = new_pc & ~1; // THUMB Bit set on CPSR, no need to set it here
+
+	// restore from BX-compatible pointer
+	// set THUMB bit accordingly
+	if (new_pc & 1)
+		MCTX(.arm_cpsr) |= (1<<5);
+	else
+		MCTX(.arm_cpsr) &= ~(1<<5);
+#else
+	ctx.pc = new_pc;
+#endif
+	
 	context_segfault_bicopy(&ctx, UCTX_data, true);
 	fault_printf("segfault_set_pc: new pc: %lx\n", ctx.pc);
 #endif

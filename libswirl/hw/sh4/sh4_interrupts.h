@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 
 #include "types.h"
@@ -119,8 +125,9 @@ bool SRdecode();
 void SIIDRebuild();
 
 
+struct SuperH4Mmr;
 
 //Init/Res/Term
-void interrupts_init();
+void interrupts_init(SuperH4Mmr* sh4mmr);
 void interrupts_reset();
 void interrupts_term();

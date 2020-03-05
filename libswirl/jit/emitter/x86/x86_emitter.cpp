@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 //Emitting code ;)
 #pragma warning(disable:4127)
 #pragma warning(disable:4244)
@@ -69,7 +75,7 @@ const char* DissasmClass(x86_opcode_class opcode)
 	return "No opcode name info included";
 	#endif
 }
-void x86_block::Init(dyna_reallocFP* ral,dyna_finalizeFP* alf)
+void x86_block::Init(dyna_reallocFP ral,dyna_finalizeFP alf)
 {
 	ralloc=ral;
 	allocfin=alf;

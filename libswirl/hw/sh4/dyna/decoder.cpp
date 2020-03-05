@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Ugly, hacky, bad code
 	It decodes sh4 opcodes too
 */

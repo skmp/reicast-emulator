@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "types.h"
 #include "oslib/oslib.h"
@@ -309,29 +315,7 @@ struct AicaTimerData
 };
 
 #pragma pack(pop)
-
-extern InterruptInfo* MCIEB;
-extern InterruptInfo* MCIPD;
-extern InterruptInfo* MCIRE;
-extern InterruptInfo* SCIEB;
-extern InterruptInfo* SCIPD;
-extern InterruptInfo* SCIRE;
-
 #undef entry
-
-extern CommonData_struct* CommonData;
-extern DSPData_struct*	  DSPData;
-
-void UpdateAICA(u32 Cycles);
-
-void AICA_Init();
-void AICA_Term();
-
-//u32 ReadAicaReg(u32 reg);
-void WriteAicaReg8(u32 reg,u32 data);
-
-template<u32 sz>
-void WriteAicaReg(u32 reg,u32 data);
 
 ////
 //Timers :)
@@ -340,12 +324,18 @@ class AicaTimer
 {
 public:
 	AicaTimerData* data;
+	InterruptInfo* MCIPD;
+	InterruptInfo* SCIPD;
+
 	s32 c_step;
 	u32 m_step;
 	u32 id;
-	void Init(u8* regbase,u32 timer)
+	void Init(u8* regbase, InterruptInfo* MCIPD, InterruptInfo* SCIPD,u32 timer)
 	{
 		data=(AicaTimerData*)&regbase[0x2890 + timer*4];
+		this->MCIPD = MCIPD;
+		this->SCIPD = SCIPD;
+
 		id=timer;
 		m_step=1<<(data->md);
 		c_step=m_step;

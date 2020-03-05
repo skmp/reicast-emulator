@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 
 #include "../sh4_interpreter.h"
@@ -9,7 +15,6 @@
 #include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/aica/aica_if.h"
 #include "hw/gdrom/gdrom_if.h"
 
 #include <time.h>
@@ -66,36 +71,6 @@ void RASDASD()
 	LastAddr=LastAddr_min;
 	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
 }
-void recSh4_ClearCache()
-{
-	LastAddr=LastAddr_min;
-	bm_Reset();
-
-	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
-}
-
-void recSh4_Run()
-{
-	sh4_int_bCpuRun=true;
-
-	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
-	printf("cntx // fpcb offset: %td // pc offset: %td // pc %08X\n",(u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb,sh4rcb.cntx.pc);
-
-	if (!settings.dynarec.safemode)
-		printf("Warning: Dynarec safe mode is off\n");
-
-	if (settings.dynarec.unstable_opt)
-		printf("Warning: Unstable optimizations is on\n");
-
-	if (settings.dynarec.SmcCheckLevel != FullCheck)
-		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
-	
-	verify(rcb_noffs(&next_pc)==-184);
-	
-	rdv_ngen->Mainloop(sh4_dyna_rcb);
-	
-	sh4_int_bCpuRun=false;
-}
 
 void emit_Write32(u32 data)
 {
@@ -123,6 +98,13 @@ u32 emit_FreeSpace()
 
 SmcCheckEnum DoCheck(u32 pc, u32 len)
 {
+
+	// is on bios or such
+	if (!GetMemPtr(pc, len))
+	{
+		return NoCheck;
+	}
+	
 	// no need for checks if fault based discard is used for this block
 	if (!bm_RamPageHasData(pc, len))
 	{
@@ -318,7 +300,7 @@ DynarecCodeEntryPtr rdv_CompilePC_OrClearCache()
 
 	if (!rv)
 	{
-		recSh4_ClearCache();
+        sh4_cpu->ResetCache();
 
 		rv = rdv_CompilePC_OrFail(false);
 
@@ -467,92 +449,86 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	bm_printf("rdv_LinkBlock() end\n");
 	return (void*)rv;
 }
-void recSh4_Stop()
+struct recSH4 : SuperH4Backend {
+	~recSH4() { Term(); }
+
+    void ClearCache()
+    {
+        LastAddr = LastAddr_min;
+        bm_Reset();
+
+        printf("recSh4:Dynarec Cache clear at %08X\n", curr_pc);
+    }
+
+    void Loop()
+    {
+        sh4_dyna_rcb = (u8*)& Sh4cntx + sizeof(Sh4cntx);
+        printf("cntx // fpcb offset: %td // pc offset: %td // pc %08X\n", (u8*)& sh4rcb.fpcb - sh4_dyna_rcb, (u8*)& sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
+
+        if (!settings.dynarec.safemode)
+            printf("Warning: Dynarec safe mode is off\n");
+
+        if (settings.dynarec.unstable_opt)
+            printf("Warning: Unstable optimizations is on\n");
+
+        if (settings.dynarec.SmcCheckLevel != FullCheck)
+            printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
+
+        verify(rcb_noffs(&next_pc) == -184);
+
+        rdv_ngen->Mainloop(sh4_dyna_rcb);
+    }
+
+
+    bool Init()
+    {
+        printf("recSh4 Init\n");
+        
+        bm_Init();
+        bm_Reset();
+
+        verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
+
+        verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
+
+        verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
+        verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
+
+        if (_nvmem_enabled()) {
+            verify(sh4_cpu->mram.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
+        }
+
+        // Prepare some pointer to the pre-allocated code cache:
+        void* candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
+
+        // Call the platform-specific magic to make the pages RWX
+        CodeCache = NULL;
+#ifdef FEAT_NO_RWX_PAGES
+        verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)& CodeCache, &cc_rx_offset));
+#else
+        verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)& CodeCache));
+#endif
+        // Ensure the pointer returned is non-null
+        verify(CodeCache != NULL);
+
+        memset(CodeCache, 0xFF, CODE_SIZE);
+        verify(rdv_ngen->Init());
+
+        bm_Reset();
+
+        return true;
+    }
+
+    void Term()
+    {
+        printf("recSh4 Term\n");
+        bm_Term();
+    }
+};
+
+SuperH4Backend*  Get_Sh4Recompiler()
 {
-	Sh4_int_Stop();
-}
-
-void recSh4_Start()
-{
-	Sh4_int_Start();
-}
-
-void recSh4_Step()
-{
-	Sh4_int_Step();
-}
-
-void recSh4_Skip()
-{
-	Sh4_int_Skip();
-}
-
-void recSh4_Reset(bool Manual)
-{
-	Sh4_int_Reset(Manual);
-}
-
-void recSh4_Init()
-{
-	printf("recSh4 Init\n");
-	Sh4_int_Init();
-	bm_Init();
-	bm_Reset();
-
-	verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
-
-	verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
-
-	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
-	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
-	
-	if (_nvmem_enabled()) {
-		verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
-	}
-
-	// Prepare some pointer to the pre-allocated code cache:
-	void *candidate_ptr = (void*)(((unat)SH4_TCB + 4095) & ~4095);
-
-	// Call the platform-specific magic to make the pages RWX
-	CodeCache = NULL;
-	#ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)&CodeCache, &cc_rx_offset));
-	#else
-	verify(vmem_platform_prepare_jit_block(candidate_ptr, CODE_SIZE, (void**)&CodeCache));
-	#endif
-	// Ensure the pointer returned is non-null
-	verify(CodeCache != NULL);
-
-	memset(CodeCache, 0xFF, CODE_SIZE);
-	verify(rdv_ngen->Init());
-
-	bm_Reset();
-}
-
-void recSh4_Term()
-{
-	printf("recSh4 Term\n");
-	bm_Term();
-	Sh4_int_Term();
-}
-
-bool recSh4_IsCpuRunning()
-{
-	return Sh4_int_IsCpuRunning();
-}
-
-void Get_Sh4Recompiler(sh4_if* rv)
-{
-	rv->Run = recSh4_Run;
-	rv->Stop = recSh4_Stop;
-	rv->Start = recSh4_Start;
-	rv->Step = recSh4_Step;
-	rv->Skip = recSh4_Skip;
-	rv->Reset = recSh4_Reset;
-	rv->Init = recSh4_Init;
-	rv->Term = recSh4_Term;
-	rv->IsCpuRunning = recSh4_IsCpuRunning;
-	rv->ResetCache = recSh4_ClearCache;
+    return new recSH4();
 }
 
 bool rdv_RegisterShilBackend(const ngen_backend_t& backend)

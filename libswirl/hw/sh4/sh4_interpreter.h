@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "types.h"
 #include "sh4_if.h"
@@ -38,20 +44,9 @@ enum OpcodeType
 	Branch_rel_d = Delayslot|Branch_rel, // Relative (rg pc+=10);
 };
 
-//interface
-void Sh4_int_Run();
-void Sh4_int_Stop();
-void Sh4_int_Start();
-void Sh4_int_Step();
-void Sh4_int_Skip();
-void Sh4_int_Reset(bool Manual);
-void Sh4_int_Init();
-void Sh4_int_Term();
-bool Sh4_int_IsCpuRunning();
-void sh4_int_RaiseExeption(u32 ExeptionCode,u32 VectorAddr);
-u32 Sh4_int_GetRegister(Sh4RegType reg);
-void Sh4_int_SetRegister(Sh4RegType reg,u32 regdata);
-//Other things (mainly used by the cpu core
+
+//Other things (mainly used by the cpu core)
+void ExecuteOpcode(u16 op);
 void ExecuteDelayslot();
 void ExecuteDelayslot_RTE();
 

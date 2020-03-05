@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Extremely primitive bios replacement
 
 	Many thanks to Lars Olsson (jlo@ludd.luth.se) for bios decompile work
@@ -10,6 +16,7 @@
 #include "reios.h"
 
 #include "reios_elf.h"
+#include "libswirl.h"
 
 #include "gdrom_hle.h"
 #include "descrambl.h"
@@ -52,7 +59,7 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	u32 data_len = 2048 * 1024;
 	u8* temp = new u8[data_len];
 
-	libGDR_ReadSector(temp, base_fad + 16, 1, 2048);
+	g_GDRDisc->ReadSector(temp, base_fad + 16, 1, 2048);
 
 	if (memcmp(temp, "\001CD001\001", 7) == 0) {
 		printf("reios: iso9660 PVD found\n");
@@ -62,10 +69,10 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 		data_len = ((len + 2047) / 2048) *2048;
 
 		printf("reios: iso9660 root_directory, FAD: %d, len: %d\n", 150 + lba, data_len);
-		libGDR_ReadSector(temp, 150 + lba, data_len/2048, 2048);
+		g_GDRDisc->ReadSector(temp, 150 + lba, data_len/2048, 2048);
 	}
 	else {
-		libGDR_ReadSector(temp, base_fad + 16, data_len / 2048, 2048);
+		g_GDRDisc->ReadSector(temp, base_fad + 16, data_len / 2048, 2048);
 	}
 
 	for (int i = 0; i < (data_len-20); i++) {
@@ -80,9 +87,9 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			printf("file LEN: %d\n", len);
 
 			if (descrambl)
-				descrambl_file(lba + 150, len, GetMemPtr(0x8c010000, 0));
+				descrambl_file(g_GDRDisc.get(), lba + 150, len, GetMemPtr(0x8c010000, 0));
 			else
-				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
+				g_GDRDisc->ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
 
 			if (false) {
 				FILE* f = fopen("z:\\1stboot.bin", "wb");
@@ -120,13 +127,13 @@ bool pre_init = false;
 
 void reios_pre_init()
 {
-	if (libGDR_GetDiscType() == GdRom) {
+	if (g_GDRDisc->GetDiscType() == GdRom) {
 		base_fad = 45150;
 		descrambl = false;
 	} else {
 		u8 ses[6];
-		libGDR_GetSessionInfo(ses, 0);
-		libGDR_GetSessionInfo(ses, ses[2]);
+		g_GDRDisc->GetSessionInfo(ses, 0);
+		g_GDRDisc->GetSessionInfo(ses, ses[2]);
 		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
 		descrambl = true;
 	}
@@ -137,7 +144,7 @@ char* reios_disk_id() {
 
 	if (!pre_init) reios_pre_init();
 
-	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 256, 2048);
+	g_GDRDisc->ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 256, 2048);
 	memset(ip_bin, 0, sizeof(ip_bin));
 	memcpy(ip_bin, GetMemPtr(0x8c008000, 0), 256);
 	memcpy(&reios_hardware_id[0], &ip_bin[0], 16 * sizeof(char));

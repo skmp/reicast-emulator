@@ -1,6 +1,13 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "ta.h"
 #include "pvr_regs.h"
+#include "helper_classes.h"
 #include "oslib/threading.h"
 
 // helper for 32 byte aligned memory allocation
@@ -121,7 +128,6 @@ struct rend_context
 
 	bool Overrun;
 	bool isRTT;
-	bool isRenderFramebuffer;
 	
 	double early;
 
@@ -157,7 +163,6 @@ struct rend_context
 		Overrun=false;
 		fZ_min= 1000000.0f;
 		fZ_max= 1.0f;
-		isRenderFramebuffer = false;
 	}
 };
 
@@ -274,6 +279,10 @@ bool TryDecodeTARC();
 void VDecEnd();
 
 //must be moved to proper header
-void FillBGP(TA_context* ctx);
-bool UsingAutoSort(int pass_number);
+void FillBGP(u8* vram, TA_context* ctx);
+bool UsingAutoSort(u8* vram, int pass_number);
 bool rend_framePending();
+
+
+void tactx_write_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL);
+TA_context* tactx_read_frame(const char* file, u8* vram_ref = NULL);

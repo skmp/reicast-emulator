@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <d3d11.h>
 #include "hw/pvr/Renderer_if.h"
 #include "oslib/oslib.h"
@@ -75,14 +81,13 @@ struct d3d11 : Renderer
 
 	void SetFBScale(float x, float y) { }
 	void Resize(int w, int h) { }
-	void Term() { }
-
+	
 	bool Process(TA_context* ctx)
 	{
 		return true;
 	}
 
-	bool Render()
+	bool RenderPVR()
 	{
 		if (!pvrrc.isRTT)
 		{
@@ -93,11 +98,17 @@ struct d3d11 : Renderer
 		return !pvrrc.isRTT;
 	}
 
+    bool RenderFramebuffer()
+    {
+        return true;
+    }
+
 	void Present()
 	{
 		swapchain->Present(0,0);
 	}
 };
 
-
-static auto d3d11rend = RegisterRendererBackend(rendererbackend_t{ "d3d11", "Direct3D 11", -3, [] { return (Renderer*) new ::d3d11(); } });
+#if FEAT_TA == TA_HLE
+static auto d3d11rend = RegisterRendererBackend(rendererbackend_t{ "d3d11", "Direct3D 11", -3, [] (u8* vram) { return (Renderer*) new ::d3d11(); } });
+#endif

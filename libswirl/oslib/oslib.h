@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "types.h"
 
@@ -8,7 +14,6 @@ double os_GetSeconds();
 void os_DoEvents();
 void os_CreateWindow();
 void os_SetupInput();
-void WriteSample(s16 right, s16 left);
 
 #if BUILD_COMPILER==COMPILER_VC
 #include <intrin.h>
@@ -33,7 +38,7 @@ void os_DebugBreak();
 void os_LaunchFromURL(const string& url);
 
 bool os_gl_init(void* hwnd, void* hdc);
-void os_gl_swap();
+bool os_gl_swap();
 void os_gl_term();
 
 // FIXME 2 - this needs to be os_*

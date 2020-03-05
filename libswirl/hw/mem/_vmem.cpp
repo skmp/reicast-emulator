@@ -1,9 +1,12 @@
-#include "_vmem.h"
-#include "hw/aica/aica_if.h"
-#include "hw/sh4/dyna/blockmanager.h"
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
 
-#define HANDLER_MAX 0x1F
-#define HANDLER_COUNT (HANDLER_MAX+1)
+
+#include "_vmem.h"
+#include "hw/aica/aica_mem.h"
+#include "hw/sh4/dyna/blockmanager.h"
 
 //top registered handler
 _vmem_handler       _vmem_lrp;
@@ -17,6 +20,8 @@ _vmem_WriteMem16FP* _vmem_WF16[HANDLER_COUNT];
 
 _vmem_ReadMem32FP*  _vmem_RF32[HANDLER_COUNT];
 _vmem_WriteMem32FP* _vmem_WF32[HANDLER_COUNT];
+
+void* _vmem_CTX[HANDLER_COUNT];
 
 //upper 8b of the address
 void* _vmem_MemInfo_ptr[0x100];
@@ -137,147 +142,44 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 	return 0;
 }
 
-template<typename T,typename Trv>
-INLINE Trv DYNACALL _vmem_readt(u32 addr)
-{
-	const u32 sz=sizeof(T);
-
-	u32   page=addr>>24;	//1 op, shift/extract
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
-	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		T data=(*((T*)&(((u8*)ptr)[addr])));
-		return data;
-	}
-	else
-	{
-		const u32 id=iirf;
-		if (sz==1)
-		{
-			return (T)_vmem_RF8[id/4](addr);
-		}
-		else if (sz==2)
-		{
-			return (T)_vmem_RF16[id/4](addr);
-		}
-		else if (sz==4)
-		{
-			return _vmem_RF32[id/4](addr);
-		}
-		else if (sz==8)
-		{
-			T rv=_vmem_RF32[id/4](addr);
-			rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
-			
-			return rv;
-		}
-		else
-		{
-			die("Invalid size");
-		}
-	}
-}
-template<typename T>
-INLINE void DYNACALL _vmem_writet(u32 addr,T data)
-{
-	const u32 sz=sizeof(T);
-
-	u32 page=addr>>24;
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		*((T*)&(((u8*)ptr)[addr]))=data;
-	}
-	else
-	{
-		const u32 id=iirf;
-		if (sz==1)
-		{
-			 _vmem_WF8[id/4](addr,data);
-		}
-		else if (sz==2)
-		{
-			 _vmem_WF16[id/4](addr,data);
-		}
-		else if (sz==4)
-		{
-			 _vmem_WF32[id/4](addr,data);
-		}
-		else if (sz==8)
-		{
-			_vmem_WF32[id/4](addr,(u32)data);
-			_vmem_WF32[id/4](addr+4,(u32)((u64)data>>32));
-		}
-		else
-		{
-			die("Invalid size");
-		}
-	}
-}
-
-//ReadMem/WriteMem functions
-//ReadMem
-u32 DYNACALL _vmem_ReadMem8SX32(u32 Address) { return _vmem_readt<s8,s32>(Address); }
-u32 DYNACALL _vmem_ReadMem16SX32(u32 Address) { return _vmem_readt<s16,s32>(Address); }
-
-u8 DYNACALL _vmem_ReadMem8(u32 Address) { return _vmem_readt<u8,u8>(Address); }
-u16 DYNACALL _vmem_ReadMem16(u32 Address) { return _vmem_readt<u16,u16>(Address); }
-u32 DYNACALL _vmem_ReadMem32(u32 Address) { return _vmem_readt<u32,u32>(Address); }
-u64 DYNACALL _vmem_ReadMem64(u32 Address) { return _vmem_readt<u64,u64>(Address); }
-
-//WriteMem
-void DYNACALL _vmem_WriteMem8(u32 Address,u8 data) { _vmem_writet<u8>(Address,data); }
-void DYNACALL _vmem_WriteMem16(u32 Address,u16 data) { _vmem_writet<u16>(Address,data); }
-void DYNACALL _vmem_WriteMem32(u32 Address,u32 data) { _vmem_writet<u32>(Address,data); }
-void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address,data); }
-
 //0xDEADC0D3 or 0
 #define MEM_ERROR_RETURN_VALUE 0xDEADC0D3
 
 //phew .. that was lota asm code ;) lets go back to C :D
 //default mem handlers ;)
 //default read handlers
-u8 DYNACALL _vmem_ReadMem8_not_mapped(u32 addresss)
+u8 DYNACALL _vmem_ReadMem8_not_mapped(void*, u32 addresss)
 {
 	//printf("[sh4]Read8 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u8)MEM_ERROR_RETURN_VALUE;
 }
-u16 DYNACALL _vmem_ReadMem16_not_mapped(u32 addresss)
+u16 DYNACALL _vmem_ReadMem16_not_mapped(void*, u32 addresss)
 {
 	//printf("[sh4]Read16 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u16)MEM_ERROR_RETURN_VALUE;
 }
-u32 DYNACALL _vmem_ReadMem32_not_mapped(u32 addresss)
+u32 DYNACALL _vmem_ReadMem32_not_mapped(void*, u32 addresss)
 {
 	//printf("[sh4]Read32 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u32)MEM_ERROR_RETURN_VALUE;
 }
 //default write handers
-void DYNACALL _vmem_WriteMem8_not_mapped(u32 addresss,u8 data)
+void DYNACALL _vmem_WriteMem8_not_mapped(void*, u32 addresss,u8 data)
 {
 	//printf("[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
-void DYNACALL _vmem_WriteMem16_not_mapped(u32 addresss,u16 data)
+void DYNACALL _vmem_WriteMem16_not_mapped(void*, u32 addresss,u16 data)
 {
 	//printf("[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
-void DYNACALL _vmem_WriteMem32_not_mapped(u32 addresss,u32 data)
+void DYNACALL _vmem_WriteMem32_not_mapped(void*, u32 addresss,u32 data)
 {
 	//printf("[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 //code to register handlers
 //0 is considered error :)
 _vmem_handler _vmem_register_handler(
+									 void* ctx,
 									 _vmem_ReadMem8FP* read8,
 									 _vmem_ReadMem16FP* read16,
 									 _vmem_ReadMem32FP* read32,
@@ -290,6 +192,7 @@ _vmem_handler _vmem_register_handler(
 	_vmem_handler rv=_vmem_lrp++;
 
 	verify(rv<HANDLER_COUNT);
+	_vmem_CTX[rv] = ctx;
 
 	_vmem_RF8[rv] =read8==0  ? _vmem_ReadMem8_not_mapped  : read8;
 	_vmem_RF16[rv]=read16==0 ? _vmem_ReadMem16_not_mapped : read16;
@@ -381,7 +284,7 @@ void _vmem_reset()
 	_vmem_lrp=0;
 
 	//register default functions (0) for slot 0
-	verify(_vmem_register_handler(0,0,0,0,0,0)==0);
+	verify(_vmem_register_handler(0,0,0,0,0,0,0)==0);
 }
 
 void _vmem_term() {}
@@ -402,6 +305,16 @@ void* malloc_pages(size_t size) {
 		return NULL;
 	else
 		return data;
+#endif
+}
+
+void free_pages(void* ptr) {
+#if HOST_OS == OS_WINDOWS
+	return _aligned_free(ptr);
+#elif defined(_ISOC11_SOURCE)
+	return free(ptr);
+#else
+	return free(ptr);;
 #endif
 }
 
@@ -437,7 +350,7 @@ bool _vmem_bm_LockedWrite(u8* address) {
 	return false;
 }
 
-bool _vmem_reserve() {
+bool _vmem_reserve(VLockedMemory* mram, VLockedMemory* vram, VLockedMemory* aica_ram, u32 aram_size) {
 	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
@@ -458,14 +371,14 @@ bool _vmem_reserve() {
 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
 
-		mem_b.size = RAM_SIZE;
-		mem_b.data = (u8*)malloc_pages(RAM_SIZE);
+		mram->size = RAM_SIZE;
+		mram->data = (u8*)malloc_pages(RAM_SIZE);
 
-		vram.size = VRAM_SIZE;
-		vram.data = (u8*)malloc_pages(VRAM_SIZE);
+		vram->size = VRAM_SIZE;
+		vram->data = (u8*)malloc_pages(VRAM_SIZE);
 
-		aica_ram.size = ARAM_SIZE;
-		aica_ram.data = (u8*)malloc_pages(ARAM_SIZE);
+		aica_ram->size = aram_size;
+		aica_ram->data = (u8*)malloc_pages(aram_size);
 	}
 	else {
 		printf("Info: nvmem is enabled, with addr space of size %s\n", vmemstatus == MemType4GB ? "4GB" : "512MB");
@@ -476,8 +389,8 @@ bool _vmem_reserve() {
 		#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 		const vmem_mapping mem_mappings[] = {
 			{0x00000000, 0x00800000,                               0,         0, false},  // Area 0 -> unused
-			{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, ARAM_SIZE, false},  // Aica, wraps too
-			{0x20000000, 0x20000000+ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},
+			{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, aram_size, false},  // Aica, wraps too
+			{0x20000000, 0x20000000+aram_size, MAP_ARAM_START_OFFSET, aram_size,  true},
 			{0x01000000, 0x04000000,                               0,         0, false},  // More unused
 			{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 			{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
@@ -490,35 +403,35 @@ bool _vmem_reserve() {
 		vmem_platform_create_mappings(&mem_mappings[0], sizeof(mem_mappings) / sizeof(mem_mappings[0]));
 
 		// Point buffers to actual data pointers
-		aica_ram.size = ARAM_SIZE;
-		aica_ram.data = &virt_ram_base[0x20000000];  // Points to the writtable AICA addrspace
+		aica_ram->size = aram_size;
+		aica_ram->data = &virt_ram_base[0x20000000];  // Points to the writtable AICA addrspace
 
-		vram.size = VRAM_SIZE;
-		vram.data = &virt_ram_base[0x04000000];   // Points to first vram mirror (writtable and lockable)
+		vram->size = VRAM_SIZE;
+		vram->data = &virt_ram_base[0x04000000];   // Points to first vram mirror (writtable and lockable)
 
-		mem_b.size = RAM_SIZE;
-		mem_b.data = &virt_ram_base[0x0C000000];   // Main memory, first mirror
+		mram->size = RAM_SIZE;
+		mram->data = &virt_ram_base[0x0C000000];   // Main memory, first mirror
 	}
 
 	// Clear out memory
-	aica_ram.Zero();
-	vram.Zero();
-	mem_b.Zero();
+	aica_ram->Zero();
+	vram->Zero();
+	mram->Zero();
 
 	return true;
 }
 
 #define freedefptr(x) \
-	if (x) { free(x); x = NULL; }
+	if (x) { free_pages(x); x = NULL; }
 
-void _vmem_release() {
+void _vmem_release(VLockedMemory* mram, VLockedMemory* vram, VLockedMemory* aica_ram) {
 	if (virt_ram_base)
 		vmem_platform_destroy();
 	else {
 		freedefptr(p_sh4rcb);
-		freedefptr(vram.data);
-		freedefptr(aica_ram.data);
-		freedefptr(mem_b.data);
+		freedefptr(vram->data);
+		freedefptr(aica_ram->data);
+		freedefptr(mram->data);
 	}
 }
 

@@ -1,11 +1,18 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Mostly buggy, old, glue code that somehow still works
 	Most of the work is now delegated on vtlb and only helpers are here
 */
 #include "types.h"
+#include <memory>
 
 #include "sh4_mem.h"
-#include "hw/holly/sb_mem.h"
+#include "hw/holly/sh4_mem_area0.h"
 #include "sh4_mmr.h"
 #include "modules/modules.h"
 #include "hw/pvr/pvr_mem.h"
@@ -14,32 +21,23 @@
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
-
-
-//main system mem
-VLockedMemory mem_b;
-
-void _vmem_init();
-void _vmem_reset();
-void _vmem_term();
-
 //MEM MAPPINNGG
 
 //AREA 1
 _vmem_handler area1_32b;
-void map_area1_init()
+void map_area1_init(SuperH4* sh4)
 {
-	area1_32b = _vmem_register_handler(pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
+	area1_32b = _vmem_register_handler(sh4->vram.data, pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
 									pvr_write_area1_8,pvr_write_area1_16,pvr_write_area1_32);
 }
 
-void map_area1(u32 base)
+void map_area1(SuperH4* sh4, u32 base)
 {
 	//map vram
 	
 	//Lower 32 mb map
 	//64b interface
-	_vmem_map_block(vram.data,0x04 | base,0x04 | base,VRAM_SIZE-1);
+	_vmem_map_block(sh4->vram.data,0x04 | base,0x04 | base,VRAM_SIZE-1);
 	//32b interface
 	_vmem_map_handler(area1_32b,0x05 | base,0x05 | base);
 	
@@ -54,7 +52,7 @@ void map_area2_init()
 	//nothing to map :p
 }
 
-void map_area2(u32 base)
+void map_area2(SuperH4* sh4, u32 base)
 {
 	//nothing to map :p
 }
@@ -65,10 +63,10 @@ void map_area3_init()
 {
 }
 
-void map_area3(u32 base)
+void map_area3(SuperH4* sh4, u32 base)
 {
 	//32x2 or 16x4
-	_vmem_map_block_mirror(mem_b.data,0x0C | base,0x0F | base,RAM_SIZE);
+	_vmem_map_block_mirror(sh4->mram.data,0x0C | base,0x0F | base,RAM_SIZE);
 }
 
 //AREA 4
@@ -77,7 +75,7 @@ void map_area4_init()
 	
 }
 
-void map_area4(u32 base)
+void map_area4(SuperH4* sh4, u32 base)
 {
 	//TODO : map later
 
@@ -89,14 +87,14 @@ void map_area4(u32 base)
 //AREA 5	--	Ext. Device
 //Read Ext.Device
 template <u32 sz,class T>
-T DYNACALL ReadMem_extdev_T(u32 addr)
+T DYNACALL ReadMem_extdev_T(void* sh4, u32 addr)
 {
 	return (T)libExtDevice_ReadMem_A5(addr,sz);
 }
 
 //Write Ext.Device
 template <u32 sz,class T>
-void DYNACALL WriteMem_extdev_T(u32 addr,T data)
+void DYNACALL WriteMem_extdev_T(void* sh4, u32 addr,T data)
 {
 	libExtDevice_WriteMem_A5(addr,data,sz);
 }
@@ -104,10 +102,10 @@ void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 _vmem_handler area5_handler;
 void map_area5_init()
 {
-	area5_handler = _vmem_register_handler_Template(ReadMem_extdev_T,WriteMem_extdev_T);
+	area5_handler = _vmem_register_handler_Template(nullptr, ReadMem_extdev_T,WriteMem_extdev_T);
 }
 
-void map_area5(u32 base)
+void map_area5(SuperH4* sh4, u32 base)
 {
 	//map whole region to plugin handler :)
 	_vmem_map_handler(area5_handler,base|0x14,base|0x17);
@@ -118,14 +116,14 @@ void map_area6_init()
 {
 	//nothing to map :p
 }
-void map_area6(u32 base)
+void map_area6(SuperH4* sh4, u32 base)
 {
 	//nothing to map :p
 }
 
 
 //set vmem to default values
-void mem_map_default()
+void mem_map_default(SuperH4* sh4)
 {
 	//vmem - init/reset :)
 	_vmem_init();
@@ -156,64 +154,52 @@ void mem_map_default()
 	//0xExxx xxxx	-> internal area
 
 	//Init Memmaps (register handlers)
-	map_area0_init();
-	map_area1_init();
+	map_area0_init(sh4);
+	map_area1_init(sh4);
 	map_area2_init();
 	map_area3_init();
 	map_area4_init();
 	map_area5_init();
 	map_area6_init();
-	map_area7_init();
+	map_area7_init(sh4->sh4mmr.get());
 
 	//0x0-0xD : 7 times the normal memmap mirrors :)
 	//some areas can be customised :)
 	for (int i=0x0;i<0xE;i+=0x2)
 	{
-		map_area0(i<<4); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
-		map_area1(i<<4); //VRAM
-		map_area2(i<<4); //Unassigned
-		map_area3(i<<4); //RAM
-		map_area4(i<<4); //TA
-		map_area5(i<<4); //Ext. Device
-		map_area6(i<<4); //Unassigned
-		map_area7(i<<4); //Sh4 Regs
+		map_area0(sh4, i<<4); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
+		map_area1(sh4, i<<4); //VRAM
+		map_area2(sh4, i<<4); //Unassigned
+		map_area3(sh4, i<<4); //RAM
+		map_area4(sh4, i<<4); //TA
+		map_area5(sh4, i<<4); //Ext. Device
+		map_area6(sh4, i<<4); //Unassigned
+		map_area7(sh4, i<<4); //Sh4 Regs
 	}
 
 	//map p4 region :)
-	map_p4();
+	map_p4(sh4, sh4->sh4mmr.get());
 }
-void mem_Init()
+
+void mem_Init(SuperH4* sh4)
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
-
-	sh4_area0_Init();
-	sh4_mmr_init();
-	MMU_init();
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
-void mem_Reset(bool Manual)
+void mem_Reset(SuperH4* sh4, bool Manual)
 {
 	//mem is reseted on hard restart(power on) , not manual...
 	if (!Manual)
 	{
 		//fill mem w/ 0's
-		mem_b.Zero();
+		sh4->mram.Zero();
 	}
-
-	//Reset registers
-	sh4_area0_Reset(Manual);
-	sh4_mmr_reset();
-	MMU_reset();
 }
 
-void mem_Term()
+void mem_Term(SuperH4* sh4)
 {
-	MMU_term();
-	sh4_mmr_term();
-	sh4_area0_Term();
-
 	//write back Flash/SRAM
 	SaveRomFiles(get_writable_data_path(DATA_PATH));
 	
@@ -317,7 +303,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 	switch ((Addr>>26)&0x7)
 	{
 		case 3:
-		return &mem_b[Addr & RAM_MASK];
+		return &sh4_cpu->mram[Addr & RAM_MASK];
 		
 		case 0:
 		case 1:

@@ -1,43 +1,30 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "types.h"
+#include "sh4_mod.h"
 
-void bsc_init();
-void bsc_reset();
-void bsc_term();
+struct SuperH4Mmr;
+struct SystemBus;
 
+#define DEFAULT_MOD(Mod) \
+    struct Sh4Mod##Mod : SuperH4Module { static Sh4Mod##Mod * Create(SuperH4Mmr* sh4mmr); };
 
-void cpg_init();
-void cpg_reset();
-void cpg_term();
+DEFAULT_MOD(Bsc)
+DEFAULT_MOD(Cpg)
+DEFAULT_MOD(Dmac)
+DEFAULT_MOD(Rtc)
+DEFAULT_MOD(Intc)
+DEFAULT_MOD(Sci)
+DEFAULT_MOD(Scif)
+DEFAULT_MOD(Ubc)
+DEFAULT_MOD(Tmu)
+DEFAULT_MOD(Ccn)
 
-void dmac_init();
-void dmac_reset();
-void dmac_term();
-
-void rtc_init();
-void rtc_reset();
-void rtc_term();
-
-void intc_init();
-void intc_reset();
-void intc_term();
-
-void serial_init();
-void serial_reset();
-void serial_term();
-
-void ubc_init();
-void ubc_reset();
-void ubc_term();
-
-void tmu_init();
-void tmu_reset();
-void tmu_term();
-
-void ccn_init();
-void ccn_reset();
-void ccn_term();
-
-void MMU_init();
+void MMU_init(SuperH4Mmr* sh4mmr);
 void MMU_reset();
 void MMU_term();

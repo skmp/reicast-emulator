@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  * m1cartridge.cpp
  *
  *  Created on: Nov 4, 2018
@@ -8,6 +14,7 @@
  *  // copyright-holders:Olivier Galibert
  */
 #include "m1cartridge.h"
+#include "serialize.h"
 
 M1Cartridge::M1Cartridge(u32 size) : NaomiCartridge(size)
 {

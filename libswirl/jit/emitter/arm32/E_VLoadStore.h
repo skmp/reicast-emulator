@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	E_VLoadStore.h		* VFP/A.SIMD Load/Store Instruction Set Encoding
  *
  */

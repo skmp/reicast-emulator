@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 
 // Thread/Mutex/Cond wrappers for pthreads/windows-threads
@@ -70,6 +76,7 @@ public :
 		:entry(function), param(param), hThread(NULL) {}
 	~cThread() { WaitToEnd(); }
 	void Start();
+	void Start(void* param) { this->param = param; Start(); }
 	void WaitToEnd();
 };
 #endif

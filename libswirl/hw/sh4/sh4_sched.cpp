@@ -1,9 +1,16 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 
 #include "types.h"
 #include "sh4_interrupts.h"
 #include "sh4_core.h"
 #include "sh4_sched.h"
 #include "oslib/oslib.h"
+#include "serialize.h"
 
 
 //sh4 scheduler
@@ -75,9 +82,9 @@ void sh4_sched_ffts()
 	sh4_sched_ffb+=Sh4cntx.sh4_sched_next;
 }
 
-int sh4_sched_register(int tag, sh4_sched_callback* ssc)
+int sh4_sched_register(void* context, int tag, sh4_sched_callback* ssc)
 {
-	sched_list t={ssc,tag,-1,-1};
+	sched_list t={ssc,context, tag,-1,-1};
 
 	sch_list.push_back(t);
 
@@ -137,7 +144,7 @@ void handle_cb(int id)
 	int jitter=elapsd-remain;
 
 	sch_list[id].end=-1;
-	int re_sch=sch_list[id].cb(sch_list[id].tag,remain,jitter);
+	int re_sch=sch_list[id].cb(sch_list[id].context, sch_list[id].tag,remain,jitter);
 
 	if (re_sch > 0)
 		sh4_sched_request(id, std::max(0, re_sch - jitter));
@@ -166,5 +173,36 @@ void sh4_sched_tick(int cycles)
 			}
 		}
 		sh4_sched_ffts();
+	}
+}
+
+void sh4_sched_cleanup() {
+	sch_list.clear();
+	sh4_sched_next_id = -1;
+	sh4_sched_ffb = 0;
+	sh4_sched_intr = 0;
+}
+
+void sh4_sched_serialize(void** data, unsigned int* total_size) {
+	REICAST_S(sh4_sched_next_id);
+	REICAST_S(sh4_sched_ffb);
+	REICAST_S(sh4_sched_intr);
+
+	for (auto& entry : sch_list) {
+		REICAST_S(entry.tag);
+		REICAST_S(entry.start);
+		REICAST_S(entry.end);
+	}
+}
+
+void sh4_sched_unserialize(void** data, unsigned int* total_size) {
+	REICAST_US(sh4_sched_next_id);
+	REICAST_US(sh4_sched_ffb);
+	REICAST_US(sh4_sched_intr);
+
+	for (auto& entry : sch_list) {
+		REICAST_US(entry.tag);
+		REICAST_US(entry.start);
+		REICAST_US(entry.end);
 	}
 }

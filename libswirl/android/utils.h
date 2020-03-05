@@ -1,6 +1,9 @@
-#ifndef UTILS_H_
-#define UTILS_H_
+#pragma once
+
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
 
 void setAPK (const char* apkPath);
-
-#endif /* UTILS_H_ */

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "rend/gles/gles.h"
 #include <unordered_map>
@@ -69,6 +75,9 @@ void abufferDrawQuad(bool upsideDown = false, float x = 0.f, float y = 0.f, floa
 extern const char *gl4PixelPipelineShader;
 bool gl4CompilePipelineShader(gl4PipelineShader* s, bool rotate_90, const char *source = gl4PixelPipelineShader);
 void gl4_delete_shaders();
+
+void gl4_CreateSamplers();
+void gl4_DestroySamplers();
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;

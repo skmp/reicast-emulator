@@ -57,9 +57,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-        DisplayMetrics dm = context.getResources().getDisplayMetrics();
-        JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
-
         this.setLayerType(prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE), null);
 
         if (NativeGLActivity.syms != null)
@@ -85,15 +82,13 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-
+        surfaceReady = true;
+        JNIdc.rendinitNative(surfaceHolder.getSurface());
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int w, int h) {
         //Log.i("reicast", "NativeGLView.surfaceChanged: " + w + "x" + h);
-        surfaceReady = true;
-        JNIdc.rendinitNative(surfaceHolder.getSurface());
-        Emulator.getCurrentActivity().handleStateChange(false);
     }
 
     @Override
@@ -101,7 +96,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         //Log.i("reicast", "NativeGLView.surfaceDestroyed");
         surfaceReady = false;
         JNIdc.rendinitNative(null);
-        Emulator.getCurrentActivity().handleStateChange(true);
     }
 
     public boolean isSurfaceReady() {
@@ -121,23 +115,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
             setFocusable(true);
             setFocusableInTouchMode(true);
             requestFocus();
-            JNIdc.resume();
-        }
-    }
-
-    @TargetApi(19)
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-            requestLayout();
         }
     }
 

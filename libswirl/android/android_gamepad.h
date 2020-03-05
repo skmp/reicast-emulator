@@ -1,21 +1,7 @@
 /*
-	Copyright 2019 flyinghead
-
-	This file is part of reicast.
-
-    reicast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
-
-    reicast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
- */
+	This file is part of libswirl
+*/
+#include "license/bsd"
 
 #include "input/gamepad_device.h"
 
@@ -147,7 +133,7 @@ public:
 	void virtual_gamepad_event(int kcode, int joyx, int joyy, int lt, int rt)
 	{
 		// No virtual gamepad when the GUI is open: touch events only
-		if (gui_is_open())
+		if (g_GUI->IsOpen())
 		{
 			kcode = 0xffff;
 			joyx = joyy = rt = lt = 0;
@@ -222,7 +208,7 @@ public:
 
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (g_GUI->IsOpen())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic

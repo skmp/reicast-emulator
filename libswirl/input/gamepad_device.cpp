@@ -1,31 +1,19 @@
 /*
-	Copyright 2019 flyinghead
+	This file is part of libswirl
+*/
+#include "license/bsd"
 
-	This file is part of reicast.
 
-    reicast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
 
-    reicast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
- */
 #include <algorithm>
 #include <limits.h>
 #include "gamepad_device.h"
 #include "gui/gui.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
+#include "libswirl.h"
 
 #define MAPLE_PORT_CFG_PREFIX "maple_"
-
-extern void dc_exit();
 
 extern u16 kcode[4];
 extern u8 rt[4], lt[4];
@@ -92,12 +80,17 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		switch (key)
 		{
 		case EMU_BTN_ESCAPE:
-			if (pressed)
-				dc_exit();
+            verify(virtualDreamcast != nullptr);
+            if (pressed)
+				virtualDreamcast->Stop([] { });
 			break;
 		case EMU_BTN_MENU:
-			if (pressed)
-				gui_open_settings();
+			if (pressed && !settingsOpenning) {
+				settingsOpenning = true;
+				g_GUI->OpenSettings([this] {
+					settingsOpenning = false;
+				});
+			}
 			break;
 		case EMU_BTN_TRIGGER_LEFT:
 			lt[_maple_port] = pressed ? 255 : 0;

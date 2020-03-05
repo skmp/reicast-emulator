@@ -1,4 +1,9 @@
 /*
+
+	This file is part of libswirl
+
+	#include "license/bsd"
+
 	reicast build options
 
 		Reicast can support a lot of stuff, and this is an attempt
@@ -162,8 +167,24 @@
 #define DYNAREC_JIT		0x40000002
 #define DYNAREC_CPP		0x40000003
 
+//TARGET_LICENSE
+#define LICENSE_BSD  0x50000001
+#define LICENSE_LGPL 0x50000002
+#define LICENSE_GPL  0x50000003
+
+//FEAT_TA
+#define TA_HLE 0x60000001
+#define TA_LLE 0x60000002
 
 //automatic
+
+#if !defined(TARGET_LICENSE)
+#define TARGET_LICENSE LICENSE_GPL
+#endif
+
+#if !defined(FEAT_TA)
+#define FEAT_TA TA_HLE
+#endif
 
 #ifndef CMAKE_BUILD
 
@@ -303,6 +324,10 @@
 	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
 
+#ifndef FEAT_HAS_SERIAL_TTY
+    #define FEAT_HAS_SERIAL_TTY (HOST_OS == OS_LINUX && !defined(_ANDROID))
+#endif
+
 //Depricated build configs
 #ifdef HOST_NO_REC
 #error Dont use HOST_NO_REC
@@ -347,7 +372,7 @@
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
 	#define RAM_SIZE (16*1024*1024)
 	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
+	#define INTERNAL_ARAM_SIZE (2*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
 	#define FLASH_SIZE (128*1024)
 
@@ -362,7 +387,7 @@
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
 	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
+	#define INTERNAL_ARAM_SIZE (2*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
 	#define FLASH_SIZE (128*1024)
 
@@ -375,7 +400,7 @@
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
 	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
+	#define INTERNAL_ARAM_SIZE (8*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
 	#define BBSRAM_SIZE (32*1024)
 
@@ -388,7 +413,7 @@
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
 	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
+	#define INTERNAL_ARAM_SIZE (8*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
 	#define BBSRAM_SIZE (32*1024)
 
@@ -403,7 +428,7 @@
 	//Atomiswave : 16 mb ram, 8 mb vram, 8 mb aram, 128kb bios on flash, 128kb battery-backed ram
 	#define RAM_SIZE (16*1024*1024)
 	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
+	#define INTERNAL_ARAM_SIZE (8*1024*1024)
 	#define BIOS_SIZE (128*1024)
 	#define BBSRAM_SIZE (128*1024)
 
@@ -417,7 +442,6 @@
 
 #define RAM_MASK	(RAM_SIZE-1)
 #define VRAM_MASK	(VRAM_SIZE-1)
-#define ARAM_MASK	(ARAM_SIZE-1)
 #define BIOS_MASK	(BIOS_SIZE-1)
 
 #ifdef FLASH_SIZE

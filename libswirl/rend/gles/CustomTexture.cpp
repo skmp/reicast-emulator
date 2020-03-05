@@ -1,21 +1,10 @@
 /*
-	 Copyright 2018 flyinghead
- 
-	 This file is part of reicast.
- 
-	 reicast is free software: you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-	 the Free Software Foundation, either version 2 of the License, or
-	 (at your option) any later version.
- 
-	 reicast is distributed in the hope that it will be useful,
-	 but WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
- 
-	 You should have received a copy of the GNU General Public License
-	 along with reicast.  If not, see <https://www.gnu.org/licenses/>.
- */
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+
 #include "CustomTexture.h"
 
 #include <algorithm>
@@ -99,7 +88,7 @@ bool CustomTexture::Init()
 	if (!initialized)
 	{
 		initialized = true;
-#ifndef TARGET_NO_THREADS
+
 		std::string game_id = GetGameId();
 		if (game_id.length() > 0)
 		{
@@ -112,11 +101,11 @@ bool CustomTexture::Init()
 				custom_textures_available = true;
 				closedir(dir);
 				loader_thread.Start();
-
+#if defined(SCRIPTING)
 				luabindings_findscripts(textures_path);
+#endif
 			}
 		}
-#endif
 	}
 	return custom_textures_available;
 }
@@ -130,12 +119,13 @@ void CustomTexture::Terminate()
 		work_queue.clear();
 		work_queue_mutex.Unlock();
 		wakeup_thread.Set();
-#ifndef TARGET_NO_THREADS
+
 		loader_thread.WaitToEnd();
-#endif
 	}
 
+#if defined(SCRIPTING)
 	luabindings_close();
+#endif
 }
 
 u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)

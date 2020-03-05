@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "rend/gles/gles.h"
 
 #include <EGL/egl.h>
@@ -16,8 +22,6 @@ struct
         EGLContext context;
 } egl_setup;
 
-
-static bool created_context;
 
 bool egl_MakeCurrent()
 {
@@ -163,7 +167,6 @@ bool egl_Init(void* wind, void* disp)
 			if (!load_gles_symbols())
 				die("Failed to load symbols");
 		}
-		created_context = true;
 	}
 	else if (glGetError == NULL)
 	{
@@ -177,8 +180,10 @@ bool egl_Init(void* wind, void* disp)
 		return false;
 	}
 
+#if !defined(TARGET_EMSCRIPTEN)
 	// Required when doing partial redraws
 	if (!eglSurfaceAttrib(egl_setup.display, egl_setup.surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
+#endif
 	{
 		printf("Swap buffers are not preserved. Last frame copy enabled\n");
 		gl.swap_buffer_not_preserved = true;
@@ -189,7 +194,7 @@ bool egl_Init(void* wind, void* disp)
 }
 
 //swap buffers
-void egl_Swap()
+bool egl_Swap()
 {
 #ifdef TARGET_PANDORA0
 	if (fbdev >= 0)
@@ -198,37 +203,49 @@ void egl_Swap()
 		ioctl(fbdev, FBIO_WAITFORVSYNC, &arg);
 	}
 #endif
-	eglSwapBuffers(egl_setup.display, egl_setup.surface);
+	auto status = eglSwapBuffers(egl_setup.display, egl_setup.surface);
+
+	bool rv = true;
+
+	if (status != GL_TRUE) {
+		printf("EGL: eglSwapBuffers failed. Error: %d\n", eglGetError());
+		rv = false;
+	}
 
 	EGLint w, h;
 	eglQuerySurface(egl_setup.display, egl_setup.surface, EGL_WIDTH, &w);
 	eglQuerySurface(egl_setup.display, egl_setup.surface, EGL_HEIGHT, &h);
 
 	rend_resize(w, h);
+
+	return rv;
 }
 
 void egl_Term()
 {
-	if (!created_context)
-		return;
-	created_context = false;
-	eglMakeCurrent(egl_setup.display, NULL, NULL, EGL_NO_CONTEXT);
+
+	if (egl_setup.display != EGL_NO_DISPLAY) {
+		eglMakeCurrent(egl_setup.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 #if HOST_OS == OS_WINDOWS
-	ReleaseDC((HWND)egl_setup.native_wind, (HDC)egl_setup.native_disp);
+		ReleaseDC((HWND)egl_setup.native_wind, (HDC)egl_setup.native_disp);
 #else
-	if (egl_setup.context != NULL)
-		eglDestroyContext(egl_setup.display, egl_setup.context);
-	if (egl_setup.surface != NULL)
-		eglDestroySurface(egl_setup.display, egl_setup.surface);
+		if (egl_setup.context != NULL)
+			eglDestroyContext(egl_setup.display, egl_setup.context);
+		if (egl_setup.surface != NULL)
+			eglDestroySurface(egl_setup.display, egl_setup.surface);
 #ifdef TARGET_PANDORA
-	if (egl_setup.display)
-		eglTerminate(egl_setup.display);
-	if (fbdev >= 0)
-		close(fbdev);
-	fbdev = -1;
+        if (egl_setup.display)
+            eglTerminate(egl_setup.display);
+        if (fbdev >= 0)
+            close(fbdev);
+        fbdev = -1;
 #endif
-#endif	// !OS_WINDOWS
-	egl_setup.context = EGL_NO_CONTEXT;
-	egl_setup.surface = EGL_NO_SURFACE;
-	egl_setup.display = EGL_NO_DISPLAY;
+#endif    // !OS_WINDOWS
+		eglTerminate(egl_setup.display);
+
+		egl_setup.context = EGL_NO_CONTEXT;
+		egl_setup.surface = EGL_NO_SURFACE;
+		egl_setup.display = EGL_NO_DISPLAY;
+
+	}
 }

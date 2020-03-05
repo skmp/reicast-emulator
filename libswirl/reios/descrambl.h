@@ -1,8 +1,11 @@
-#ifndef DESCRAMBL_H
-#define DESCRAMBL_H
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+#pragma once
 
 #include "types.h"
 
-void descrambl_file(u32 FAD, u32 file_size, u8* dst);
-
-#endif //DESCRAMBL_H
+void descrambl_file(GDRomDisc* disc, u32 FAD, u32 file_size, u8* dst);

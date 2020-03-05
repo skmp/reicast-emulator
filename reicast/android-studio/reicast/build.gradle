@@ -1,6 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'com.github.triplet.play'
-
+plugins {
+    id("com.android.application")
+    id("com.github.triplet.play") version "2.6.2"
+}
 def getBuildId = { ->
     def build_id = System.getenv("TRAVIS_JOB_ID") ?: "8"
     return Integer.parseInt( build_id )
@@ -25,13 +26,13 @@ def getVersionName = { ->
 }
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "27.0.3"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
 
     defaultConfig {
         applicationId "com.reicast.emulator"
         minSdkVersion 16
-        targetSdkVersion 26
+        targetSdkVersion 28
         versionCode getBuildId()
         versionName getVersionName()
         vectorDrawables.useSupportLibrary = true
@@ -104,21 +105,21 @@ def playReleaseTrack = "internal"
 
 task(runProgram){
    if(project.hasProperty("releaseTrack")){
-       playReleaseTrack = releaseTrack;
+       playReleaseTrack = releaseTrack
    }
 }
 
 play {
     track = playReleaseTrack
     serviceAccountEmail = 'reicast-beta-cd@api-7801059239587459896-777757.iam.gserviceaccount.com'
-    pk12File = file('../reicast-beta-cd.p12')
+    serviceAccountCredentials = file('../reicast-beta-cd.p12')
 }
 
 dependencies {
-    implementation 'com.android.support:support-v4:25.4.0'
-    implementation 'com.android.support:appcompat-v7:25.4.0'
-    implementation 'com.android.support:design:25.4.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation 'org.bouncycastle:bcprov-jdk16:1.46'
     implementation 'commons-io:commons-io:2.6'
     implementation 'org.apache.commons:commons-lang3:3.7'

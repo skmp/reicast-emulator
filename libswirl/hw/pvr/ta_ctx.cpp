@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "ta.h"
 #include "ta_ctx.h"
 
@@ -311,4 +317,146 @@ void tactx_Term()
 	}
 	ctx_pool.clear();
 	mtx_pool.Unlock();
+}
+
+#include "deps/zlib/zlib.h"
+#include "hw/pvr/pvr_mem.h"
+
+void tactx_write_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref) {
+    FILE* fw = fopen(file, "wb");
+
+    //append to it
+    fseek(fw, 0, SEEK_END);
+
+    u32 bytes = ctx->tad.End() - ctx->tad.thd_root;
+
+    fwrite("TAFRAME4", 1, 8, fw);
+
+    fwrite(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
+    u32 zero = 0;
+    fwrite(&zero, 1, sizeof(bool), fw);	// Was autosort
+    fwrite(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
+    fwrite(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
+
+    fwrite(ctx->rend.global_param_op.head(), 1, sizeof(PolyParam), fw);
+    fwrite(ctx->rend.verts.head(), 1, 4 * sizeof(Vertex), fw);
+
+    u32 t = VRAM_SIZE;
+    fwrite(&t, 1, sizeof(t), fw);
+
+    u8* compressed;
+    uLongf compressed_size;
+    u8* src_vram = vram;
+
+    if (vram_ref) {
+        src_vram = (u8*)malloc(VRAM_SIZE);
+
+        for (int i = 0; i < VRAM_SIZE; i++) {
+            src_vram[i] = vram[i] ^ vram_ref[i];
+        }
+    }
+
+    compressed = (u8*)malloc(VRAM_SIZE + 16);
+    compressed_size = VRAM_SIZE;
+    verify(compress(compressed, &compressed_size, src_vram, VRAM_SIZE) == Z_OK);
+    fwrite(&compressed_size, 1, sizeof(compressed_size), fw);
+    fwrite(compressed, 1, compressed_size, fw);
+    free(compressed);
+
+    if (src_vram != vram)
+        free(src_vram);
+
+    fwrite(&bytes, 1, sizeof(t), fw);
+    compressed = (u8*)malloc(bytes + 16);
+    compressed_size = bytes;
+    verify(compress(compressed, &compressed_size, ctx->tad.thd_root, bytes) == Z_OK);
+    fwrite(&compressed_size, 1, sizeof(compressed_size), fw);
+    fwrite(compressed, 1, compressed_size, fw);
+    free(compressed);
+
+    fwrite(&ctx->tad.render_pass_count, 1, sizeof(u32), fw);
+    for (int i = 0; i < ctx->tad.render_pass_count; i++) {
+        u32 offset = ctx->tad.render_passes[i] - ctx->tad.thd_root;
+        fwrite(&offset, 1, sizeof(offset), fw);
+    }
+
+    fwrite(pvr_regs, 1, sizeof(pvr_regs), fw);
+
+    fclose(fw);
+}
+
+TA_context* tactx_read_frame(const char* file, u8* vram, u8* vram_ref) {
+
+    FILE* fw = fopen(file, "rb");
+    if (fw == NULL)
+        die("Cannot open frame to display");
+    char id0[8] = { 0 };
+    u32 t = 0;
+
+    fread(id0, 1, 8, fw);
+
+    if (memcmp(id0, "TAFRAME", 7) != 0 || (id0[7] != '3' && id0[7] != '4')) {
+        fclose(fw);
+        return 0;
+    }
+    int sizeofPolyParam = sizeof(PolyParam);
+    int sizeofVertex = sizeof(Vertex);
+    if (id0[7] == '3')
+    {
+        sizeofPolyParam -= 12;
+        sizeofVertex -= 16;
+    }
+
+    TA_context* ctx = tactx_Alloc();
+
+    ctx->Reset();
+
+    ctx->tad.Clear();
+
+    fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
+    fread(&t, 1, sizeof(bool), fw);	// Was autosort
+    fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
+    fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
+
+    fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw);
+    Vertex* vtx = ctx->rend.verts.Append(4);
+    for (int i = 0; i < 4; i++)
+        fread(vtx + i, 1, sizeofVertex, fw);
+
+    fread(&t, 1, sizeof(t), fw);
+    verify(t == VRAM_SIZE);
+
+    uLongf compressed_size;
+
+    fread(&compressed_size, 1, sizeof(compressed_size), fw);
+
+    u8* gz_stream = (u8*)malloc(compressed_size);
+    fread(gz_stream, 1, compressed_size, fw);
+    uLongf tl = t;
+    verify(uncompress(vram, &tl, gz_stream, compressed_size) == Z_OK);
+    free(gz_stream);
+
+    fread(&t, 1, sizeof(t), fw);
+    fread(&compressed_size, 1, sizeof(compressed_size), fw);
+    gz_stream = (u8*)malloc(compressed_size);
+    fread(gz_stream, 1, compressed_size, fw);
+    tl = t;
+    verify(uncompress(ctx->tad.thd_data, &tl, gz_stream, compressed_size) == Z_OK);
+    free(gz_stream);
+
+    ctx->tad.thd_data += t;
+
+    if (fread(&t, 1, sizeof(t), fw) > 0) {
+        ctx->tad.render_pass_count = t;
+        for (int i = 0; i < t; i++) {
+            u32 offset;
+            fread(&offset, 1, sizeof(offset), fw);
+            ctx->tad.render_passes[i] = ctx->tad.thd_root + offset;
+        }
+    }
+    fread(pvr_regs, 1, sizeof(pvr_regs), fw);
+
+    fclose(fw);
+
+    return ctx;
 }

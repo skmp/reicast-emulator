@@ -1,3 +1,11 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+// for xbrz
+#include "license/dep_gpl"
+
 #include <list>
 #include <functional>
 #ifndef TARGET_NO_OPENMP
@@ -7,8 +15,9 @@
 #include "TexCache.h"
 #include "oslib/threading.h"
 #include "hw/pvr/pvr_regs.h"
+#include "hw/pvr/Renderer_if.h"
 #include "hw/mem/_vmem.h"
-#include "deps/xbrz/xbrz.h"
+#include "gpl/deps/xbrz/xbrz.h"
 #include "deps/xxhash/xxhash.h"
 
 u8* vq_codebook;
@@ -125,7 +134,6 @@ void palette_update()
 using namespace std;
 
 vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
-VLockedMemory vram;  // vram 32-64b
 
 //List functions
 //
@@ -207,11 +215,11 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	{
 		vramlist_lock.Lock();
 	
-		vram.LockRegion(block->start, block->len);
+		sh4_cpu->vram.LockRegion(block->start, block->len);
 
 		//TODO: Fix this for 32M wrap as well
 		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-			vram.LockRegion(block->start + VRAM_SIZE, block->len);
+			sh4_cpu->vram.LockRegion(block->start + VRAM_SIZE, block->len);
 		}
 		
 		vramlock_list_add(block);
@@ -223,9 +231,9 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 }
 
 
-bool VramLockedWrite(u8* address)
+bool VramLockedWrite(u8* vram, u8* address)
 {
-	size_t offset=address-vram.data;
+	size_t offset=address-vram;
 
 	if (offset<VRAM_SIZE)
 	{
@@ -240,7 +248,7 @@ bool VramLockedWrite(u8* address)
 			{
 				if ((*list)[i])
 				{
-					libPvr_LockedBlockWrite((*list)[i],(u32)offset);
+					rend_text_invl((*list)[i]);
 				
 					if ((*list)[i])
 					{
@@ -252,11 +260,12 @@ bool VramLockedWrite(u8* address)
 			}
 			list->clear();
 
-			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+			
+			sh4_cpu->vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
 
 			//TODO: Fix this for 32M wrap as well
 			if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-				vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+				sh4_cpu->vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
 			}
 			
 			vramlist_lock.Unlock();

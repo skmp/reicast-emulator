@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  * awcartridge.cpp
  *
  *  Created on: Nov 5, 2018

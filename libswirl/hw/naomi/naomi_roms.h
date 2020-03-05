@@ -1,27 +1,10 @@
 /*
-	Created on: Nov 2, 2018
+	This file is part of libswirl
+*/
+#include "license/bsd"
 
-	Copyright 2018 flyinghead
 
-	Rom information from mame (https://github.com/mamedev/mame)
-	license:LGPL-2.1+
-	copyright-holders: Samuele Zannoli, R. Belmont, ElSemi, David Haywood, Angelo Salese, Olivier Galibert, MetalliC
 
-	This file is part of reicast.
-
-    reicast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
-
-    reicast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
- */
 #pragma once
 #include "naomi_roms_input.h"
 

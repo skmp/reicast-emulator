@@ -1,3 +1,10 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+#include "license/dep_gpl"
+
+
 #include "virt_arm.h"
 
 #if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
@@ -88,9 +95,9 @@ namespace VARM
 
 		armNextPC=reg[15].I=0;
 
-#include "arm-new.h"
+		#include "gpl/vba-arm/arm-new.h"
 
-		verify(reg[15].I==0);
+		verify(reg[15].I==0 || reg[15].I == 4);
 		verify(arm_ArmNextPC==0);
 
 		return clockTicks;

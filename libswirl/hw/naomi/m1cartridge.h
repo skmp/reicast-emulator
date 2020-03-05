@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  * m1cartridge.h
  *
  *  Created on: Nov 4, 2018

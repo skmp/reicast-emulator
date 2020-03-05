@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include <algorithm>
 #include "oslib/oslib.h"
@@ -19,10 +25,12 @@ class PixelBuffer
 	pixel_type* p_buffer_start;
 	pixel_type* p_current_line;
 	pixel_type* p_current_pixel;
-
 	u32 pixels_per_line;
 
 public:
+	u32 total_pixels;
+	
+
 	PixelBuffer()
 	{
 		p_buffer_start = p_current_line = p_current_pixel = NULL;
@@ -37,6 +45,7 @@ public:
 	{
 		deinit();
 		p_buffer_start = p_current_line = p_current_pixel = (pixel_type *)malloc(width * height * sizeof(pixel_type));
+		this->total_pixels = width * height;
 		this->pixels_per_line = width;
 	}
 
@@ -92,7 +101,7 @@ public:
 void palette_update();
 
 template<class pixel_type>
-__forceinline pixel_type clamp(pixel_type minv, pixel_type maxv, pixel_type x) {
+__forceinline pixel_type cclamp(pixel_type minv, pixel_type maxv, pixel_type x) {
 	return std::min(maxv, std::max(minv, x));
 }
 
@@ -130,7 +139,7 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 	s32 G = Y - (Yu*11 + Yv*22)/32; // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
 	s32 B = Y + Yu*110/64;          // Y + (Yu-128) * (11/8) * 1.25 ?
 
-	return PixelPacker::packRGB(clamp<s32>(0, 255, R),clamp<s32>(0, 255, G),clamp<s32>(0, 255, B));
+	return PixelPacker::packRGB(cclamp<s32>(0, 255, R),cclamp<s32>(0, 255, G),cclamp<s32>(0, 255, B));
 }
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
@@ -629,8 +638,6 @@ void vramlock_Unlock_block(vram_block* block);
 vram_block* vramlock_Lock_32(u32 start_offset32,u32 end_offset32,void* userdata);
 vram_block* vramlock_Lock_64(u32 start_offset64,u32 end_offset64,void* userdata);
 
-void vram_LockedWrite(u32 offset64);
-
 void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
-bool VramLockedWrite(u8* address);
+bool VramLockedWrite(u8* vram, u8* address);

@@ -1,8 +1,14 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 
 
 
-#include "common.h"
+#include "imgread_common.h"
 
 #include "deps/cdipsr/cdipsr.h"
 

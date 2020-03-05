@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 
 #include "build.h"
@@ -165,8 +171,8 @@ enum HollyInterruptID
 		//bit 0 = RENDER : ISP out of Cache(Buffer over flow)
 		//bit 1 = RENDER : Hazard Processing of Strip Buffer
 		holly_PRIM_NOMEM = holly_err | 0x02,	//bit 2 = TA : ISP/TSP Parameter Overflow
-		holly_MATR_NOMEM = holly_err | 0x03		//bit 3 = TA : Object List Pointer Overflow
-		//bit 4 = TA : Illegal Parameter
+		holly_MATR_NOMEM = holly_err | 0x03,	//bit 3 = TA : Object List Pointer Overflow
+		holly_ILLEGAL_PARAM = holly_err | 0x04 //bit 4 = TA : Illegal Parameter
 		//bit 5 = TA : FIFO Overflow
 		//bit 6 = PVRIF : Illegal Address set
 		//bit 7 = PVRIF : DMA over run
@@ -267,7 +273,6 @@ enum DriveEvent
 //******************************************************
 //************************ AICA ************************
 //******************************************************
-void libARM_InterruptChange(u32 bits,u32 L);
 void libCore_CDDA_Sector(s16* sector);
 
 
@@ -348,7 +353,7 @@ int darw_printf(const wchar* Text,...);
 using namespace std;
 
 //used for asm-olny functions
-#if defined(X86) && COMPILER_VC==BUILD_COMPILER
+#if COMPILER_VC==BUILD_COMPILER
 #define naked   __declspec( naked )
 #else
 #define naked __attribute__((naked))
@@ -423,184 +428,20 @@ using namespace std;
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
 
-bool rc_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
-bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
-bool dc_serialize(void **data, unsigned int *total_size);
-bool dc_unserialize(void **data, unsigned int *total_size);
-
-#define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
-#define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
-
-#define REICAST_SA(v_arr,num) rc_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
-#define REICAST_USA(v_arr,num) rc_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
-
-enum
-{
-	RN_CPSR      = 16,
-	RN_SPSR      = 17,
-
-	R13_IRQ      = 18,
-	R14_IRQ      = 19,
-	SPSR_IRQ     = 20,
-	R13_USR      = 26,
-	R14_USR      = 27,
-	R13_SVC      = 28,
-	R14_SVC      = 29,
-	SPSR_SVC     = 30,
-	R13_ABT      = 31,
-	R14_ABT      = 32,
-	SPSR_ABT     = 33,
-	R13_UND      = 34,
-	R14_UND      = 35,
-	SPSR_UND     = 36,
-	R8_FIQ       = 37,
-	R9_FIQ       = 38,
-	R10_FIQ      = 39,
-	R11_FIQ      = 40,
-	R12_FIQ      = 41,
-	R13_FIQ      = 42,
-	R14_FIQ      = 43,
-	SPSR_FIQ     = 44,
-	RN_PSR_FLAGS = 45,
-	R15_ARM_NEXT = 46,
-	INTR_PEND    = 47,
-	CYCL_CNT     = 48,
-
-	RN_ARM_REG_COUNT,
-};
-
-typedef union
-{
-	struct
-	{
-		u8 B0;
-		u8 B1;
-		u8 B2;
-		u8 B3;
-	} B;
-
-	struct
-	{
-		u16 W0;
-		u16 W1;
-	} W;
-
-	union
-	{
-		struct
-		{
-			u32 _pad0 : 28;
-			u32 V     : 1; //Bit 28
-			u32 C     : 1; //Bit 29
-			u32 Z     : 1; //Bit 30
-			u32 N     : 1; //Bit 31
-		};
-
-		struct
-		{
-			u32 _pad1 : 28;
-			u32 NZCV  : 4; //Bits [31:28]
-		};
-	} FLG;
-
-	struct
-	{
-		u32 M     : 5;  //mode, PSR[4:0]
-		u32 _pad0 : 1;  //not used / zero
-		u32 F     : 1;  //FIQ disable, PSR[6]
-		u32 I     : 1;  //IRQ disable, PSR[7]
-		u32 _pad1 : 20; //not used / zero
-		u32 NZCV  : 4;  //Bits [31:28]
-	} PSR;
-
-	u32 I;
-} reg_pair;
-
-
-
-
 #if COMPILER_VC_OR_CLANG_WIN32
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
 #define stricmp strcasecmp
 #endif
 
-#ifndef STRIP_TEXT
 #define verify(x) if((x)==false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
 #define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
-#else
-#define verify(x) if((x)==false) { dbgbreak; }
-#define die(reason) { dbgbreak; }
-#endif
 
 #define fverify verify
 
 
 //will be removed sometime soon
 //This shit needs to be moved to proper headers
-typedef u32  RegReadFP();
-typedef u32  RegReadAddrFP(u32 addr);
-
-typedef void RegWriteFP(u32 data);
-typedef void RegWriteAddrFP(u32 addr, u32 data);
-
-/*
-	Read Write Const
-	D    D     N      -> 0			-> RIO_DATA
-	D    F     N      -> WF			-> RIO_WF
-	F    F     N      -> RF|WF		-> RIO_FUNC
-	D    X     N      -> RO|WF		-> RIO_RO
-	F    X     N      -> RF|WF|RO	-> RIO_RO_FUNC
-	D    X     Y      -> CONST|RO|WF-> RIO_CONST
-	X    F     N      -> RF|WF|WO	-> RIO_WO_FUNC
-*/
-enum RegStructFlags
-{
-	//Basic :
-	REG_ACCESS_8=1,
-	REG_ACCESS_16=2,
-	REG_ACCESS_32=4,
-
-	REG_RF=8,
-	REG_WF=16,
-	REG_RO=32,
-	REG_WO=64,
-	REG_CONST=128,
-	REG_NO_ACCESS=REG_RO|REG_WO,
-};
-
-enum RegIO
-{
-	RIO_DATA = 0,
-	RIO_WF = REG_WF,
-	RIO_FUNC = REG_WF | REG_RF,
-	RIO_RO = REG_RO | REG_WF,
-	RIO_RO_FUNC = REG_RO | REG_RF | REG_WF,
-	RIO_CONST = REG_RO | REG_WF,
-	RIO_WO_FUNC = REG_WF | REG_RF | REG_WO,
-	RIO_NO_ACCESS = REG_WF | REG_RF | REG_NO_ACCESS
-};
-
-struct RegisterStruct
-{
-	union
-	{
-		u32 data32;					//stores data of reg variable [if used] 32b
-		u16 data16;					//stores data of reg variable [if used] 16b
-		u8  data8;					//stores data of reg variable [if used]	8b
-
-		RegReadFP* readFunction;	//stored pointer to reg read function
-		RegReadAddrFP* readFunctionAddr;
-	};
-
-	union
-	{
-		RegWriteFP* writeFunction;	//stored pointer to reg write function
-		RegWriteAddrFP* writeFunctionAddr;
-	};
-
-	u32 flags;					//Access flags !
-};
 
 enum SmcCheckEnum {
 	NoCheck = -1,
@@ -650,7 +491,10 @@ struct settings_t
 		bool safemode;
 		bool disable_nvmem;
 		SmcCheckEnum SmcCheckLevel;
+		int ScpuEnable;
+		int DspEnable;
 	} dynarec;
+
 
 	struct
 	{
@@ -722,10 +566,13 @@ struct settings_t
 
 		u32 MaxThreads;
 		bool SynchronousRender;
+		bool ForceGLES2;
 	} pvr;
 
 	struct {
 		bool SerialConsole;
+		bool VirtualSerialPort;
+		string VirtualSerialPortFile;
 	} debug;
 
 	struct {
@@ -753,7 +600,7 @@ extern settings_t settings;
 void InitSettings();
 void LoadSettings(bool game_specific);
 void SaveSettings();
-u32 GetRTC_now();
+
 extern u32 patchRB;
 
 inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
@@ -781,13 +628,9 @@ static inline void do_nada(...) { }
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
-	#ifdef STRIP_TEXT
-		#define puts do_nada
-		#define printf do_nada
-	#else
-		#define puts      LOGI
-		#define printf    LOGI
-	#endif
+
+#define puts      LOGI
+#define printf    LOGI
 #define putinf    LOGI
 #endif
 
@@ -797,7 +640,7 @@ static inline void do_nada(...) { }
 
 //more to come
 
-extern sh4_if				  sh4_cpu;
+extern SuperH4* sh4_cpu;
 
 //sh4 thread
 s32 plugins_Init();
@@ -805,47 +648,30 @@ void plugins_Term();
 void plugins_Reset(bool Manual);
 
 //PVR
-s32 libPvr_Init();
-void libPvr_Reset(bool Manual);
-void libPvr_Term();
-
-
-//void DYNACALL libPvr_TaSQ(u32* data);				//size is 32 byte transfer counts
-u32 libPvr_ReadReg(u32 addr,u32 size);
-void libPvr_WriteReg(u32 addr,u32 data,u32 size);
-
-void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
 
 void* libPvr_GetRenderTarget();
 void* libPvr_GetRenderSurface();
 
-//AICA
-s32 libAICA_Init();
-void libAICA_Reset(bool Manual);
-void libAICA_Term();
-
-
-u32  libAICA_ReadReg(u32 addr,u32 size);
-void libAICA_WriteReg(u32 addr,u32 data,u32 size);
-
-u32  libAICA_ReadMem_aica_ram(u32 addr,u32 size);
-void libAICA_WriteMem_aica_ram(u32 addr,u32 data,u32 size);
-void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not used
-
 
 //GDR
-s32 libGDR_Init();
-void libGDR_Reset(bool M);
-void libGDR_Term();
-
 void libCore_gdrom_disc_change();
 
-//IO
-void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
-void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
-void libGDR_GetToc(u32* toc,u32 area);
-u32 libGDR_GetDiscType();
-void libGDR_GetSessionInfo(u8* pout,u8 session);
+struct GDRomDisc {
+	virtual s32 Init() = 0;
+	virtual void Reset(bool M) = 0;
+
+	//IO
+	virtual void ReadSector(u8* buff, u32 StartSector, u32 SectorCount, u32 secsz) = 0;
+	virtual void ReadSubChannel(u8* buff, u32 format, u32 len) = 0;
+	virtual void GetToc(u32* toc, u32 area) = 0;
+	virtual u32 GetDiscType() = 0;
+	virtual void GetSessionInfo(u8* pout, u8 session) = 0;
+	virtual void Swap() = 0;
+	virtual ~GDRomDisc() { }
+
+	static GDRomDisc* Create();
+};
+
 
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
@@ -861,12 +687,6 @@ static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
 static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
 //ARM
-s32 libARM_Init();
-void libARM_Reset(bool M);
-void libARM_Term();
-
-void libARM_SetResetState(u32 State);
-void libARM_Update(u32 cycles);
 
 
 #define 	ReadMemArrRet(arr,addr,sz)				\

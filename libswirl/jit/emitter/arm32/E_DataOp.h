@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	<E_DataOp.h		Title="ARMv7 ISA Emitter Middle-ware:	Data-Processing Instructions"	/>
  *
  *	<?CTYPE
@@ -145,36 +151,6 @@ ADD.SP.REG	0x008D0000
 	EAPI	BIC DP_PARAMS	{ DP_RCOMMON;	DP_OPCODE(DP_BIC);	EMIT_I; }
 	EAPI	MVN DP_PARAMS	{ DP_RCOMMON;	DP_OPCODE(DP_MVN);	EMIT_I; }
 #endif
-
-
-
-		static u32 ARMImmid8r4_enc(u32 imm32)
-		{
-			for (int i=0;i<=30;i+=2)
-			{
-				u32 immv=(imm32<<i) | (imm32>>(32-i));
-				if (i == 0)
-					immv = imm32;
-				if (immv<256)
-				{
-					return ((i/2)<<8) | immv;
-				}
-			}
-
-			return -1;
-		}
-
-		static u32 ARMImmid8r4(u32 imm8r4)
-		{
-			u32 rv = ARMImmid8r4_enc(imm8r4);
-
-			verify(rv!=-1);
-			return rv;
-		}
-
-		static bool is_i8r4(u32 i32) {	return ARMImmid8r4_enc(i32) != -1;	}
-
-   
 
 		EAPI ADD(eReg Rd, eReg Rn, eReg Rm, u32 RmLSL, bool S, ConditionCode CC=AL)
         {

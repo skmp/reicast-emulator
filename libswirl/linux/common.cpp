@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 #include "cfg/cfg.h"
 
@@ -81,7 +87,7 @@ extern "C" u8* generic_fault_handler ()
 
 	fault_printf("generic_fault_handler\n");
 	
-	if (dc_handle_fault(trap_si_addr, &ctx))
+	if (virtualDreamcast->HandleFault(trap_si_addr, &ctx))
 	{
 		fault_printf("generic_fault_handler: final pc: %p, trap pc: %p\n", ctx.pc, trap_pc);
 		context_to_segfault(&ctx);
@@ -91,7 +97,7 @@ extern "C" u8* generic_fault_handler ()
 	}
 	else
 	{
-		fault_printf("generic_fault_handler: not in handled SIGSEGV pc: %lx addr:%p\n", ctx.pc, (void*)trap_si_addr);
+		fault_printf("generic_fault_handler: not in handled SIGSEGV pc: %lx addr:%p here %p\n", ctx.pc, (void*)trap_si_addr, (void*)generic_fault_handler);
 		trap_handled = false;
 	}
 
@@ -128,10 +134,10 @@ naked void re_raise_fault()
     );
 }
 
-
+bool break_segfault = false;
 static void fatal_error()
 {
-    for (;;)
+    while(!break_segfault)
     {
         printf("fault_handler: Blocking before restoring default SIGSEGV handler\n");
         sleep(1);
@@ -322,6 +328,9 @@ void common_linux_setup()
 	settings.profile.run_counts=0;
 	
 	printf("Linux paging: %ld %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
+
+#if !defined(TARGET_EMSCRIPTEN)
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+#endif
 }
 #endif

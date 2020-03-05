@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Some WIP optimisation stuff and maby helper functions for shil
 */
 

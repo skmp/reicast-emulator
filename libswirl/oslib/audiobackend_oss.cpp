@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "oslib/audiostream.h"
 #ifdef USE_OSS
 #include <sys/ioctl.h>

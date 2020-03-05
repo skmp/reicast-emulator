@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Tiny cute block manager. Doesn't keep block graphs or anything fancy ...
 	Its based on a simple hashed-lists idea
 */
@@ -17,11 +23,7 @@
 #include "../sh4_core.h"
 #include "../sh4_if.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/aica/aica_if.h"
-//#include "../dmac.h"
 #include "hw/gdrom/gdrom_if.h"
-//#include "../intc.h"
-//#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
 
 #define printf_bm(...)
@@ -136,7 +138,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 
 		if (lockRam)
 		{
-			mem_b.LockRegion(ram_page * PAGE_SIZE, PAGE_SIZE);
+			sh4_cpu->mram.LockRegion(ram_page * PAGE_SIZE, PAGE_SIZE);
 		}
 	}
 
@@ -362,8 +364,7 @@ bool bm_LockedWrite(u8* addy)
 			bm_DiscardBlock(*it);
 		}
 
-
-		mem_b.UnLockRegion(ram_obase, PAGE_SIZE);
+		sh4_cpu->mram.UnLockRegion(ram_obase, PAGE_SIZE);
 
 		return true;
 	}

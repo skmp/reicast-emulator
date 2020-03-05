@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
@@ -298,7 +304,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 #ifdef PROF2
 						x86e->Emit(op_add32,&srmls,1);
 #endif
-						x86e->Emit(op_mov32,ECX,op->rs1._imm);
+						x86e->Emit(op_mov32,ECX, (uintptr_t)(sh4_cpu));
+						x86e->Emit(op_mov32,EDX,op->rs1._imm);
 						fuct=ptr;
 					}
 				}
@@ -1417,6 +1424,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				x86e->Emit(op_cmp32,EDX,0x38);
 				x86e->Emit(op_jne,nosq);
 				{
+					auto sh4mmr = sh4_cpu->sh4mmr.get();
+
 					if (CCN_MMUCR.AT)
 						x86e->Emit(op_call,x86_ptr_imm(&do_sqw_mmu));	//call do_sqw_mmu
 					else

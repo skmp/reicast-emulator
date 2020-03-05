@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <unistd.h>
 #include <sys/mman.h>
 #include "types.h"
@@ -857,7 +863,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				} 
 				else 
 				{
-					MOV32(r0,op->rs1._imm);
+					MOV32(r0, (uintptr_t)sh4_cpu);
+					MOV32(r1,op->rs1._imm);
 
 					switch(optp)
 					{
@@ -1452,6 +1459,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				}
 				else
 					MOV(r0,reg.mapg(op->rs1));
+
+				auto sh4mmr = sh4_cpu->sh4mmr.get();
 
 				if (CCN_MMUCR.AT)
 				{

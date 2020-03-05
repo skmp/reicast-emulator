@@ -192,7 +192,7 @@ elf_getNumSections(void *elfFile)
 		: elf64_getNumSections((Elf64_Header*)elfFile);
 }
 
-char *
+const char *
 elf_getSectionName(void *elfFile, int i)
 {
 	return ISELF32 (elfFile)

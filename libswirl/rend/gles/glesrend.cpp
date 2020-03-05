@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <math.h>
 #include "glcache.h"
 #include "rend/TexCache.h"
@@ -347,81 +353,6 @@ void main() \n\
 	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
-const char* OSD_VertexShader =
-"\
-%s \n\
-#define TARGET_GL %s \n\
- \n\
-#define GLES2 0 \n\
-#define GLES3 1 \n\
-#define GL2 2 \n\
-#define GL3 3 \n\
- \n\
-#if TARGET_GL == GL2 \n\
-#define highp \n\
-#define lowp \n\
-#define mediump \n\
-#endif \n\
-#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
-#define in attribute \n\
-#define out varying \n\
-#endif \n\
- \n\
-uniform highp vec4      scale; \n\
- \n\
-in highp vec4    in_pos; \n\
-in lowp vec4     in_base; \n\
-in mediump vec2  in_uv; \n\
- \n\
-out lowp vec4 vtx_base; \n\
-out mediump vec2 vtx_uv; \n\
- \n\
-void main() \n\
-{ \n\
-	vtx_base = in_base; \n\
-	vtx_uv = in_uv; \n\
-	highp vec4 vpos = in_pos; \n\
-	\n\
-	vpos.w = 1.0; \n\
-	vpos.z = vpos.w; \n\
-	vpos.xy = vpos.xy * scale.xy - scale.zw;  \n\
-	gl_Position = vpos; \n\
-}";
-
-const char* OSD_Shader =
-"\
-%s \n\
-#define TARGET_GL %s \n\
- \n\
-#define GLES2 0 \n\
-#define GLES3 1 \n\
-#define GL2 2 \n\
-#define GL3 3 \n\
- \n\
-#if TARGET_GL == GL2 \n\
-#define highp \n\
-#define lowp \n\
-#define mediump \n\
-#endif \n\
-#if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
-out highp vec4 FragColor; \n\
-#define gl_FragColor FragColor \n\
-#else \n\
-#define in varying \n\
-#define texture texture2D \n\
-#endif \n\
- \n\
-in lowp vec4 vtx_base; \n\
-in mediump vec2 vtx_uv; \n\
-/* Vertex input*/ \n\
-uniform sampler2D tex; \n\
-void main() \n\
-{ \n\
-	mediump vec2 uv=vtx_uv; \n\
-	uv.y=1.0-uv.y; \n\
-	gl_FragColor = vtx_base*texture(tex,uv.st); \n\
-}";
-
 GLCache glcache;
 gl_ctx gl;
 
@@ -450,88 +381,25 @@ static void gles_term()
 {
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	gl.vbo.geometry = 0;
+
 	glDeleteBuffers(1, &gl.vbo.modvols);
+	gl.vbo.modvols = 0;
+
 	glDeleteBuffers(1, &gl.vbo.idxs);
+	gl.vbo.idxs = 0;
+
 	glDeleteBuffers(1, &gl.vbo.idxs2);
+	gl.vbo.idxs2 = 0;
+
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
+
 	glcache.DeleteTextures(1, &fogTextureId);
 	fogTextureId = 0;
-	gl_free_osd_resources();
+
 	free_output_framebuffer();
 
 	gl_delete_shaders();
-	os_gl_term();
-}
-
-void findGLVersion()
-{
-	gl.index_type = GL_UNSIGNED_INT;
-	gl.rpi4_workaround = false;
-
-	while (true)
-		if (glGetError() == GL_NO_ERROR)
-			break;
-	glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
-	if (glGetError() == GL_INVALID_ENUM)
-		gl.gl_major = 2;
-	const char *version = (const char *)glGetString(GL_VERSION);
-	printf("OpenGL version: %s\n", version);
-	if (!strncmp(version, "OpenGL ES", 9))
-	{
-		gl.is_gles = true;
-		if (gl.gl_major >= 3)
-		{
-			gl.gl_version = "GLES3";
-			gl.glsl_version_header = "#version 300 es";
-		}
-		else
-		{
-			gl.gl_version = "GLES2";
-			gl.glsl_version_header = "";
-			gl.index_type = GL_UNSIGNED_SHORT;
-		}
-		gl.fog_image_format = GL_ALPHA;
-		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
-		if (strstr(extensions, "GL_OES_packed_depth_stencil") != NULL)
-			gl.GL_OES_packed_depth_stencil_supported = true;
-		if (strstr(extensions, "GL_OES_depth24") != NULL)
-			gl.GL_OES_depth24_supported = true;
-		if (!gl.GL_OES_packed_depth_stencil_supported)
-			printf("Packed depth/stencil not supported: no modifier volumes when rendering to a texture\n");
-	}
-	else
-	{
-		gl.is_gles = false;
-    	if (gl.gl_major >= 3)
-    	{
-			gl.gl_version = "GL3";
-#if HOST_OS == OS_DARWIN
-			gl.glsl_version_header = "#version 150";
-#else
-			gl.glsl_version_header = "#version 130";
-#endif
-			gl.fog_image_format = GL_RED;
-		}
-		else
-		{
-			gl.gl_version = "GL2";
-			gl.glsl_version_header = "#version 120";
-			gl.fog_image_format = GL_ALPHA;
-		}
-	}
-
-
-	// workarounds
-
-	auto renderer = (const char*)glGetString(GL_RENDERER);
-
-	if (renderer && strstr(renderer, "V3D 4.2"))
-	{
-		printf("glesrend: Enabling rpi4_workaround\n");
-
-		gl.rpi4_workaround = true;
-	}
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -617,7 +485,9 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 	glcache.UseProgram(program);
 
-	verify(glIsProgram(program));
+	if(!glIsProgram(program)) {
+	    printf("GLES: Failed to compile %d\n", program);
+	}
 
 	return program;
 }
@@ -641,10 +511,10 @@ PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv<<=2; rv|=pp_ShadInstr;
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
-	rv<<=1; rv|=pp_Gouraud;
-	rv<<=1; rv|=pp_BumpMap;
-	rv<<=1; rv|=fog_clamping;
-	rv<<=1; rv|=trilinear;
+	rv<<=1; rv|= (int)pp_Gouraud;
+	rv<<=1; rv|= (int)pp_BumpMap;
+	rv<<=1; rv|= (int)fog_clamping;
+	rv<<=1; rv|= (int)trilinear;
 
 	PipelineShader *shader = &gl.shaders[rv];
 	if (shader->program == 0)
@@ -740,37 +610,6 @@ bool CompilePipelineShader(	PipelineShader* s)
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-GLuint osd_tex;
-
-void gl_load_osd_resources()
-{
-	char vshader[8192];
-	char fshader[8192];
-
-	sprintf(vshader, OSD_VertexShader, gl.glsl_version_header, gl.gl_version);
-	sprintf(fshader, OSD_Shader, gl.glsl_version_header, gl.gl_version);
-
-	gl.OSD_SHADER.program = gl_CompileAndLink(vshader, fshader);
-	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
-	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
-
-#ifdef _ANDROID
-	int w, h;
-	if (osd_tex == 0)
-		osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
-#endif
-}
-
-void gl_free_osd_resources()
-{
-	glcache.DeleteProgram(gl.OSD_SHADER.program);
-
-    if (osd_tex != 0) {
-        glcache.DeleteTextures(1, &osd_tex);
-        osd_tex = 0;
-    }
-}
-
 static void create_modvol_shader()
 {
 	if (gl.modvol_shader.program != 0)
@@ -811,10 +650,6 @@ bool gl_create_resources()
 
 	create_modvol_shader();
 
-	gl_load_osd_resources();
-
-	gui_init();
-
 	return true;
 }
 
@@ -828,12 +663,6 @@ bool gl_create_resources();
 
 bool gles_init()
 {
-	if (!os_gl_init((void*)libPvr_GetRenderTarget(),
-		         (void*)libPvr_GetRenderSurface()))
-			return false;
-
-	findGLVersion();
-
 	glcache.EnableCache();
 
 	if (!gl_create_resources())
@@ -851,11 +680,6 @@ bool gles_init()
 	//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	//    glDebugMessageCallback(gl_DebugOutput, NULL);
 	//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-
-	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	os_gl_swap();
 
 #ifdef GL_GENERATE_MIPMAP_HINT
 	if (gl.is_gles)
@@ -903,203 +727,16 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	glActiveTexture(GL_TEXTURE0);
 }
 
-
-extern u16 kcode[4];
-extern u8 rt[4],lt[4];
-
-#if defined(_ANDROID)
-extern float vjoy_pos[14][8];
-#else
-
-float vjoy_pos[14][8]=
-{
-	{24+0,24+64,64,64},     //LEFT
-	{24+64,24+0,64,64},     //UP
-	{24+128,24+64,64,64},   //RIGHT
-	{24+64,24+128,64,64},   //DOWN
-
-	{440+0,280+64,64,64},   //X
-	{440+64,280+0,64,64},   //Y
-	{440+128,280+64,64,64}, //B
-	{440+64,280+128,64,64}, //A
-
-	{320-32,360+32,64,64},  //Start
-
-	{440,200,90,64},        //RT
-	{542,200,90,64},        //LT
-
-	{-24,128+224,128,128},  //ANALOG_RING
-	{96,320,64,64},         //ANALOG_POINT
-	{1}
-};
-#endif // !_ANDROID
-
-static List<Vertex> osd_vertices;
-static bool osd_vertices_overrun;
-
-static const float vjoy_sz[2][14] = {
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
-};
-
-void HideOSD()
-{
-	vjoy_pos[13][0] = 0;
-	vjoy_pos[13][1] = 0;
-	vjoy_pos[13][2] = 0;
-	vjoy_pos[13][3] = 0;
-}
-
-static void DrawButton(float* xy, u32 state)
-{
-	Vertex vtx;
-
-	vtx.z = 1;
-
-	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[13][0];
-
-	vtx.col[3]=0xA0*vjoy_pos[13][4];
-
-	vjoy_pos[13][4]+=(vjoy_pos[13][0]-vjoy_pos[13][4])/2;
-
-
-
-	vtx.x = xy[0]; vtx.y = xy[1];
-	vtx.u=xy[4]; vtx.v=xy[5];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0] + xy[2]; vtx.y = xy[1];
-	vtx.u=xy[6]; vtx.v=xy[5];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0]; vtx.y = xy[1] + xy[3];
-	vtx.u=xy[4]; vtx.v=xy[7];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0] + xy[2]; vtx.y = xy[1] + xy[3];
-	vtx.u=xy[6]; vtx.v=xy[7];
-	*osd_vertices.Append() = vtx;
-}
-
-static void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
-
-static void osd_gen_vertices()
-{
-	osd_vertices.Init(ARRAY_SIZE(vjoy_pos) * 4, &osd_vertices_overrun, "OSD vertices");
-	DrawButton2(vjoy_pos[0],kcode[0] & DC_DPAD_LEFT);
-	DrawButton2(vjoy_pos[1],kcode[0] & DC_DPAD_UP);
-	DrawButton2(vjoy_pos[2],kcode[0] & DC_DPAD_RIGHT);
-	DrawButton2(vjoy_pos[3],kcode[0] & DC_DPAD_DOWN);
-
-	DrawButton2(vjoy_pos[4],kcode[0] & DC_BTN_X);
-	DrawButton2(vjoy_pos[5],kcode[0] & DC_BTN_Y);
-	DrawButton2(vjoy_pos[6],kcode[0] & DC_BTN_B);
-	DrawButton2(vjoy_pos[7],kcode[0] & DC_BTN_A);
-
-	DrawButton2(vjoy_pos[8],kcode[0] & DC_BTN_START);
-
-	DrawButton(vjoy_pos[9],lt[0]);
-
-	DrawButton(vjoy_pos[10],rt[0]);
-
-	DrawButton2(vjoy_pos[11],1);
-	DrawButton2(vjoy_pos[12],0);
-}
-
-#define OSD_TEX_W 512
-#define OSD_TEX_H 256
-
-void OSD_DRAW(bool clear_screen)
-{
-#ifdef _ANDROID
-	if (osd_tex == 0)
-		gl_load_osd_resources();
-	if (osd_tex != 0)
-	{
-		osd_gen_vertices();
-
-		float u=0;
-		float v=0;
-
-		for (int i=0;i<13;i++)
-		{
-			//umin,vmin,umax,vmax
-			vjoy_pos[i][4]=(u+1)/OSD_TEX_W;
-			vjoy_pos[i][5]=(v+1)/OSD_TEX_H;
-
-			vjoy_pos[i][6]=((u+vjoy_sz[0][i]-1))/OSD_TEX_W;
-			vjoy_pos[i][7]=((v+vjoy_sz[1][i]-1))/OSD_TEX_H;
-
-			u+=vjoy_sz[0][i];
-			if (u>=OSD_TEX_W)
-			{
-				u-=OSD_TEX_W;
-				v+=vjoy_sz[1][i];
-			}
-			//v+=vjoy_pos[i][3];
-		}
-
-		verify(glIsProgram(gl.OSD_SHADER.program));
-		glcache.UseProgram(gl.OSD_SHADER.program);
-
-		float scale_h = screen_height / 480.f;
-		float offs_x = (screen_width - scale_h * 640.f) / 2.f;
-		float scale[4];
-		scale[0] = 2.f / (screen_width / scale_h);
-		scale[1]= -2.f / 480.f;
-		scale[2]= 1.f - 2.f * offs_x / screen_width;
-		scale[3]= -1.f;
-		glUniform4fv(gl.OSD_SHADER.scale, 1, scale);
-
-		glActiveTexture(GL_TEXTURE0);
-		glcache.BindTexture(GL_TEXTURE_2D, osd_tex);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		glBufferData(GL_ARRAY_BUFFER, osd_vertices.bytes(), osd_vertices.head(), GL_STREAM_DRAW); glCheck();
-
-		glcache.Enable(GL_BLEND);
-		glcache.Disable(GL_DEPTH_TEST);
-		glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glcache.DepthMask(false);
-		glcache.DepthFunc(GL_ALWAYS);
-
-		glcache.Disable(GL_CULL_FACE);
-		glcache.Disable(GL_SCISSOR_TEST);
-		glViewport(0, 0, screen_width, screen_height);
-
-		if (clear_screen)
-		{
-			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
-		int dfa = osd_vertices.used() / 4;
-
-		for (int i = 0; i < dfa; i++)
-			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
-	}
-#endif
-	gui_display_osd();
-}
-
-bool ProcessFrame(TA_context* ctx)
+bool ProcessFrame(Renderer* renderer, u8* vram, TA_context* ctx)
 {
 	ctx->rend_inuse.Lock();
 
 	if (KillTex)
 		killtex();
 
-	if (ctx->rend.isRenderFramebuffer)
-	{
-		RenderFramebuffer();
-		ctx->rend_inuse.Unlock();
-	}
-	else
-	{
-		if (!ta_parse_vdrc(ctx))
-			return false;
-	}
+	if (!ta_parse_vdrc(renderer, vram, ctx))
+		return false;
+
 	CollectCleanup();
 
 	if (ctx->rend.Overrun)
@@ -1126,12 +763,19 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-bool RenderFrame()
+bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 {
+    if (isRenderFramebuffer) {
+        RenderFramebuffer();
+        glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        DrawFramebuffer(640, 480);
+        return true;
+    }
 	DoCleanup();
 	create_modvol_shader();
 
-	bool is_rtt=pvrrc.isRTT;
+	bool is_rtt = pvrrc.isRTT;
 
 	//if (FrameCount&7) return;
 
@@ -1245,7 +889,7 @@ bool RenderFrame()
 
 	float scissoring_scale_x = 1;
 
-	if (!is_rtt && !pvrrc.isRenderFramebuffer)
+	if (!is_rtt && !isRenderFramebuffer)
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
@@ -1324,10 +968,16 @@ bool RenderFrame()
 		}
 		else
 		{
-			dc2s_scale_h = screen_height / 480.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+			dc2s_scale_h = screen_height / dc_height;
+			ds2s_offs_x = (screen_width - dc2s_scale_h * dc_width * screen_stretching) / 2;
+
+			if (ds2s_offs_x < 0) {
+				dc2s_scale_h = screen_width / dc_width;
+				ds2s_offs_x = 0;
+			}
+
 			ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+			ShaderUniforms.scale_coefs[1] = -2.0f / (screen_height / dc2s_scale_h);
 			ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
 			ShaderUniforms.scale_coefs[3] = -1;
 		}
@@ -1465,7 +1115,7 @@ bool RenderFrame()
 
 	//move vertex to gpu
 
-	if (!pvrrc.isRenderFramebuffer)
+	if (!isRenderFramebuffer)
 	{
 		//Main VBO
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
@@ -1553,9 +1203,6 @@ bool RenderFrame()
 	}
 	else
 	{
-		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		DrawFramebuffer(dc_width, dc_height);
 		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
 		upload_vertex_indices();
 	}
@@ -1568,56 +1215,44 @@ bool RenderFrame()
 	KillTex=false;
 
 	if (is_rtt)
-		ReadRTTBuffer();
+		ReadRTTBuffer(vram);
 	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		render_output_framebuffer();
 
 	return !is_rtt;
 }
 
-struct glesrend : Renderer
+struct glesrend final : Renderer
 {
-	bool Init() { return gles_init(); }
+	bool wasInit=false;
+	u8* vram;
+	glesrend(u8* vram) : vram(vram) { }
+
+	bool Init() { return (wasInit = gles_init()); }
 	void SetFBScale(float x, float y)
 	{
 		fb_scale_x = x;
 		fb_scale_y = y;
 	}
 
-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
-	void Term()
+	void Resize(int w, int h) {
+		glViewport(0, 0, w, h);
+	}
+	~glesrend()
 	{
-		if (KillTex)
-			killtex();
-		gles_term();
+		if (wasInit) {
+			gles_term();
+		}
 	}
 
-	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool Render() { return RenderFrame(); }
+	bool Process(TA_context* ctx) { return ProcessFrame(this, vram, ctx); }
+	bool RenderPVR() { return RenderFrame(vram, false); }
+    bool RenderFramebuffer() { return RenderFrame(vram, true); }
 	bool RenderLastFrame() { return render_output_framebuffer(); }
 	void Present() { os_gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
-	void DrawOSD(bool clear_screen)
-	{
-
-		if (gl.gl_major >= 3)
-			glBindVertexArray(gl.vbo.vao);
-
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-		glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
-
-		glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-		glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
-
-		glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
-
-		OSD_DRAW(clear_screen);
-	}
-
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
-		return gl_GetTexture(tsp, tcw);
+		return gl_GetTexture(vram, tsp, tcw);
 	}
 };
 
@@ -1783,4 +1418,6 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 #include "hw/pvr/Renderer_if.h"
 
-static auto gles2rend = RegisterRendererBackend(rendererbackend_t{ "gles", "OpenGL ES 2/PC41 (Per Triangle Sort)", 1, []() { return (Renderer*) new glesrend(); } });
+#if FEAT_TA == TA_HLE
+static auto gles2rend = RegisterRendererBackend(rendererbackend_t{ "gles", "OpenGL ES 2/PC41 (Per Triangle Sort)", 1, [](u8* vram) { return (Renderer*) new glesrend(vram); } });
+#endif

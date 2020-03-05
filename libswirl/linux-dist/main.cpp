@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 #include "cfg/cfg.h"
 
@@ -12,15 +18,17 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/maple/maple_cfg.h"
 #include <unistd.h>
+#include <pty.h>
 
 #include "libswirl.h"
 #include "hw/pvr/Renderer_if.h"
 
 #if defined(TARGET_EMSCRIPTEN)
-	#include <emscripten.h>
+	#include "emscripten.h"
 #endif
 
 #if defined(SUPPORT_DISPMANX)
@@ -33,10 +41,6 @@
 
 #if defined(USE_SDL)
 	#include "sdl/sdl.h"
-#endif
-
-#if defined(USES_HOMEDIR)
-	#include <sys/stat.h>
 #endif
 
 #if defined(USE_EVDEV)
@@ -57,11 +61,24 @@
 #include "profiler/profiler.h"
 #endif
 
+#if defined(SUPPORT_GLX)
 #include "utils/glinit/glx/glx.h"
+#endif
+
+#if defined(SUPPORT_EGL)
 #include "utils/glinit/egl/egl.h"
+#endif
+
+#if defined(SUPPORT_SDL)
+#include "utils/glinit/sdl/sdl.h"
+#endif
 
 void* x11_win = 0;
 void* x11_disp = 0;
+
+
+void* sdl_win = 0;
+void* sdl_disp = 0;
 
 void* libPvr_GetRenderTarget()
 {
@@ -115,8 +132,8 @@ void os_SetupInput()
 	input_sdl_init();
 #endif
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_CreateDevices();
+#if defined(TARGET_EMSCRIPTEN)
+	input_emscripten_init();
 #endif
 }
 
@@ -173,7 +190,7 @@ void os_CreateWindow()
 		x11_window_create();
 	#endif
 	#if defined(USE_SDL)
-		sdl_window_create();
+		sdl_window_create(&sdl_win, &sdl_disp);
 	#endif
 }
 
@@ -217,41 +234,39 @@ void common_linux_setup();
 
 string find_user_config_dir()
 {
-	#ifdef USES_HOMEDIR
-		struct stat info;
-		string home = "";
-		if(getenv("HOME") != NULL)
+	struct stat info;
+	string home = "";
+	if(getenv("HOME") != NULL)
+	{
+		// Support for the legacy config dir at "$HOME/.reicast"
+		string legacy_home = (string)getenv("HOME") + "/.reicast";
+		if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 		{
-			// Support for the legacy config dir at "$HOME/.reicast"
-			string legacy_home = (string)getenv("HOME") + "/.reicast";
-			if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
-			{
-				// "$HOME/.reicast" already exists, let's use it!
-				return legacy_home;
-			}
-
-			/* If $XDG_CONFIG_HOME is not set, we're supposed to use "$HOME/.config" instead.
-			 * Consult the XDG Base Directory Specification for details:
-			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
-			 */
-			home = (string)getenv("HOME") + "/.config/reicast";
-		}
-		if(getenv("XDG_CONFIG_HOME") != NULL)
-		{
-			// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
-			home = (string)getenv("XDG_CONFIG_HOME") + "/reicast";
+			// "$HOME/.reicast" already exists, let's use it!
+			return legacy_home;
 		}
 
-		if(!home.empty())
+		/* If $XDG_CONFIG_HOME is not set, we're supposed to use "$HOME/.config" instead.
+		 * Consult the XDG Base Directory Specification for details:
+		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+		 */
+		home = (string)getenv("HOME") + "/.config/reicast";
+	}
+	if(getenv("XDG_CONFIG_HOME") != NULL)
+	{
+		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
+		home = (string)getenv("XDG_CONFIG_HOME") + "/reicast";
+	}
+
+	if(!home.empty())
+	{
+		if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
 		{
-			if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
-			{
-				// If the directory doesn't exist yet, create it!
-				mkdir(home.c_str(), 0755);
-			}
-			return home;
+			// If the directory doesn't exist yet, create it!
+			mkdir(home.c_str(), 0755);
 		}
-	#endif
+		return home;
+	}
 
 	// Unable to detect config dir, use the current folder
 	return ".";
@@ -259,41 +274,39 @@ string find_user_config_dir()
 
 string find_user_data_dir()
 {
-	#ifdef USES_HOMEDIR
-		struct stat info;
-		string data = "";
-		if(getenv("HOME") != NULL)
+	struct stat info;
+	string data = "";
+	if(getenv("HOME") != NULL)
+	{
+		// Support for the legacy config dir at "$HOME/.reicast"
+		string legacy_data = (string)getenv("HOME") + "/.reicast";
+		if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 		{
-			// Support for the legacy config dir at "$HOME/.reicast"
-			string legacy_data = (string)getenv("HOME") + "/.reicast";
-			if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
-			{
-				// "$HOME/.reicast" already exists, let's use it!
-				return legacy_data;
-			}
-
-			/* If $XDG_DATA_HOME is not set, we're supposed to use "$HOME/.local/share" instead.
-			 * Consult the XDG Base Directory Specification for details:
-			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
-			 */
-			data = (string)getenv("HOME") + "/.local/share/reicast";
-		}
-		if(getenv("XDG_DATA_HOME") != NULL)
-		{
-			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
-			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
+			// "$HOME/.reicast" already exists, let's use it!
+			return legacy_data;
 		}
 
-		if(!data.empty())
+		/* If $XDG_DATA_HOME is not set, we're supposed to use "$HOME/.local/share" instead.
+		 * Consult the XDG Base Directory Specification for details:
+		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+		 */
+		data = (string)getenv("HOME") + "/.local/share/reicast";
+	}
+	if(getenv("XDG_DATA_HOME") != NULL)
+	{
+		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
+		data = (string)getenv("XDG_DATA_HOME") + "/reicast";
+	}
+
+	if(!data.empty())
+	{
+		if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
 		{
-			if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
-			{
-				// If the directory doesn't exist yet, create it!
-				mkdir(data.c_str(), 0755);
-			}
-			return data;
+			// If the directory doesn't exist yet, create it!
+			mkdir(data.c_str(), 0755);
 		}
-	#endif
+		return data;
+	}
 
 	// Unable to detect config dir, use the current folder
 	return ".";
@@ -357,20 +370,25 @@ bool os_gl_init(void* hwnd, void* hdc)
 		return glx_Init(x11_win, x11_disp);
 	#elif defined(SUPPORT_EGL)
 		return egl_Init(x11_win, x11_disp);
+	#elif defined(SUPPORT_SDL)
+		return sdlgl_Init(sdl_win, sdl_win);
 	#else
-		#error "only x11 supported"
+		#error "only glx/egl/sdl supported"
 		return true;
 	#endif
 }
 
-void os_gl_swap()
+bool os_gl_swap()
 {
 	#if defined(SUPPORT_GLX)
-		glx_Swap();
+		return glx_Swap();
 	#elif defined(SUPPORT_EGL)
-		egl_Swap(); 
+		return egl_Swap();
+	#elif defined(SUPPORT_SDL)
+		return sdlgl_Swap();
 	#else
-		#error "only x11 supported"
+		#error "only glx/egl/sdl supported"
+		return true;
 	#endif
 }
 
@@ -380,13 +398,20 @@ void os_gl_term()
 		glx_Term();
 	#elif defined(SUPPORT_EGL)
 		egl_Term();
+	#elif defined(SUPPORT_SDL)
+		return sdlgl_Term();
 	#else
-		#error "only x11 supported"
+		#error "only glx/egl/sdl supported"
 	#endif
 }
 
+#if FEAT_HAS_SERIAL_TTY
+int pty_master;
+#endif
+
 int main(int argc, wchar* argv[])
 {
+
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
 		signal(SIGKILL, clean_exit);
@@ -406,8 +431,7 @@ int main(int argc, wchar* argv[])
 	{
 		add_system_data_dir(dirs[i]);
 	}
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
+	add_system_data_dir(find_user_data_dir());
 
 	#if defined(USE_SDL)
 		if (SDL_Init(0) != 0)
@@ -423,20 +447,62 @@ int main(int argc, wchar* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-	#if !defined(TARGET_EMSCRIPTEN)
-		#if FEAT_HAS_NIXPROF
-		install_prof_handler(1);
-		#endif
-		rend_thread(NULL);
-	#else
-		emscripten_set_main_loop(&dc_run, 100, false);
+#if FEAT_HAS_SERIAL_TTY
+	bool cleanup_pty_symlink = false;
+	if (settings.debug.VirtualSerialPort) {
+		int slave;
+		char slave_name[2048];
+		pty_master = -1;
+		if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0)
+		{
+			// Turn ECHO off, we don't want to loop-back
+			struct termios tp;
+			tcgetattr(pty_master, &tp);
+			tp.c_lflag &= ~ECHO;
+			tcsetattr(pty_master, TCSAFLUSH, &tp);
+
+			printf("Serial: Created virtual serial port at %s\n", slave_name);
+
+			if (settings.debug.VirtualSerialPortFile.size())
+			{
+				if (symlink(slave_name, settings.debug.VirtualSerialPortFile.c_str()) == 0)
+				{
+					cleanup_pty_symlink = true;
+					printf("Serial: Created symlink to %s\n",  settings.debug.VirtualSerialPortFile.c_str());
+				}
+				else
+				{
+					printf("Serial: Failed to create symlink to %s, %d\n", settings.debug.VirtualSerialPortFile.c_str(), errno);
+				}
+			}
+			// not for us to use, we use master
+			// do not close to avoid EIO though
+			// close(slave);
+		}
+		else
+		{
+			printf("Serial: Failed to create PTY: %d\n", errno);
+		}
+		
+	}
+#endif
+
+	#if FEAT_HAS_NIXPROF
+	install_prof_handler(1);
 	#endif
+	
+	reicast_ui_loop();
+#if FEAT_HAS_SERIAL_TTY
+	if (cleanup_pty_symlink)
+	{
+		unlink(settings.debug.VirtualSerialPortFile.c_str());
+	}
+#endif
+	reicast_term();
 
 	#ifdef TARGET_PANDORA
 		clean_exit(0);
 	#endif
-
-	dc_term();
 
 	#if defined(USE_EVDEV)
 		input_evdev_close();

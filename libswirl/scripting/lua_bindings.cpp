@@ -1,19 +1,26 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "lua_bindings.h"
 #include "hw/pvr/Renderer_if.h"
 #include "gui/gui.h"
 #include "hw/sh4/sh4_mem.h"
-#include "hw/arm7/arm_mem.h"
 #include "libswirl.h"
 
 extern u32 vblank_count_monotonic;
 
 static int emu_status(lua_State* L) {
-	if (gui_is_open())
+	if (g_GUI->IsOpen())
 		lua_pushliteral(L, "menu");
 	else
 		lua_pushliteral(L, "ingame");
 	return 1;
 }
+
+extern bool game_started;
 
 static int emu_start_game(lua_State* L) {
 	int n = lua_gettop(L);  /* number of arguments */
@@ -22,8 +29,8 @@ static int emu_start_game(lua_State* L) {
 
 	const char* str = lua_tostring(L, 1);
 
-	int ret = dc_start_game(str);
-
+	int ret = virtualDreamcast->StartGame(str);
+    game_started = ret -= 0;
 	lua_pushinteger(L, ret);
 
 	return 1;
@@ -31,18 +38,19 @@ static int emu_start_game(lua_State* L) {
 
 static int emu_resume(lua_State* L) {
 	// TODO: verify it's not already started
-	dc_resume();
+    virtualDreamcast->Resume();
 	return 0;
 }
 
 static int emu_stop(lua_State* L) {
 	// TODO: verify it's not already stopped
-	dc_stop();
+    //virtualDreamcast->Stop();
+	die("stop is async now. what to do in lua?");
 	return 0;
 }
 
 static int emu_reset(lua_State* L) {
-	dc_reset();
+    virtualDreamcast->Reset();
 	return 0;
 }
 
@@ -62,12 +70,12 @@ static int emu_change_disk(lua_State* L) {
 }
 
 static int emu_save_state(lua_State* L) {
-	dc_savestate();
+    virtualDreamcast->SaveState();
 	return 1;
 }
 
 static int emu_load_state(lua_State* L) {
-	dc_loadstate();
+    virtualDreamcast->LoadState();
 	return 1;
 }
 
@@ -94,16 +102,12 @@ inline static void _write_main(u32 addr, T value) {
 
 template<class T>
 inline static T _read_sound(u32 addr) {
-	if (sizeof(T) == 1) return (T)arm_ReadMem8(addr);
-	else if (sizeof(T) == 2) return (T)arm_ReadMem16(addr);
-	else return (T)arm_ReadMem32(addr);
+	return (T)0;
 }
 
 template<class T>
 inline static void _write_sound(u32 addr, T value) {
-	if (sizeof(T) == 1) arm_WriteMem8(addr, (u8)value);
-	else if (sizeof(T) == 2) arm_WriteMem16(addr, (u16)value);
-	else arm_WriteMem32(addr, (u32)value);
+
 }
 
 template<class T>

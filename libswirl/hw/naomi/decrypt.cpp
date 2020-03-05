@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 /* Encryption/decryption 315-5881 chip support */
 /* used on Naomi M2 ROM boards */
 /* Borrowed from yabause */

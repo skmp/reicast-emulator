@@ -1,29 +1,17 @@
 /*
-	Copyright 2019 flyinghead
+	This file is part of libswirl
+*/
+#include "license/bsd"
 
-	This file is part of reicast.
 
-    reicast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
-
-    reicast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
- */
 
 #include "build.h"
 
 #if HOST_CPU == CPU_ARM64 && FEAT_DSPREC != DYNAREC_NONE
 
 #include <sys/mman.h>
-#include "dsp.h"
-#include "hw/aica/aica_if.h"
+#include "dsp_backend.h"
+#include "hw/aica/aica_mem.h"
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
@@ -34,7 +22,7 @@ class DSPAssembler : public MacroAssembler
 public:
 	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(NULL) {}
 
-	void Compile(struct dsp_t *DSP)
+	void Compile(u8* aica_ram, u32 aram_size, dsp_context_t *DSP, DSPData_struct* DSPData)
 	{
 		this->DSP = DSP;
 		//printf("DSPAssembler::DSPCompile recompiling for arm64 at %p\n", GetBuffer()->GetStartAddress<void*>());
@@ -43,7 +31,7 @@ public:
 		{
 			// Clear EFREG
 			Mov(x1, (uintptr_t)DSPData);
-			MemOperand efreg_op = dspdata_operand(DSPData->EFREG);	// just for the offset
+			MemOperand efreg_op = dspdata_operand(DSPData, DSPData->EFREG);	// just for the offset
 			if (efreg_op.IsRegisterOffset())
 				Add(x0, x1, efreg_op.GetRegisterOffset());
 			else
@@ -83,7 +71,7 @@ public:
 		const Register& MDEC_CT = w23;	// saved
 
 		//memset(DSPData->EFREG, 0, sizeof(DSPData->EFREG));
-		MemOperand efreg_op = dspdata_operand(DSPData->EFREG);
+		MemOperand efreg_op = dspdata_operand(DSPData, DSPData->EFREG);
 		if (efreg_op.IsRegisterOffset())
 			Add(x0, x27, efreg_op.GetRegisterOffset());
 		else
@@ -110,7 +98,7 @@ public:
 		{
 			u32 *mpro = &DSPData->MPRO[step * 4];
 			_INST op;
-			DecodeInst(mpro, &op);
+			DSPBackend::DecodeInst(mpro, &op);
 			const u32 COEF = step;
 
 			if (op.XSEL || op.YRL || (op.ADRL && op.SHIFT != 3))
@@ -129,7 +117,7 @@ public:
 				else if (op.IRA <= 0x31)
 				{
 					//INPUTS = DSPData->EXTS[op.IRA - 0x30] << 8;	// EXTS is 16 bits
-					Ldr(INPUTS, dspdata_operand(DSPData->EXTS, op.IRA - 0x30));
+					Ldr(INPUTS, dspdata_operand(DSPData, DSPData->EXTS, op.IRA - 0x30));
 					Lsl(INPUTS, INPUTS, 8);
 				}
 				else
@@ -207,7 +195,7 @@ public:
 			else if (op.YSEL == 1)
 			{
 				//Y = DSPData->COEF[COEF] >> 3;	//COEF is 16 bits
-				Ldr(Y, dspdata_operand(DSPData->COEF, COEF));
+				Ldr(Y, dspdata_operand(DSPData, DSPData->COEF, COEF));
 				Sbfx(Y, Y, 3, 13);
 			}
 			else if (op.YSEL == 2)
@@ -315,11 +303,11 @@ public:
 				if (op.MRD)			// memory only allowed on odd. DoA inserts NOPs on even
 				{
 					//MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
-					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					Ldr(x1, GetAicaRam());
+					CalculateADDR(DSPData, aram_size, ADDR, op, ADRS_REG, MDEC_CT);
+					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Ldrh(w0, aram_op);
-					GenCallRuntime(UNPACK);
+					GenCallRuntime(DSPBackend::UNPACK);
 					Mov(w2, w0);
 					Str(w2, dsp_operand(DSP->MEMVAL, (step + 2) & 3));
 				}
@@ -327,11 +315,11 @@ public:
 				{
 					// *(u16 *)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
 					Mov(w0, SHIFTED);
-					GenCallRuntime(PACK);
+					GenCallRuntime(DSPBackend::PACK);
 					Mov(w2, w0);
 
-					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					Ldr(x1, GetAicaRam());
+					CalculateADDR(DSPData, aram_size, ADDR, op, ADRS_REG, MDEC_CT);
+					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Strh(w2, aram_op);
 				}
@@ -351,7 +339,7 @@ public:
 			{
 				// 4 ????
 				//DSPData->EFREG[op.EWA] += SHIFTED >> 4;	// x86 dynarec uses = instead of +=
-				MemOperand mem_operand = dspdata_operand(DSPData->EFREG, op.EWA);
+				MemOperand mem_operand = dspdata_operand(DSPData, DSPData->EFREG, op.EWA);
 				Ldr(w1, mem_operand);
 				Asr(w2, SHIFTED, 4);
 				Add(w1, w1, w2);
@@ -366,9 +354,9 @@ public:
 		}
 		// DSP->regs.MDEC_CT--
 		Subs(MDEC_CT, MDEC_CT, 1);
-		//if (dsp.regs.MDEC_CT == 0)
-		//	dsp.regs.MDEC_CT = dsp.RBL + 1;			// RBL is ring buffer length - 1
-		Mov(w0, dsp.RBL + 1);
+		//if (dsp->regs.MDEC_CT == 0)
+		//	dsp->regs.MDEC_CT = dsp->RBL + 1;			// RBL is ring buffer length - 1
+		Mov(w0, DSP->RBL + 1);
 		Csel(MDEC_CT, w0, MDEC_CT, eq);
 		Str(MDEC_CT, dsp_operand(&DSP->regs.MDEC_CT));
 
@@ -395,7 +383,7 @@ public:
 private:
 	MemOperand dsp_operand(void *data, int index = 0, u32 element_size = 4)
 	{
-		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP) + index  * element_size;
+		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_context_t, TEMP) + index  * element_size;
 		if (offset < 16384)
 			return MemOperand(x28, offset);
 		Mov(x0, offset);
@@ -404,7 +392,7 @@ private:
 
 	MemOperand dsp_operand(void *data, const Register& offset_reg, u32 element_size = 4)
 	{
-		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP);
+		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_context_t, TEMP);
 		if (offset == 0)
 			return MemOperand(x28, offset_reg, LSL, element_size == 4 ? 2 : element_size == 2 ? 1 : 0);
 
@@ -413,7 +401,7 @@ private:
 		return MemOperand(x28, x0);
 	}
 
-	MemOperand dspdata_operand(void *data, int index = 0, u32 element_size = 4)
+	MemOperand dspdata_operand(DSPData_struct* DSPData, void *data, int index = 0, u32 element_size = 4)
 	{
 		ptrdiff_t offset = ((u8*)data - (u8*)DSPData) + index  * element_size;
 		if (offset < 16384)
@@ -433,10 +421,10 @@ private:
 		Bl(&function_label);
 	}
 
-	void CalculateADDR(const Register& ADDR, const _INST& op, const Register& ADRS_REG, const Register& MDEC_CT)
+	void CalculateADDR(DSPData_struct* DSPData, u32 aram_size, const Register& ADDR, const _INST& op, const Register& ADRS_REG, const Register& MDEC_CT)
 	{
 		//u32 ADDR = DSPData->MADRS[op.MASA];
-		Ldr(ADDR, dspdata_operand(DSPData->MADRS, op.MASA));
+		Ldr(ADDR, dspdata_operand(DSPData, DSPData->MADRS, op.MASA));
 		if (op.ADREB)
 		{
 			//ADDR += ADRS_REG & 0x0FFF;
@@ -464,15 +452,15 @@ private:
 		// RBP is constant for this program
 		Add(ADDR, ADDR, DSP->RBP);
 		// ADDR & ARAM_MASK
-		if (ARAM_SIZE == 2*1024*1024)
+		if (aram_size == 2*1024*1024)
 			Bfc(ADDR, 21, 11);
-		else if (ARAM_SIZE == 8*1024*1024)
+		else if (aram_size == 8*1024*1024)
 			Bfc(ADDR, 23, 9);
 		else
 			die("Unsupported ARAM_SIZE");
 	}
 
-	Literal<u8*> *GetAicaRam()
+	Literal<u8*> *GetAicaRam(u8* aica_ram)
 	{
 		if (aica_ram_lit == NULL)
 			aica_ram_lit = new Literal<u8*>(&aica_ram[0], GetLiteralPool(), RawLiteral::kDeletedOnPoolDestruction);
@@ -493,74 +481,49 @@ private:
 		}
 	}
 
-	struct dsp_t *DSP;
+	struct dsp_context_t* DSP;
 	Literal<u8*> *aica_ram_lit;
 };
 
-void dsp_recompile()
-{
-	dsp.Stopped = true;
-	for (int i = 127; i >= 0; --i)
-	{
-		u32 *IPtr = DSPData->MPRO + i * 4;
+struct DSPJITArm64 : DSPBackend {
+	u8* aica_ram;
+	u32 aram_size;
+	DSPData_struct* DSPData;
+	dsp_context_t* dsp;
 
-		if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2 ]!= 0 || IPtr[3] != 0)
+	DSPJITArm64(DSPData_struct* DSPData, dsp_context_t* dsp, u8* aica_ram, u32 aram_size)
+		: DSPData(DSPData), dsp(dsp), aica_ram(aica_ram), aram_size(aram_size) {
+		if (mprotect(dsp->DynCode, sizeof(dsp->DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
 		{
-			dsp.Stopped = false;
-			break;
+			perror("Couldn’t mprotect DSP code");
+			die("mprotect failed in arm64 dsp");
 		}
 	}
-	DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
-	assembler.Compile(&dsp);
-}
 
-void dsp_init()
-{
-	memset(&dsp, 0, sizeof(dsp));
-	dsp.RBL = 0x8000 - 1;
-	dsp.RBP=0;
-	dsp.regs.MDEC_CT = 1;
-	dsp.dyndirty = true;
-
-	if (mprotect(dsp.DynCode, sizeof(dsp.DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
+	void Recompile()
 	{
-		perror("Couldn’t mprotect DSP code");
-		die("mprotect failed in arm64 dsp");
-	}
-}
+		dsp->Stopped = true;
+		for (int i = 127; i >= 0; --i)
+		{
+			u32* IPtr = DSPData->MPRO + i * 4;
 
-void dsp_step()
-{
-	if (dsp.dyndirty)
-	{
-		dsp.dyndirty = false;
-		dsp_recompile();
+			if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2] != 0 || IPtr[3] != 0)
+			{
+				dsp->Stopped = false;
+				break;
+			}
+		}
+		DSPAssembler assembler(&dsp->DynCode[0], sizeof(dsp->DynCode));
+		assembler.Compile(aica_ram, aram_size, dsp, DSPData);
 	}
 
-#ifdef _ANDROID
-	((void (*)())&dsp.DynCode)();
-#endif
-}
+    void Step()
+    { 
+		((void (*)())&dsp->DynCode[0])();
+    }
+};
 
-void dsp_writenmem(u32 addr)
-{
-	if (addr >= 0x3400 && addr < 0x3C00)
-	{
-		dsp.dyndirty = true;
-	}
-	else if (addr >= 0x4000 && addr < 0x4400)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-	}
-	else if (addr >= 0x4400 && addr < 0x4500)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-	}
-}
-
-void dsp_term()
-{
+DSPBackend* DSPBackend::CreateJIT(DSPData_struct* DSPData, dsp_context_t* dsp, u8* aica_ram, u32 aram_size) {
+	return new DSPJITArm64(DSPData, dsp, aica_ram, aram_size);
 }
 #endif

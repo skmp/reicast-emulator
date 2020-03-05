@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <math.h>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
@@ -45,6 +51,16 @@ static GLuint texSamplers[2];
 static GLuint depth_fbo;
 GLuint depthSaveTexId;
 
+void gl4_CreateSamplers() {
+	glGenSamplers(2, texSamplers);
+}
+
+void gl4_DestroySamplers() {
+	glDeleteSamplers(2, texSamplers);
+	memset(texSamplers, 0, sizeof(texSamplers));
+}
+
+
 static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
@@ -67,8 +83,8 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv <<= 1; rv |= (int)pp_TwoVolumes;
 	rv <<= 3; rv |= pp_DepthFunc;
 	rv <<= 1; rv |= (int)pp_Gouraud;
-	rv <<= 1; rv |= pp_BumpMap;
-	rv <<= 1; rv |= fog_clamping;
+	rv <<= 1; rv |= (int)pp_BumpMap;
+	rv <<= 1; rv |= (int)fog_clamping;
 	rv <<= 2; rv |= pass;
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];
@@ -450,8 +466,6 @@ void gl4DrawStrips(GLuint output_fbo)
 		if (stencilTexId == 0)
 			CreateTextures(scaled_width, scaled_height);
 	}
-	if (texSamplers[0] == 0)
-		glGenSamplers(2, texSamplers);
 
 	glcache.DepthMask(GL_TRUE);
 	glStencilMask(0xFF);

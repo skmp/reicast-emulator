@@ -116,7 +116,10 @@ static int socket_cmp_remotehost(struct pico_socket *a, struct pico_socket *b)
 {
     int ret = 0;
     if (is_sock_ipv6(a))
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunreachable-code"
         ret = memcmp(a->remote_addr.ip6.addr, b->remote_addr.ip6.addr, PICO_SIZE_IP6);
+        #pragma clang diagnostic pop
     else
         ret = (int)(a->remote_addr.ip4.addr - b->remote_addr.ip4.addr);
 
@@ -939,8 +942,12 @@ static void *pico_socket_sendto_get_src(struct pico_socket *s, void *dst)
     if (is_sock_ipv4(s))
         src = pico_socket_sendto_get_ip4_src(s, (struct pico_ip4 *)dst);
 
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunreachable-code"
     if (is_sock_ipv6(s))
         src = pico_socket_sendto_get_ip6_src(s, (struct pico_ip6 *)dst);
+    #pragma clang diagnostic pop
+        
 
     return src;
 }

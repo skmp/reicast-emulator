@@ -42,8 +42,6 @@ static int maple_schid;
 	DMA continuation on suspect, etc ...
 */
 
-static void maple_handle_reconnect();
-
 //really hackish
 //misses delay , and stop/start implementation
 //ddt/etc are just hacked for wince to work

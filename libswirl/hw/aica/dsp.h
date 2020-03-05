@@ -24,7 +24,7 @@ struct DSP : MMIODevice {
 	static DSP* Create(AicaContext* aica_ctx, u8* aica_ram, u32 aram_size);
 };
 
-static void libDSP_Step() {
+static inline void libDSP_Step() {
 	sh4_cpu->GetA0H<DSP>(A0H_DSP)->Step();
 }
 

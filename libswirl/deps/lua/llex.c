@@ -324,6 +324,8 @@ static int readhexaesc (LexState *ls) {
 }
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcomma"
 static unsigned long readutf8esc (LexState *ls) {
   unsigned long r;
   int i = 4;  /* chars to be removed: '\', 'u', '{', and first digit */
@@ -340,6 +342,7 @@ static unsigned long readutf8esc (LexState *ls) {
   luaZ_buffremove(ls->buff, i);  /* remove saved chars from buffer */
   return r;
 }
+#pragma clang diagnostic pop
 
 
 static void utf8esc (LexState *ls) {

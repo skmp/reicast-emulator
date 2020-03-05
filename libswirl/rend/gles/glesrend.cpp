@@ -945,8 +945,8 @@ bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 	float screen_stretching = settings.rend.ScreenStretching / 100.f;
 	float screen_scaling = settings.rend.ScreenScaling / 100.f;
 
-	float dc2s_scale_h;
-	float ds2s_offs_x;
+	float dc2s_scale_h = 0;
+	float ds2s_offs_x = 0;
 
 	if (is_rtt)
 	{
@@ -1044,7 +1044,7 @@ bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 	//setup render target first
 	if (is_rtt)
 	{
-		GLuint channels,format;
+		GLuint channels=0,format=0;
 		switch(FB_W_CTRL.fb_packmode)
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].

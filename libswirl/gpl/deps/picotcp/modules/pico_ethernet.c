@@ -260,7 +260,7 @@ static struct pico_eth *pico_ethernet_mcast6_translate(struct pico_frame *f, uin
 
     return (struct pico_eth *)pico_mcast6_mac;
 }
-#endif
+
 
 static int pico_ethernet_ipv6_dst(struct pico_frame *f, struct pico_eth *const dstmac)
 {
@@ -268,7 +268,6 @@ static int pico_ethernet_ipv6_dst(struct pico_frame *f, struct pico_eth *const d
     if (!dstmac)
         return -1;
 
-    #ifdef PICO_SUPPORT_IPV6
     if (destination_is_mcast(f)) {
         uint8_t pico_mcast6_mac[6] = {
             0x33, 0x33, 0x00, 0x00, 0x00, 0x00
@@ -285,12 +284,9 @@ static int pico_ethernet_ipv6_dst(struct pico_frame *f, struct pico_eth *const d
         }
     }
 
-    #else
-    (void)f;
-    pico_err = PICO_ERR_EPROTONOSUPPORT;
-    #endif
     return retval;
 }
+#endif
 
 
 /* Ethernet send, first attempt: try our own address.

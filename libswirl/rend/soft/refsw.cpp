@@ -19,10 +19,13 @@
 #include <emmintrin.h>
 #include <smmintrin.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 static __forceinline int iround(float x)
 {
     return _mm_cvtt_ss2si(_mm_load_ss(&x));
 }
+#pragma clang diagnostic pop
 
 static float mmin(float a, float b, float c, float d)
 {

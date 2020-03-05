@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <string.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmacro-redefined"
 #ifdef _ANDROID
 #include <sys/mman.h>
 #undef PAGE_MASK
@@ -20,6 +22,7 @@
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
 #endif
+#pragma clang diagnostic pop
 
 //Commonly used classes across the project
 //Simple Array class for helping me out ;P

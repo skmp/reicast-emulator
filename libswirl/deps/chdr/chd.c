@@ -54,7 +54,11 @@
 #endif // CHD5_LZMA
 #include "deps/crypto/md5.h"
 #include "deps/crypto/sha1.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtypedef-redefinition"
+// Both the LZMA lib and zlib define Byte, which will compile fine, so ignore the warning
 #include "deps/zlib/zlib.h"
+#pragma clang diagnostic pop
 
 #define TRUE 1
 #define FALSE 0
@@ -553,6 +557,8 @@ chd_error lzma_codec_init(void* codec, uint32_t hunkbytes)
  *-------------------------------------------------
  */
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 void lzma_codec_free(void* codec)
 {
 	lzma_codec_data* lzma_codec = (lzma_codec_data*) codec;
@@ -560,6 +566,7 @@ void lzma_codec_free(void* codec)
 	/* free memory */
 	LzmaDec_Free(&lzma_codec->decoder, (ISzAlloc*)&lzma_codec->allocator);
 }
+#pragma clang diagnostic pop
 
 /*-------------------------------------------------
  *  decompress - decompress data using the LZMA
@@ -1040,6 +1047,8 @@ static inline void map_extract(const UINT8 *base, map_entry *entry)
     entry to the datastream
 -------------------------------------------------*/
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 static inline void map_assemble(UINT8 *base, map_entry *entry)
 {
 	put_bigendian_uint64(&base[0], entry->offset);
@@ -1048,6 +1057,7 @@ static inline void map_assemble(UINT8 *base, map_entry *entry)
 	base[14] = entry->length >> 16;
 	base[15] = entry->flags;
 }
+#pragma clang diagnostic pop
 
 /*-------------------------------------------------
     map_size_v5 - calculate CHDv5 map size
@@ -1160,17 +1170,29 @@ static chd_error decompress_v5_map(chd_file* chd, chd_header* header)
 	for (int hunknum = 0; hunknum < header->hunkcount; hunknum++)
 	{
 		uint8_t *rawmap = header->rawmap + (hunknum * 12);
-		if (repcount > 0)
-			rawmap[0] = lastcomp, repcount--;
+        if (repcount > 0)
+        {
+            rawmap[0] = lastcomp;
+            repcount--;
+        }
 		else
 		{
 			uint8_t val = huffman_decode_one(decoder, bitbuf);
-			if (val == COMPRESSION_RLE_SMALL)
-				rawmap[0] = lastcomp, repcount = 2 + huffman_decode_one(decoder, bitbuf);
+            if (val == COMPRESSION_RLE_SMALL)
+            {
+                rawmap[0] = lastcomp;
+                repcount = 2 + huffman_decode_one(decoder, bitbuf);
+            }
 			else if (val == COMPRESSION_RLE_LARGE)
-				rawmap[0] = lastcomp, repcount = 2 + 16 + (huffman_decode_one(decoder, bitbuf) << 4), repcount += huffman_decode_one(decoder, bitbuf);
+            {
+                rawmap[0] = lastcomp;
+                repcount = 2 + 16 + (huffman_decode_one(decoder, bitbuf) << 4);
+                repcount += huffman_decode_one(decoder, bitbuf);
+            }
 			else
+            {
 				rawmap[0] = lastcomp = val;
+            }
 		}
 	}
 
@@ -1574,7 +1596,10 @@ void chd_close(chd_file *chd)
 	if (chd->owns_file && chd->file != NULL)
 		core_fclose(chd->file);
 
-	if (PRINTF_MAX_HUNK) printf("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunreachable-code"
+	if (/* DISABLES CODE */ PRINTF_MAX_HUNK) printf("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
+    #pragma clang diagnostic pop
 
 	/* free our memory */
 	free(chd);
@@ -1994,6 +2019,8 @@ static chd_error header_read(chd_file *chd, chd_header *header)
     the CHD's hunk cache
 -------------------------------------------------*/
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum)
 {
 	chd_error err;
@@ -2016,6 +2043,7 @@ static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum)
 	chd->cachehunk = hunknum;
 	return CHDERR_NONE;
 }
+#pragma clang diagnostic pop
 
 /*-------------------------------------------------
     hunk_read_into_memory - read a hunk into

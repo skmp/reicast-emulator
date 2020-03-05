@@ -255,15 +255,7 @@ void gl_free_osd_resources()
     }
 }
 
-
 static vector<Vertex> osd_vertices;
-
-#ifdef _ANDROID
-static const float vjoy_sz[2][14] = {
-        { 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-        { 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
-};
-#endif
 
 void HideOSD()
 {
@@ -272,6 +264,12 @@ void HideOSD()
     vjoy_pos[13][2] = 0;
     vjoy_pos[13][3] = 0;
 }
+
+#ifdef _ANDROID
+static const float vjoy_sz[2][14] = {
+        { 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
+        { 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
+};
 
 static void DrawButton(float* xy, u32 state)
 {
@@ -328,6 +326,7 @@ static void osd_gen_vertices()
     DrawButton2(vjoy_pos[11],1);
     DrawButton2(vjoy_pos[12],0);
 }
+#endif
 
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256

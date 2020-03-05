@@ -307,6 +307,8 @@ static int sort_comp (lua_State *L, int a, int b) {
 ** Pos-condition: a[lo .. i - 1] <= a[i] == P <= a[i + 1 .. up]
 ** returns 'i'.
 */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcomma"
 static IdxT partition (lua_State *L, IdxT lo, IdxT up) {
   IdxT i = lo;  /* will be incremented before first use */
   IdxT j = up - 1;  /* will be decremented before first use */
@@ -337,6 +339,7 @@ static IdxT partition (lua_State *L, IdxT lo, IdxT up) {
     set2(L, i, j);
   }
 }
+#pragma clang diagnostic pop
 
 
 /*

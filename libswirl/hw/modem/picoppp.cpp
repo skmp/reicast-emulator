@@ -591,6 +591,9 @@ static void usleep(unsigned int usec)
 }
 #endif
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
+
 static void check_dns_entries()
 {
     static uint32_t dns_query_start = 0;
@@ -795,6 +798,8 @@ static void *pico_thread_func(void *)
 
 	return NULL;
 }
+
+#pragma clang diagnostic pop
 
 static cThread pico_thread(pico_thread_func, NULL);
 

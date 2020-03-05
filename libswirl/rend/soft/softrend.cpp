@@ -68,11 +68,14 @@ static __m128 _mm_broadcast_float(float v)
 {
 	return _mm_setr_ps(v, v, v, v);
 }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 static __m128i _mm_broadcast_int(int v)
 {
 	__m128i rv = _mm_cvtsi32_si128(v);
 	return _mm_shuffle_epi32(rv, 0);
 }
+#pragma clang diagnostic pop
 static __m128 _mm_load_ps_r(float a, float b, float c, float d)
 {
 	DECL_ALIGN(128) float v[4];
@@ -695,9 +698,9 @@ struct softrend : Renderer
 		const float FDqY23 = FDY23 * q;
 		const float FDqY31 = FDY31 * q;
 
-		const float FDX12mq = FDX12 + FDY12 * q;
-		const float FDX23mq = FDX23 + FDY23 * q;
-		const float FDX31mq = FDX31 + FDY31 * q;
+		//const float FDX12mq = FDX12 + FDY12 * q;
+		//const float FDX23mq = FDX23 + FDY23 * q;
+		//const float FDX31mq = FDX31 + FDY31 * q;
 
 		float hs12 = C1 + FDX12 * (miny + 0.5f) - FDY12 * (minx + 0.5f) + FDqY12 - MIN_12;
 		float hs23 = C2 + FDX23 * (miny + 0.5f) - FDY23 * (minx + 0.5f) + FDqY23 - MIN_23;

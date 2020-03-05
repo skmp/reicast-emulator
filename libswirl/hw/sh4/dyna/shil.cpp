@@ -57,7 +57,7 @@ bool isdst(shil_opcode* op,Sh4RegType rd)
 void PromoteConstAddress(RuntimeBlockInfo* blk)
 {
 	bool is_const=false;
-	u32 value;
+	u32 value=0;
 
 	total_blocks++;
 	for (size_t i=0;i<blk->oplist.size();i++)

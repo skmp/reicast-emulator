@@ -18,7 +18,7 @@
     #include <dlfcn.h>
     #include <util.h>
 #endif
-#ifdef FEAT_HAS_SERIAL_TTY
+#if FEAT_HAS_SERIAL_TTY
     #include <sys/stat.h>
     #if HOST_OS == OS_DARWIN
         #import <util.h>
@@ -344,7 +344,7 @@ void common_linux_setup()
 #endif
 }
 
-#ifdef FEAT_HAS_SERIAL_TTY
+#if FEAT_HAS_SERIAL_TTY
 int pty_master;
 bool common_serial_pty_setup() {
     bool cleanup_pty_symlink = false;

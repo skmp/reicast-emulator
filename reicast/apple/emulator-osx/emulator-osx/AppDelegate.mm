@@ -10,7 +10,7 @@
 #import "libswirl.h"
 #import "gui/gui_renderer.h"
 
-#ifdef FEAT_HAS_SERIAL_TTY
+#if FEAT_HAS_SERIAL_TTY
 #include <util.h>
 #include <sys/stat.h>
 bool common_serial_pty_setup();
@@ -159,7 +159,7 @@ static BOOL _isShuttingDownEmulator = NO;
     }
     _isShuttingDownEmulator = YES;
     
-#ifdef FEAT_HAS_SERIAL_TTY
+#if FEAT_HAS_SERIAL_TTY 
     if (_removePTYSymlink) {
         unlink(settings.debug.VirtualSerialPortFile.c_str());
     }

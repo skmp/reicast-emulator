@@ -3774,6 +3774,7 @@
 				COMPILER_INDEX_STORE_ENABLE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
+					"FEAT_HAS_SERIAL_TTY=1",
 					"$(inherited)",
 				);
 				"GCC_PREPROCESSOR_DEFINITIONS[arch=i386]" = (
@@ -3817,7 +3818,10 @@
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COMPILER_INDEX_STORE_ENABLE = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"FEAT_HAS_SERIAL_TTY=1",
+					"$(inherited)",
+				);
 				"GCC_PREPROCESSOR_DEFINITIONS[arch=i386]" = (
 					TARGET_OSX,
 					"$(inherited)",

@@ -18,7 +18,7 @@ SCIF_SCFSR2_type SCIF_SCFSR2;
 u8 SCIF_SCFRDR2;
 SCIF_SCFDR2_type SCIF_SCFDR2;
 
-#ifdef FEAT_HAS_SERIAL_TTY
+#if FEAT_HAS_SERIAL_TTY
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -27,7 +27,7 @@ extern int pty_master;
 #endif
 
 int SerialReadData(u8* buffer, size_t nbytes) {
-#ifdef FEAT_HAS_SERIAL_TTY
+#if FEAT_HAS_SERIAL_TTY
     if (pty_master != -1) {
         int bytes_read = (int)read(pty_master, buffer, nbytes);
         if (bytes_read >= 0) {
@@ -46,7 +46,7 @@ void SerialWriteData(u8 data) {
 		if (settings.debug.SerialConsole) {
 			putc(data, stdout);
 		}
-#ifdef FEAT_HAS_SERIAL_TTY
+#if FEAT_HAS_SERIAL_TTY
 		if (pty_master != -1) {
 			while(write(pty_master, &data, 1) != 1)
 				printf("SERIAL: PTY write failed, %s\n", strerror(errno));

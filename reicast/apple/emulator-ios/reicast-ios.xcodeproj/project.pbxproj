@@ -1853,6 +1853,7 @@
 					"TARGET_IPHONE=1",
 					"$(inherited)",
 					"TARGET_NO_WEBUI=1",
+					"FEAT_HAS_SERIAL_TTY=0",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1888,6 +1889,7 @@
 					"GLES=1",
 					"TARGET_IPHONE=1",
 					"TARGET_NO_WEBUI=1",
+					"FEAT_HAS_SERIAL_TTY=0",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",

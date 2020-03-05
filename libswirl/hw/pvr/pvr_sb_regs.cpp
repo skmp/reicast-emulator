@@ -427,7 +427,7 @@ struct PVRDevice : MMIODevice {
         SPG_HBLANK_INT.full = 0x031D0000;
         SPG_VBLANK_INT.full = 0x01500104;
         FPU_PARAM_CFG = 0x0007DF77;
-        HALF_OFFSET = 0x00000007;
+        HALF_OFFSET.full = 0x00000007;
         ISP_FEED_CFG = 0x00402000;
         SDRAM_REFRESH = 0x00000020;
         SDRAM_ARB_CFG = 0x0000001F;

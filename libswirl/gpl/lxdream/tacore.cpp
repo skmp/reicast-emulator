@@ -376,7 +376,8 @@ static void ta_end_list() {
 }
 
 static void ta_bad_input_error() {
-    verify(false);
+    asic_RaiseInterrupt(holly_ILLEGAL_PARAM);
+    printf("TA error: holly_ILLEGAL_PARAM. Interrupt raised\n");
     //asic_event( EVENT_PVR_BAD_INPUT );
 }
 
@@ -395,7 +396,8 @@ static int ta_write_polygon_buffer( uint32_t *data, int length )
     pvraddr_t target = posn;
     for( rv=0; rv < length; rv++ ) {
         if( posn == end ) {
-            verify(false);
+            asic_RaiseInterrupt(holly_PRIM_NOMEM);
+            printf("TA error: holly_PRIM_NOMEM. Interrupt Raised\n");
             //asic_event( EVENT_PVR_PRIM_ALLOC_FAIL );
             ////	    ta_status.state = STATE_ERROR;
             break;
@@ -432,7 +434,8 @@ static uint32_t ta_alloc_tilelist( uint32_t reference ) {
             return TA_NO_ALLOC;
         } else if( newposn <= limit ) {
         } else if( newposn <= (limit + ta_status.tilelist_size) ) {
-            verify(false);
+            asic_RaiseInterrupt(holly_MATR_NOMEM);
+            printf("TA error: holly_MATR_NOMEM. Interrupt raised\n");
             //asic_event( EVENT_PVR_MATRIX_ALLOC_FAIL );
             TA_NEXT_OPB = newposn;
             //MMIO_WRITE( PVR2, TA_LISTPOS, newposn );
@@ -453,7 +456,8 @@ static uint32_t ta_alloc_tilelist( uint32_t reference ) {
             return TA_NO_ALLOC;
         } else if( newposn >= limit ) {
         } else if( newposn >= (limit - ta_status.tilelist_size) ) {
-            verify(false);
+            asic_RaiseInterrupt(holly_MATR_NOMEM);
+            printf("TA error: holly_MATR_NOMEM. Interrupt raised\n");
             //asic_event( EVENT_PVR_MATRIX_ALLOC_FAIL );
             TA_NEXT_OPB = newposn;
             //MMIO_WRITE( PVR2, TA_LISTPOS, newposn );
@@ -1077,11 +1081,11 @@ static void ta_parse_vertex_block2( union ta_data *data ) {
         vertex->z = 0;
         vertex->detail[0] = 0;
         vertex->detail[1] = 0;
-        ta_status.poly_vertex[0].detail[0] = data[7].i;
+        ta_status.poly_vertex[0].detail[0] = data[5].i;
         ta_status.poly_vertex[0].detail[1] = 0;
         ta_status.poly_vertex[1].detail[0] = data[6].i;
         ta_status.poly_vertex[1].detail[1] = 0;
-        ta_status.poly_vertex[2].detail[0] = data[5].i;
+        ta_status.poly_vertex[2].detail[0] = data[7].i;
         break;
     case TA_VERTEX_MOD_VOLUME:
     case TA_VERTEX_LISTLESS:

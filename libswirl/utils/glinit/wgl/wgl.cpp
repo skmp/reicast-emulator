@@ -173,8 +173,7 @@ bool wgl_Init(void* hwnd, void* hdc)
 
 bool wgl_Swap()
 {
-	wglSwapLayerBuffers(ourWindowHandleToDeviceContext, WGL_SWAP_MAIN_PLANE);
-	//SwapBuffers(ourWindowHandleToDeviceContext);
+	SwapBuffers(ourWindowHandleToDeviceContext);
 	return true;
 }
 

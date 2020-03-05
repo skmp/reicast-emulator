@@ -57,7 +57,8 @@
 
     OBJECTS are first rendered by ISP in the depth and tag buffers, using a depth pass and a depth test buffer. SPAN SORTER collects spans with
     the same tag and sends them to TSP for shading processing. The process repeats itself until all layers have been indepedently rendered. On
-    each pass, only the pixels with the lowest depth value that pass the depth pass buffer are rendered.
+    each pass, only the pixels with the lowest depth value that pass the depth pass buffer are rendered. In case of identical depth values, the
+    tag buffer is used to sort the pixels by tag as well as depth in order to support co-planar polygons.
 */
 
 
@@ -232,6 +233,7 @@ struct refrend : Renderer
     u8* vram;
 
     RefThreadPool pool;
+    int numRenders = 0;
 
     refrend(u8* vram, function<RefRendInterface*()> createBackend) : vram(vram), createBackend(createBackend) {
         if (MAX_CPU_COUNT == 0) {
@@ -243,6 +245,7 @@ struct refrend : Renderer
         }
     }
 
+    //queue a tile to the correct thread, or render it immediately if threading is disabled 
     void EnqueueTile(int tileId, function<void(RefRendInterface*)> fn) {
         if (!pool.running) {
             fn(backend.get());
@@ -251,6 +254,7 @@ struct refrend : Renderer
         }
     }
 
+    //queue a tile writeout the main thread, or do it immediatelly if threading is disabled
     void EnqueueWriteout(function<void()> fn) {
         if (!pool.running) {
             fn();
@@ -349,8 +353,8 @@ struct refrend : Renderer
             if (params->isp.UV_16b)
             {
                 u32 uv=vri(vram, ptr);
-                cv->u = f16((u16)uv);
-                cv->v = f16((u16)(uv >> 16));
+                cv->u = f16((u16)(uv >>16));
+                cv->v = f16((u16)(uv >> 0));
                 ptr+=4;
             }
             else
@@ -365,7 +369,7 @@ struct refrend : Renderer
         vert_packed_color_(cv->col,col);
         if (params->isp.Offset)
         {
-            //Intensity color (can be missing too ;p)
+            //Intensity color
             u32 col=vri(vram, ptr);ptr+=4;
             vert_packed_color_(cv->spc,col);
         }
@@ -399,6 +403,17 @@ struct refrend : Renderer
         return base;
     }
 
+    ISP_BACKGND_T_type CoreTagFromDesc(u32 cache_bypass, u32 shadow, u32 skip, u32 tag_address, u32 tag_offset) {
+        ISP_BACKGND_T_type rv;
+        
+        rv.cache_bypass = cache_bypass;
+        rv.shadow = shadow;
+        rv.skip = skip;
+        rv.tag_address = tag_address;
+        rv.tag_offset = tag_offset;
+
+        return rv;
+    }
 
     // render a triangle strip object list entry
     void RenderTriangleStrip(RefRendInterface* backend, RenderMode render_mode, ObjectListEntry obj, taRECT* rect)
@@ -408,7 +423,9 @@ struct refrend : Renderer
 
         u32 param_base = PARAM_BASE & 0xF00000;
 
-        decode_pvr_vetrices(&params, param_base + obj.tstrip.param_offs_in_words * 4, obj.tstrip.skip, obj.tstrip.shadow, vtx, 8);
+        u32 tag_address = param_base + obj.tstrip.param_offs_in_words * 4;
+
+        decode_pvr_vetrices(&params, tag_address, obj.tstrip.skip, obj.tstrip.shadow, vtx, 8);
 
 
         for (int i = 0; i < 6; i++)
@@ -416,7 +433,8 @@ struct refrend : Renderer
             if (obj.tstrip.mask & (1 << (5-i)))
             {
 
-                parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode);
+                auto core_tag = CoreTagFromDesc(params.isp.CacheBypass, obj.tstrip.shadow, obj.tstrip.skip, tag_address, i);
+                parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[i], render_mode, core_tag);
 
                 RenderTriangle(backend, render_mode, &params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], nullptr, rect);
             }
@@ -438,12 +456,14 @@ struct refrend : Renderer
             DrawParameters params;
             Vertex vtx[3];
 
-            param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.tarray.skip, obj.tarray.shadow, vtx, 3);
+            u32 tag_address = param_ptr;
+            param_ptr = decode_pvr_vetrices(&params, tag_address, obj.tarray.skip, obj.tarray.shadow, vtx, 3);
             
             parameter_tag_t tag = 0;
             if (render_mode != RM_MODIFIER)
             {
-                tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
+                auto core_tag = CoreTagFromDesc(params.isp.CacheBypass, obj.tstrip.shadow, obj.tstrip.skip, tag_address, 0);
+                tag = backend->AddFpuEntry(&params, &vtx[0], render_mode, core_tag);
             }
 
             RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], nullptr, rect);
@@ -464,9 +484,11 @@ struct refrend : Renderer
             DrawParameters params;
             Vertex vtx[4];
 
-            param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
+            u32 tag_address = param_ptr;
+            param_ptr = decode_pvr_vetrices(&params, tag_address, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
             
-            parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode);
+            auto core_tag = CoreTagFromDesc(params.isp.CacheBypass, obj.tstrip.shadow, obj.tstrip.skip, tag_address, 0);
+            parameter_tag_t tag = backend->AddFpuEntry(&params, &vtx[0], render_mode, core_tag);
 
             //TODO: FIXME
             RenderTriangle(backend, render_mode, &params, tag, 0, vtx[0], vtx[1], vtx[2], &vtx[3], rect);
@@ -512,11 +534,16 @@ struct refrend : Renderer
     // Render a frame
     // Called on START_RENDER write
     virtual bool RenderPVR() {
+        numRenders++;
 
         u32 base = REGION_BASE;
 
         RegionArrayEntry entry;
         int tilenum = 1;
+
+        EnqueueTile(0, [=](RefRendInterface* backend){
+            backend->DebugOnFrameStart(numRenders);
+        });
 
         // Parse region array
         do {
@@ -531,12 +558,14 @@ struct refrend : Renderer
 
                 parameter_tag_t bgTag;
 
+                backend->DebugOnTileStart(rect.left, rect.top);
+
                 // register BGPOLY to fpu
                 {
                     DrawParameters params;
                     Vertex vtx[8];
                     decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
-                    bgTag = backend->AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE);
+                    bgTag = backend->AddFpuEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], RM_OPAQUE, ISP_BACKGND_T);
                 }
 
                 // Tile needs clear?
@@ -570,13 +599,16 @@ struct refrend : Renderer
                 // layer peeling rendering
                 if (!entry.trans.empty)
                 {
+                    // clear the param buffer
+                    backend->ClearParamBuffer(TAG_INVALID);
 
                     do
                     {
+                        // prepare for a new pass
                         backend->ClearPixelsDrawn();
 
-                        //copy depth test to depth reference buffer, clear depth test buffer, clear stencil, clear Param buffer
-                        backend->PeelBuffers(0, FLT_MAX, 0);
+                        // copy depth test to depth reference buffer, clear depth test buffer, clear stencil
+                        backend->PeelBuffers(FLT_MAX, 0);
 
                         // render to TAGS
                         RenderObjectList(backend, RM_TRANSLUCENT, entry.trans.ptr_in_words * 4, &rect);
@@ -587,6 +619,7 @@ struct refrend : Renderer
                         }
 
                         // render TAGS to ACCUM
+                        // also marks TAGS as invalid, but keeps the index for coplanar sorting
                         backend->RenderParamTags(RM_TRANSLUCENT, rect.left, rect.top);
                     } while (backend->GetPixelsDrawn() != 0);
                 }

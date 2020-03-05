@@ -35,6 +35,7 @@ enum RenderMode {
     RM_COUNT
 };
 
+#define TAG_INVALID 1
 
 typedef u32 parameter_tag_t;
 
@@ -50,8 +51,11 @@ struct RefRendInterface
     // Clear the buffers
     virtual void ClearBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
 
+    // Clear only the param buffer (used for peeling)
+    virtual void ClearParamBuffer(u32 paramValue) = 0;
+
     // Clear and set DEPTH2 for peeling
-    virtual void PeelBuffers(u32 paramValue, float depthValue, u32 stencilValue) = 0;
+    virtual void PeelBuffers(float depthValue, u32 stencilValue) = 0;
 
     // Summarize tile after rendering modvol (inside)
     virtual void SummarizeStencilOr() = 0;
@@ -66,7 +70,7 @@ struct RefRendInterface
     virtual u32 GetPixelsDrawn() = 0;
 
     // Add an entry to the fpu parameters list
-    virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode) = 0;
+    virtual parameter_tag_t AddFpuEntry(DrawParameters* params, Vertex* vtx, RenderMode render_mode, ISP_BACKGND_T_type core_tag) = 0;
 
     // Clear the fpu parameters list
     virtual void ClearFpuEntries() = 0;
@@ -82,6 +86,14 @@ struct RefRendInterface
     virtual void RasterizeTriangle(RenderMode render_mode, DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, const Vertex* v4, taRECT* area) = 0;
 
     virtual ~RefRendInterface() { };
+
+    // Debug-level
+    virtual u8* DebugGetAllBuffers() = 0;
+
+    virtual void DebugOnFrameStart(int fn) { }
+    virtual void DebugOnTileStart(int x, int y) { }
 };
 
 Renderer* rend_refred_base(u8* vram, function<RefRendInterface*()> createBackend);
+
+RefRendInterface*  rend_refred_debug(RefRendInterface* backend);

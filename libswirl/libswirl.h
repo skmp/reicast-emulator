@@ -19,7 +19,7 @@ struct VirtualDreamcast {
     virtual void Resume() = 0;
     virtual bool Init() = 0;
     virtual void Term() = 0;
-    virtual int StartGame(const char* path) = 0;
+    virtual int StartGame(const string& path) = 0;
     virtual void RequestReset() = 0;
     virtual bool HandleFault(unat addr, rei_host_context_t* ctx) = 0;
     virtual ~VirtualDreamcast() { }

@@ -89,6 +89,10 @@ Building for iOS / MacOS
 ---
 Requirements:
 
+Due to the use of OpenMP, which is not included with the default Xcode LLVM compiler, you must first install LLVM and OpenMP using the Homebrew package manager: `brew install libomp llvm`
+
+[Install Homebrew](https://brew.sh/)
+
 [Latest Xcode](https://developer.apple.com/xcode/downloads/)
 
 * [iOSOpenDev](http://iosopendev.com/download/) if developing without an official Apple certificate
@@ -103,11 +107,11 @@ From project root directory:
 
 | iOS             | Mac                           |
 | --------------- | ----------------------------- |
-| `cd shell/ios/` | `cd shell/apple/emulator-osx` |
+| `cd reicast-emulator/reicast/apple/emulator-ios` | `cd reicast-emulator/reicast/apple/emulator-osx` |
 
 `xcodebuild -configuration Release`
 
-Or open the .xcodeproj in Xcode and hit "Build".
+Or open the workspace `reicast-emulator/reicast/apple/reicast.xcworkspace` in Xcode, choose the target, and press Command + B to build.
 
 Building for Linux
 ------------------

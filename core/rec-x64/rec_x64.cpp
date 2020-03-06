@@ -1844,15 +1844,16 @@ private:
 		  void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
 		  if (ptr)
 		  {
-			 mov(rax, reinterpret_cast<uintptr_t>(ptr));
+			 uintptr_t uintptr = reinterpret_cast<uintptr_t>(ptr);
+			 mov(rax, uintptr);
 
-			 if (sz >= 8) {
+			 if (sz >= 8 && !(uintptr & 7)) {
 				mov(rdx, *(u64*)ptr);
 				cmp(qword[rax], rdx);
 				sz -= 8;
 				sa += 8;
 			 }
-			 else if (sz >= 4) {
+			 else if (sz >= 4 && !(uintptr & 3)) {
 				mov(edx, *(u32*)ptr);
 				cmp(dword[rax], edx);
 				sz -= 4;

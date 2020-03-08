@@ -1,5 +1,6 @@
 /*
 	This file is part of libswirl
+	original code by flyinghead
 */
 #include "license/bsd"
 

@@ -39,12 +39,17 @@ static void gl_resize();
     [self mainSetup];
 }
 
-- (void)applicationWillTerminate:(NSNotification *)notification {
-    [self shutdownEmulator];
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
+    // Exit the app when clicking the window's close button
+    return YES;
 }
 
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
-    return YES;
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+    // Start shutting down the emulator
+    [self shutdownEmulator];
+    
+    // Keep the app open until it's safe to exit
+    return NSTerminateLater;
 }
 
 // TODO: BEN This works while in BIOS or game, but doesn't correctly update the DPI for ImGUI
@@ -55,11 +60,8 @@ static void gl_resize();
     gl_resize();
 }
 
-- (void)windowWillClose:(NSNotification *)notification {
-    [self shutdownEmulator];
-}
-
 - (void)emuGLViewIsResizing:(EmuGLView *)emuGLView {
+    // Smoother rendering while resizing the window
     _glViewSize = emuGLView.frame.size;
     gl_resize();
 }
@@ -76,17 +78,6 @@ static void gl_resize();
     }
     _removePTYSymlink = common_serial_pty_setup();
     [self setupUIThread];
-}
-
-- (void)setupUIThread {
-    _uiThread = [[NSThread alloc] initWithBlock:^{
-        NSLog(@"Starting UI Loop");
-        reicast_ui_loop();
-        NSLog(@"UI Loop ended");
-    }];
-    _uiThread.threadPriority = 1.0;
-    _uiThread.qualityOfService = NSQualityOfServiceUserInteractive;
-    [_uiThread start];
 }
 
 - (void)setupWindow {
@@ -107,6 +98,19 @@ static void gl_resize();
     // Set initial scale factor and view size
     _backingScaleFactor = _window.screen.backingScaleFactor;
     _glViewSize = _glView.bounds.size;
+}
+
+- (void)setupScreenDPI {
+    // Calculate screen DPI
+    NSScreen *screen = _window.screen;
+    NSDictionary *description = [screen deviceDescription];
+    NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
+    // Must multiply by the scale factor to account for retina displays
+    displayPixelSize.width *= screen.backingScaleFactor;
+    displayPixelSize.height *= screen.backingScaleFactor;
+    CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
+    screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
+    NSLog(@"displayPixelSize: %@  displayPhysicalSize: %@  screen_dpi: %d", NSStringFromSize(displayPixelSize), NSStringFromSize(displayPhysicalSize), screen_dpi);
 }
 
 - (void)setupPaths {
@@ -136,43 +140,51 @@ static void gl_resize();
     add_system_data_dir(data_dir);
 }
 
-- (void)setupScreenDPI {
-    // Calculate screen DPI
-    NSScreen *screen = _window.screen;
-    NSDictionary *description = [screen deviceDescription];
-    NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
-    // Must multiply by the scale factor to account for retina displays
-    displayPixelSize.width *= screen.backingScaleFactor;
-    displayPixelSize.height *= screen.backingScaleFactor;
-    CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
-    screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
-    NSLog(@"displayPixelSize: %@  displayPhysicalSize: %@  screen_dpi: %d", NSStringFromSize(displayPixelSize), NSStringFromSize(displayPhysicalSize), screen_dpi);
+- (void)setupUIThread {
+    // Run the rendering in a dedicated thread
+    _uiThread = [[NSThread alloc] initWithBlock:^{
+        NSLog(@"Starting UI Loop");
+        reicast_ui_loop();
+        NSLog(@"UI Loop ended");
+        
+        // Terminate emulator (must be done after UI Loop ends or it may crash, must be run on main thread or it will crash)
+        [_sharedInstance performSelectorOnMainThread:@selector(uiThreadEnded) withObject:nil waitUntilDone:YES];
+    }];
+    
+    // Ensure the thread has the highest priority for the best performance
+    _uiThread.threadPriority = 1.0;
+    _uiThread.qualityOfService = NSQualityOfServiceUserInteractive;
+    [_uiThread start];
 }
 
-static BOOL _isShuttingDownEmulator = NO;
-- (void)shutdownEmulator {
-    if (_isShuttingDownEmulator) {
-        return;
-    }
-    _isShuttingDownEmulator = YES;
+// Terminate emulator and safely exit the app (must be called from the main thread)
+- (void)uiThreadEnded {
+    // Ensure that the gl view's context is the current context for this thread or it may crash
+    [_glView.openGLContext makeCurrentContext];
     
-#if FEAT_HAS_SERIAL_TTY 
+    // Terminate the emulator
+    reicast_term();
+    
+    // Notify the app that it can safely exit now
+    [NSApp replyToApplicationShouldTerminate:YES];
+}
+
+- (void)shutdownEmulator {
+    #if FEAT_HAS_SERIAL_TTY
     if (_removePTYSymlink) {
         unlink(settings.debug.VirtualSerialPortFile.c_str());
     }
-#endif
+    #endif
     
     // Shut down emulator
     if (virtualDreamcast && sh4_cpu->IsRunning()) {
         virtualDreamcast->Stop([] {
+            // Stop the UI thread (which will then complete the shutdown, otherwise doing it here will crash)
             g_GUIRenderer->Stop();
-            reicast_term();
-            _isShuttingDownEmulator = NO;
         });
     } else {
+        // Stop the UI thread (which will then complete the shutdown, otherwise doing it here will crash)
         g_GUIRenderer->Stop();
-        reicast_term();
-        _isShuttingDownEmulator = NO;
     }
 }
 
@@ -229,7 +241,7 @@ bool os_gl_swap() {
 
 // Called when the application terminates
 void os_gl_term() {
-    [_sharedInstance shutdownEmulator];
+    // Left empty on purpose as we have nothing to run here
 }
 
 static void gl_resize() {

@@ -1,10 +1,7 @@
-//
-//  EmuGLView.m
-//  reicast-osx
-//
-//  Created by Benjamin Baron on 2/27/20.
-//  Copyright © 2020 reicast. All rights reserved.
-//
+/*
+    This file is part of reicast-osx
+*/
+#include "license/bsd"
 
 #import "EmuGLView.h"
 #import "input.h"

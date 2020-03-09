@@ -1,10 +1,7 @@
-//
-//  main.m
-//  reicast-osx
-//
-//  Created by Benjamin Baron on 3/3/20.
-//  Copyright © 2020 reicast. All rights reserved.
-//
+/*
+    This file is part of reicast-osx
+*/
+#include "license/bsd"
 
 #import <AppKit/AppKit.h>
 

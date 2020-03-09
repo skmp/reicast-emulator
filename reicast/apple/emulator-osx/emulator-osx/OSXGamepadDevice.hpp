@@ -1,10 +1,8 @@
-//
-//  OSXGamepadDevice.hpp
-//  reicast-osx
-//
-//  Created by flyinghead on 26/02/2019.
-//  Copyright © 2019 reicast. All rights reserved.
-//
+/*
+    This file is part of reicast-osx
+*/
+#include "license/bsd"
+
 #include "input/gamepad_device.h"
 #include "input.h"
 #include "gui/gui.h"

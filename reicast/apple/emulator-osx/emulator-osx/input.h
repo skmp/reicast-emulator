@@ -1,10 +1,8 @@
-//
-//  input.h
-//  emulator-osx
-//
-//  Created by admin on 8/5/15.
-//  Copyright (c) 2015 reicast. All rights reserved.
-//
+/*
+    This file is part of reicast-osx
+*/
+#include "license/bsd"
+
 #pragma once
 
 #ifdef __cplusplus

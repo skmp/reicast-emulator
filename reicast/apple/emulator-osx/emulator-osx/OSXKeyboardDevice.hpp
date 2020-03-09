@@ -1,10 +1,8 @@
-//
-//  OSXKeyboardDevice.hpp
-//  reicast-osx
-//
-//  Created by flyinghead on 26/02/2019.
-//  Copyright © 2019 reicast. All rights reserved.
-//
+/*
+    This file is part of reicast-osx
+*/
+#include "license/bsd"
+
 #pragma once
 #include "input/keyboard_device.h"
 

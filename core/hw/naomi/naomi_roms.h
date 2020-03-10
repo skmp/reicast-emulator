@@ -5102,6 +5102,7 @@ Games[] =
             { NULL, 0, 0, 0x00000000 },
         },
         "gdl-0002",
+        &sfz3ugd_inputs
     },
     // Shakatto Tambourine (Rev B) (GDS-0002B)
     {

@@ -2802,18 +2802,14 @@ void UpdateInputState(u32 port)
 		   if ( digital_triggers )
 		   {
 		      // -- digital left trigger
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
+            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2))
 		         lt[port]=0xFF;
-            else if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2))
-		         lt[port]=0x7F;
 		      else
 		         lt[port]=0;
 		      // -- digital right trigger
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R))
-		         rt[port]=0xFF;
-            else if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R2))
-		         rt[port]=0x7F;
-		      else
+            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R2))
+            	rt[port]=0xFF;
+            else
 		         rt[port]=0;
 		   }
 		   else

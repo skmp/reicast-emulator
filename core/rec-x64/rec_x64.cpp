@@ -1945,9 +1945,12 @@ private:
 
 		// Need to save xmm registers as they are not preserved in linux/mach
 		int offset = 0;
+		u32 stack_size = 0;
 		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
 		{
-			sub(rsp, 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped));
+			stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
+			stack_size = (((stack_size + 15) >> 4) << 4); // Stack needs to be 16-byte aligned before the call
+			sub(rsp, stack_size);
 			if (xmm8_mapped)
 			{
 				movd(ptr[rsp + offset], xmm8);
@@ -1996,7 +1999,7 @@ private:
 				offset -= 4;
 				movd(xmm8, ptr[rsp + offset]);
 			}
-			add(rsp, 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped));
+			add(rsp, stack_size);
 		}
 #endif
 	}

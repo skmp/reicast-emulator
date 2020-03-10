@@ -165,9 +165,9 @@ void FixUpFlash()
      		syscfg.mono = 0;
      		syscfg.autostart = 1;
      	}
-     	u32 time = GetRTC_now();
-     	syscfg.time_lo = time & 0xffff;
-     	syscfg.time_hi = time >> 16;
+     	u32 now = GetRTC_now();
+     	syscfg.time_lo = now & 0xffff;
+     	syscfg.time_hi = now >> 16;
      	if (settings.dreamcast.language <= 5)
      		syscfg.lang = settings.dreamcast.language;
 
@@ -175,6 +175,18 @@ void FixUpFlash()
      		WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
 
      	add_isp_to_nvmem(&sys_nvmem_flash);
+
+     	// Check the console ID used by some network games (chuchu rocket)
+     	u8 *console_id = &sys_nvmem_flash.data[0x1A058];
+     	if (!memcmp(console_id, "\377\377\377\377\377\377", 6))
+     	{
+     		srand(now);
+     		for (int i = 0; i < 6; i++)
+     		{
+     			console_id[i] = rand();
+     			console_id[i + 0xA0] = console_id[i];	// copy at 1A0F8
+     		}
+     	}
 	}
 }
 

@@ -198,10 +198,11 @@ __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
 	{
 		//bilinear filtering
 		//PowerVR supports also trilinear via two passes, but we ignore that for now
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+		bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && settings.rend.UseMipmaps;
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #ifdef GL_TEXTURE_LOD_BIAS
-		if (!gl.is_gles && gl.gl_major >= 3 && gp->tcw.MipMapped && settings.rend.UseMipmaps)
+		if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
 #endif
 		if (gl.max_anisotropy > 1.f)
@@ -211,7 +212,7 @@ __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
 						std::min((f32)settings.rend.AnisotropicFiltering, gl.max_anisotropy));
 				// Set the recommended minification filter for best results
-				if (gp->tcw.MipMapped && settings.rend.UseMipmaps)
+				if (mipmapped)
 					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			}
 			else

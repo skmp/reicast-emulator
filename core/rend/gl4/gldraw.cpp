@@ -178,9 +178,10 @@ static void SetGPState(const PolyParam* gp)
 				{
 					//bilinear filtering
 					//PowerVR supports also trilinear via two passes, but we ignore that for now
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, (tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+					bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && settings.rend.UseMipmaps;
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-					if (gp->tcw.MipMapped && settings.rend.UseMipmaps)
+					if (mipmapped)
 						glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
 					if (gl.max_anisotropy > 1.f)
 					{
@@ -189,7 +190,7 @@ static void SetGPState(const PolyParam* gp)
 							glSamplerParameterf(texSamplers[i], GL_TEXTURE_MAX_ANISOTROPY_EXT,
 									std::min((f32)settings.rend.AnisotropicFiltering, gl.max_anisotropy));
 							// Set the recommended minification filter for best results
-							if (gp->tcw.MipMapped && settings.rend.UseMipmaps)
+							if (mipmapped)
 								glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 						}
 						else

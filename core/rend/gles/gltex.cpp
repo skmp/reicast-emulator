@@ -46,7 +46,7 @@ GlTextureCache TexCache;
 
 extern "C" struct retro_hw_render_callback hw_render;
 
-void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped)
+void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
 	if (texID != 0)
 	{
@@ -73,7 +73,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 			die("Unsupported texture type");
 			break;
 		}
-		if (mipmapped)
+		if (mipmapsIncluded)
 		{
 			int mipmapLevels = 0;
 			int dim = width;
@@ -128,9 +128,9 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 		}
 		else
 		{
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-		glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, gltype, temp_tex_buffer);
+			glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, gltype, temp_tex_buffer);
+			if (mipmapped)
+				glGenerateMipmap(GL_TEXTURE_2D);
 	}
 		glCheck();
 	}

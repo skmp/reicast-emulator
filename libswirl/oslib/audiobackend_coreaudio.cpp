@@ -19,6 +19,7 @@
  */
 
 #include "oslib/audiostream.h"
+#include "oslib/threading.h"
 
 #if HOST_OS == OS_DARWIN
 #include <atomic>
@@ -51,8 +52,8 @@ static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags,
         }
         else
         {
-            memcpy(abl->mBuffers[i].mData, samples_temp + samples_rptr, buf_size);
-            samples_rptr = (samples_rptr + buf_size) % BUFSIZE;
+            memcpy(abl->mBuffers[i].mData, samples_temp + samples_rptr.load(), buf_size);
+            samples_rptr = (samples_rptr.load() + buf_size) % BUFSIZE;
         }
     }
 

@@ -22,28 +22,24 @@ SCIF_SCFDR2_type SCIF_SCFDR2;
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 extern int pty_master;
 #endif
 
-int SerialHasPendingData() {
-	int bytes_avaiable = 0;
-	#if FEAT_HAS_SERIAL_TTY
-		if (pty_master != -1) {
-			ioctl(pty_master, FIONREAD, &bytes_avaiable);
-			return bytes_avaiable;
-		}
-	#endif
-	return bytes_avaiable;
-}
-
-void SerialReadData(u8* buffer, size_t nbytes) {
-	u8 rd = 0;
-	#if FEAT_HAS_SERIAL_TTY
-		if (pty_master != -1){
-			while(read(pty_master, buffer, nbytes) != nbytes)
-				printf("SERIAL: PTY read failed, %d\n", errno);
-		}
-	#endif
+int SerialReadData(u8* buffer, size_t nbytes) {
+#if FEAT_HAS_SERIAL_TTY
+    if (pty_master != -1) {
+        int bytes_read = (int)read(pty_master, buffer, nbytes);
+        if (bytes_read >= 0) {
+            return bytes_read;
+        } else if (bytes_read < 0 && errno != EAGAIN) {
+            // Some error other than "no data available" occurred during read
+            printf("SERIAL: PTY read failed, %s\n", strerror(errno));
+        }
+    }
+#endif
+    
+    return -1;
 }
 
 void SerialWriteData(u8 data) {
@@ -53,7 +49,7 @@ void SerialWriteData(u8 data) {
 #if FEAT_HAS_SERIAL_TTY
 		if (pty_master != -1) {
 			while(write(pty_master, &data, 1) != 1)
-				printf("SERIAL: PTY write failed, %d\n", errno);
+				printf("SERIAL: PTY write failed, %s\n", strerror(errno));
 		}
 #endif
 }
@@ -99,20 +95,13 @@ struct Sh4ModScif_impl : Sh4ModScif
 
 	bool FifoRefill()
 	{
-		auto bytes = SerialHasPendingData();
-		if (!bytes)
-			return false;
-
-		if (bytes > 64)
-			bytes = 64;
-
 		u8 temp[64];
-		SerialReadData(temp, bytes);
-		for (int i = 0; i<bytes; i++) {
+		int bytes_read = SerialReadData(temp, 64);
+		for (int i = 0; i<bytes_read; i++) {
 			fifo.push(temp[i]);
 		}
 
-		return true;
+		return bytes_read > 0;
 	}
 
 	u8 FifoRead()

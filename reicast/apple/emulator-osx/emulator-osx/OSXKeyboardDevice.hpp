@@ -1,18 +1,14 @@
-//
-//  osx_keyboard.h
-//  reicast-osx
-//
-//  Created by flyinghead on 26/02/2019.
-//  Copyright © 2019 reicast. All rights reserved.
-//
+/*
+    This file is part of reicast-osx
+*/
+#include "license/bsd"
+
 #pragma once
 #include "input/keyboard_device.h"
 
-class OSXKeyboardDevice : public KeyboardDeviceTemplate<UInt16>
-{
+class OSXKeyboardDevice : public KeyboardDeviceTemplate<UInt16> {
 public:
-	OSXKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port)
-	{
+	OSXKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port) {
 		//04-1D Letter keys A-Z (in alphabetic order)
 		kb_map[kVK_ANSI_A] = 0x04;
 		kb_map[kVK_ANSI_B] = 0x05;
@@ -154,10 +150,11 @@ public:
 		//E8-FF Reserved
 	}
 	
-	virtual const char* name() override { return "OSX Keyboard"; }
+	virtual const char* name() override {
+        return "OSX Keyboard";
+    }
 	
-	int convert_modifier_keys(UInt modifierFlags)
-	{
+	int convert_modifier_keys(UInt modifierFlags) {
 		int kb_shift = 0;
 		if (modifierFlags & NSEventModifierFlagShift)
 			kb_shift |= 0x02 | 0x20;
@@ -167,8 +164,7 @@ public:
 	}
 	
 protected:
-	virtual u8 convert_keycode(UInt16 keycode) override
-	{
+	virtual u8 convert_keycode(UInt16 keycode) override {
 		return kb_map[keycode];
 	}
 	

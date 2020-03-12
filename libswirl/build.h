@@ -325,7 +325,7 @@
 #endif
 
 #ifndef FEAT_HAS_SERIAL_TTY
-    #define FEAT_HAS_SERIAL_TTY (HOST_OS == OS_LINUX && !defined(_ANDROID))
+    #define FEAT_HAS_SERIAL_TTY (HOST_OS == OS_LINUX && !defined(_ANDROID)) || (HOST_OS == OS_DARWIN && !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR)
 #endif
 
 //Depricated build configs

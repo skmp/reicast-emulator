@@ -10,16 +10,22 @@
 #include <pthread.h>
 
 #if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
+
 #if HOST_OS == OS_DARWIN
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
 	#include <TargetConditionals.h>
+    #include <dlfcn.h>
+    #include <util.h>
 #endif
-#if !defined(TARGET_NACL32)
-#include <poll.h>
-#include <termios.h>
-#endif  
-//#include <curses.h>
+#if FEAT_HAS_SERIAL_TTY
+    #include <sys/stat.h>
+    #if HOST_OS == OS_DARWIN
+        #import <util.h>
+    #else
+        #include <pty.h>
+    #endif
+#endif
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
@@ -51,8 +57,10 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	
     rei_host_context_t ctx;
     
-    context_from_segfault(&ctx, segfault_ctx);
-
+    // TODO: BEN fix this properly
+    //context_from_segfault(&ctx, segfault_ctx);
+    context_from_segfault(&ctx);
+    
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
 	
@@ -105,8 +113,6 @@ extern "C" u8* generic_fault_handler ()
 	return trap_ptr_fault;
 }
 
-
-
 naked void re_raise_fault()
 {
 	__asm__ __volatile__(
@@ -114,10 +120,14 @@ naked void re_raise_fault()
 	        "movl %0, %%esp\n"
 	        "call generic_fault_handler\n"
 	        "movb $0, (%%eax)"
-		#elif HOST_CPU == CPU_X64
-	        "movq %0, %%rsp\n"
-	        "call generic_fault_handler\n"
-	        "movb $0, (%%rax)"
+        #elif HOST_CPU == CPU_X64
+            "movq %0, %%rsp\n"
+            #if HOST_OS == OS_DARWIN
+                "call _generic_fault_handler\n"
+            #else
+                "call generic_fault_handler\n"
+            #endif
+            "movb $0, (%%rax)"
         #elif HOST_CPU == CPU_ARM
 			"mov sp, %0\n"
 	        "bl generic_fault_handler\n"
@@ -291,11 +301,11 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_MAC) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
-          printf("Personality: %08X\n", personality(0xFFFFFFFF));
-          personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-          printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
-        #endif
+    #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_MAC) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
+        printf("Personality: %08X\n", personality(0xFFFFFFFF));
+        personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
+        printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+    #endif
 }
 
 void linux_rpi2_init() {
@@ -333,4 +343,57 @@ void common_linux_setup()
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 #endif
 }
+
+#if FEAT_HAS_SERIAL_TTY
+int pty_master;
+bool common_serial_pty_setup() {
+    bool cleanup_pty_symlink = false;
+    if (settings.debug.VirtualSerialPort) {
+        int slave;
+        char slave_name[2048];
+        pty_master = -1;
+        if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0) {
+            // Set the port to be non-blocking
+            int flags = fcntl(pty_master, F_GETFL, 0);
+            fcntl(pty_master, F_SETFL, flags | O_NONBLOCK);
+            
+            // Turn ECHO off, we don't want to loop-back
+            struct termios tp;
+            tcgetattr(pty_master, &tp);
+            tp.c_lflag &= ~ECHO;
+            tcsetattr(pty_master, TCSAFLUSH, &tp);
+            printf("Serial: Created virtual serial port at %s\n", slave_name);
+
+            if (settings.debug.VirtualSerialPortFile.size()) {
+                const char *file_name = settings.debug.VirtualSerialPortFile.c_str();
+                
+                // Check if a symlink already exists at this location, and if so, delete it so we can make a new one
+                struct stat stat_buffer;
+                if (lstat(file_name, &stat_buffer) == 0 && S_ISLNK(stat_buffer.st_mode)) {
+                    // File is a symlink, so delete it
+                    if (remove(file_name) == 0) {
+                        printf("Serial: Removed existing symlink at %s\n", file_name);
+                    } else {
+                        printf("Serial: Failed to remove existing symlink at %s, %s\n", file_name, strerror(errno));
+                    }
+                }
+                
+                if (symlink(slave_name, file_name) == 0) {
+                    cleanup_pty_symlink = true;
+                    printf("Serial: Created symlink to %s\n", file_name);
+                } else {
+                    printf("Serial: Failed to create symlink to %s, %s\n", file_name, strerror(errno));
+                }
+            }
+            // not for us to use, we use master
+            // do not close to avoid EIO though
+            // close(slave);
+        } else {
+            printf("Serial: Failed to create PTY: %s\n", strerror(errno));
+        }
+    }
+    return cleanup_pty_symlink;
+}
+#endif
+
 #endif

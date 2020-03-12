@@ -1,17 +1,15 @@
-//
-//  osx_gamepad.h
-//  reicast-osx
-//
-//  Created by flyinghead on 26/02/2019.
-//  Copyright © 2019 reicast. All rights reserved.
-//
-#include "input/gamepad_device.h"
+/*
+    This file is part of reicast-osx
+*/
+#include "license/bsd"
 
-class KbInputMapping : public InputMapping
-{
+#include "input/gamepad_device.h"
+#include "input.h"
+#include "gui/gui.h"
+
+class KbInputMapping : public InputMapping {
 public:
-	KbInputMapping()
-	{
+	KbInputMapping() {
 		name = "OSX Keyboard";
 		set_button(DC_BTN_A, kVK_ANSI_X);
 		set_button(DC_BTN_B, kVK_ANSI_C);
@@ -30,11 +28,9 @@ public:
 	}
 };
 
-class OSXKbGamepadDevice : public GamepadDevice
-{
+class OSXKbGamepadDevice : public GamepadDevice {
 public:
-	OSXKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "OSX")
-	{
+	OSXKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "OSX") {
 		_name = "Keyboard";
 		_unique_id = "osx_keyboard";
 		if (!find_mapping())
@@ -42,33 +38,29 @@ public:
 	}
 };
 
-class MouseInputMapping : public InputMapping
-{
+class MouseInputMapping : public InputMapping {
 public:
-	MouseInputMapping()
-	{
+	MouseInputMapping() {
 		name = "OSX Mouse";
 		set_button(DC_BTN_A, 1);		// Left button
 		set_button(DC_BTN_B, 2);		// Right button
 		set_button(DC_BTN_START, 3);	// Other button
-
+        
 		dirty = false;
 	}
 };
 
-class OSXMouseGamepadDevice : public GamepadDevice
-{
+class OSXMouseGamepadDevice : public GamepadDevice {
 public:
-	OSXMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "OSX")
-	{
+	OSXMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "OSX") {
 		_name = "Mouse";
 		_unique_id = "osx_mouse";
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}
-	bool gamepad_btn_input(u32 code, bool pressed) override
-	{
-		if (gui_is_open())
+	
+    bool gamepad_btn_input(u32 code, bool pressed) override {
+		if (g_GUI->IsOpen())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
@@ -77,5 +69,3 @@ public:
 			return GamepadDevice::gamepad_btn_input(code, pressed);
 	}
 };
-
-

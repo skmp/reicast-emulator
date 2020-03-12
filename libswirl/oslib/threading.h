@@ -16,6 +16,10 @@
 	#include <windows.h>
 #else
 	#include <pthread.h>
+    #if HOST_OS == OS_DARWIN
+        #include <mach/mach.h>
+        #include <mach/clock.h>
+    #endif
 #endif
 
 void SleepMs(unsigned count);

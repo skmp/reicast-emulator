@@ -125,7 +125,7 @@ bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 		return false;
 	}
 
-	fseek(fsource, image->length-8, SEEK_SET);
+	fseek(fsource, (size_t)image->length-8U, SEEK_SET);
 	fread(&image->version, 4, 1, fsource);
 	fread(&image->header_offset, 4, 1, fsource);
 
@@ -144,7 +144,7 @@ void CDI_get_sessions (FILE *fsource, image_s *image)
 {
 #ifndef DEBUG_CDI
      if (image->version == CDI_V35)
-        fseek(fsource, (image->length - image->header_offset), SEEK_SET);
+        fseek(fsource, ((size_t)image->length - (size_t)image->header_offset), SEEK_SET);
      else
         fseek(fsource, image->header_offset, SEEK_SET);
 

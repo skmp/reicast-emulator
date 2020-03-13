@@ -142,7 +142,7 @@ public:
 		push(r15);
 		sub(rsp, STACK_ALIGN);
 
-		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);
+		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);  // rip 
 
 		L(run_loop);  // -- run_loop
 			mov(rax, qword[rip + &p_sh4rcb]);
@@ -443,10 +443,12 @@ public:
 					L(negative_shift);
 					test(ecx, 0x1f);
 					jnz(non_zero);
+
 					if (op.op == shop_shld)
 						xor_(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd));
 					else
 						sar(regalloc.MapRegister(op.rd), 31);
+
 					jmp(exit);
 
 					L(non_zero);
@@ -1403,7 +1405,7 @@ struct X64NGenBackend : NGenBackend
 		auto it = block->memory_accesses.find(code_ptr);
 		if (it == block->memory_accesses.end())
 		{
-			printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
+			printf("ngen_Rewrite: memory access at %p not found (%llu entries)\n", code_ptr, block->memory_accesses.size());
 			return false;
 		}
 		u32 opid = it->second.opid;

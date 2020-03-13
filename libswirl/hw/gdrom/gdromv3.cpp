@@ -9,6 +9,11 @@
 	Overly complex implementation of a very ugly device
 */
 
+#include <iostream>
+#include <iomanip>
+#include <chrono>
+#include <stdlib.h>
+#include "perf_tools/moving_average.hpp"
 #include "gdromv3.h"
 
 #include "types.h"
@@ -77,8 +82,15 @@ struct GDRomV3_impl final : MMIODevice {
     ByteCount_t ByteCount = { 0 };
 
     //end
+
+    moving_average_c<double, 10> cpu_time_avg, time_avg;
+
     void FillReadBuffer()
     {
+        std::clock_t c_start = std::clock();
+        auto t_start = std::chrono::high_resolution_clock::now();
+ 
+      
         read_buff.cache_index = 0;
         u32 count = read_params.remaining_sectors;
         u32 hint = 0;
@@ -94,6 +106,14 @@ struct GDRomV3_impl final : MMIODevice {
         g_GDRDisc->ReadSector(read_buff.cache, read_params.start_sector, count, read_params.sector_type);
         read_params.start_sector += count;
         read_params.remaining_sectors -= count;
+
+        auto t_end = std::chrono::high_resolution_clock::now();
+        std::clock_t c_end = std::clock();
+
+        printf("Read took : %lf/avg=%lf ms(cpu) or %lf/avg=%lf ms time\n", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC,
+            cpu_time_avg.update(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC),
+            std::chrono::duration<double, std::milli>(t_end - t_start).count(),
+            time_avg.update(std::chrono::duration<double, std::milli>(t_end - t_start).count()) );
     }
 
 

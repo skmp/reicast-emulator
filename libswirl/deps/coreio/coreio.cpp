@@ -111,7 +111,7 @@ static CoreFile* (*vfs[])(const char* path) =
 
 core_file* core_fopen(const char* filename)
 {
-	CoreFile* rv;
+	CoreFile* rv = nullptr;
 	for (int i = 0; vfs[i] != nullptr; i++)
 	{
 		auto fs_open = vfs[i];

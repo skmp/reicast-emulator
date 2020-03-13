@@ -719,6 +719,8 @@ void setup_seh() {
 
 
 
+#ifndef BUILD_RETROARCH_CORE
+
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
 //	: pragma isn't pretty but def's are configurable 
 #ifdef DEF_CONSOLE
@@ -806,7 +808,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 	return 0;
 }
-
+#endif
 
 
 LARGE_INTEGER qpf;

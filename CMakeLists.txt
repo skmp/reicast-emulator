@@ -7,8 +7,11 @@ if (CCACHE_FOUND)
 endif()
 
 set(TNAME reicast)
+#set(LIBRETRO_CORE ON)
 
-add_definitions(/DBUILD_RETROARCH_CORE)
+if (DEFINED LIBRETRO_CORE)
+    add_definitions(/DBUILD_RETROARCH_CORE)
+endif()
 
 project(${TNAME})
 
@@ -263,22 +266,26 @@ else()
 #
 endif()
 
-
-
 ## 
 
 include_directories ("${reicast_core_path}")
 
-
-
-
 set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
-#add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+if (DEFINED LIBRETRO_CORE)
+    include (GenerateExportHeader)
+    add_library(${TNAME} SHARED ${reicast_SRCS})
+    GENERATE_EXPORT_HEADER (reicast
+        BASE_NAME reicast
+        EXPORT_MACRO_NAME reicast_EXPORT
+        EXPORT_FILE_NAME reicast_Export.h
+        STATIC_DEFINE reicast_BUILT_AS_STATIC
+    )
+else()
+    add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+endif()
 
-
-
-
+target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
 
 if(${HOST_OS} EQUAL ${OS_LINUX})
   # needed for opentty
@@ -398,18 +405,6 @@ endif()
 
 
 
-
-
-include (GenerateExportHeader)
-add_library(${TNAME} SHARED ${reicast_SRCS})
-GENERATE_EXPORT_HEADER (reicast
-    BASE_NAME reicast
-    EXPORT_MACRO_NAME reicast_EXPORT
-    EXPORT_FILE_NAME reicast_Export.h
-    STATIC_DEFINE reicast_BUILT_AS_STATIC
-)
-
-target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
 
 
 

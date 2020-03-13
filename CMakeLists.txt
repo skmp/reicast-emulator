@@ -218,7 +218,7 @@ set(osd_SRCS "")
 list(APPEND osd_SRCS ${d_aout}/audiostream.cpp)
 
 if (${HOST_OS} EQUAL ${OS_WINDOWS})
-
+  list(APPEND osd_SRCS ${d_core}/windows/win_common.cpp)
   list(APPEND osd_SRCS ${d_core}/windows/winmain.cpp)
   list(APPEND osd_SRCS ${d_core}/windows/win_vmem.cpp)
   list(APPEND osd_SRCS ${d_core}/oslib/windows/threading.cpp)

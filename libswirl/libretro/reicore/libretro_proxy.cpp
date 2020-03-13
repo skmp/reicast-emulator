@@ -38,6 +38,10 @@ static struct retro_log_callback logging;
 static bool g_b_init_done = false;
 static surface_dims_t g_surf_dims{ 1024,768,1024,1024,0.0f };
 
+#ifdef BUILD_RETROARCH_CORE
+extern void retro_reicast_entry_point();
+#endif
+
 //Private bridge module functions
 static void __emu_log_provider(enum retro_log_level level, const char* fmt, ...) {
     (void)level;
@@ -54,6 +58,10 @@ void LIBRETRO_PROXY_STUB_TYPE retro_init(void) {
         //TODO
         g_b_init_done = true;
     }
+
+#ifdef BUILD_RETROARCH_CORE
+    retro_reicast_entry_point();
+#endif
 }
 
 void LIBRETRO_PROXY_STUB_TYPE retro_deinit(void) {
@@ -230,4 +238,3 @@ void LIBRETRO_PROXY_STUB_TYPE retro_cheat_reset(void) {
 void LIBRETRO_PROXY_STUB_TYPE retro_cheat_set(unsigned index, bool enabled, const char* code) {
     trace_plugin("retro_cheat_set");
 }
-

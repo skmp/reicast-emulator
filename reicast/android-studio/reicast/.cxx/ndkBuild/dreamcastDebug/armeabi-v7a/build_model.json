@@ -1,0 +1,60 @@
+{
+  "variant": {
+    "module": {
+      "rootBuildGradleFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio",
+      "sdkFolder": "C:\\Users\\skmp\\AppData\\Local\\Android\\Sdk",
+      "isNativeCompilerSettingsCacheEnabled": false,
+      "isBuildOnlyTargetAbiEnabled": true,
+      "ideBuildTargetAbi": "armeabi-v7a,armeabi",
+      "splitsAbiFilterSet": [],
+      "intermediatesFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\build\\intermediates",
+      "gradleModulePathName": ":reicast",
+      "moduleRootFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast",
+      "makeFile": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\src\\main\\jni\\Android.mk",
+      "buildSystem": "NDK_BUILD",
+      "compilerSettingsCacheFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\.cxx",
+      "cxxFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx",
+      "ndkFolder": "C:\\Users\\skmp\\AppData\\Local\\Android\\Sdk\\ndk-bundle",
+      "ndkVersion": "21.0.6113669",
+      "ndkSupportedAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "cmakeToolchainFile": "."
+    },
+    "buildSystemArgumentList": [
+      "-j8"
+    ],
+    "cFlagList": [],
+    "cppFlagsList": [],
+    "variantName": "dreamcastDebug",
+    "soFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\build\\intermediates\\ndkBuild\\dreamcastDebug\\lib",
+    "objFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\build\\intermediates\\ndkBuild\\dreamcastDebug\\obj\\local",
+    "jsonFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\ndkBuild\\dreamcastDebug",
+    "gradleBuildOutputFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\cxx\\dreamcastDebug",
+    "isDebuggableEnabled": true,
+    "validAbiList": [
+      "ARMEABI_V7A"
+    ],
+    "buildTargetSet": []
+  },
+  "abi": "ARMEABI_V7A",
+  "abiPlatformVersion": 16,
+  "cxxBuildFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\ndkBuild\\dreamcastDebug\\armeabi-v7a",
+  "jsonFile": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\ndkBuild\\dreamcastDebug\\armeabi-v7a\\android_gradle_build.json",
+  "gradleBuildOutputFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\cxx\\dreamcastDebug\\armeabi-v7a",
+  "objFolder": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\build\\intermediates\\ndkBuild\\dreamcastDebug\\obj\\local\\armeabi-v7a",
+  "buildCommandFile": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\ndkBuild\\dreamcastDebug\\armeabi-v7a\\build_command.txt",
+  "buildOutputFile": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\ndkBuild\\dreamcastDebug\\armeabi-v7a\\build_output.txt",
+  "modelOutputFile": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\ndkBuild\\dreamcastDebug\\armeabi-v7a\\build_model.json",
+  "jsonGenerationLoggingRecordFile": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\ndkBuild\\dreamcastDebug\\armeabi-v7a\\json_generation_record.json",
+  "compileCommandsJsonFile": "C:\\workspace\\reicast-emulator\\reicast\\android-studio\\reicast\\.cxx\\ndkBuild\\dreamcastDebug\\armeabi-v7a\\compile_commands.json"
+}

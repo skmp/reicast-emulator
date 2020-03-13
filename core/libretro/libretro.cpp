@@ -31,6 +31,7 @@
 #include "../hw/aica/dsp.h"
 #include "log/LogManager.h"
 #include "cheats.h"
+#include "rend/CustomTexture.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -2160,6 +2161,7 @@ bool retro_unserialize(const void * data, size_t size)
     mmu_flush_table();
 #endif
     bm_Reset();
+    custom_texture.Terminate();
 
     result = dc_unserialize(&data_ptr, &total_size, size) ;
 

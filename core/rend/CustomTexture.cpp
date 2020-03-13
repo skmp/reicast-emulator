@@ -28,6 +28,8 @@
 
 extern const char *retro_get_system_directory();
 
+CustomTexture custom_texture;
+
 void CustomTexture::LoaderThread()
 {
 	while (initialized)

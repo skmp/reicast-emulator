@@ -39,8 +39,8 @@ private:
 	
 	static void *loader_thread_func(void *param) { ((CustomTexture *)param)->LoaderThread(); return NULL; }
 	
-	bool initialized;
-	bool custom_textures_available;
+	bool initialized = false;
+	bool custom_textures_available = false;
 	std::string textures_path;
 	std::set<u32> unknown_hashes;
 	cThread loader_thread;
@@ -48,3 +48,5 @@ private:
 	std::vector<BaseTextureCacheData *> work_queue;
 	cMutex work_queue_mutex;
 };
+
+extern CustomTexture custom_texture;

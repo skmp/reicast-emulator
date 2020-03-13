@@ -452,8 +452,6 @@ static const TextureType PAL_TYPE[4] = {
 	TextureType::_5551, TextureType::_565, TextureType::_4444, TextureType::_8888
 };
 
-CustomTexture custom_texture;
-
 void BaseTextureCacheData::PrintTextureName()
 {
 	char str[512];

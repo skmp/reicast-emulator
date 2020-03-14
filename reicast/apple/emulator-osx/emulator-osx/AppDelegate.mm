@@ -82,7 +82,7 @@ static void gl_resize();
 
 - (void)setupWindow {
     // Create the OpenGL view and context
-    // TODO: BEN See why background color is red when resizing window tall
+    // TODO: BEN See why background color is red when resizing window tall (it's likely due to default GL framebuffer color)
     _glView = [[EmuGLView alloc] init];
     _glView.delegate = self;
     

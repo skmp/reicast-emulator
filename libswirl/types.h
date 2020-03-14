@@ -360,8 +360,7 @@ using namespace std;
 #endif
 
 
-// NOTE: Always inline for macOS builds or it causes duplicate symbol linker errors
-#if DEBUG && HOST_OS != OS_DARWIN
+#if DEBUG
 //force
 #define INLINE
 //sugest
@@ -461,6 +460,10 @@ struct settings_t
 	struct {
 		string ElfFile;
 	} reios;
+
+	struct {
+		bool isShown;
+	} savepopup;
 
 	struct
 	{

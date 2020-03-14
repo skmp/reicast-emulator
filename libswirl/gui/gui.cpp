@@ -534,6 +534,8 @@ struct ReicastUI_impl : GUI {
 
         ImGui::Begin("Reicast", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
+
+
         ImGui::Columns(2, "buttons", false);
         if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
         {
@@ -542,12 +544,41 @@ struct ReicastUI_impl : GUI {
             virtualDreamcast->Resume();
         }
         ImGui::NextColumn();
+
+
         if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
         {
-            virtualDreamcast->SaveState();
-            gui_state = Closed;
-            virtualDreamcast->Resume();
+            if (!settings.savepopup.isShown) {
+                ImGui::OpenPopup("Warning!");
+                settings.savepopup.isShown = true;
+                SaveSettings();
+            }
+            else{
+                virtualDreamcast->SaveState();
+                gui_state = Closed;
+                virtualDreamcast->Resume();
+            }
+
         }
+
+        if (ImGui::BeginPopupModal("Warning!"))
+        {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 250.f * scaling);
+            ImGui::Text("Save states are not guaranteed to be compatible between releases, please use with caution and always save to VMU");
+            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+            if (ImGui::Button("Okay", ImVec2(80.f * scaling, 0.f)))
+            {
+                ImGui::CloseCurrentPopup();
+                virtualDreamcast->SaveState();
+                gui_state = Closed;
+                virtualDreamcast->Resume();
+
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::EndPopup();
+        }
+
 
         ImGui::NextColumn();
         if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))

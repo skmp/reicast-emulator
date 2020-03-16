@@ -56,9 +56,6 @@
 void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	
     rei_host_context_t ctx;
-    
-    // TODO: BEN fix this properly
-    //context_from_segfault(&ctx, segfault_ctx);
     context_from_segfault(&ctx);
     
 	unat pc = (unat)ctx.pc;

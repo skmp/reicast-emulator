@@ -29,6 +29,7 @@ public final class JNIdc
 
 	public static native void setupMic(SipEmulator sip);
 	public static native boolean getNosound();
+	public static native int getScreenOrientation(); //Using SETTINGS_ACCESSORS to get the value of ScreenOrientation
 
 	public static native int getVirtualGamepadVibration();
 

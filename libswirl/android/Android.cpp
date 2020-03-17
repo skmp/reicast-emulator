@@ -116,9 +116,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 
-SETTINGS_ACCESSORS(Nosound, aica.NoSound, jboolean)
-SETTINGS_ACCESSORS(Widescreen, rend.WideScreen, jboolean)
+SETTINGS_ACCESSORS(Nosound, aica.NoSound, jboolean);
+SETTINGS_ACCESSORS(Widescreen, rend.WideScreen, jboolean);
 SETTINGS_ACCESSORS(VirtualGamepadVibration, input.VirtualGamepadVibration, jint);
+SETTINGS_ACCESSORS(ScreenOrientation, rend.ScreenOrientation, jint);
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));

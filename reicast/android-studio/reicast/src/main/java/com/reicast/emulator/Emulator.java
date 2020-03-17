@@ -23,6 +23,7 @@ public class Emulator extends Application {
 
     public static boolean nosound = false;
     public static int vibrationDuration = 20;
+    public static int screenOrientation = 0; //Default value is 0
 
     public static int maple_devices[] = {
             MDT_None,
@@ -44,6 +45,7 @@ public class Emulator extends Application {
     public void getConfigurationPrefs() {
         Emulator.nosound = JNIdc.getNosound();
         Emulator.vibrationDuration = JNIdc.getVirtualGamepadVibration();
+        Emulator.screenOrientation = JNIdc.getScreenOrientation(); //Loading screenOrientation
         JNIdc.getControllers(maple_devices, maple_expansion_devices);
     }
 
@@ -53,10 +55,12 @@ public class Emulator extends Application {
      */
     public void SaveAndroidSettings(String homeDirectory)
     {
+
         Log.i("reicast", "SaveAndroidSettings: saving preferences");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         Emulator.nosound = JNIdc.getNosound();
         Emulator.vibrationDuration = JNIdc.getVirtualGamepadVibration();
+        Emulator.screenOrientation = JNIdc.getScreenOrientation();
         JNIdc.getControllers(maple_devices, maple_expansion_devices);
 
         prefs.edit()
@@ -67,6 +71,8 @@ public class Emulator extends Application {
         if (micPluggedIn() && currentActivity instanceof BaseGLActivity) {
             ((BaseGLActivity)currentActivity).requestRecordAudioPermission();
         }
+        currentActivity.setOrientation(); //As the settings are saved, setOrientation sets the new Orientation of the device
+
     }
 
     public void LaunchFromUrl(String url) {

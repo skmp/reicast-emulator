@@ -309,6 +309,7 @@ void InitSettings()
     settings.rend.Fog = true;
     settings.rend.FloatVMUs = false;
     settings.rend.Rotate90 = false;
+    settings.rend.ScreenOrientation = 0; //default is 0 (Auto Rotation)
 
     settings.pvr.ta_skip = 0;
     settings.pvr.backend = "auto";
@@ -405,6 +406,7 @@ void LoadSettings(bool game_specific)
     settings.rend.Fog = cfgLoadBool(config_section, "rend.Fog", settings.rend.Fog);
     settings.rend.FloatVMUs = cfgLoadBool(config_section, "rend.FloatVMUs", settings.rend.FloatVMUs);
     settings.rend.Rotate90 = cfgLoadBool(config_section, "rend.Rotate90", settings.rend.Rotate90);
+    settings.rend.ScreenOrientation = cfgLoadInt(config_section, "rend.ScreenOrientation", settings.rend.ScreenOrientation); //Load Orientation
 
     settings.pvr.ta_skip = cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
     settings.pvr.backend = cfgLoadStr(config_section, "pvr.backend", settings.pvr.backend.c_str());
@@ -563,6 +565,7 @@ void SaveSettings()
     cfgSaveBool("config", "rend.Fog", settings.rend.Fog);
     cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
     cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
+    cfgSaveInt("config", "rend.ScreenOrientation", settings.rend.ScreenOrientation);
     cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
     cfgSaveStr("config", "pvr.backend", settings.pvr.backend.c_str());
 

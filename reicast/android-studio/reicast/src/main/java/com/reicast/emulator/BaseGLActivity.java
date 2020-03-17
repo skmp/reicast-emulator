@@ -6,7 +6,9 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,6 +23,7 @@ import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewConfiguration;
 
@@ -60,7 +63,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         Emulator app = (Emulator)getApplicationContext();
-        app.getConfigurationPrefs();
         Emulator.setCurrentActivity(this);
 
         OuyaController.init(this);
@@ -103,8 +105,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
         InputDeviceManager.getInstance().startListening(getApplicationContext());
         register(this);
-
+        app.getConfigurationPrefs(); //when this method is on top, the values of screenOrientation, vibrationDuration and noSound did not load as they should. moved here fixes all these problems.
         audioBackend = new AudioBackend();
+        setOrientation(); //Setting device orientation as the application starts.
+
+
 
         // When viewing a resource, pass its URI to the native code for opening
         Intent intent = getIntent();
@@ -133,6 +138,26 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         Log.i("reicast", "External storage dirs: " + pathList);
         JNIdc.setExternalStorageDirectories(pathList.toArray());
     }
+
+    public void setOrientation(){ //forcing orientation, depending on the value of Emulator.screenOrientation
+        Log.i("reicast", Integer.toString(Emulator.screenOrientation));
+       if ((Emulator.screenOrientation == 0)){
+           setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+       }else if ((Emulator.screenOrientation == 1)){
+           setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+       }else{
+           setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+       }
+    }
+
+    @Override 
+    public void onConfigurationChanged(Configuration newConfig) { //as the device orientation changes, the device checks the config and apply the Orientation if possible (this is used in order to get revert_landscape working as well in realtime, without restart or Save changes)
+        super.onConfigurationChanged(newConfig);
+        setOrientation();
+
+
+    }
+
 
     @Override
     protected void onDestroy() {

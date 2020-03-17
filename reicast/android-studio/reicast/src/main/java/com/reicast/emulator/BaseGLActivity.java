@@ -141,9 +141,9 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
     public void setOrientation(){ //forcing orientation, depending on the value of Emulator.screenOrientation
         Log.i("reicast", Integer.toString(Emulator.screenOrientation));
-       if ((Emulator.screenOrientation == 0)){
+       if ((Emulator.screenOrientation == 1)){
            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-       }else if ((Emulator.screenOrientation == 1)){
+       }else if ((Emulator.screenOrientation == 2)){
            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
        }else{
            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);

@@ -309,7 +309,7 @@ void InitSettings()
     settings.rend.Fog = true;
     settings.rend.FloatVMUs = false;
     settings.rend.Rotate90 = false;
-    settings.rend.ScreenOrientation = 2; //default is 2 (Auto Rotation)
+    settings.rend.ScreenOrientation = 0; //default is 0 (Auto Rotation)
 
     settings.pvr.ta_skip = 0;
     settings.pvr.backend = "auto";

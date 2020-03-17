@@ -41,6 +41,23 @@ void gui_settings_general()
         ImGui::SameLine();
         gui_ShowHelpMarker("The language as configured in the Dreamcast BIOS");
 
+#ifdef _ANDROID
+		const char *orientation[] = { "Force Portrait", "Force Landscape", "Auto" };
+		if (ImGui::BeginCombo("Orientation", orientation[settings.rend.ScreenOrientation], ImGuiComboFlags_None))
+		{
+			for (int i = 0; i < IM_ARRAYSIZE(orientation); i++)
+			{
+				bool is_selected = settings.rend.ScreenOrientation == i;
+				if (ImGui::Selectable(orientation[i], &is_selected))
+					settings.rend.ScreenOrientation = i;
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::SameLine();
+		gui_ShowHelpMarker("Select type of orientation");
+#endif
 		const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
 		if (ImGui::BeginCombo("Broadcast", broadcast[settings.dreamcast.broadcast], ImGuiComboFlags_None))
 		{

@@ -279,6 +279,8 @@ void InitSettings()
     settings.dynarec.ScpuEnable = true;
     settings.dynarec.DspEnable = true;
 
+    settings.savepopup.isShown = false; // if false, popup on save state should appear
+
     settings.dreamcast.cable = 3;	// TV composite
     settings.dreamcast.region = 3;	// default
     settings.dreamcast.broadcast = 4;	// default
@@ -365,6 +367,8 @@ void LoadSettings(bool game_specific)
     settings.dynarec.SmcCheckLevel = (SmcCheckEnum)cfgLoadInt(config_section, "Dynarec.SmcCheckLevel", settings.dynarec.SmcCheckLevel);
     settings.dynarec.ScpuEnable = cfgLoadInt(config_section, "Dynarec.ScpuEnabled", settings.dynarec.ScpuEnable);
     settings.dynarec.DspEnable = cfgLoadInt(config_section, "Dynarec.DspEnabled", settings.dynarec.DspEnable);
+
+    settings.savepopup.isShown = cfgLoadBool(config_section, "SavePopup.isShown", settings.savepopup.isShown);
 
     //disable_nvmem can't be loaded, because nvmem init is before cfg load
     settings.dreamcast.cable = cfgLoadInt(config_section, "Dreamcast.Cable", settings.dreamcast.cable);
@@ -511,6 +515,9 @@ void SaveSettings()
     cfgSaveBool("config", "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
     cfgSaveBool("config", "Dynarec.idleskip", settings.dynarec.idleskip);
     cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
+
+    cfgSaveBool("config", "SavePopup.isShown", settings.savepopup.isShown);
+
     if (!safemode_game || !settings.dynarec.safemode)
         cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
     cfgSaveInt("config", "Dynarec.SmcCheckLevel", (int)settings.dynarec.SmcCheckLevel);

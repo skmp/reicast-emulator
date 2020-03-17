@@ -462,6 +462,10 @@ struct settings_t
 		string ElfFile;
 	} reios;
 
+	struct {
+		bool isShown;
+	} savepopup;
+
 	struct
 	{
 		bool UseMipmaps;

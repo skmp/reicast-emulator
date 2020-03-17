@@ -23,7 +23,7 @@ public class Emulator extends Application {
 
     public static boolean nosound = false;
     public static int vibrationDuration = 20;
-    public static int screenOrientation = 2; //Default value is 2
+    public static int screenOrientation = 0; //Default value is 0
 
     public static int maple_devices[] = {
             MDT_None,

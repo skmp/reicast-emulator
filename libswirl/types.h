@@ -360,7 +360,6 @@ using namespace std;
 #endif
 
 
-// NOTE: Always inline for macOS builds or it causes duplicate symbol linker errors
 #if DEBUG && HOST_OS != OS_DARWIN
 //force
 #define INLINE
@@ -486,6 +485,7 @@ struct settings_t
 		bool Fog;
 		bool FloatVMUs;
 		bool Rotate90;			// Rotate the screen 90 deg CC
+		int ScreenOrientation;		//Force Screen Orientation value here: 1=Force Portrait, 2=Force Landscape, 3=AutoRotate
 	} rend;
 
 	struct

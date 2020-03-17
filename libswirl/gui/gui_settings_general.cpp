@@ -42,7 +42,7 @@ void gui_settings_general()
         gui_ShowHelpMarker("The language as configured in the Dreamcast BIOS");
 
 #ifdef _ANDROID
-		const char *orientation[] = { "Force Portrait", "Force Landscape", "Auto" };
+		const char *orientation[] = { "Auto", "Force Portrait", "Force Landscape" };
 		if (ImGui::BeginCombo("Orientation", orientation[settings.rend.ScreenOrientation], ImGuiComboFlags_None))
 		{
 			for (int i = 0; i < IM_ARRAYSIZE(orientation); i++)

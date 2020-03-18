@@ -24,7 +24,7 @@ u32 pal_hash_16[64];
 
 // Rough approximation of LoD bias from D adjust param
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
-		0.f, -7.f, -2.75f, -1.f, 0.f, 0.49f, 0.5f, 0.75f, 1.f, 1.5f, 1.5f, 1.5f, 2.f, 3.f, 3.f, 4.f
+		0.f, -4.f, -2.f, -1.f, 0.f, 0.3f, 0.5f, 0.75f, 1.f, 1.f, 1.5f, 1.5f, 1.5f, 1.5f, 1.75f, 2.f
 };
 
 u32 detwiddle[2][11][1024];

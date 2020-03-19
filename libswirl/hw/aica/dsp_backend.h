@@ -128,6 +128,7 @@ struct DSPBackend {
 	static u16 DYNACALL PACK(s32 val);
 	static s32 DYNACALL UNPACK(u16 val);
 	static void DecodeInst(u32* IPtr, _INST* i);
+	static void EncodeInst(u32* IPtr, _INST* i);
 
 	virtual void Step() = 0;
 	virtual void Recompile() = 0;

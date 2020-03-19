@@ -77,7 +77,7 @@ void libCore_CDDA_Sector(s16* sector)
 	{
 		libGDR_ReadSector((u8*)sector,cdda.CurrAddr.FAD,1,2352);
 		cdda.CurrAddr.FAD++;
-		if (cdda.CurrAddr.FAD==cdda.EndAddr.FAD)
+		if (cdda.CurrAddr.FAD >= cdda.EndAddr.FAD)
 		{
 			if (cdda.repeats==0)
 			{
@@ -428,6 +428,31 @@ void gd_process_ata_cmd()
 		gd_set_state(gds_waitcmd);
 		break;
 
+    case ATA_IDENTIFY:
+        printf_ata("ATA_IDENTIFY\n");
+
+        // Set Signature
+        DriveSel &= 0xf0;
+
+        SecCount.full = 1;
+        SecNumber.full = 1;
+        ByteCount.low = 0x14;
+        ByteCount.hi = 0xeb;
+
+        // where did this come from?
+        //GDStatus.DRQ = 0;
+
+        // ABORT command
+        Error.full = 0x4;
+
+        GDStatus.full = 0;
+        GDStatus.DRDY = 1;
+        GDStatus.CHECK = 1;
+
+        asic_RaiseInterrupt(holly_GDROM_CMD);
+        gd_set_state(gds_waitcmd);
+        break;
+
 	default:
 		die("Unknown ATA command...");
 		break;
@@ -693,7 +718,12 @@ void gd_process_spi_cmd()
 			}
 			else if (param_type==7)
 			{
-				//Resume from previous pos :)
+				// Resume from previous pos unless we're at the end
+				if (cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
+				{
+					cdda.playing = false;
+					SecNumber.Status = GD_STANDBY;
+				}
 			}
 			else
 			{

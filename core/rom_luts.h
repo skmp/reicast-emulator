@@ -129,6 +129,7 @@ extern InputDescriptors deathcox_inputs;
 static struct game_type_naomi lut_games_naomi[] = 
 {
    /* Div matching disabled */
+   { "ALIEN FRONT"                       , -1, -1, -1, -1,  1, -1,  1 },                /* Alien Front */
    { "METAL SLUG 6"                      , -1, -1, -1, -1,  1, -1,  1 },                /* Metal Slug 6 */
    { "WAVE RUNNER GP"                    , -1, -1, -1, -1,  1, -1,  1 },                /* WaveRunner GP */
    { "STREET FIGHTER ZERO3 UPPER"        , -1, -1, -1, -1,  1, -1,  1 },                /* Street Fighter Zero 3 Upper */

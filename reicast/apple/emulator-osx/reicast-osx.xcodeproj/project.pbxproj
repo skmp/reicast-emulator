@@ -339,6 +339,7 @@
 		5317CF4B24086456008A1850 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8D24081FE500C67C85 /* context.cpp */; };
 		5317CF4C24086456008A1850 /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC9024081FE500C67C85 /* nixprof.cpp */; };
 		5317CF4F2408674A008A1850 /* libomp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4E2408674A008A1850 /* libomp.dylib */; };
+		537E069D242699A10011E92A /* dsp_helpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 537E069C242699A10011E92A /* dsp_helpers.cpp */; };
 		5381D6D5240887FD0078E797 /* tacore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D65A240887FC0078E797 /* tacore.cpp */; };
 		5381D6D8240887FD0078E797 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D663240887FC0078E797 /* xbrz.cpp */; };
 		5381D6EC240887FD0078E797 /* pico_device.c in Sources */ = {isa = PBXBuildFile; fileRef = 5381D69C240887FC0078E797 /* pico_device.c */; };
@@ -1147,6 +1148,7 @@
 		5317CF4524086353008A1850 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		5317CF4724086368008A1850 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		5317CF4E2408674A008A1850 /* libomp.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libomp.dylib; path = ../../../../../../../usr/local/Cellar/libomp/9.0.1/lib/libomp.dylib; sourceTree = "<group>"; };
+		537E069C242699A10011E92A /* dsp_helpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_helpers.cpp; sourceTree = "<group>"; };
 		5381D65A240887FC0078E797 /* tacore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tacore.cpp; sourceTree = "<group>"; };
 		5381D65B240887FC0078E797 /* tacore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tacore.h; sourceTree = "<group>"; };
 		5381D65E240887FC0078E797 /* xbrz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz.h; sourceTree = "<group>"; };
@@ -1616,6 +1618,7 @@
 				5312CBF924081FE500C67C85 /* aica.h */,
 				5312CBFA24081FE500C67C85 /* dsp_backend.h */,
 				5312CBFB24081FE500C67C85 /* dsp_arm64.cpp */,
+				537E069C242699A10011E92A /* dsp_helpers.cpp */,
 				5312CBFC24081FE500C67C85 /* dsp.cpp */,
 				5312CBFD24081FE500C67C85 /* aica_mmio.h */,
 				5312CBFE24081FE500C67C85 /* dsp_x86.cpp */,
@@ -3385,6 +3388,7 @@
 				5312CFBA24081FE600C67C85 /* simulator-aarch64.cc in Sources */,
 				5312D03724081FE600C67C85 /* lparser.c in Sources */,
 				5312D01C24081FE600C67C85 /* lstate.c in Sources */,
+				537E069D242699A10011E92A /* dsp_helpers.cpp in Sources */,
 				5312CF4F24081FE600C67C85 /* decrypt.cpp in Sources */,
 				5312CF2D24081FE600C67C85 /* sh4_opcode_list.cpp in Sources */,
 				5312D03624081FE600C67C85 /* ldebug.c in Sources */,

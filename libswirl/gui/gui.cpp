@@ -952,7 +952,7 @@ struct ReicastUI_impl : GUI {
             ImGui::PopID();
 #endif
 
-            ImGui::Text("");
+            ImGui::Text("%s", "");
             ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "LOCAL ROMS");
 
             for (auto game : game_list)
@@ -968,7 +968,7 @@ struct ReicastUI_impl : GUI {
                 }
 
 
-            ImGui::Text("");
+            ImGui::Text("%s", "");
 
             gui_render_online_roms();
 

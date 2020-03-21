@@ -110,7 +110,11 @@ extern "C" u8* generic_fault_handler ()
 	return trap_ptr_fault;
 }
 
+#if HOST_CPU==CPU_X64 || HOST_CPU==CPU_X86 || HOST_CPU==CPU_MIPS
+void re_raise_fault()
+#else
 naked void re_raise_fault()
+#endif
 {
 	__asm__ __volatile__(
 		#if HOST_CPU == CPU_X86

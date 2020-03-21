@@ -66,7 +66,7 @@ void gui_settings_audio()
 				if (ImGui::Selectable(backend->slug.c_str(), &is_selected))
 					settings.audio.backend = backend->slug;
 				ImGui::SameLine(); ImGui::Text("-");
-				ImGui::SameLine(); ImGui::Text(backend->name.c_str());
+				ImGui::SameLine(); ImGui::Text("%s", backend->name.c_str());
                 if (is_selected)
                     ImGui::SetItemDefaultFocus();
 			}

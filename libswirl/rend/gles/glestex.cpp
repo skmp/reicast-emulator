@@ -81,8 +81,10 @@ const GLuint PAL_TYPE[4]=
 
 CustomTexture custom_texture;
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
+#endif
 static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	char sname[256];
 	sprintf(sname, "texdump/%x-%d.png", name, FrameCount);
@@ -123,7 +125,9 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 		free(rows[y]);
 	free(rows);
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 //Texture Cache :)
 void TextureCacheData::PrintTextureName()

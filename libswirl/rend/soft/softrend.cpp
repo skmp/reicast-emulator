@@ -68,14 +68,18 @@ static __m128 _mm_broadcast_float(float v)
 {
 	return _mm_setr_ps(v, v, v, v);
 }
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
+#endif
 static __m128i _mm_broadcast_int(int v)
 {
 	__m128i rv = _mm_cvtsi32_si128(v);
 	return _mm_shuffle_epi32(rv, 0);
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 static __m128 _mm_load_ps_r(float a, float b, float c, float d)
 {
 	DECL_ALIGN(128) float v[4];

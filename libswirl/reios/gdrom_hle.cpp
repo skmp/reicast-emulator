@@ -73,8 +73,10 @@ void read_sectors_to(u32 addr, u32 sector, u32 count) {
 	
 }
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
+#endif
 
 void GDROM_HLE_ReadDMA(u32 addr)
 {
@@ -110,7 +112,9 @@ void GDCC_HLE_GETSCD(u32 addr) {
 	printf("GDROM: Doing nothing for GETSCD [0]=%d, [1]=%d, [2]=0x%08X, [3]=0x%08X\n", s, n, b, u);
 }
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 #define r Sh4cntx.r
 

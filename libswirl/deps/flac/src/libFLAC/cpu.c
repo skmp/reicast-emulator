@@ -80,8 +80,10 @@ static const unsigned FLAC__CPUINFO_IA32_CPUID_FMA = 0x00001000;
 static const unsigned FLAC__CPUINFO_IA32_CPUID_AVX2 = 0x00000020;
 #endif
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
+#endif
 #if defined FLAC__CPU_IA32 || defined FLAC__CPU_X86_64
 static uint32_t
 cpu_xgetbv_x86(void)
@@ -97,7 +99,9 @@ cpu_xgetbv_x86(void)
 #endif
 }
 #endif
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 static void
 ia32_cpu_info (FLAC__CPUInfo *info)

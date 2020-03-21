@@ -37,14 +37,18 @@
 #endif
 
 /* Check whether 'mode' matches '[rwa]%+?[L_MODEEXT]*' */
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wcomma"
+#endif
 static int l_checkmode (const char *mode) {
   return (*mode != '\0' && strchr("rwa", *(mode++)) != NULL &&
          (*mode != '+' || (++mode, 1)) &&  /* skip if char is '+' */
          (strspn(mode, L_MODEEXT) == strlen(mode)));  /* check extensions */
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 #endif
 

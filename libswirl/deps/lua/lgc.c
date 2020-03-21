@@ -448,8 +448,10 @@ static void traversestrongtable (global_State *g, Table *h) {
 }
 
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wcomma"
+#endif
 static lu_mem traversetable (global_State *g, Table *h) {
   const char *weakkey, *weakvalue;
   const TValue *mode = gfasttm(g, h->metatable, TM_MODE);
@@ -471,8 +473,9 @@ static lu_mem traversetable (global_State *g, Table *h) {
   return sizeof(Table) + sizeof(TValue) * h->sizearray +
                          sizeof(Node) * cast(size_t, allocsizenode(h));
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
-
+#endif
 
 /*
 ** Traverse a prototype. (While a prototype is being build, its

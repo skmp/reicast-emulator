@@ -116,10 +116,14 @@ static int socket_cmp_remotehost(struct pico_socket *a, struct pico_socket *b)
 {
     int ret = 0;
     if (is_sock_ipv6(a))
+        #ifdef __clang__
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wunreachable-code"
+        #endif
         ret = memcmp(a->remote_addr.ip6.addr, b->remote_addr.ip6.addr, PICO_SIZE_IP6);
+        #ifdef __clang__
         #pragma clang diagnostic pop
+        #endif
     else
         ret = (int)(a->remote_addr.ip4.addr - b->remote_addr.ip4.addr);
 
@@ -941,14 +945,17 @@ static void *pico_socket_sendto_get_src(struct pico_socket *s, void *dst)
     void *src = NULL;
     if (is_sock_ipv4(s))
         src = pico_socket_sendto_get_ip4_src(s, (struct pico_ip4 *)dst);
-
+    
+    #ifdef __clang__
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunreachable-code"
+    #endif
     if (is_sock_ipv6(s))
         src = pico_socket_sendto_get_ip6_src(s, (struct pico_ip6 *)dst);
+    #ifdef __clang__
     #pragma clang diagnostic pop
-        
-
+    #endif
+    
     return src;
 }
 
@@ -1099,11 +1106,15 @@ static int pico_socket_xmit_one(struct pico_socket *s, const void *buf, const in
         dev = pico_ipv6_link_find(src);
     }
 #endif
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunreachable-code"
+#endif
     else if (IS_SOCK_IPV6(s) && ep) {
         dev = pico_ipv6_source_dev_find(&ep->remote_addr.ip6);
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
     } else if (IS_SOCK_IPV4(s) && ep) {
         dev = pico_ipv4_source_dev_find(&ep->remote_addr.ip4);
     } else {

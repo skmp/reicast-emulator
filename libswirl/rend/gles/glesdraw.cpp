@@ -1027,13 +1027,17 @@ void DrawModVols(int first, int count)
 
 	if(0)
 	{
+        #ifdef __clang__
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wunreachable-code"
+        #endif
 		//simply draw the volumes -- for debugging
 		SetCull(0);
 		glDrawArrays(GL_TRIANGLES, first, count * 3);
 		SetupMainVBO();
+        #ifdef __clang__
         #pragma clang diagnostic pop
+        #endif
 	}
 	else
 	{

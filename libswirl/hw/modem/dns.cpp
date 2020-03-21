@@ -68,7 +68,7 @@ void get_host_by_name(const char *host, struct pico_ip4 dnsaddr)
 
     strcpy(qname + 1, host);
     pico_dns_name_to_dns_notation(qname, 128);
-	qname_len = strlen(qname) + 1;
+	qname_len = (int)(strlen(qname) + 1);
 
 	struct pico_dns_question_suffix *qinfo = (struct pico_dns_question_suffix *) &buf[sizeof(pico_dns_packet) + qname_len]; //fill it
     qinfo->qtype = htons(PICO_DNS_TYPE_A);		// Address record
@@ -84,7 +84,7 @@ int get_dns_answer(struct pico_ip4 *address, struct pico_ip4 dnsaddr)
 	socklen_t peer_len = sizeof(peer);
     char buf[1024];
 
-    int r = recvfrom(sock_fd, buf, sizeof(buf), 0, (struct sockaddr*)&peer , &peer_len);
+    int r = (int)recvfrom(sock_fd, buf, sizeof(buf), 0, (struct sockaddr*)&peer , &peer_len);
     if (r < 0)
     {
     	if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
@@ -132,7 +132,7 @@ char *read_name(char *reader, char *buffer, int *count)
 	}
 	else
 	{
-		*count = strlen(reader) + 1;
+		*count = (int)(strlen(reader) + 1);
 	}
 	pico_dns_notation_to_name(reader, 128);
 	strcpy(name, reader + 1);

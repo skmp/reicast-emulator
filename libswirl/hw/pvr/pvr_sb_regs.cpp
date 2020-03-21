@@ -34,9 +34,9 @@ u8 pvr_regs[pvr_RegSize];
 struct PVRDevice : MMIODevice {
     void DMAC_Ch2St(u8* vram)
     {
-        u32 chcr = DMAC_CHCR(2).full;
+        //u32 chcr = DMAC_CHCR(2).full;
         u32 dmaor = DMAC_DMAOR.full;
-        u32 dmatcr = DMAC_DMATCR(2);
+        //u32 dmatcr = DMAC_DMATCR(2);
 
         u32 src = DMAC_SAR(2);
         u32 dst = SB_C2DSTAT;
@@ -165,9 +165,9 @@ struct PVRDevice : MMIODevice {
     //PVR-DMA
     void do_pvr_dma()
     {
-        u32 chcr = DMAC_CHCR(0).full;
+        //u32 chcr = DMAC_CHCR(0).full;
         u32 dmaor = DMAC_DMAOR.full;
-        u32 dmatcr = DMAC_DMATCR(0);
+        //u32 dmatcr = DMAC_DMATCR(0);
 
         u32 src = SB_PDSTAR;	// System RAM address
         u32 dst = SB_PDSTAP;	// VRAM address

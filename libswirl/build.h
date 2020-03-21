@@ -196,7 +196,9 @@
 	#endif
 #endif
 
-#ifdef __GNUC__ 
+#if defined(__clang__)
+    #define BUILD_COMPILER COMPILER_CLANG
+#elif __GNUC__
 	#define BUILD_COMPILER COMPILER_GCC
 #else
 	#define BUILD_COMPILER COMPILER_VC
@@ -325,7 +327,11 @@
 #endif
 
 #ifndef FEAT_HAS_SERIAL_TTY
-    #define FEAT_HAS_SERIAL_TTY (HOST_OS == OS_LINUX && !defined(_ANDROID)) || (HOST_OS == OS_DARWIN && !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR)
+    #if (HOST_OS == OS_LINUX && !defined(_ANDROID)) || (HOST_OS == OS_DARWIN && !TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR)
+        #define FEAT_HAS_SERIAL_TTY 1
+    #else
+        #define FEAT_HAS_SERIAL_TTY 0
+    #endif
 #endif
 
 //Depricated build configs

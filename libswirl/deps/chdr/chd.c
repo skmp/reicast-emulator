@@ -54,7 +54,15 @@
 #endif // CHD5_LZMA
 #include "deps/crypto/md5.h"
 #include "deps/crypto/sha1.h"
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtypedef-redefinition"
+#endif
+// Both the LZMA lib and zlib define Byte, which will compile fine, so ignore the warning
 #include "deps/zlib/zlib.h"
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 #define TRUE 1
 #define FALSE 0
@@ -461,7 +469,7 @@ void *lzma_fast_alloc(void *p, size_t size)
 	}
 
 	/* set the low bit of the size so we don't match next time */
-	*addr = size | 1;
+	*addr = (uint32_t)(size | 1);
 	return addr + 1;
 }
 
@@ -553,6 +561,10 @@ chd_error lzma_codec_init(void* codec, uint32_t hunkbytes)
  *-------------------------------------------------
  */
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 void lzma_codec_free(void* codec)
 {
 	lzma_codec_data* lzma_codec = (lzma_codec_data*) codec;
@@ -560,6 +572,9 @@ void lzma_codec_free(void* codec)
 	/* free memory */
 	LzmaDec_Free(&lzma_codec->decoder, (ISzAlloc*)&lzma_codec->allocator);
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 /*-------------------------------------------------
  *  decompress - decompress data using the LZMA
@@ -1040,6 +1055,10 @@ static inline void map_extract(const UINT8 *base, map_entry *entry)
     entry to the datastream
 -------------------------------------------------*/
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 static inline void map_assemble(UINT8 *base, map_entry *entry)
 {
 	put_bigendian_uint64(&base[0], entry->offset);
@@ -1048,6 +1067,9 @@ static inline void map_assemble(UINT8 *base, map_entry *entry)
 	base[14] = entry->length >> 16;
 	base[15] = entry->flags;
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 /*-------------------------------------------------
     map_size_v5 - calculate CHDv5 map size
@@ -1160,17 +1182,29 @@ static chd_error decompress_v5_map(chd_file* chd, chd_header* header)
 	for (int hunknum = 0; hunknum < header->hunkcount; hunknum++)
 	{
 		uint8_t *rawmap = header->rawmap + (hunknum * 12);
-		if (repcount > 0)
-			rawmap[0] = lastcomp, repcount--;
+        if (repcount > 0)
+        {
+            rawmap[0] = lastcomp;
+            repcount--;
+        }
 		else
 		{
 			uint8_t val = huffman_decode_one(decoder, bitbuf);
-			if (val == COMPRESSION_RLE_SMALL)
-				rawmap[0] = lastcomp, repcount = 2 + huffman_decode_one(decoder, bitbuf);
+            if (val == COMPRESSION_RLE_SMALL)
+            {
+                rawmap[0] = lastcomp;
+                repcount = 2 + huffman_decode_one(decoder, bitbuf);
+            }
 			else if (val == COMPRESSION_RLE_LARGE)
-				rawmap[0] = lastcomp, repcount = 2 + 16 + (huffman_decode_one(decoder, bitbuf) << 4), repcount += huffman_decode_one(decoder, bitbuf);
+            {
+                rawmap[0] = lastcomp;
+                repcount = 2 + 16 + (huffman_decode_one(decoder, bitbuf) << 4);
+                repcount += huffman_decode_one(decoder, bitbuf);
+            }
 			else
+            {
 				rawmap[0] = lastcomp = val;
+            }
 		}
 	}
 
@@ -1455,7 +1489,6 @@ chd_error chd_open(const char *filename, int mode, chd_file *parent, chd_file **
 {
 	chd_error err;
 	core_file *file = NULL;
-	UINT32 openflags;
 
 	/* choose the proper mode */
 	switch(mode)
@@ -1574,9 +1607,16 @@ void chd_close(chd_file *chd)
 	/* close the file */
 	if (chd->owns_file && chd->file != NULL)
 		core_fclose(chd->file);
-
-	if (PRINTF_MAX_HUNK) printf("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
-
+    
+    #if BUILD_COMPILER==COMPILER_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunreachable-code"
+    #endif
+	if (/* DISABLES CODE */ PRINTF_MAX_HUNK) printf("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
+    #if BUILD_COMPILER==COMPILER_CLANG
+    #pragma clang diagnostic pop
+    #endif
+    
 	/* free our memory */
 	free(chd);
 }
@@ -1718,7 +1758,7 @@ chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, 
 	/* read the metadata */
 	outputlen = MIN(outputlen, metaentry.length);
 	core_fseek(chd->file, metaentry.offset + METADATA_HEADER_SIZE, SEEK_SET);
-	count = core_fread(chd->file, output, outputlen);
+	count = (UINT32)core_fread(chd->file, output, outputlen);
 	if (count != outputlen)
 		return CHDERR_READ_ERROR;
 
@@ -1870,7 +1910,7 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 
 	/* seek and read */
 	core_fseek(chd->file, 0, SEEK_SET);
-	count = core_fread(chd->file, rawheader, sizeof(rawheader));
+	count = (UINT32)core_fread(chd->file, rawheader, sizeof(rawheader));
 	if (count != sizeof(rawheader))
 		return CHDERR_READ_ERROR;
 
@@ -1962,7 +2002,7 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 		header->mapoffset       = get_bigendian_uint64(&rawheader[40]);
 		header->metaoffset      = get_bigendian_uint64(&rawheader[48]);
 		header->hunkbytes       = get_bigendian_uint32(&rawheader[56]);
-		header->hunkcount       = (header->logicalbytes + header->hunkbytes - 1) / header->hunkbytes;
+		header->hunkcount       = (UINT32)((header->logicalbytes + header->hunkbytes - 1) / header->hunkbytes);
 		header->unitbytes       = get_bigendian_uint32(&rawheader[60]);
 		header->unitcount       = (header->logicalbytes + header->unitbytes - 1) / header->unitbytes;
 		memcpy(header->sha1, &rawheader[84], CHD_SHA1_BYTES);
@@ -1995,6 +2035,10 @@ static chd_error header_read(chd_file *chd, chd_header *header)
     the CHD's hunk cache
 -------------------------------------------------*/
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum)
 {
 	chd_error err;
@@ -2017,6 +2061,9 @@ static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum)
 	chd->cachehunk = hunknum;
 	return CHDERR_NONE;
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 /*-------------------------------------------------
     hunk_read_into_memory - read a hunk into
@@ -2048,7 +2095,7 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 
 				/* read it into the decompression buffer */
 				core_fseek(chd->file, entry->offset, SEEK_SET);
-				bytes = core_fread(chd->file, chd->compressed, entry->length);
+                bytes = (UINT32)core_fread(chd->file, chd->compressed, entry->length);
 				if (bytes != entry->length)
 					return CHDERR_READ_ERROR;
 
@@ -2064,7 +2111,7 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 			/* uncompressed data */
 			case V34_MAP_ENTRY_TYPE_UNCOMPRESSED:
 				core_fseek(chd->file, entry->offset, SEEK_SET);
-				bytes = core_fread(chd->file, dest, chd->header.hunkbytes);
+				bytes = (UINT32)core_fread(chd->file, dest, chd->header.hunkbytes);
 				if (bytes != chd->header.hunkbytes)
 					return CHDERR_READ_ERROR;
 				break;
@@ -2080,11 +2127,11 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 			case V34_MAP_ENTRY_TYPE_SELF_HUNK:
 				if (chd->cachehunk == entry->offset && dest == chd->cache)
 					break;
-				return hunk_read_into_memory(chd, entry->offset, dest);
+				return hunk_read_into_memory(chd, (UINT32)entry->offset, dest);
 
 			/* parent-referenced data */
 			case V34_MAP_ENTRY_TYPE_PARENT_HUNK:
-				err = hunk_read_into_memory(chd->parent, entry->offset, dest);
+				err = hunk_read_into_memory(chd->parent, (UINT32)entry->offset, dest);
 				if (err != CHDERR_NONE)
 					return err;
 				break;
@@ -2169,7 +2216,7 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 				return CHDERR_NONE;
 
 			case COMPRESSION_SELF:
-				return hunk_read_into_memory(chd, blockoffs, dest);
+				return hunk_read_into_memory(chd, (UINT32)blockoffs, dest);
 
 			case COMPRESSION_PARENT:
 #if 0
@@ -2221,7 +2268,7 @@ static chd_error map_read(chd_file *chd)
 
 		/* read that many */
 		core_fseek(chd->file, fileoffset, SEEK_SET);
-		count = core_fread(chd->file, raw_map_entries, entries * entrysize);
+		count = (UINT32)core_fread(chd->file, raw_map_entries, entries * entrysize);
 		if (count != entries * entrysize)
 		{
 			err = CHDERR_READ_ERROR;
@@ -2250,7 +2297,7 @@ static chd_error map_read(chd_file *chd)
 
 	/* verify the cookie */
 	core_fseek(chd->file, fileoffset, SEEK_SET);
-	count = core_fread(chd->file, &cookie, entrysize);
+	count = (UINT32)core_fread(chd->file, &cookie, entrysize);
 	if (count != entrysize || memcmp(&cookie, END_OF_LIST_COOKIE, entrysize))
 	{
 		err = CHDERR_INVALID_FILE;
@@ -2294,7 +2341,7 @@ static chd_error metadata_find_entry(chd_file *chd, UINT32 metatag, UINT32 metai
 
 		/* read the raw header */
 		core_fseek(chd->file, metaentry->offset, SEEK_SET);
-		count = core_fread(chd->file, raw_meta_header, sizeof(raw_meta_header));
+		count = (UINT32)core_fread(chd->file, raw_meta_header, sizeof(raw_meta_header));
 		if (count != sizeof(raw_meta_header))
 			break;
 

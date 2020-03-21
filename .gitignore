@@ -44,12 +44,12 @@ Workdir/lib*ant.properties
 reicast-ios.xccheckout
 
 # Linux General
-shell/linux/.map
-shell/linux/nosym-reicast.elf
-shell/linux/reicast.elf
-shell/linux/reicast_naomi.elf
-shell/linux/reicast_awave.elf
-shell/linux/dispframe.elf
+reicast/linux/.map
+reicast/linux/nosym-reicast.elf
+reicast/linux/reicast.elf
+reicast/linux/reicast_naomi.elf
+reicast/linux/reicast_awave.elf
+reicast/linux/dispframe.elf
 
 # Visual Studio
 generated
@@ -69,7 +69,8 @@ ant.properties
 *.iml
 .externalNativeBuild
 gradle.properties
-shell/android-studio/reicast/src/main/assets/build
+reicast/android-studio/reicast/src/main/assets/build
+reicast/android-studio/reicast/.cxx
 
 # JetBrains IDES
 .idea/

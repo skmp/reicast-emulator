@@ -271,7 +271,14 @@ DynarecCodeEntryPtr rdv_CompilePC_OrFail(bool soft_resets)
 			pc=rbi->NextBlock;
 		else
 			pc=0;
+    #if BUILD_COMPILER==COMPILER_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunreachable-code"
+    #endif
 	} while(false && pc);
+    #if BUILD_COMPILER==COMPILER_CLANG
+    #pragma clang diagnostic pop
+    #endif
 
 	bm_printf("rdv_CompilePC: end %08X\n", next_pc);
 

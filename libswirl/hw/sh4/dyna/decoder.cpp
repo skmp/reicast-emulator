@@ -902,6 +902,7 @@ bool dec_generic(u32 op)
 				case -64: op=shop_mul_s64; rd2 = mk_reg(reg_mach); break;
 
 				default:
+                    op = shop_mul_u16; // silence unintialized variabe warning
 					die("DM_MUL: Failed to classify opcode");
 			}
 

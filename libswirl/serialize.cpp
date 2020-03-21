@@ -685,7 +685,6 @@ bool register_unserialize(RegisterStruct* regs, size_t size,void **data, unsigne
 bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
-	int j = 0;
 	serialize_version_enum version = V4 ;
 
 	*total_size = 0 ;
@@ -892,7 +891,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 bool dc_unserialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
-	int j = 0;
 	serialize_version_enum version = V1 ;
 
 	*total_size = 0 ;

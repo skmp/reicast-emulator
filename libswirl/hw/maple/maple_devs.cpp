@@ -692,7 +692,6 @@ struct maple_sega_vmu: maple_base
 
 					case MFID_2_LCD:
 					{
-						u32 wat=r32();
 						rptr(lcd_data,192);
 
 						u8 white=0xff,black=0x00;
@@ -1431,26 +1430,6 @@ extern s8 joyx[4],joyy[4];
 extern u8 rt[4], lt[4];
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
-
-static u16 getJoystickXAxis()
-{
-	return (joyx[0] + 128) << 8;
-}
-
-static u16 getJoystickYAxis()
-{
-	return (joyy[0] + 128) << 8;
-}
-
-static u16 getLeftTriggerAxis()
-{
-	return lt[0] << 8;
-}
-
-static u16 getRightTriggerAxis()
-{
-	return rt[0] << 8;
-}
 
 u32 naomi_button_mapping[] = {
 		NAOMI_SERVICE_KEY,	// DC_BTN_C
@@ -2381,8 +2360,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			LOGJVS("JVS Node %d: ", node_id);
 			PlainJoystickState pjs;
 			parent->config->GetInput(&pjs);
-			u32 keycode = ~kcode[0];
-			u32 keycode2 = ~kcode[1];
 
 			JVS_STATUS1();	// status
 			for (int cmdi = 0; cmdi < length_in; )

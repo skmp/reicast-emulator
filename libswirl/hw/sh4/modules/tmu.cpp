@@ -27,7 +27,7 @@ u32 tmu_shift[3];
 u32 tmu_mask[3];
 u64 tmu_mask64[3];
 
-const u32 tmu_ch_bit[3]={1,2,4};
+//const u32 tmu_ch_bit[3]={1,2,4};
 
 u32 old_mode[3] = {0xFFFF,0xFFFF,0xFFFF};
 
@@ -193,7 +193,7 @@ struct Sh4ModTmu_impl : Sh4ModTmu
 
 			u32 tcor = TMU_TCOR(ch);
 
-			u32 cycles = tcor << tmu_shift[ch];
+			//u32 cycles = tcor << tmu_shift[ch];
 
 			//64 bit maths to differentiate big values from overflows
 			if (tcnt64 <= jitter) {

@@ -539,7 +539,6 @@ struct refrend : Renderer
         u32 base = REGION_BASE;
 
         RegionArrayEntry entry;
-        int tilenum = 1;
 
         EnqueueTile(0, [=](RefRendInterface* backend){
             backend->DebugOnFrameStart(numRenders);
@@ -875,9 +874,9 @@ struct refrend : Renderer
             }
             break;
         }
-        u32 *psrc = pb.data();
-
+        
 #if HOST_OS == OS_WINDOWS
+        u32 *psrc = pb.data();
         SetDIBits(hmem, hBMP, 0, SPG_CONTROL.interlace ? height * 2 : height, psrc, (BITMAPINFO*)& bi, DIB_RGB_COLORS);
 
         RECT clientRect;
@@ -899,7 +898,8 @@ struct refrend : Renderer
 
         extern int x11_width;
         extern int x11_height;
-
+        
+        u32 *psrc = pb.data();
         XImage* ximage = XCreateImage(x11_disp, x11_vis, 24, ZPixmap, 0, (char*)psrc, width, SPG_CONTROL.interlace ? height * 2 : height, 32, width * 4);
 
         GC gc = XCreateGC(x11_disp, x11_win, 0, 0);

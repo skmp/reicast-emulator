@@ -509,7 +509,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			//special encoding
 			//encoded as [none*x + ESP]
 			//index ,scale [sib]
-			rv.modrm = make_modrm(0,ESP); //ESP means sib
+			rv.modrm = (u8)make_modrm(0,ESP); //ESP means sib
 			rv.flags|=1;
 
 
@@ -517,7 +517,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 
 			if ( disp.ptr_int!=0 )
 			{
-				rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3);
+				rv.modrm |= EncodeDisp((u32)disp.ptr_int,&rv,3);
 			}
 		}
 		else if (base == EBP)
@@ -526,14 +526,14 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			//verify(false);
 			rv.modrm = make_modrm(0,base);
 			//uses [EBP+S8] , or [EBP+S32] forms
-			rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3); //32 or 8 bit disp
+			rv.modrm |= EncodeDisp((u32)disp.ptr_int,&rv,3); //32 or 8 bit disp
 		}
 		else if (base == NO_REG)
 		{
 			//[disp32]
 			//special encoding , will use mode [EBP] (it means disp :p)
-			rv.modrm=make_modrm(0,EBP);
-			EncodeDisp(disp.ptr_int,&rv,2|4); //only 32b disp allowed , uses form 0
+			rv.modrm=(u8)make_modrm(0,EBP);
+			EncodeDisp((u32)disp.ptr_int,&rv,2|4); //only 32b disp allowed , uses form 0
 		}
 		else
 		{
@@ -541,14 +541,14 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			rv.modrm = make_modrm(0,base);
 			if (disp.ptr_int!=0)
 			{
-				rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3); //32 or 16 bit disp
+				rv.modrm |= EncodeDisp((u32)disp.ptr_int,&rv,3); //32 or 16 bit disp
 			}
 		}
 	}
 	else
 	{
 		//index ,scale [sib]
-		rv.modrm = make_modrm(0,ESP);//ESP means sib
+		rv.modrm = (u8)make_modrm(0,ESP);//ESP means sib
 		rv.flags|=1;
 
 		bool force_disp=false;
@@ -569,7 +569,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 
 		if ( force_disp  || (disp.ptr_int!=0) )
 		{
-			rv.modrm |= EncodeDisp(disp.ptr_int,&rv,disp_sz);
+			rv.modrm |= EncodeDisp((u32)disp.ptr_int,&rv,disp_sz);
 		}
 	}
 	return rv;

@@ -91,6 +91,10 @@ static int pico_dns_client_del_ns(struct pico_ip4 *ns_addr)
     return 0;
 }
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#endif
 static struct pico_dns_ns *pico_dns_client_add_ns(struct pico_ip4 *ns_addr)
 {
     struct pico_dns_ns *dns = NULL, *found = NULL, test = {{0}};
@@ -130,6 +134,9 @@ static struct pico_dns_ns *pico_dns_client_add_ns(struct pico_ip4 *ns_addr)
 
     return dns;
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 static struct pico_dns_ns pico_dns_client_next_ns(struct pico_ip4 *ns_addr)
 {
@@ -820,6 +827,10 @@ int pico_dns_client_nameserver(struct pico_ip4 *ns, uint8_t flag)
     return 0;
 }
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#endif
 int pico_dns_client_init(void)
 {
     struct pico_ip4 default_ns = {
@@ -831,6 +842,9 @@ int pico_dns_client_init(void)
 
     return pico_dns_client_nameserver(&default_ns, PICO_DNS_NS_ADD);
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 #else
 

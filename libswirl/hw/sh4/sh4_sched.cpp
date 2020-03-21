@@ -58,7 +58,7 @@ void sh4_sched_ffts()
 	u32 diff=-1;
 	int slot=-1;
 
-	for (size_t i=0;i<sch_list.size();i++)
+	for (int i=0;i<sch_list.size();i++)
 	{
 		if (sh4_sched_remaining(i)<diff)
 		{
@@ -88,7 +88,7 @@ int sh4_sched_register(void* context, int tag, sh4_sched_callback* ssc)
 
 	sch_list.push_back(t);
 
-	return sch_list.size()-1;
+	return (int)(sch_list.size()-1);
 }
 
 /*
@@ -96,7 +96,7 @@ int sh4_sched_register(void* context, int tag, sh4_sched_callback* ssc)
 */
 u32 sh4_sched_now()
 {
-	return sh4_sched_ffb-Sh4cntx.sh4_sched_next;
+	return (u32)(sh4_sched_ffb-Sh4cntx.sh4_sched_next);
 }
 
 /*

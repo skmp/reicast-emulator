@@ -141,7 +141,7 @@ zip_fopen_index(struct zip *za, int fileno, int flags)
 int
 _zip_file_fillbuf(void *buf, size_t buflen, struct zip_file *zf)
 {
-    int i, j;
+    size_t i, j;
 
     if (zf->error.zip_err != ZIP_ER_OK)
 	return -1;
@@ -170,7 +170,7 @@ _zip_file_fillbuf(void *buf, size_t buflen, struct zip_file *zf)
 	zf->cbytes_left -= j;
     }
 
-    return j;	
+    return (int)j;	
 }
 
 

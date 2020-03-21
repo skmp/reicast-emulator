@@ -53,10 +53,10 @@ float scaling = 1;
 GuiState gui_state = Welcome;
 
 bool settings_opening;
+#ifdef _ANDROID
 static bool touch_up;
+#endif
 
-static void render_vmus();
-static void term_vmus();
 extern bool subfolders_read;
 
 static double last_render;
@@ -480,7 +480,7 @@ struct ReicastUI_impl : GUI {
             ImGui_Impl_NewFrame();
             ImGui::NewFrame();
 
-            ImGui::PlotLines("Render Times", &render_times[0], render_times.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
+            ImGui::PlotLines("Render Times", &render_times[0], (int)render_times.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
 
             // Render dear imgui into screen
             ImGui::Render();
@@ -952,7 +952,7 @@ struct ReicastUI_impl : GUI {
             ImGui::PopID();
 #endif
 
-            ImGui::Text("");
+            ImGui::Text("%s", "");
             ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "LOCAL ROMS");
 
             for (auto game : game_list)
@@ -968,7 +968,7 @@ struct ReicastUI_impl : GUI {
                 }
 
 
-            ImGui::Text("");
+            ImGui::Text("%s", "");
 
             gui_render_online_roms();
 

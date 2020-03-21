@@ -11,13 +11,21 @@
 #include <algorithm>
 #include <string.h>
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#endif
 #ifdef _ANDROID
 #include <sys/mman.h>
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
 #else
 #define PAGE_SIZE 4096
+#undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
+#endif
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
 #endif
 
 //Commonly used classes across the project

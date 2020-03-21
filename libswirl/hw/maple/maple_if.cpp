@@ -42,8 +42,6 @@ static int maple_schid;
 	DMA continuation on suspect, etc ...
 */
 
-static void maple_handle_reconnect();
-
 //really hackish
 //misses delay , and stop/start implementation
 //ddt/etc are just hacked for wince to work
@@ -147,10 +145,9 @@ struct MapleDevice final : MMIODevice {
 				u32 port = maple_GetPort(reci);
 				u32 bus = maple_GetBusId(reci);
 				//Sender address 
-				u32 send = (p_data[0] >> 16) & 0xFF;
+				//u32 send = (p_data[0] >> 16) & 0xFF;
 				//Number of additional words in frame 
 				u32 inlen = (p_data[0] >> 24) & 0xFF;
-				u32 resp = 0;
 				inlen *= 4;
 
 				if (MapleDevices[bus][5] && MapleDevices[bus][port])

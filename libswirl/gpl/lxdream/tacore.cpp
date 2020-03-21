@@ -325,7 +325,6 @@ static void ta_init_list( unsigned int listtype ) {
             (ta_status.tilelist_dir == TA_GROW_UP && list_end >= tile_matrix )) &&
             listtype <= TA_LIST_PUNCH_OUT ) {
         int i;
-        uint32_t *p;
         for( i=0; i < listtype; i++ ) {
             int size = tilematrix_sizes[(config & 0x03)] << 2;
             ta_status.current_tile_matrix += ta_status.width * ta_status.height * size;
@@ -393,7 +392,6 @@ static int ta_write_polygon_buffer( uint32_t *data, int length )
     int rv;
     int posn = TA_ISP_CURRENT;// MMIO_READ( PVR2, TA_POLYPOS );
     int end = TA_ISP_LIMIT;// MMIO_READ( PVR2, TA_POLYEND );
-    pvraddr_t target = posn;
     for( rv=0; rv < length; rv++ ) {
         if( posn == end ) {
             asic_RaiseInterrupt(holly_PRIM_NOMEM);

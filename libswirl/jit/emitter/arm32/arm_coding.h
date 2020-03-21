@@ -268,7 +268,7 @@ namespace ARM
 		return -1;
 	}
 
-	static u32 ARMImmid8r4(u32 imm8r4)
+	static inline u32 ARMImmid8r4(u32 imm8r4)
 	{
 		u32 rv = ARMImmid8r4_enc(imm8r4);
 
@@ -276,7 +276,7 @@ namespace ARM
 		return rv;
 	}
 
-	static bool is_i8r4(u32 i32)
+	static inline bool is_i8r4(u32 i32)
 	{
 		return ARMImmid8r4_enc(i32) != -1;
 	}

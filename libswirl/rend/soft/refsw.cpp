@@ -11,6 +11,7 @@
 #include <cmath>
 #include <float.h>
 
+#include "build.h"
 #include "refsw.h"
 #include "refsw_pixel.h"
 
@@ -19,10 +20,17 @@
 #include <emmintrin.h>
 #include <smmintrin.h>
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 static __forceinline int iround(float x)
 {
     return _mm_cvtt_ss2si(_mm_load_ss(&x));
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 static float mmin(float a, float b, float c, float d)
 {
@@ -157,7 +165,7 @@ struct refsw_impl : refsw
 
         fpu_entires.push_back(entry);
 
-        parameter_tag_t tag = fpu_entires.size() << 1;
+        parameter_tag_t tag = (parameter_tag_t)(fpu_entires.size() << 1);
 
         fpu_entires_lookup[core_tag.full] = tag;
 
@@ -215,7 +223,7 @@ struct refsw_impl : refsw
                     return;
 
                 if (params->isp.CullMode >= 2) {
-                    u32 mode = vertex_offset ^ params->isp.CullMode & 1;
+                    u32 mode = vertex_offset ^ (params->isp.CullMode & 1);
 
                     if (
                         (mode == 0 && area < 0) ||

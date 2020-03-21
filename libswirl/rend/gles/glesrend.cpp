@@ -945,8 +945,8 @@ bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 	float screen_stretching = settings.rend.ScreenStretching / 100.f;
 	float screen_scaling = settings.rend.ScreenScaling / 100.f;
 
-	float dc2s_scale_h;
-	float ds2s_offs_x;
+	float dc2s_scale_h = 0;
+	float ds2s_offs_x = 0;
 
 	if (is_rtt)
 	{
@@ -1044,7 +1044,7 @@ bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 	//setup render target first
 	if (is_rtt)
 	{
-		GLuint channels,format;
+		GLuint channels=0,format=0;
 		switch(FB_W_CTRL.fb_packmode)
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
@@ -1358,7 +1358,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	png_read_update_info(png_ptr, info_ptr);
 
 	// Row size in bytes.
-	int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+	int rowbytes = (int)png_get_rowbytes(png_ptr, info_ptr);
 
 	// Allocate the image_data as a big block, to be given to opengl
 	png_byte *image_data = new png_byte[rowbytes * height];

@@ -3,7 +3,7 @@
 */
 #include "license/bsd"
 
-
+#include "build.h"
 #include "glcache.h"
 #include "rend/rend.h"
 
@@ -79,7 +79,6 @@ extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
-static GLuint g_previous_frame_tex;
 
 s32 SetTileClip(u32 val, GLint uniform)
 {
@@ -511,9 +510,9 @@ static vector<SortTrigDrawParam>	pidx_sort;
 
 void fill_id(u32* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
 {
-	d[0]=v0-vb;
-	d[1]=v1-vb;
-	d[2]=v2-vb;
+	d[0]=(u32)(v0-vb);
+	d[1]=(u32)(v1-vb);
+	d[2]=(u32)(v2-vb);
 }
 
 void GenSorted(int first, int count)
@@ -532,7 +531,6 @@ void GenSorted(int first, int count)
 	PolyParam* pp = pp_base;
 	PolyParam* pp_end = pp + count;
 	
-	Vertex* vtx_arr=vtx_base+idx_base[pp->first];
 	vtx_sort_base=vtx_base;
 
 	static u32 vtx_cnt;
@@ -558,7 +556,7 @@ void GenSorted(int first, int count)
 
 	while(pp!=pp_end)
 	{
-		u32 ppid=(pp-pp_base);
+		u32 ppid=(u32)(pp-pp_base);
 
 		if (pp->count>2)
 		{
@@ -569,7 +567,7 @@ void GenSorted(int first, int count)
 			u32 flip=0;
 			while(vtx!=vtx_end)
 			{
-				Vertex* v0, * v1, * v2, * v3, * v4, * v5;
+				Vertex* v0, * v1, * v2;
 
 				if (flip)
 				{
@@ -584,6 +582,8 @@ void GenSorted(int first, int count)
 					v2=&vtx[2];
 				}
 #if 0
+                Vertex* v3, * v4, * v5;
+                
 				if (settings.pvr.subdivide_transp)
 				{
 					u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
@@ -780,7 +780,7 @@ void GenSorted(int first, int count)
 			static List<u16> short_vidx;
 			if (short_vidx.daty != NULL)
 				short_vidx.Free();
-			short_vidx.Init(vidx_sort.size(), &overrun, NULL);
+			short_vidx.Init((int)vidx_sort.size(), &overrun, NULL);
 			for (int i = 0; i < vidx_sort.size(); i++)
 				*(short_vidx.Append()) = vidx_sort[i];
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.bytes(), short_vidx.head(), GL_STREAM_DRAW);
@@ -798,7 +798,7 @@ void DrawSorted(bool multipass)
 	//if any drawing commands, draw them
 	if (pidx_sort.size())
 	{
-		u32 count=pidx_sort.size();
+		u32 count=(u32)pidx_sort.size();
 		
 		{
 			//set some 'global' modes for all primitives
@@ -1027,10 +1027,19 @@ void DrawModVols(int first, int count)
 
 	if(0)
 	{
+        #if BUILD_COMPILER==COMPILER_CLANG
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunreachable-code"
+        #endif
+    
 		//simply draw the volumes -- for debugging
 		SetCull(0);
 		glDrawArrays(GL_TRIANGLES, first, count * 3);
 		SetupMainVBO();
+    
+        #if BUILD_COMPILER==COMPILER_CLANG
+        #pragma clang diagnostic pop
+        #endif
 	}
 	else
 	{

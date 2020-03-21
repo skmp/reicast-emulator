@@ -1126,7 +1126,7 @@ static FLAC__off_t chain_prepare_for_write_(FLAC__Metadata_Chain *chain, FLAC__b
 				chain->status = FLAC__METADATA_CHAIN_STATUS_MEMORY_ALLOCATION_ERROR;
 				return 0;
 			}
-			padding->length = chain->initial_length - (FLAC__STREAM_METADATA_HEADER_LENGTH + current_length);
+			padding->length = (unsigned)(chain->initial_length - (FLAC__STREAM_METADATA_HEADER_LENGTH + current_length));
 			if(0 == (node = node_new_())) {
 				FLAC__metadata_object_delete(padding);
 				chain->status = FLAC__METADATA_CHAIN_STATUS_MEMORY_ALLOCATION_ERROR;
@@ -1644,12 +1644,12 @@ FLAC_API FLAC__bool FLAC__metadata_chain_check_if_tempfile_needed(FLAC__Metadata
 		/* if the metadata shrank and the last block is padding, we just extend the last padding block */
 		if(current_length < chain->initial_length && node->data->type == FLAC__METADATA_TYPE_PADDING) {
 			lbs_state = LBS_SIZE_CHANGED;
-			lbs_size = node->data->length + (chain->initial_length - current_length);
+			lbs_size = (unsigned)(node->data->length + (chain->initial_length - current_length));
 		}
 		/* if the metadata shrank more than 4 bytes then there's room to add another padding block */
 		else if(current_length + (FLAC__off_t)FLAC__STREAM_METADATA_HEADER_LENGTH <= chain->initial_length) {
 			lbs_state = LBS_BLOCK_ADDED;
-			lbs_size = chain->initial_length - (current_length + (FLAC__off_t)FLAC__STREAM_METADATA_HEADER_LENGTH);
+			lbs_size = (unsigned)(chain->initial_length - (current_length + (FLAC__off_t)FLAC__STREAM_METADATA_HEADER_LENGTH));
 		}
 		/* if the metadata grew but the last block is padding, try cutting the padding to restore the original length so we don't have to rewrite the whole file */
 		else if(current_length > chain->initial_length) {
@@ -1663,7 +1663,7 @@ FLAC_API FLAC__bool FLAC__metadata_chain_check_if_tempfile_needed(FLAC__Metadata
 				/* if there is at least 'delta' bytes of padding, trim the padding down */
 				else if((FLAC__off_t)node->data->length >= delta) {
 					lbs_state = LBS_SIZE_CHANGED;
-					lbs_size = node->data->length - delta;
+					lbs_size = (unsigned)(node->data->length - delta);
 				}
 			}
 		}
@@ -2873,7 +2873,7 @@ FLAC__bool write_metadata_block_data_picture_cb_(FLAC__IOHandle handle, FLAC__IO
 
 	len = FLAC__STREAM_METADATA_PICTURE_MIME_TYPE_LENGTH_LEN/8;
 	slen = strlen(block->mime_type);
-	pack_uint32_(slen, buffer, len);
+	pack_uint32_((FLAC__uint32)slen, buffer, len);
 	if(write_cb(buffer, 1, len, handle) != len)
 		return false;
 	if(write_cb(block->mime_type, 1, slen, handle) != slen)
@@ -2881,7 +2881,7 @@ FLAC__bool write_metadata_block_data_picture_cb_(FLAC__IOHandle handle, FLAC__IO
 
 	len = FLAC__STREAM_METADATA_PICTURE_DESCRIPTION_LENGTH_LEN/8;
 	slen = strlen((const char *)block->description);
-	pack_uint32_(slen, buffer, len);
+	pack_uint32_((FLAC__uint32)slen, buffer, len);
 	if(write_cb(buffer, 1, len, handle) != len)
 		return false;
 	if(write_cb(block->description, 1, slen, handle) != slen)

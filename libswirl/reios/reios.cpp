@@ -91,7 +91,7 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			else
 				g_GDRDisc->ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
 
-			if (false) {
+            if (/* DISABLES CODE */ (false)) {
 				FILE* f = fopen("z:\\1stboot.bin", "wb");
 				fwrite(GetMemPtr(0x8c010000, 0), 1, len, f);
 				fclose(f);
@@ -290,7 +290,7 @@ void reios_sys_flashrom() {
 			case 3:	//FLASHROM_DELETE  
 			{			
 				u32 offs = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
+				//u32 dest = Sh4cntx.r[5];
 
 				u32 part = 5;
 

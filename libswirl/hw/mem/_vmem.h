@@ -95,7 +95,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 	}
 	else
 	{
-		const u32 id = iirf;
+		const u32 id = (u32)iirf;
 		if (sz == 1)
 		{
 			return (T)_vmem_RF8[id / 4](_vmem_CTX[id / 4], addr);
@@ -139,7 +139,7 @@ INLINE void DYNACALL _vmem_writet(u32 addr, T data)
 	}
 	else
 	{
-		const u32 id = iirf;
+		const u32 id = (u32)iirf;
 		if (sz == 1)
 		{
 			_vmem_WF8[id / 4](_vmem_CTX[id / 4], addr, data);
@@ -192,7 +192,6 @@ void _vmem_map_block(void* base,u32 start,u32 end,u32 mask);
 void _vmem_mirror_mapping(u32 new_region,u32 start,u32 size);
 
 #define _vmem_map_block_mirror(base,start,end,blck_size) {u32 block_size=(blck_size)>>24;u32 map_sz=(end)-(start)+1;/*verify((map_sz%block_size)==0);u32 map_times=map_sz/(block_size);*/ for (u32 _maip=(start);_maip<(end);_maip+=block_size) _vmem_map_block((base),_maip,_maip+block_size-1,blck_size-1);}
-
 
 #define VMEM_MAP_FORWARDER(klass, name) \
 template <u32 sz, class T>  \

@@ -79,7 +79,7 @@ struct RefRendDebug: RefRendInterface
             init = true;
         }
 
-        struct sockaddr_in serv_addr, cli_addr;
+        struct sockaddr_in serv_addr;
         sockFd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockFd < 0) {
             error("ERROR opening socket");

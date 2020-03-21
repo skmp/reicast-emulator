@@ -1124,7 +1124,7 @@ FLAC_API FLAC__bool FLAC__metadata_object_seektable_template_append_spaced_point
 		if (num > 32768) {
 			/* Set the bound and recalculate samples accordingly. */
 			num = 32768;
-			samples = total_samples / num;
+			samples = (unsigned)(total_samples / num);
 		}
 
 		i = seek_table->num_points;
@@ -1265,8 +1265,7 @@ FLAC_API FLAC__bool FLAC__metadata_object_vorbiscomment_replace_comment(FLAC__St
 		return false;
 
 	{
-		int i;
-		size_t field_name_length;
+		size_t i, field_name_length;
 		const FLAC__byte *eq = (FLAC__byte*)memchr(entry.entry, '=', entry.length);
 
 		if (eq == NULL)
@@ -1274,7 +1273,7 @@ FLAC_API FLAC__bool FLAC__metadata_object_vorbiscomment_replace_comment(FLAC__St
 
 		field_name_length = eq-entry.entry;
 
-		i = vorbiscomment_find_entry_from_(object, 0, (const char *)entry.entry, field_name_length);
+		i = vorbiscomment_find_entry_from_(object, 0, (const char *)entry.entry, (unsigned)field_name_length);
 		if (i >= 0) {
 			unsigned indx = (unsigned)i;
 			if (!FLAC__metadata_object_vorbiscomment_set_comment(object, indx, entry, copy))
@@ -1282,13 +1281,13 @@ FLAC_API FLAC__bool FLAC__metadata_object_vorbiscomment_replace_comment(FLAC__St
 			entry = object->data.vorbis_comment.comments[indx];
 			indx++; /* skip over replaced comment */
 			if (all && indx < object->data.vorbis_comment.num_comments) {
-				i = vorbiscomment_find_entry_from_(object, indx, (const char *)entry.entry, field_name_length);
+				i = vorbiscomment_find_entry_from_(object, indx, (const char *)entry.entry, (unsigned)field_name_length);
 				while (i >= 0) {
 					indx = (unsigned)i;
 					if (!FLAC__metadata_object_vorbiscomment_delete_comment(object, indx))
 						return false;
 					if (indx < object->data.vorbis_comment.num_comments)
-						i = vorbiscomment_find_entry_from_(object, indx, (const char *)entry.entry, field_name_length);
+						i = vorbiscomment_find_entry_from_(object, indx, (const char *)entry.entry, (unsigned)field_name_length);
 					else
 						i = -1;
 				}
@@ -1335,7 +1334,7 @@ FLAC_API FLAC__bool FLAC__metadata_object_vorbiscomment_entry_from_name_value_pa
 	{
 		const size_t nn = strlen(field_name);
 		const size_t nv = strlen(field_value);
-		entry->length = nn + 1 /*=*/ + nv;
+		entry->length = (FLAC__uint32)(nn + 1 /*=*/ + nv);
 		if ((entry->entry = safe_malloc_add_4op_(nn, /*+*/1, /*+*/nv, /*+*/1)) == NULL)
 			return false;
 		memcpy(entry->entry, field_name, nn);
@@ -1391,12 +1390,12 @@ FLAC_API int FLAC__metadata_object_vorbiscomment_find_entry_from(const FLAC__Str
 {
 	FLAC__ASSERT(field_name != NULL);
 
-	return vorbiscomment_find_entry_from_(object, offset, field_name, strlen(field_name));
+	return vorbiscomment_find_entry_from_(object, offset, field_name, (unsigned)strlen(field_name));
 }
 
 FLAC_API int FLAC__metadata_object_vorbiscomment_remove_entry_matching(FLAC__StreamMetadata *object, const char *field_name)
 {
-	const unsigned field_name_length = strlen(field_name);
+	const unsigned field_name_length = (unsigned)strlen(field_name);
 	unsigned i;
 
 	FLAC__ASSERT(object != NULL);
@@ -1418,7 +1417,7 @@ FLAC_API int FLAC__metadata_object_vorbiscomment_remove_entries_matching(FLAC__S
 {
 	FLAC__bool ok = true;
 	unsigned matching = 0;
-	const unsigned field_name_length = strlen(field_name);
+	const unsigned field_name_length = (unsigned)strlen(field_name);
 	int i;
 
 	FLAC__ASSERT(object != NULL);
@@ -1740,7 +1739,7 @@ FLAC_API FLAC__bool FLAC__metadata_object_picture_set_mime_type(FLAC__StreamMeta
 	if (copy) {
 		if (new_length >= SIZE_MAX) /* overflow check */
 			return false;
-		if (!copy_bytes_((FLAC__byte**)(&object->data.picture.mime_type), (FLAC__byte*)mime_type, new_length+1))
+		if (!copy_bytes_((FLAC__byte**)(&object->data.picture.mime_type), (FLAC__byte*)mime_type, (unsigned)(new_length+1)))
 			return false;
 	}
 	else {
@@ -1771,7 +1770,7 @@ FLAC_API FLAC__bool FLAC__metadata_object_picture_set_description(FLAC__StreamMe
 	if (copy) {
 		if (new_length >= SIZE_MAX) /* overflow check */
 			return false;
-		if (!copy_bytes_(&object->data.picture.description, description, new_length+1))
+		if (!copy_bytes_(&object->data.picture.description, description, (unsigned)(new_length+1)))
 			return false;
 	}
 	else {

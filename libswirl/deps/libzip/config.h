@@ -1,3 +1,4 @@
+#ifdef _ANDROID
 /* Config header for Android */
 /* Define to 1 if you have the declaration of `tzname', and to 0 if you don't.
    */
@@ -97,3 +98,5 @@
 
 /* Version number of package */
 #define VERSION "0.9.3"
+
+#endif

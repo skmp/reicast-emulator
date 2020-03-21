@@ -174,7 +174,7 @@ uint32_t elf64_getSectionLink(struct Elf64_Header *file, int s)
 static inline uint32_t 
 elf64_getSectionFlags(struct Elf64_Header *file, uint16_t s)
 {
-	return elf64_getSectionTable(file)[s].sh_flags;
+	return (uint32_t)elf64_getSectionTable(file)[s].sh_flags;
 }
 
 char * elf64_getSectionName(void *elfFile, int i);

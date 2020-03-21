@@ -403,8 +403,8 @@ void BuildOpcodeTables()
 		if (opcodes[i2].diss==0)
 			opcodes[i2].diss="Unknown Opcode";
 
-		u32 shft;
-		u32 count;
+		u32 shft=0;
+		u32 count=0;
 		u32 mask=~opcodes[i2].mask;
 		u32 base=opcodes[i2].rez;
 		switch(opcodes[i2].mask)

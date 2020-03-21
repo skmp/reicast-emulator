@@ -111,7 +111,7 @@ static CoreFile* (*vfs[])(const char* path) =
 
 core_file* core_fopen(const char* filename)
 {
-	CoreFile* rv;
+	CoreFile* rv = nullptr;
 	for (int i = 0; vfs[i] != nullptr; i++)
 	{
 		auto fs_open = vfs[i];
@@ -161,7 +161,7 @@ int core_fread(core_file* fc, void* buff, size_t len)
 
 	f->seek_ptr += rv;
 
-	return rv;
+	return (int)rv;
 }
 
 int core_fclose(core_file* fc)

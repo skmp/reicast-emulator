@@ -466,7 +466,7 @@ bool naomi_cart_LoadRom(char* file)
 			return false;
 
 		fseek(fp, 0, SEEK_END);
-		u32 file_size = ftell(fp);
+		u32 file_size = (u32)ftell(fp);
 		fclose(fp);
 		files.push_back(t);
 		fstart.push_back(0);

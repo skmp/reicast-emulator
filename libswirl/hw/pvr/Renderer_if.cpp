@@ -362,7 +362,7 @@ void rend_start_render(u8* vram)
 			u8 digest[16];
 
 			MD5Init(&md5);
-			MD5Update(&md5, ctx->tad.thd_root, ctx->tad.End() - ctx->tad.thd_root);
+			MD5Update(&md5, ctx->tad.thd_root, (unsigned)(ctx->tad.End() - ctx->tad.thd_root));
 			MD5Final(digest, &md5);
 
 			if (fLogFrames) {

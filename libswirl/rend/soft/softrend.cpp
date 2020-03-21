@@ -5,6 +5,7 @@
 
 
 #include <omp.h>
+#include "build.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/pvr_mem.h"
 #include "oslib/oslib.h"
@@ -68,11 +69,18 @@ static __m128 _mm_broadcast_float(float v)
 {
 	return _mm_setr_ps(v, v, v, v);
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 static __m128i _mm_broadcast_int(int v)
 {
 	__m128i rv = _mm_cvtsi32_si128(v);
 	return _mm_shuffle_epi32(rv, 0);
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 static __m128 _mm_load_ps_r(float a, float b, float c, float d)
 {
 	DECL_ALIGN(128) float v[4];
@@ -370,7 +378,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 				__m128i tex_00 = _mm_cvtepu8_epi32(px);
 				__m128i tex_01 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 1)));
 				__m128i tex_10 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 2)));
-				__m128i tex_11 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 3)));
+				//__m128i tex_11 = _mm_cvtepu8_epi32(_mm_shuffle_epi32(px, _MM_SHUFFLE(0, 0, 0, 3)));
 
 				tex_00 = _mm_add_epi32(_mm_mullo_epi32(tex_00, mufi_), _mm_mullo_epi32(tex_01, mufi_n));
 				tex_10 = _mm_add_epi32(_mm_mullo_epi32(tex_10, mufi_), _mm_mullo_epi32(tex_10, mufi_n));
@@ -624,7 +632,7 @@ struct softrend : Renderer
 					return;
 
 				if (pp->isp.CullMode >= 2) {
-					u32 mode = vertex_offset ^ pp->isp.CullMode & 1;
+					u32 mode = vertex_offset ^ (pp->isp.CullMode & 1);
 
 					if (
 						(mode == 0 && area < 0) ||
@@ -695,9 +703,9 @@ struct softrend : Renderer
 		const float FDqY23 = FDY23 * q;
 		const float FDqY31 = FDY31 * q;
 
-		const float FDX12mq = FDX12 + FDY12 * q;
-		const float FDX23mq = FDX23 + FDY23 * q;
-		const float FDX31mq = FDX31 + FDY31 * q;
+		//const float FDX12mq = FDX12 + FDY12 * q;
+		//const float FDX23mq = FDX23 + FDY23 * q;
+		//const float FDX31mq = FDX31 + FDY31 * q;
 
 		float hs12 = C1 + FDX12 * (miny + 0.5f) - FDY12 * (minx + 0.5f) + FDqY12 - MIN_12;
 		float hs23 = C2 + FDX23 * (miny + 0.5f) - FDY23 * (minx + 0.5f) + FDqY23 - MIN_23;
@@ -1188,7 +1196,7 @@ struct softrend : Renderer
 
 	//R coefs should be adjusted to match pixel format
 	INLINE __m128 shuffle_pixel(__m128 v) {
-		return _mm_cvtepi32_ps(_mm_shuffle_epi8(_mm_cvtps_epi32(v), _mm_set_epi8(R(0x80, 2, 1, 0))));
+		return _mm_cvtepi32_ps(_mm_shuffle_epi8(_mm_cvtps_epi32(v), _mm_set_epi8(R((char)0x80, 2, 1, 0))));
 	}
 
 	virtual void Present() {

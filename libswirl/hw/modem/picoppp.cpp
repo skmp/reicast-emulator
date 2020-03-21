@@ -7,6 +7,7 @@
 // for picoppp
 #include "license/dep_gpl"
 
+#include "build.h"
 
 #if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)
 
@@ -195,8 +196,6 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 
 static void tcp_callback(uint16_t ev, struct pico_socket *s)
 {
-	int r = 0;
-
 	if (ev & PICO_SOCK_EV_RD)
 	{
 		auto it = tcp_sockets.find(s);
@@ -213,7 +212,6 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 
 	if (ev & PICO_SOCK_EV_CONN)
 	{
-		uint32_t ka_val = 0;
 		struct pico_ip4 orig;
 		uint16_t port;
 		char peer[30];
@@ -490,7 +488,7 @@ static void read_native_sockets()
 	{
 		addr_len = sizeof(src_addr);
 		memset(&src_addr, 0, addr_len);
-		r = recvfrom(it->second, buf, sizeof(buf), 0, (struct sockaddr *)&src_addr, &addr_len);
+		r = (int)recvfrom(it->second, buf, sizeof(buf), 0, (struct sockaddr *)&src_addr, &addr_len);
 		if (r > 0)
 		{
 			msginfo.dev = ppp;
@@ -499,7 +497,7 @@ static void read_native_sockets()
 			msginfo.local_addr.ip4.addr = src_addr.sin_addr.s_addr;
 			msginfo.local_port = src_addr.sin_port;
 			//printf("read_native_sockets UDP received %d bytes from %08x:%d\n", r, long_be(msginfo.local_addr.ip4.addr), short_be(msginfo.local_port));
-			int r2 = pico_socket_sendto_extended(pico_udp_socket, buf, r, &dcaddr, it->first, &msginfo);
+			int r2 = (int)pico_socket_sendto_extended(pico_udp_socket, buf, r, &dcaddr, it->first, &msginfo);
 			if (r2 < r)
 				printf("%s: error UDP sending to %d: %s\n", __FUNCTION__, short_be(it->first), strerror(pico_err));
 		}
@@ -521,7 +519,7 @@ static void read_native_sockets()
 			it++;
 			continue;
 		}
-		r = recv(it->second, buf, sizeof(buf), 0);
+		r = (int)recv(it->second, buf, sizeof(buf), 0);
 		if (r > 0)
 		{
 			if (it->first->remote_port == short_be(5011) && r >= 5)
@@ -592,6 +590,11 @@ static void usleep(unsigned int usec)
 	WaitForSingleObject(timer, INFINITE);
 	CloseHandle(timer);
 }
+#endif
+
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
 #endif
 
 static void check_dns_entries()
@@ -677,9 +680,7 @@ static bool pico_thread_running = false;
 
 static void *pico_thread_func(void *)
 {
-    struct pico_ip4 ipaddr, netmask, zero = {
-    	    0
-    	};
+    struct pico_ip4 ipaddr = { 0 };
 
     if (!pico_stack_inited)
     {
@@ -800,6 +801,10 @@ static void *pico_thread_func(void *)
 
 	return NULL;
 }
+
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 static cThread pico_thread(pico_thread_func, NULL);
 

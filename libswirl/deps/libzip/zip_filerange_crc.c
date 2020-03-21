@@ -62,7 +62,7 @@ _zip_filerange_crc(FILE *fp, off_t start, off_t len, uLong *crcp,
 	    return -1;
 	}
 
-	*crcp = crc32(*crcp, buf, n);
+	*crcp = crc32(*crcp, buf, (uInt)n);
 
 	len-= n;
     }

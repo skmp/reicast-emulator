@@ -55,7 +55,7 @@ struct AICARTC_impl : MMIODevice
 		gmtm.tm_isdst = -1;
 		time_t time_offset = mktime(&localtm) - mktime(&gmtm);
 		// 1/1/50 to 1/1/70 is 20 years and 5 leap days
-		return (20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset;
+		return (u32)((20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset);
 	}
 
 	bool Init() {

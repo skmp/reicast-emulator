@@ -41,7 +41,7 @@ int stuffcmp(const void* p1,const void* p2)
 	sh4_opcodelistentry* a=(sh4_opcodelistentry*)p1;
 	sh4_opcodelistentry* b=(sh4_opcodelistentry*)p2;
 
-	return b->fallbacks-a->fallbacks;
+	return (int)(b->fallbacks-a->fallbacks);
 }
 
 extern u32 ret_hit,ret_all,ret_stc;

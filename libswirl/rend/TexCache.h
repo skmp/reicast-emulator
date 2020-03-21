@@ -516,7 +516,7 @@ void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 
 	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
 
-	unsigned long bcx_,bcy_;
+	u32 bcx_,bcy_;
 	bcx_=bitscanrev(Width);
 	bcy_=bitscanrev(Height);
 	const u32 bcx=bcx_-3;
@@ -542,7 +542,7 @@ void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	pb->amove(0,0);
 
 	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
-	unsigned long bcx_,bcy_;
+	u32 bcx_,bcy_;
 	bcx_=bitscanrev(Width);
 	bcy_=bitscanrev(Height);
 	const u32 bcx=bcx_-3;

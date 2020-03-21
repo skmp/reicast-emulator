@@ -106,7 +106,6 @@ void gui_settings_general()
         ImGui::SameLine();
         gui_ShowHelpMarker("Video connection type");
 
-        static int current_item;
         std::vector<const char *> paths;
         for (auto path : settings.dreamcast.ContentPath)
         	paths.push_back(path.c_str());

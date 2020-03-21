@@ -406,27 +406,28 @@ static void pico_arp_reply_on_request(struct pico_frame *f, struct pico_ip4 me)
     f->dev->send(f->dev, f->start, (int)f->len);
 }
 
-static int pico_arp_check_flooding(struct pico_frame *f, struct pico_ip4 me)
-{
-    struct pico_device *link_dev;
-    struct pico_arp_hdr *hdr;
-    hdr = (struct pico_arp_hdr *) f->net_hdr;
-
-    /* Prevent ARP flooding */
-    link_dev = pico_ipv4_link_find(&me);
-    if ((link_dev == f->dev) && (hdr->opcode == PICO_ARP_REQUEST)) {
-        if (max_arp_reqs == 0)
-            return -1;
-        else
-            max_arp_reqs--;
-    }
-
-    /* Check if we are the target IP address */
-    if (link_dev != f->dev)
-        return -1;
-
-    return 0;
-}
+// FIXME Problem with proxy ARP
+//static int pico_arp_check_flooding(struct pico_frame *f, struct pico_ip4 me)
+//{
+//    struct pico_device *link_dev;
+//    struct pico_arp_hdr *hdr;
+//    hdr = (struct pico_arp_hdr *) f->net_hdr;
+//
+//    /* Prevent ARP flooding */
+//    link_dev = pico_ipv4_link_find(&me);
+//    if ((link_dev == f->dev) && (hdr->opcode == PICO_ARP_REQUEST)) {
+//        if (max_arp_reqs == 0)
+//            return -1;
+//        else
+//            max_arp_reqs--;
+//    }
+//
+//    /* Check if we are the target IP address */
+//    if (link_dev != f->dev)
+//        return -1;
+//
+//    return 0;
+//}
 
 static int pico_arp_process_in(struct pico_frame *f, struct pico_arp_hdr *hdr, struct pico_arp *found)
 {

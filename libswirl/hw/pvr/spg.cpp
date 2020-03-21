@@ -80,7 +80,7 @@ struct SPG_impl final : SPG {
 
         //We need to calculate the pixel clock
 
-        u32 sync_cycles = (SPG_LOAD.hcount + 1) * (SPG_LOAD.vcount + 1);
+        //u32 sync_cycles = (SPG_LOAD.hcount + 1) * (SPG_LOAD.vcount + 1);
         pvr_numscanlines = SPG_LOAD.vcount + 1;
 
         Line_Cycles = (u32)((u64)SH4_MAIN_CLOCK * (u64)(SPG_LOAD.hcount + 1) / (u64)pixel_clock);
@@ -89,7 +89,7 @@ struct SPG_impl final : SPG {
         {
             //this is a temp hack
             Line_Cycles /= 2;
-            u32 interl_mode = VO_CONTROL.field_mode;
+            //u32 interl_mode = VO_CONTROL.field_mode;
 
             //if (interl_mode==2)//3 will be funny =P
             //  scale_y=0.5f;//single interlace

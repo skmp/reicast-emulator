@@ -63,11 +63,18 @@ void map_area3_init()
 {
 }
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#endif
 void map_area3(SuperH4* sh4, u32 base)
 {
 	//32x2 or 16x4
 	_vmem_map_block_mirror(sh4->mram.data,0x0C | base,0x0F | base,RAM_SIZE);
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 //AREA 4
 void map_area4_init()

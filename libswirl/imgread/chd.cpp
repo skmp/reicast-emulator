@@ -124,23 +124,23 @@ bool CHDDisc::TryOpen(const wchar* file)
 		char type[16], subtype[16], pgtype[16], pgsub[16];
 		int tkid=-1, frames=0, pregap=0, postgap=0, padframes=0;
 
-		err = chd_get_metadata(chd, CDROM_TRACK_METADATA2_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
+		err = chd_get_metadata(chd, CDROM_TRACK_METADATA2_TAG, (UINT32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 		if (err == CHDERR_NONE)
 		{
 			//"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
 			sscanf(temp, CDROM_TRACK_METADATA2_FORMAT, &tkid, type, subtype, &frames, &pregap, pgtype, pgsub, &postgap);
 		}
-		else if (CHDERR_NONE== (err = chd_get_metadata(chd, CDROM_TRACK_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags)) )
+		else if (CHDERR_NONE== (err = chd_get_metadata(chd, CDROM_TRACK_METADATA_TAG, (UINT32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags)) )
 		{
 			//CDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d"
 			sscanf(temp, CDROM_TRACK_METADATA_FORMAT, &tkid, type, subtype, &frames);
 		}
 		else
 		{
-			err = chd_get_metadata(chd, GDROM_OLD_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
+			err = chd_get_metadata(chd, GDROM_OLD_METADATA_TAG, (UINT32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 			if (err != CHDERR_NONE)
 			{
-				err = chd_get_metadata(chd, GDROM_TRACK_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
+				err = chd_get_metadata(chd, GDROM_TRACK_METADATA_TAG, (UINT32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 			}
 			if (err == CHDERR_NONE)
 			{
@@ -179,7 +179,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	if (total_frames!=549300 || tracks.size()<3)
 	{
-		printf("WARNING: chd: Total frames is wrong: %u frames in %u tracks\n",total_frames,tracks.size());
+		printf("WARNING: chd: Total frames is wrong: %u frames in %zu tracks\n",total_frames,tracks.size());
 
 		msgboxf("This is an improper dump!",MBX_ICONEXCLAMATION);
 

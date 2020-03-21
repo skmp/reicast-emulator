@@ -1107,7 +1107,7 @@ struct Dreamcast_impl : VirtualDreamcast {
             return;
         }
         fseek(f, 0, SEEK_END);
-        total_size = ftell(f);
+        total_size = (unsigned int)ftell(f);
         fseek(f, 0, SEEK_SET);
         data = malloc(total_size);
         if (data == NULL)

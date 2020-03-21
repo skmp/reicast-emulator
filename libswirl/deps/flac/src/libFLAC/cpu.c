@@ -80,6 +80,10 @@ static const unsigned FLAC__CPUINFO_IA32_CPUID_FMA = 0x00001000;
 static const unsigned FLAC__CPUINFO_IA32_CPUID_AVX2 = 0x00000020;
 #endif
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 #if defined FLAC__CPU_IA32 || defined FLAC__CPU_X86_64
 static uint32_t
 cpu_xgetbv_x86(void)
@@ -94,6 +98,9 @@ cpu_xgetbv_x86(void)
 	return 0;
 #endif
 }
+#endif
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
 #endif
 
 static void
@@ -227,9 +234,11 @@ x86_64_cpu_info (FLAC__CPUInfo *info)
 #else
 	/* Silence compiler warnings. */
 	(void) info;
+    /*
 #if defined FLAC__CPU_IA32 || defined FLAC__CPU_X86_64
 	if (0) cpu_xgetbv_x86 ();
 #endif
+    */
 #endif
 }
 

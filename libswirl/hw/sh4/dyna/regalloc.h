@@ -446,7 +446,7 @@ struct RegAlloc
 			}*/
 
 			//if (op->op != shop_readm && op->op != shop_writem && op->op != shop_jcond && op->op != shop_jdyn && op->op != shop_mov32 && op->op != shop_mov64 && (op->op != shop_add || block->addr<=0x8c0DA0BA))
-			if (IsFlushOp(block,opid))
+			if (IsFlushOp(block,(int)opid))
 			{
 				bool fp=false,gpr_b=false,all=false;
 
@@ -572,12 +572,12 @@ struct RegAlloc
 								{
 									if (spans[(*iter)._reg]==0)
 									{
-										spans[(*iter)._reg] = new RegSpan((*iter),opid,AM_READWRITE);
+										spans[(*iter)._reg] = new RegSpan((*iter),(int)opid,AM_READWRITE);
 										all_spans.push_back(spans[(*iter)._reg]);
 									}
 									else
 									{
-										spans[(*iter)._reg]->Access(opid,AM_READWRITE);
+										spans[(*iter)._reg]->Access((int)opid,AM_READWRITE);
 									}
 								}
 								else
@@ -620,7 +620,7 @@ struct RegAlloc
 								if (spans[(*iter)._reg]!=0)
 									spans[(*iter)._reg]->Kill();
 
-								spans[(*iter)._reg]= new RegSpan((*iter),opid,AM_WRITE);
+								spans[(*iter)._reg]= new RegSpan((*iter),(int)opid,AM_WRITE);
 								all_spans.push_back(spans[(*iter)._reg]);
 							}
 						}
@@ -638,12 +638,12 @@ struct RegAlloc
 						{
 							if (spans[(*iter)._reg]==0)
 							{
-								spans[(*iter)._reg] = new RegSpan((*iter),opid,AM_READ);
+								spans[(*iter)._reg] = new RegSpan((*iter),(int)opid,AM_READ);
 								all_spans.push_back(spans[(*iter)._reg]);
 							}
 							else
 							{
-								spans[(*iter)._reg]->Access(opid,AM_READ);
+								spans[(*iter)._reg]->Access((int)opid,AM_READ);
 							}
 						}
 						else
@@ -683,14 +683,14 @@ struct RegAlloc
 		while (*nregs!=-1)
 			regs.push_back(*nregs++);
 
-		u32 reg_cc_max_g=regs.size();
+		u32 reg_cc_max_g=(u32)regs.size();
 
 		const nregf_t* nregsf=nregsf_avail;
 
 		while (*nregsf!=-1)
 			regsf.push_back(*nregsf++);
 
-		u32 reg_cc_max_f=regsf.size();
+		u32 reg_cc_max_f=(u32)regsf.size();
 
 		
 		//Trim span count to max reg count
@@ -701,7 +701,7 @@ struct RegAlloc
 
 			for (u32 sid=0;sid<all_spans.size();sid++)
 			{
-				if (all_spans[sid]->contains(opid))
+				if (all_spans[sid]->contains((int)opid))
 				{
 					if (all_spans[sid]->fpr)
 						cc_f++;
@@ -710,9 +710,9 @@ struct RegAlloc
 				}
 			}
 
-			SplitSpans(cc_g,reg_cc_max_g,false,opid);
+			SplitSpans(cc_g,reg_cc_max_g,false,(u32)opid);
 
-			SplitSpans(cc_f,reg_cc_max_f,true,opid);
+			SplitSpans(cc_f,reg_cc_max_f,true,(u32)opid);
 
 			if (false)
 			{
@@ -739,7 +739,7 @@ struct RegAlloc
 				))
 			{
 				//FindSpan(block->oplist[opid].rd._reg);
-				RegSpan* x=FindSpan(block->oplist[opid].rs1._reg,opid);
+				RegSpan* x=FindSpan(block->oplist[opid].rs1._reg,(u32)opid);
 				if (0 && x->nacc_w(opid)==-1 && (x->nreg!=-1 || x->nregf!=-1) && !x->aliased)
 				{
 					RegSpan* d=FindSpan(block->oplist[opid].rd._reg,opid);
@@ -773,7 +773,7 @@ struct RegAlloc
 				{
 					RegSpan* spn=all_spans[sid];
 
-					if (spn->begining(opid))
+					if (spn->begining((int)opid))
 					{
 						if (spn->fpr)
 						{
@@ -796,7 +796,7 @@ struct RegAlloc
 			{
 				RegSpan* spn=all_spans[sid];
 
-				if ( spn->ending(opid) && !spn->aliased)
+				if ( spn->ending((int)opid) && !spn->aliased)
 				{
 					if (spn->fpr)
 					{

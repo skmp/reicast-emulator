@@ -135,7 +135,10 @@ template <class T> inline
 T square(T value) { return value * value; }
 
 
-
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 inline
 double distRGB(uint32_t pix1, uint32_t pix2)
 {
@@ -173,6 +176,9 @@ double distYCbCr(uint32_t pix1, uint32_t pix2, double lumaWeight)
     //we skip division by 255 to have similar range like other distance functions
     return std::sqrt(square(lumaWeight * y) + square(c_b) + square(c_r));
 }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 
 inline
@@ -312,6 +318,10 @@ struct Kernel_3x3
     /**/g,  h,  i;
 };
 
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 #define DEF_GETTER(x) template <RotationDegree rotDeg> uint32_t inline get_##x(const Kernel_3x3& ker) { return ker.x; }
 //we cannot and NEED NOT write "ker.##x" since ## concatenates preprocessor tokens but "." is not a token
 DEF_GETTER(a) DEF_GETTER(b) DEF_GETTER(c)
@@ -343,6 +353,9 @@ inline BlendType getTopL   (unsigned char b) { return static_cast<BlendType>(0x3
 inline BlendType getTopR   (unsigned char b) { return static_cast<BlendType>(0x3 & (b >> 2)); }
 inline BlendType getBottomR(unsigned char b) { return static_cast<BlendType>(0x3 & (b >> 4)); }
 inline BlendType getBottomL(unsigned char b) { return static_cast<BlendType>(0x3 & (b >> 6)); }
+#if BUILD_COMPILER==COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 inline void setTopL   (unsigned char& b, BlendType bt) { b |= bt; } //buffer is assumed to be initialized before preprocessing!
 inline void setTopR   (unsigned char& b, BlendType bt) { b |= (bt << 2); }

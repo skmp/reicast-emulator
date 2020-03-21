@@ -36,7 +36,7 @@ void gui_settings_video()
 				if (ImGui::Selectable(backend.slug.c_str(), &is_selected))
 					settings.pvr.backend = backend.slug;
 				ImGui::SameLine(); ImGui::Text("-");
-				ImGui::SameLine(); ImGui::Text(backend.desc.c_str());
+				ImGui::SameLine(); ImGui::Text("%s", backend.desc.c_str());
 			}
 
 			ImGui::EndCombo();

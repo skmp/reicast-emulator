@@ -684,12 +684,12 @@ u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
 void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size);
 
 //Area 0 , 0x01000000- 0x01FFFFFF	[Ext. Device]
-static u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }
-static void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
+static inline u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }
+static inline void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
 
 //Area 5
-static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
-static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
+static inline u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
+static inline void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
 //ARM
 

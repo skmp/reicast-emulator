@@ -271,12 +271,12 @@ DynarecCodeEntryPtr rdv_CompilePC_OrFail(bool soft_resets)
 			pc=rbi->NextBlock;
 		else
 			pc=0;
-    #ifdef __clang__
+    #if BUILD_COMPILER==COMPILER_CLANG
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunreachable-code"
     #endif
 	} while(false && pc);
-    #ifdef __clang__
+    #if BUILD_COMPILER==COMPILER_CLANG
     #pragma clang diagnostic pop
     #endif
 

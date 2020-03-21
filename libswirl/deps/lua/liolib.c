@@ -37,7 +37,7 @@
 #endif
 
 /* Check whether 'mode' matches '[rwa]%+?[L_MODEEXT]*' */
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wcomma"
 #endif
@@ -46,7 +46,7 @@ static int l_checkmode (const char *mode) {
          (*mode != '+' || (++mode, 1)) &&  /* skip if char is '+' */
          (strspn(mode, L_MODEEXT) == strlen(mode)));  /* check extensions */
 }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

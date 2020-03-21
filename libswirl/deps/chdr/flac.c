@@ -27,7 +27,7 @@ FLAC__StreamDecoderWriteStatus flac_decoder_write_callback(void* client_data, co
 static void flac_decoder_error_callback_static(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data);
 
 /* getters (valid after reset) */
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
@@ -37,7 +37,7 @@ static uint8_t bits_per_sample(flac_decoder *decoder) { return decoder->bits_per
 static uint32_t total_samples(flac_decoder *decoder)  { return (uint32_t)FLAC__stream_decoder_get_total_samples(decoder->decoder); }
 static FLAC__StreamDecoderState state(flac_decoder *decoder) { return FLAC__stream_decoder_get_state(decoder->decoder); }
 static const char *state_string(flac_decoder *decoder) { return FLAC__stream_decoder_get_resolved_state_string(decoder->decoder); }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

@@ -196,7 +196,9 @@
 	#endif
 #endif
 
-#ifdef __GNUC__ 
+#if defined(__clang__)
+    #define BUILD_COMPILER COMPILER_CLANG
+#elif __GNUC__
 	#define BUILD_COMPILER COMPILER_GCC
 #else
 	#define BUILD_COMPILER COMPILER_VC

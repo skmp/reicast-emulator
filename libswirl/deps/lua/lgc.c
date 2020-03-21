@@ -448,7 +448,7 @@ static void traversestrongtable (global_State *g, Table *h) {
 }
 
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wcomma"
 #endif
@@ -473,7 +473,7 @@ static lu_mem traversetable (global_State *g, Table *h) {
   return sizeof(Table) + sizeof(TValue) * h->sizearray +
                          sizeof(Node) * cast(size_t, allocsizenode(h));
 }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

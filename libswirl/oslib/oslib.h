@@ -21,7 +21,7 @@ void os_SetupInput();
 
 u32 static INLINE bitscanrev(u32 v)
 {
-#if (BUILD_COMPILER==COMPILER_GCC)
+#if BUILD_COMPILER==COMPILER_GCC || BUILD_COMPILER==COMPILER_CLANG
 	return 31-__builtin_clz(v);
 #else
 	unsigned long rv;

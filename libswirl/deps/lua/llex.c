@@ -324,7 +324,7 @@ static int readhexaesc (LexState *ls) {
 }
 
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wcomma"
 #endif
@@ -344,7 +344,7 @@ static unsigned long readutf8esc (LexState *ls) {
   luaZ_buffremove(ls->buff, i);  /* remove saved chars from buffer */
   return r;
 }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

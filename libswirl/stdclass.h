@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <string.h>
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmacro-redefined"
 #endif
@@ -24,7 +24,7 @@
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
 #endif
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

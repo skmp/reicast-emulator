@@ -81,7 +81,7 @@ const GLuint PAL_TYPE[4]=
 
 CustomTexture custom_texture;
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
@@ -125,7 +125,7 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 		free(rows[y]);
 	free(rows);
 }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

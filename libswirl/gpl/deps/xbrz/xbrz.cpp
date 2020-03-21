@@ -135,7 +135,7 @@ template <class T> inline
 T square(T value) { return value * value; }
 
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
@@ -176,7 +176,7 @@ double distYCbCr(uint32_t pix1, uint32_t pix2, double lumaWeight)
     //we skip division by 255 to have similar range like other distance functions
     return std::sqrt(square(lumaWeight * y) + square(c_b) + square(c_r));
 }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 
@@ -318,7 +318,7 @@ struct Kernel_3x3
     /**/g,  h,  i;
 };
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
@@ -353,7 +353,7 @@ inline BlendType getTopL   (unsigned char b) { return static_cast<BlendType>(0x3
 inline BlendType getTopR   (unsigned char b) { return static_cast<BlendType>(0x3 & (b >> 2)); }
 inline BlendType getBottomR(unsigned char b) { return static_cast<BlendType>(0x3 & (b >> 4)); }
 inline BlendType getBottomL(unsigned char b) { return static_cast<BlendType>(0x3 & (b >> 6)); }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

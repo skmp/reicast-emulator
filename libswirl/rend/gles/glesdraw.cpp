@@ -3,7 +3,7 @@
 */
 #include "license/bsd"
 
-
+#include "build.h"
 #include "glcache.h"
 #include "rend/rend.h"
 
@@ -1027,15 +1027,17 @@ void DrawModVols(int first, int count)
 
 	if(0)
 	{
-        #ifdef __clang__
+        #if BUILD_COMPILER==COMPILER_CLANG
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wunreachable-code"
         #endif
+    
 		//simply draw the volumes -- for debugging
 		SetCull(0);
 		glDrawArrays(GL_TRIANGLES, first, count * 3);
 		SetupMainVBO();
-        #ifdef __clang__
+    
+        #if BUILD_COMPILER==COMPILER_CLANG
         #pragma clang diagnostic pop
         #endif
 	}

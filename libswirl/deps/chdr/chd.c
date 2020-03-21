@@ -54,13 +54,13 @@
 #endif // CHD5_LZMA
 #include "deps/crypto/md5.h"
 #include "deps/crypto/sha1.h"
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtypedef-redefinition"
 #endif
 // Both the LZMA lib and zlib define Byte, which will compile fine, so ignore the warning
 #include "deps/zlib/zlib.h"
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 
@@ -561,7 +561,7 @@ chd_error lzma_codec_init(void* codec, uint32_t hunkbytes)
  *-------------------------------------------------
  */
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
@@ -572,7 +572,7 @@ void lzma_codec_free(void* codec)
 	/* free memory */
 	LzmaDec_Free(&lzma_codec->decoder, (ISzAlloc*)&lzma_codec->allocator);
 }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 
@@ -1055,7 +1055,7 @@ static inline void map_extract(const UINT8 *base, map_entry *entry)
     entry to the datastream
 -------------------------------------------------*/
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
@@ -1067,7 +1067,7 @@ static inline void map_assemble(UINT8 *base, map_entry *entry)
 	base[14] = entry->length >> 16;
 	base[15] = entry->flags;
 }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 
@@ -1608,12 +1608,12 @@ void chd_close(chd_file *chd)
 	if (chd->owns_file && chd->file != NULL)
 		core_fclose(chd->file);
     
-    #ifdef __clang__
+    #if BUILD_COMPILER==COMPILER_CLANG
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunreachable-code"
     #endif
 	if (/* DISABLES CODE */ PRINTF_MAX_HUNK) printf("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
-    #ifdef __clang__
+    #if BUILD_COMPILER==COMPILER_CLANG
     #pragma clang diagnostic pop
     #endif
     
@@ -2035,7 +2035,7 @@ static chd_error header_read(chd_file *chd, chd_header *header)
     the CHD's hunk cache
 -------------------------------------------------*/
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
@@ -2061,7 +2061,7 @@ static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum)
 	chd->cachehunk = hunknum;
 	return CHDERR_NONE;
 }
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

@@ -7,6 +7,7 @@
 // for picoppp
 #include "license/dep_gpl"
 
+#include "build.h"
 
 #if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)
 
@@ -591,7 +592,7 @@ static void usleep(unsigned int usec)
 }
 #endif
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Waddress-of-packed-member"
 #endif
@@ -801,7 +802,7 @@ static void *pico_thread_func(void *)
 	return NULL;
 }
 
-#ifdef __clang__
+#if BUILD_COMPILER==COMPILER_CLANG
 #pragma clang diagnostic pop
 #endif
 

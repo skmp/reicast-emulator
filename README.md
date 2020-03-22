@@ -90,7 +90,7 @@ Building for iOS / MacOS
 ### Using Xcode
 - Requirements:
     * A Mac
-    * [Latest Xcode](https://developer.apple.com/xcode/downloads/)
+	* [Latest Xcode](https://developer.apple.com/xcode/downloads/)
 
 - From project root directory:
 
@@ -101,6 +101,20 @@ Building for iOS / MacOS
 `xcodebuild -configuration Release`
 
 Or open the workspace `reicast-emulator/reicast/apple/reicast.xcworkspace` in Xcode, choose the target, and press Command + B to build.
+
+### Using Cmake
+- Requirements:
+	* A Mac
+	* Command line build tools (no Xcode needed): `xcode-select --install`
+    * Or install the [Latest Xcode](https://developer.apple.com/xcode/downloads/)
+	* [Homebrew](https://brew.sh/)
+	* Cmake command line tool: `brew install cmake`
+
+- From project root directory:
+
+`rm -rf build && mkdir build && cmake -S. -B./build && make -C build`
+
+The app bundle will be located at `./build/Reicast.app`
 
 Building for Linux
 ------------------

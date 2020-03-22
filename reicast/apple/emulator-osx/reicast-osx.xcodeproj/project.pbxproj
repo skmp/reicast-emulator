@@ -363,7 +363,6 @@
 		5381D700240887FD0078E797 /* pico_fragments.c in Sources */ = {isa = PBXBuildFile; fileRef = 5381D6D0240887FC0078E797 /* pico_fragments.c */; };
 		5381D70D2408886B0078E797 /* slowsoftrend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D7032408886A0078E797 /* slowsoftrend.cpp */; };
 		5381D70E2408886B0078E797 /* refrend_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D7052408886A0078E797 /* refrend_base.cpp */; };
-		5381D70F2408886B0078E797 /* refsw_tsp_init.inl in Resources */ = {isa = PBXBuildFile; fileRef = 5381D7082408886A0078E797 /* refsw_tsp_init.inl */; };
 		5381D7102408886B0078E797 /* refsw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D7092408886B0078E797 /* refsw.cpp */; };
 		5381D7112408886B0078E797 /* softrend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70B2408886B0078E797 /* softrend.cpp */; settings = {COMPILER_FLAGS = "-msse4.1"; }; };
 		5381D7122408886B0078E797 /* refsw_pixel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70C2408886B0078E797 /* refsw_pixel.cpp */; };
@@ -3208,7 +3207,6 @@
 				5312CF6E24081FE600C67C85 /* bsd in Resources */,
 				5312CF6D24081FE600C67C85 /* lgpl in Resources */,
 				5312D03B24081FE700C67C85 /* COPYRIGHT in Resources */,
-				5381D70F2408886B0078E797 /* refsw_tsp_init.inl in Resources */,
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
 				5312CF7024081FE600C67C85 /* gpl in Resources */,
 				5312CF6F24081FE600C67C85 /* dep_gpl in Resources */,

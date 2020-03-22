@@ -371,7 +371,6 @@
 		539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4724086368008A1850 /* OpenGL.framework */; };
 		53D572EB2427099200E3FAFE /* libomp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 53D572EA2427099200E3FAFE /* libomp.a */; };
 		84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BA1B1CDD3E000166C0 /* Images.xcassets */; };
-		84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BC1B1CDD3E000166C0 /* MainMenu.xib */; };
 		84B7BF831B727AD700F9733F /* input.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* input.mm */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
@@ -1278,7 +1277,6 @@
 		84A388B31B1CDD3E000166C0 /* Reicast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Reicast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		84A388BD1B1CDD3E000166C0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		84A388C31B1CDD3F000166C0 /* reicast-osxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "reicast-osxTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388C81B1CDD3F000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84B7BF821B727AD700F9733F /* input.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = input.mm; sourceTree = "<group>"; };
@@ -3080,7 +3078,6 @@
 		84A388B51B1CDD3E000166C0 /* reicast-osx */ = {
 			isa = PBXGroup;
 			children = (
-				84A388BC1B1CDD3E000166C0 /* MainMenu.xib */,
 				84A388BA1B1CDD3E000166C0 /* Images.xcassets */,
 				5312C07224081C3800C67C85 /* AppDelegate.h */,
 				5312C07324081C3800C67C85 /* AppDelegate.mm */,
@@ -3213,7 +3210,6 @@
 				5312D03B24081FE700C67C85 /* COPYRIGHT in Resources */,
 				5381D70F2408886B0078E797 /* refsw_tsp_init.inl in Resources */,
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
-				84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */,
 				5312CF7024081FE600C67C85 /* gpl in Resources */,
 				5312CF6F24081FE600C67C85 /* dep_gpl in Resources */,
 			);
@@ -3623,17 +3619,6 @@
 			targetProxy = 84A388C41B1CDD3F000166C0 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		84A388BC1B1CDD3E000166C0 /* MainMenu.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				84A388BD1B1CDD3E000166C0 /* Base */,
-			);
-			name = MainMenu.xib;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		84A388CB1B1CDD3F000166C0 /* Debug */ = {

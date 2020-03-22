@@ -197,7 +197,6 @@
 		5312D03824081FE600C67C85 /* llex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CDE924081FE600C67C85 /* llex.c */; };
 		5312D03924081FE700C67C85 /* ltm.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CDEB24081FE600C67C85 /* ltm.c */; };
 		5312D03A24081FE700C67C85 /* ldo.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CDED24081FE600C67C85 /* ldo.c */; };
-		5312D03B24081FE700C67C85 /* COPYRIGHT in Resources */ = {isa = PBXBuildFile; fileRef = 5312CDF224081FE600C67C85 /* COPYRIGHT */; };
 		5312D03C24081FE700C67C85 /* metadata_object.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE0B24081FE600C67C85 /* metadata_object.c */; };
 		5312D03D24081FE700C67C85 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE0C24081FE600C67C85 /* memory.c */; };
 		5312D03E24081FE700C67C85 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE0D24081FE600C67C85 /* cpu.c */; };
@@ -3206,7 +3205,6 @@
 			files = (
 				5312CF6E24081FE600C67C85 /* bsd in Resources */,
 				5312CF6D24081FE600C67C85 /* lgpl in Resources */,
-				5312D03B24081FE700C67C85 /* COPYRIGHT in Resources */,
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
 				5312CF7024081FE600C67C85 /* gpl in Resources */,
 				5312CF6F24081FE600C67C85 /* dep_gpl in Resources */,

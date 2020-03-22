@@ -18,20 +18,19 @@ set(DEBUG_CMAKE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-
 set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
 set(reicast_core_path  "${reicast_root_path}/libswirl")
 set(reicast_shell_path "${reicast_root_path}/reicast")
 
-list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
+message("reicast_root_path: ${reicast_root_path}")
+message("reicast_core_path: ${reicast_core_path}")
+message("reicast_shell_path: ${reicast_shell_path}")
 
+list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
 
 include(GetGitRevisionDescription)
 git_describe(GIT_VERSION --tags)
 configure_file(${reicast_core_path}/version.h.in ${reicast_core_path}/version.h @ONLY)
-
-
-
 
 ## reicast build modules #
 #
@@ -69,9 +68,11 @@ if(${HOST_OS} EQUAL ${OS_WINDOWS})
 endif()
 
 #### option(rend)
-file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
-file(GLOB gles_SRCS			${d_core}/rend/gles/*.cpp	${d_core}/rend/gles/*.h)
-file(GLOB norend_SRCS		${d_core}/rend/norend/*.cpp	${d_core}/rend/norend/*.h)
+if(NOT ${HOST_OS} EQUAL ${OS_DARWIN})
+  file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
+endif()
+file(GLOB gles_SRCS				${d_core}/rend/gles/*.cpp	${d_core}/rend/gles/*.h)
+file(GLOB norend_SRCS			${d_core}/rend/norend/*.cpp	${d_core}/rend/norend/*.h)
 file(GLOB softrend_SRCS		${d_core}/rend/soft/*.cpp	${d_core}/rend/soft/*.h)
 if(${HOST_OS} EQUAL ${OS_WINDOWS})
   file(GLOB d3d11_SRCS		${d_core}/rend/d3d11/*.cpp	${d_core}/rend/d3d11/*.h)
@@ -104,13 +105,12 @@ set(core_SRCS
   ${d_core}/serialize.cpp
 )
 
-  
-if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME* 
+if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR ${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
   list(APPEND core_SRCS ${archive_SRCS})
 endif()
 
 if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT}) 
-#
+
   if(${HOST_CPU} EQUAL ${CPU_X86})
     list(APPEND core_SRCS 
       ${d_core}/jit/backend/x86/rec_x86_driver.cpp
@@ -135,7 +135,7 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
     message(" FEAT_SHREC==DYNAREC_JIT && HOST_CPU Unknown Default add arch or disable rec if not avail.")
 	error()
   endif()
-#
+
 elseif(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
     list(APPEND core_SRCS ${d_core}/jit/backend/cpp/rec_cpp.cpp)
 endif()
@@ -190,7 +190,7 @@ set(deps_SRCS
   ${xbyak_H}
 )
   
-if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME* 
+if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR ${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
   list(APPEND deps_SRCS
     ${lzip_SRCS}
     ${lzma_SRCS}
@@ -200,7 +200,6 @@ if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME*
 endif()
 
 ### libosd.cmake ################################################################################
-
 
 set(d_aout ${reicast_core_path}/oslib)
 
@@ -237,38 +236,33 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
     ) # todo: configure linux audio lib options
 
 elseif(${HOST_OS} EQUAL ${OS_DARWIN})
-#
-  list(APPEND objc_SRCS
-    ./shell/apple/emulator-osx/emulator-osx/osx-main.mm
-    ./shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
-    ./shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
-  )
 
-  set_source_files_properties(${objc_SRCS} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+  set(d_osx ${reicast_shell_path}/apple/emulator-osx/emulator-osx)
+
+  list(APPEND objc_SRCS
+    ${d_osx}/main.m
+    ${d_osx}/input.mm
+    ${d_osx}/AppDelegate.mm
+    ${d_osx}/EmuGLView.m
+  )
   
   list(APPEND osd_SRCS ${objc_SRCS}
-    ${d_osd}/linux/common.cpp
-    ${d_osd}/linux/context.cpp
-    ${d_osd}/audiobackend/audiobackend_coreaudio.cpp
-    # if NOT USE_SWIFT / ObjC
-    #${d_osd}/apple/osx_osd.cpp
-    )
+    ${d_core}/linux/common.cpp
+    ${d_core}/linux/context.cpp
+    ${d_core}/linux/posix_vmem.cpp
+    ${d_core}/linux/nixprof/nixprof.cpp
+    ${d_core}/oslib/posix/threading.cpp
+    ${d_aout}/audiobackend_coreaudio.cpp
+  )
 
 else()
-#
+
   message("OS Unhandled")
   error()
-#
+
 endif()
 
-
-
-## 
-
 include_directories ("${reicast_core_path}")
-
-
-
 
 set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
@@ -356,28 +350,44 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
   target_link_libraries(${TNAME} ${CMAKE_DL_LIBS} rt)
 endif()
 
-if(APPLE)
-  enable_language(Swift)
-  set_property(TARGET ${TNAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "./shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h")
+if(${HOST_OS} EQUAL ${OS_DARWIN})
+  enable_language(OBJC)
+  enable_language(OBJCXX)
 
+  # Silence warnings about OpenGL deprecation on Mojave and greater (10.14+)
+  target_compile_options(${TNAME} PRIVATE -DGL_SILENCE_DEPRECATION)
+
+  # Enable ARC
+  target_compile_options(${TNAME} PRIVATE -fobjc-arc)
+
+  # Enable OpenMP
+  target_compile_options(${TNAME} PRIVATE -Xpreprocessor -fopenmp)
+  target_link_libraries(${TNAME} "${d_osx}/../deps/libomp/lib/libomp.a")
+  target_include_directories(${TNAME} PRIVATE "${d_osx}/../deps/libomp/include")
+
+  # Include macOS *.hpp files
+  target_include_directories(${TNAME} PRIVATE "${d_osx}")
+ 
+  # Link macOS Frameworks
   target_link_libraries(${TNAME}
-# "-framework Cocoa"
-# "-framework AppKit"
-  "-framework CoreData"
-  "-framework CoreAudio"
-  "-framework AudioUnit"
-  "-framework AudioToolbox"
-  "-framework Foundation"
-)
+    "-framework Cocoa"
+    "-framework AppKit"
+    "-framework CoreData"
+    "-framework CoreAudio"
+    "-framework AudioUnit"
+    "-framework AudioToolbox"
+    "-framework Foundation"
+    "-framework OpenGL"
+  )
 
-#### OSX Notes,  when not using xcode you have to make app bundle,  edit plist and copy,  convert MainMenu.xib to nib and copy, 
-#null@devpc:~$ /Users/null/Documents/projects/reicast-emulator/bin/RelWithDebInfo/Reicast.app/Contents/MacOS/reicast ; exit;
-#2019-03-18 14:28:44.842 reicast[11468:131797] Unknown class _TtC12emulator_osx9EmuGLView in Interface Builder file at path /Users/null/Documents/projects/reicast-emulator/bin/RelWithDebInfo/Reicast.app/Contents/Resources/MainMenu.nib.
-#2019-03-18 14:28:44.842 reicast[11468:131797] Unknown class _TtC12emulator_osx11AppDelegate in Interface Builder file at path /Users/null/Documents/projects/reicast-emulator/bin/RelWithDebInfo/Reicast.app/Contents/Resources/MainMenu.nib.
-#2019-03-18 14:28:44.860 reicast[11468:131797] Failed to connect (window) outlet from (NSObject) to (NSWindow): missing setter or instance variable
-#
+  # Create the macOS app bundle
+  add_custom_command(TARGET ${TNAME} POST_BUILD
+    COMMAND bash "-c" "D_OSX=\"${d_osx}\" CMAKE_CURRENT_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\" CMAKE_CURRENT_BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\" \"${d_osx}/build_app_bundle.sh\""
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Creating macOS app bundle..."
+  )
 
-endif() #APPLE
+endif()
 
 
 if(DEBUG_CMAKE)

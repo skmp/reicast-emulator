@@ -338,7 +338,6 @@
 		5317CF4A24086456008A1850 /* posix_vmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8B24081FE500C67C85 /* posix_vmem.cpp */; };
 		5317CF4B24086456008A1850 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8D24081FE500C67C85 /* context.cpp */; };
 		5317CF4C24086456008A1850 /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC9024081FE500C67C85 /* nixprof.cpp */; };
-		5317CF4F2408674A008A1850 /* libomp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4E2408674A008A1850 /* libomp.dylib */; };
 		537E069D242699A10011E92A /* dsp_helpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 537E069C242699A10011E92A /* dsp_helpers.cpp */; };
 		5381D6D5240887FD0078E797 /* tacore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D65A240887FC0078E797 /* tacore.cpp */; };
 		5381D6D8240887FD0078E797 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D663240887FC0078E797 /* xbrz.cpp */; };
@@ -370,6 +369,7 @@
 		5381D7122408886B0078E797 /* refsw_pixel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70C2408886B0078E797 /* refsw_pixel.cpp */; };
 		53836184240EDBE2006AE5B4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 53836183240EDBE2006AE5B4 /* main.m */; };
 		539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4724086368008A1850 /* OpenGL.framework */; };
+		53D572EB2427099200E3FAFE /* libomp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 53D572EA2427099200E3FAFE /* libomp.a */; };
 		84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BA1B1CDD3E000166C0 /* Images.xcassets */; };
 		84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BC1B1CDD3E000166C0 /* MainMenu.xib */; };
 		84B7BF831B727AD700F9733F /* input.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* input.mm */; };
@@ -1274,6 +1274,7 @@
 		5381D70B2408886B0078E797 /* softrend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = softrend.cpp; sourceTree = "<group>"; };
 		5381D70C2408886B0078E797 /* refsw_pixel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = refsw_pixel.cpp; sourceTree = "<group>"; };
 		53836183240EDBE2006AE5B4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		53D572EA2427099200E3FAFE /* libomp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libomp.a; path = deps/libomp/lib/libomp.a; sourceTree = "<group>"; };
 		84A388B31B1CDD3E000166C0 /* Reicast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Reicast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -1293,11 +1294,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53D572EB2427099200E3FAFE /* libomp.a in Frameworks */,
 				539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */,
 				5317CF4624086353008A1850 /* Cocoa.framework in Frameworks */,
 				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
-				5317CF4F2408674A008A1850 /* libomp.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2845,6 +2846,7 @@
 		5317CF4424086352008A1850 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				53D572EA2427099200E3FAFE /* libomp.a */,
 				5317CF4E2408674A008A1850 /* libomp.dylib */,
 				5317CF4724086368008A1850 /* OpenGL.framework */,
 				5317CF4524086353008A1850 /* Cocoa.framework */,
@@ -3770,7 +3772,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CC = /usr/local/opt/llvm/bin/clang;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_IDENTITY = "-";
@@ -3790,22 +3791,21 @@
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					../../../libswirl/deps,
-					../../../libswirl,
-					"../../../libswirl/gpl/deps/picotcp/**",
-					../../../libswirl/deps/flac/include,
-					../../../libswirl/deps/flac/src/libFLAC/include,
-					/usr/local/opt/llvm/lib/clang/9.0.1/include,
-					../../../libswirl/deps/khronos,
+					"$(PROJECT_DIR)/../../../libswirl/deps",
+					"$(PROJECT_DIR)/../../../libswirl",
+					"$(PROJECT_DIR)/../../../libswirl/gpl/deps/picotcp/**",
+					"$(PROJECT_DIR)/../../../libswirl/deps/flac/include",
+					"$(PROJECT_DIR)/../../../libswirl/deps/flac/src/libFLAC/include",
+					"$(PROJECT_DIR)/../../../libswirl/deps/khronos",
+					"$(PROJECT_DIR)/deps/libomp/include",
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/opt/llvm/lib,
-					/usr/local/Cellar/libomp/9.0.1/lib,
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/deps/libomp/lib";
+				OTHER_CFLAGS = (
+					"-Xpreprocessor",
+					"-fopenmp",
 				);
-				OTHER_CFLAGS = "-fopenmp";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = Reicast;
 			};
@@ -3815,7 +3815,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CC = /usr/local/opt/llvm/bin/clang;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_IDENTITY = "-";
@@ -3832,22 +3831,21 @@
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					../../../libswirl/deps,
-					../../../libswirl,
-					"../../../libswirl/gpl/deps/picotcp/**",
-					../../../libswirl/deps/flac/include,
-					../../../libswirl/deps/flac/src/libFLAC/include,
-					/usr/local/opt/llvm/lib/clang/9.0.1/include,
-					../../../libswirl/deps/khronos,
+					"$(PROJECT_DIR)/../../../libswirl/deps",
+					"$(PROJECT_DIR)/../../../libswirl",
+					"$(PROJECT_DIR)/../../../libswirl/gpl/deps/picotcp/**",
+					"$(PROJECT_DIR)/../../../libswirl/deps/flac/include",
+					"$(PROJECT_DIR)/../../../libswirl/deps/flac/src/libFLAC/include",
+					"$(PROJECT_DIR)/../../../libswirl/deps/khronos",
+					"$(PROJECT_DIR)/deps/libomp/include",
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/opt/llvm/lib,
-					/usr/local/Cellar/libomp/9.0.1/lib,
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/deps/libomp/lib";
+				OTHER_CFLAGS = (
+					"-Xpreprocessor",
+					"-fopenmp",
 				);
-				OTHER_CFLAGS = "-fopenmp";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = Reicast;
 			};

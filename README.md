@@ -87,26 +87,15 @@ ant debug
 
 Building for iOS / MacOS
 ---
-Requirements:
+### Using Xcode
+- Requirements:
+    * A Mac
+    * [Latest Xcode](https://developer.apple.com/xcode/downloads/)
 
-Due to the use of OpenMP, which is not included with the default Xcode LLVM compiler, you must first install LLVM and OpenMP using the Homebrew package manager: `brew install libomp llvm`
+- From project root directory:
 
-[Install Homebrew](https://brew.sh/)
-
-[Latest Xcode](https://developer.apple.com/xcode/downloads/)
-
-* [iOSOpenDev](http://iosopendev.com/download/) if developing without an official Apple certificate
-
-
-| iOS            | Mac                    |
-| -------------- | ---------------------- |
-| An iOS device  | A Mac                  |
-| iOS  5.x ~ 7.x | macOS 10.13.3 (17D102) |
-
-From project root directory:
-
-| iOS             | Mac                           |
-| --------------- | ----------------------------- |
+| iOS (currently broken)                           | Mac                           |
+| ------------------------------------------------ | ----------------------------- |
 | `cd reicast-emulator/reicast/apple/emulator-ios` | `cd reicast-emulator/reicast/apple/emulator-osx` |
 
 `xcodebuild -configuration Release`

@@ -105,7 +105,7 @@ set(core_SRCS
   ${d_core}/serialize.cpp
 )
 
-if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR ${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
+if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG} AND ${HOST_OS} EQUAL ${OS_DARWIN})) # TODO: Test with Clang on other platforms
   list(APPEND core_SRCS ${archive_SRCS})
 endif()
 
@@ -190,7 +190,7 @@ set(deps_SRCS
   ${xbyak_H}
 )
   
-if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR ${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
+if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG} AND ${HOST_OS} EQUAL ${OS_DARWIN})) # TODO: Test with Clang on other platforms
   list(APPEND deps_SRCS
     ${lzip_SRCS}
     ${lzma_SRCS}

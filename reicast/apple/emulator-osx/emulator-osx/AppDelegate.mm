@@ -190,7 +190,7 @@ static void gl_resize();
 
 - (void)alertAndTerminateWithMessage:(NSString *)message {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.alertStyle = NSCriticalAlertStyle;
+    alert.alertStyle = NSAlertStyleCritical;
     alert.messageText = message;
     [alert addButtonWithTitle:@"Exit"];
     [alert runModal];

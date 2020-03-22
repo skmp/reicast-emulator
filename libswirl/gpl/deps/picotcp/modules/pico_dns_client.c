@@ -4,6 +4,7 @@
    .
    Authors: Kristof Roelants
  *********************************************************************/
+#include "build.h"
 #include "pico_config.h"
 #include "pico_stack.h"
 #include "pico_addressing.h"

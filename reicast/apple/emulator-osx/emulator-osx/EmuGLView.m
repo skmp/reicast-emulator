@@ -43,13 +43,13 @@
 
 - (void)keyDown:(NSEvent *)event {
     if (!event.isARepeat) {
-        emu_key_input(event.keyCode, true, event.modifierFlags & NSDeviceIndependentModifierFlagsMask);
+        emu_key_input(event.keyCode, true, event.modifierFlags & NSEventModifierFlagDeviceIndependentFlagsMask);
     }
     emu_character_input([event.characters UTF8String]);
 }
 
 - (void)keyUp:(NSEvent *)event {
-    emu_key_input(event.keyCode, false, event.modifierFlags & NSDeviceIndependentModifierFlagsMask);
+    emu_key_input(event.keyCode, false, event.modifierFlags & NSEventModifierFlagDeviceIndependentFlagsMask);
 }
 
 - (void)setMousePos:(NSEvent *)event {

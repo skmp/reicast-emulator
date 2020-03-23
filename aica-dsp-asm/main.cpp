@@ -8,7 +8,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include "libswirl/hw/aica/dsp_backend.h"
+#include <hw/aica/dsp_backend.h>
 
 using namespace std;
 

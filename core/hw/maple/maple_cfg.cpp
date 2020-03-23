@@ -269,23 +269,29 @@ void mcfg_CreateDevices()
    else if (settings.System == DC_PLATFORM_NAOMI)
    {
       use_lightgun = false;
-	  for (int i = 0; i < MAPLE_PORTS; i++)
-		 if (maple_devices[i] == MDT_LightGun)
-			use_lightgun = true;
+      for (int i = 0; i < MAPLE_PORTS; i++)
+      	if (maple_devices[i] == MDT_LightGun)
+      		use_lightgun = true;
 
-	  bus = 0;
+      bus = 0;
       mcfg_Create(MDT_NaomiJamma, bus++, 5);
-	  for (int i = 0; i < MAPLE_PORTS; i++)
-	  {
-		 switch (maple_devices[i])
-		 {
-		 case MDT_Keyboard:
-			mcfg_Create(MDT_Keyboard, bus++, 5);
-			break;
-		 default:
-			break;
-		 }
-	  }
+      for (int i = 0; i < MAPLE_PORTS; i++)
+      {
+      	switch (maple_devices[i])
+      	{
+      	case MDT_Keyboard:
+      		mcfg_Create(MDT_Keyboard, bus++, 5);
+      		break;
+      	default:
+      		if (i == 0)
+      		{
+      			// Connect VMU B1
+      			mcfg_Create(MDT_SegaController, bus, 5);
+      			mcfg_Create(MDT_SegaVMU, bus++, 0);
+      		}
+      		break;
+      	}
+      }
    }
    else if (settings.System == DC_PLATFORM_ATOMISWAVE)
    {
@@ -293,17 +299,18 @@ void mcfg_CreateDevices()
 	  mcfg_Create(MDT_SegaController, 1, 5);
 	  switch (settings.mapping.JammaSetup)
 	  {
-	  case 5:
+	  case JVS::Analog:
 		 // 2 players with analog axes
 		 mcfg_Create(MDT_SegaController, 2, 5, 0);
 		 mcfg_Create(MDT_SegaController, 3, 5, 1);
 		 break;
-	  case 6:
+	  case JVS::LightGun:
 		 // Light guns
 		 mcfg_Create(MDT_LightGun, 2, 5, 0);
 		 mcfg_Create(MDT_LightGun, 3, 5, 1);
 		 break;
-	  case 2:
+	  case JVS::RotaryEncoders:
+	  case JVS::SegaMarineFishing:
 		 // Track-ball
 		 mcfg_Create(MDT_Mouse, 2, 5, 0);
 		 break;

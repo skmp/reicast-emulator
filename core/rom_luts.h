@@ -27,15 +27,7 @@ struct game_type_naomi
    int translucentPolygonDepthMask; /* -1, make no decision */
    int rendertotexturebuffer;       /* -1, make no decision */
    int disable_div;                 /* -1, make no decision */
-   int jamma_setup;                 /* -1, make no decision,
-									   0 = normal 2P setup,
-									   1 = 4 players setup
-									   2 = 2 I/O boards w/ rotary encoder (or Track ball for AtomisWave)
-									   3 = 12bits/player, 16 drivers out for Sega Marine Fishing
-									   4 = 2 I/O boards, 4 players for Ring Out 4x4
-									   5 = 3 analog axes (AtomisWave)
-									   6 = 2 light guns (AtomisWave)
-									   */
+   JVS jamma_setup;
    float extra_depth_scale;         /* 1, default */
    InputDescriptors *game_inputs;
 };
@@ -129,45 +121,45 @@ extern InputDescriptors deathcox_inputs;
 static struct game_type_naomi lut_games_naomi[] = 
 {
    /* Div matching disabled */
-   { "ALIEN FRONT"                       , -1, -1, -1, -1,  1, -1,  1 },                /* Alien Front */
-   { "METAL SLUG 6"                      , -1, -1, -1, -1,  1, -1,  1 },                /* Metal Slug 6 */
-   { "WAVE RUNNER GP"                    , -1, -1, -1, -1,  1, -1,  1 },                /* WaveRunner GP */
-   { "STREET FIGHTER ZERO3 UPPER"        , -1, -1, -1, -1,  1, -1,  1 },                /* Street Fighter Zero 3 Upper */
+   { "ALIEN FRONT"                       , -1, -1, -1, -1,  1, JVS::Default,  1 },                /* Alien Front */
+   { "METAL SLUG 6"                      , -1, -1, -1, -1,  1, JVS::Default,  1 },                /* Metal Slug 6 */
+   { "WAVE RUNNER GP"                    , -1, -1, -1, -1,  1, JVS::Default,  1 },                /* WaveRunner GP */
+   { "STREET FIGHTER ZERO3 UPPER"        , -1, -1, -1, -1,  1, JVS::Default,  1 },                /* Street Fighter Zero 3 Upper */
 
    /* Extra Depth Scaling */
-   { "SAMURAI SPIRITS 6"                 , -1, -1, -1, -1,  -1, -1, 1e26 },             /* Samurai Shodown VI */
+   { "SAMURAI SPIRITS 6"                 , -1, -1, -1, -1,  -1, JVS::Default, 1e26 },             /* Samurai Shodown VI */
 
    /* Translucent Polygon Depth Mask */
-   { "COSMIC SMASH IN JAPAN"             , -1, -1,  1, -1,  -1, -1, 1 },                /* Cosmic Smash */
+   { "COSMIC SMASH IN JAPAN"             , -1, -1,  1, -1,  -1, JVS::Default, 1 },                /* Cosmic Smash */
 
    /* Alternate Jamma I/O Setup */
-   { "POWER STONE 2 JAPAN"               , -1, -1, -1, -1,  -1,  1, 1 },                /* Power Stone 2 (4 players, also needs to be set in service menu) */
-   { "SHOOTOUT POOL"                     , -1, -1, -1, -1,  -1,  2, 1 },                /* Shootout Pool: rotary encoders */
-   { "SHOOTOUT POOL MEDAL"               , -1, -1, -1, -1,  -1,  2, 1 },                /* Shootout Pool The Medal: rotary encoders */
-   { "DYNAMIC GOLF"                      , -1, -1, -1, -1,  -1,  2, 1 },                /* Virtua Golf/Dynamic Golf: rotary encoders */
-   { "CRACKIN'DJ  ver JAPAN"             , -1, -1, -1, -1,  -1,  2, 1 },                /* Crackin'DJ: rotary encoders */
-   { "CRACKIN'DJ PART2  ver JAPAN"       , -1, -1, -1, -1,  -1,  2, 1 },                /* Crackin'DJ 2: rotary encoders */
-   { "OUTTRIGGER     JAPAN"              , -1, -1, -1, -1,  -1,  2, 1 },                /* Outtrigger: rotary encoders */
-   { "SEGA MARINE FISHING JAPAN"         , -1, -1, -1, -1,  -1,  3, 1 },                /* Sega Marine Fishing */
-   { "RINGOUT 4X4 JAPAN"                 , -1, -1, -1, -1,  -1,  4, 1 },                /* Ring Out 4x4 (4 players, also needs to be set in service menu) */
-   { "Sports Shooting USA"               , -1, -1, -1, -1,  -1,  6, 1 },                /* Sports Shooting USA (light guns) */
-   { "SEGA CLAY CHALLENGE"               , -1, -1, -1, -1,  -1,  6, 1 },                /* Sega Clay Challenge (light guns) */
-   { "RANGER MISSION"                    , -1, -1, -1, -1,  -1,  6, 1 },                /* Ranger Mission (light guns) */
-   { "EXTREME HUNTING"                   , -1, -1, -1, -1,  -1,  6, 1 },                /* Extreme Hunting (light guns) */
-   { "FASTER THAN SPEED"                 , -1, -1, -1, -1,  -1,  5, 1, &ftspeed_inputs },/* Faster Than Speed (analog axes) */
-   { "MAXIMUM SPEED"                     , -1, -1, -1, -1,  -1,  5, 1, &maxspeed_inputs },/* Maximum Speed (analog axes) */
-   { "BLOPON"                            , -1, -1, -1, -1,  -1,  5, 1 },                /* Block Pong (analog axes) */
-   { "BASS FISHING SIMULATOR VER.A"      , -1, -1, -1, -1,  -1,  2, 1 },                /* Sega Bass Fishing Challenge (Track-ball) */
-   { "DRIVE"                             , -1, -1, -1, -1,  -1,  2, 1 },                /* WaiWai Drive */
-   { "KICK '4' CASH"                     , -1, -1, -1, -1,  -1,  2, 1 },                /* Kick '4' Cash */
-   { "NINJA ASSAULT"                     , -1, -1, -1, -1,  -1,  7, 1 },                /* Ninja Assault */
-   { "MAZAN"                             , -1, -1, -1, -1,  -1,  8, 1 },                /* Mazan */
-   { "WORLD KICKS"                       , -1, -1, -1, -1,  -1, 10, 1 },                /* World Kicks */
-   { "WORLD KICKS PCB"                   , -1,  -1, -1, -1,  -1, 11, 1 },                /* World Kicks 2 kit a.k.a. World Kicks PCB */
+   { "POWER STONE 2 JAPAN"               , -1, -1, -1, -1,  -1, JVS::FourPlayers, 1 },            /* Power Stone 2 (4 players, also needs to be set in service menu) */
+   { "SHOOTOUT POOL"                     , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Shootout Pool: rotary encoders */
+   { "SHOOTOUT POOL MEDAL"               , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Shootout Pool The Medal: rotary encoders */
+   { "DYNAMIC GOLF"                      , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Virtua Golf/Dynamic Golf: rotary encoders */
+   { "CRACKIN'DJ  ver JAPAN"             , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Crackin'DJ: rotary encoders */
+   { "CRACKIN'DJ PART2  ver JAPAN"       , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Crackin'DJ 2: rotary encoders */
+   { "OUTTRIGGER     JAPAN"              , -1, -1, -1, -1,  -1, JVS::OutTrigger, 1 },             /* Outtrigger: rotary encoders */
+   { "SEGA MARINE FISHING JAPAN"         , -1, -1, -1, -1,  -1, JVS::SegaMarineFishing, 1 },      /* Sega Marine Fishing */
+   { "RINGOUT 4X4 JAPAN"                 , -1, -1, -1, -1,  -1, JVS::DualIOBoards4P, 1 },         /* Ring Out 4x4 (4 players, also needs to be set in service menu) */
+   { "Sports Shooting USA"               , -1, -1, -1, -1,  -1, JVS::LightGun, 1 },               /* Sports Shooting USA (light guns) */
+   { "SEGA CLAY CHALLENGE"               , -1, -1, -1, -1,  -1, JVS::LightGun, 1 },               /* Sega Clay Challenge (light guns) */
+   { "RANGER MISSION"                    , -1, -1, -1, -1,  -1, JVS::LightGun, 1 },               /* Ranger Mission (light guns) */
+   { "EXTREME HUNTING"                   , -1, -1, -1, -1,  -1, JVS::LightGun, 1 },               /* Extreme Hunting (light guns) */
+   { "FASTER THAN SPEED"                 , -1, -1, -1, -1,  -1, JVS::Analog, 1, &ftspeed_inputs },/* Faster Than Speed (analog axes) */
+   { "MAXIMUM SPEED"                     , -1, -1, -1, -1,  -1, JVS::Analog, 1, &maxspeed_inputs },/* Maximum Speed (analog axes) */
+   { "BLOPON"                            , -1, -1, -1, -1,  -1, JVS::Analog, 1 },                 /* Block Pong (analog axes) */
+   { "BASS FISHING SIMULATOR VER.A"      , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Sega Bass Fishing Challenge (Track-ball) */
+   { "DRIVE"                             , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* WaiWai Drive */
+   { "KICK '4' CASH"                     , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Kick '4' Cash */
+   { "NINJA ASSAULT"                     , -1, -1, -1, -1,  -1, JVS::LightGun, 1 },               /* Ninja Assault */
+   { "MAZAN"                             , -1, -1, -1, -1,  -1, JVS::Mazan, 1 },                  /* Mazan */
+   { "WORLD KICKS"                       , -1, -1, -1, -1,  -1, JVS::WorldKicks, 1 },             /* World Kicks */
+   { "WORLD KICKS PCB"                   , -1, -1, -1, -1,  -1, JVS::WorldKicksPCB, 1 },          /* World Kicks 2 kit a.k.a. World Kicks PCB */
 
    /* Input descriptors */
-   { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1,  -1, -1, 1, &gunsur2_inputs },  /* Gun Survivor 2 Biohazard Code: Veronica */
-   { "MONKEY BALL JAPAN VERSION"         , -1, -1, -1, -1,  -1, -1, 1, &monkeyba_inputs }, /* Monkey Ball */
-   { "CAPCOM VS SNK 2  JAPAN"            , -1, -1, -1, -1,  -1, -1, 1, &cvs2_inputs },     /* Capcom Vs. SNK 2 Mark Of The Millennium 2001 */
-   { "DEATH CRIMSON OX"                  , -1, -1, -1, -1,  -1, -1, 1, &deathcox_inputs }, /* Death Crimson OX */
+   { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1,  -1, JVS::Default, 1, &gunsur2_inputs },/* Gun Survivor 2 Biohazard Code: Veronica */
+   { "MONKEY BALL JAPAN VERSION"         , -1, -1, -1, -1,  -1, JVS::Default, 1, &monkeyba_inputs },/* Monkey Ball */
+   { "CAPCOM VS SNK 2  JAPAN"            , -1, -1, -1, -1,  -1, JVS::Default, 1, &cvs2_inputs },  /* Capcom Vs. SNK 2 Mark Of The Millennium 2001 */
+   { "DEATH CRIMSON OX"                  , -1, -1, -1, -1,  -1, JVS::Default, 1, &deathcox_inputs }, /* Death Crimson OX */
 };

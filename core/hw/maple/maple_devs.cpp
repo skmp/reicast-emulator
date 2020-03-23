@@ -1502,6 +1502,16 @@ protected:
 	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 };
 
+class jvs_837_13551_noanalog : public jvs_837_13551
+{
+public:
+	jvs_837_13551_noanalog(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13551(node_id, parent, first_player)
+	{
+		analog_count = 0;
+	}
+};
+
 // Same in 4-player mode
 class jvs_837_13551_4P : public jvs_837_13551
 {
@@ -1806,38 +1816,42 @@ struct maple_naomi_jamma : maple_sega_controller
 		  return;
 	   switch (settings.mapping.JammaSetup)
 	   {
-	   case 0:
+	   case JVS::Default:
 		  io_boards.push_back(new jvs_837_13551(1, this));
 		  break;
-	   case 1:
+	   case JVS::FourPlayers:
 		  io_boards.push_back(new jvs_837_13551_4P(1, this));
 		  break;
-	   case 2:
+	   case JVS::RotaryEncoders:
 		  io_boards.push_back(new jvs_837_13938(1, this));
 		  io_boards.push_back(new jvs_837_13551(2, this));
 		  break;
-	   case 3: // Sega Marine Fishing
+		case JVS::OutTrigger:
+			io_boards.emplace_back(new jvs_837_13938(1, this));
+			io_boards.emplace_back(new jvs_837_13551_noanalog(2, this));
+			break;
+	   case JVS::SegaMarineFishing:
 		  io_boards.push_back(new jvs_837_13844(1, this));
 		  break;
-	   case 4:
+	   case JVS::DualIOBoards4P:
 		  io_boards.push_back(new jvs_837_13551(1, this));
 		  io_boards.push_back(new jvs_837_13551(2, this, 2));
 		  break;
-	   case 7: // Ninja Assault
+	   case JVS::LightGun:
 		  io_boards.push_back(new jvs_namco_jyu(1, this));
 		  break;
-	   case 8:	// Mazan
+	   case JVS::Mazan:
 		  io_boards.push_back(new jvs_namco_fcb(1, this));
 		  io_boards.push_back(new jvs_namco_fcb(2, this));
 		  break;
-	   case 10: // World Kicks
+	   case JVS::WorldKicks:
 		   io_boards.push_back(new jvs_namco_v226(1, this));
 		   break;
-	   case 11: // World Kicks PCB
+	   case JVS::WorldKicksPCB:
 		   io_boards.push_back(new jvs_namco_v226_pcb(1, this));
 		   break;
 	   }
-	   if (use_lightgun && settings.mapping.JammaSetup  != 8)
+	   if (use_lightgun && settings.mapping.JammaSetup != JVS::Mazan)
 		  io_boards.back()->lightgun_as_analog = true;
 	}
 
@@ -2686,7 +2700,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						   else
 							  axes_per_player = i;
 						}
-						if (settings.mapping.JammaSetup == 4)
+						if (settings.mapping.JammaSetup == JVS::DualIOBoards4P)
 						   // Hack for Ring Out 4x4
 						   axes_per_player = 2;
 

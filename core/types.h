@@ -493,6 +493,22 @@ struct RegisterStruct
 	}
 };
 
+enum class JVS {
+	Default,
+	FourPlayers,
+	RotaryEncoders,
+	SegaMarineFishing,
+	DualIOBoards4P,
+	Analog,
+	LightGun,
+	Mazan,
+	DogWalking,
+	TouchDeUno,
+	WorldKicks,
+	WorldKicksPCB,
+	Keyboard,
+	OutTrigger
+};
 
 struct settings_t
 {
@@ -623,7 +639,7 @@ struct settings_t
 	} validate;
 
 	struct {
-		int JammaSetup;
+		JVS JammaSetup;
 	} mapping;
 };
 

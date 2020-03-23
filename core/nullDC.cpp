@@ -301,7 +301,7 @@ static void LoadSpecialSettingsNaomi(const char *name)
          	settings.dynarec.ForceDisableDivMatching = settings.dynarec.DisableDivMatching = lut_games_naomi[i].disable_div;
          }
 
-         if (lut_games_naomi[i].jamma_setup != -1)
+         if (lut_games_naomi[i].jamma_setup != JVS::Default)
          {
          	NOTICE_LOG(BOOT, "[Hack]: Applying alternate Jamma I/O board setup.");
             settings.mapping.JammaSetup = lut_games_naomi[i].jamma_setup;

@@ -22,10 +22,6 @@ set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
 set(reicast_core_path  "${reicast_root_path}/libswirl")
 set(reicast_shell_path "${reicast_root_path}/reicast")
 
-message("reicast_root_path: ${reicast_root_path}")
-message("reicast_core_path: ${reicast_core_path}")
-message("reicast_shell_path: ${reicast_shell_path}")
-
 list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
 
 include(GetGitRevisionDescription)
@@ -45,8 +41,6 @@ add_definitions(/DSCRIPTING)
 ### libdreamcast.cmake #########################################################################
 
 set(d_core ${reicast_core_path})
-
-message(${d_core})
 
 file(GLOB_RECURSE hw_SRCS	${d_core}/hw/*.cpp			${d_core}/hw/*.h)
 file(GLOB_RECURSE lxdream_SRCS	${d_core}/gpl/lxdream/*.cpp			${d_core}/gpl/lxdream/*.h)

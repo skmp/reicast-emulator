@@ -112,7 +112,9 @@ Or open the workspace `reicast-emulator/reicast/apple/reicast.xcworkspace` in Xc
 
 - From project root directory:
 
-`rm -rf build && mkdir build && cmake -S. -B./build && make -C build`
+`rm -rf build && mkdir build && cmake -S. -B./build && make -C build -j4`
+
+Change `-j4` to the number of CPU cores you have for the best performance. So for example if you have an 8 core/16 thread processor, use `-j8` though you can experiment with a higher or lower number and see what builds the fastest on your machine.
 
 The app bundle will be located at `./build/Reicast.app`
 

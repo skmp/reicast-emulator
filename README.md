@@ -87,31 +87,36 @@ ant debug
 
 Building for iOS / MacOS
 ---
-Requirements:
+### Using Xcode
+- Requirements:
+    * A Mac
+	* [Latest Xcode](https://developer.apple.com/xcode/downloads/)
 
-Due to the use of OpenMP, which is not included with the default Xcode LLVM compiler, you must first install LLVM and OpenMP using the Homebrew package manager: `brew install libomp llvm`
+- From project root directory:
 
-[Install Homebrew](https://brew.sh/)
-
-[Latest Xcode](https://developer.apple.com/xcode/downloads/)
-
-* [iOSOpenDev](http://iosopendev.com/download/) if developing without an official Apple certificate
-
-
-| iOS            | Mac                    |
-| -------------- | ---------------------- |
-| An iOS device  | A Mac                  |
-| iOS  5.x ~ 7.x | macOS 10.13.3 (17D102) |
-
-From project root directory:
-
-| iOS             | Mac                           |
-| --------------- | ----------------------------- |
+| iOS (currently broken)                           | Mac                           |
+| ------------------------------------------------ | ----------------------------- |
 | `cd reicast-emulator/reicast/apple/emulator-ios` | `cd reicast-emulator/reicast/apple/emulator-osx` |
 
 `xcodebuild -configuration Release`
 
 Or open the workspace `reicast-emulator/reicast/apple/reicast.xcworkspace` in Xcode, choose the target, and press Command + B to build.
+
+### Using Cmake
+- Requirements:
+	* A Mac
+	* Command line build tools (no Xcode needed): `xcode-select --install`
+    * Or install the [Latest Xcode](https://developer.apple.com/xcode/downloads/)
+	* [Homebrew](https://brew.sh/)
+	* Cmake command line tool: `brew install cmake`
+
+- From project root directory:
+
+`rm -rf build && mkdir build && cmake -S. -B./build && make -C build -j4`
+
+Change `-j4` to the number of CPU cores you have for the best performance. So for example if you have an 8 core/16 thread processor, use `-j8` though you can experiment with a higher or lower number and see what builds the fastest on your machine.
+
+The app bundle will be located at `./build/Reicast.app`
 
 Building for Linux
 ------------------

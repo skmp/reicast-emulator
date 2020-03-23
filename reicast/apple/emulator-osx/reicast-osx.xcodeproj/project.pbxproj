@@ -197,7 +197,6 @@
 		5312D03824081FE600C67C85 /* llex.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CDE924081FE600C67C85 /* llex.c */; };
 		5312D03924081FE700C67C85 /* ltm.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CDEB24081FE600C67C85 /* ltm.c */; };
 		5312D03A24081FE700C67C85 /* ldo.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CDED24081FE600C67C85 /* ldo.c */; };
-		5312D03B24081FE700C67C85 /* COPYRIGHT in Resources */ = {isa = PBXBuildFile; fileRef = 5312CDF224081FE600C67C85 /* COPYRIGHT */; };
 		5312D03C24081FE700C67C85 /* metadata_object.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE0B24081FE600C67C85 /* metadata_object.c */; };
 		5312D03D24081FE700C67C85 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE0C24081FE600C67C85 /* memory.c */; };
 		5312D03E24081FE700C67C85 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 5312CE0D24081FE600C67C85 /* cpu.c */; };
@@ -338,7 +337,6 @@
 		5317CF4A24086456008A1850 /* posix_vmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8B24081FE500C67C85 /* posix_vmem.cpp */; };
 		5317CF4B24086456008A1850 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8D24081FE500C67C85 /* context.cpp */; };
 		5317CF4C24086456008A1850 /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC9024081FE500C67C85 /* nixprof.cpp */; };
-		5317CF4F2408674A008A1850 /* libomp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4E2408674A008A1850 /* libomp.dylib */; };
 		537E069D242699A10011E92A /* dsp_helpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 537E069C242699A10011E92A /* dsp_helpers.cpp */; };
 		5381D6D5240887FD0078E797 /* tacore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D65A240887FC0078E797 /* tacore.cpp */; };
 		5381D6D8240887FD0078E797 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D663240887FC0078E797 /* xbrz.cpp */; };
@@ -364,14 +362,13 @@
 		5381D700240887FD0078E797 /* pico_fragments.c in Sources */ = {isa = PBXBuildFile; fileRef = 5381D6D0240887FC0078E797 /* pico_fragments.c */; };
 		5381D70D2408886B0078E797 /* slowsoftrend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D7032408886A0078E797 /* slowsoftrend.cpp */; };
 		5381D70E2408886B0078E797 /* refrend_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D7052408886A0078E797 /* refrend_base.cpp */; };
-		5381D70F2408886B0078E797 /* refsw_tsp_init.inl in Resources */ = {isa = PBXBuildFile; fileRef = 5381D7082408886A0078E797 /* refsw_tsp_init.inl */; };
 		5381D7102408886B0078E797 /* refsw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D7092408886B0078E797 /* refsw.cpp */; };
 		5381D7112408886B0078E797 /* softrend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70B2408886B0078E797 /* softrend.cpp */; settings = {COMPILER_FLAGS = "-msse4.1"; }; };
 		5381D7122408886B0078E797 /* refsw_pixel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D70C2408886B0078E797 /* refsw_pixel.cpp */; };
 		53836184240EDBE2006AE5B4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 53836183240EDBE2006AE5B4 /* main.m */; };
 		539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5317CF4724086368008A1850 /* OpenGL.framework */; };
+		53D572EB2427099200E3FAFE /* libomp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 53D572EA2427099200E3FAFE /* libomp.a */; };
 		84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BA1B1CDD3E000166C0 /* Images.xcassets */; };
-		84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BC1B1CDD3E000166C0 /* MainMenu.xib */; };
 		84B7BF831B727AD700F9733F /* input.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* input.mm */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
@@ -1274,10 +1271,10 @@
 		5381D70B2408886B0078E797 /* softrend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = softrend.cpp; sourceTree = "<group>"; };
 		5381D70C2408886B0078E797 /* refsw_pixel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = refsw_pixel.cpp; sourceTree = "<group>"; };
 		53836183240EDBE2006AE5B4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		53D572EA2427099200E3FAFE /* libomp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libomp.a; path = deps/libomp/lib/libomp.a; sourceTree = "<group>"; };
 		84A388B31B1CDD3E000166C0 /* Reicast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Reicast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388BA1B1CDD3E000166C0 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		84A388BD1B1CDD3E000166C0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		84A388C31B1CDD3F000166C0 /* reicast-osxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "reicast-osxTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388C81B1CDD3F000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84B7BF821B727AD700F9733F /* input.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = input.mm; sourceTree = "<group>"; };
@@ -1293,11 +1290,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53D572EB2427099200E3FAFE /* libomp.a in Frameworks */,
 				539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */,
 				5317CF4624086353008A1850 /* Cocoa.framework in Frameworks */,
 				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
-				5317CF4F2408674A008A1850 /* libomp.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2845,6 +2842,7 @@
 		5317CF4424086352008A1850 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				53D572EA2427099200E3FAFE /* libomp.a */,
 				5317CF4E2408674A008A1850 /* libomp.dylib */,
 				5317CF4724086368008A1850 /* OpenGL.framework */,
 				5317CF4524086353008A1850 /* Cocoa.framework */,
@@ -3078,7 +3076,6 @@
 		84A388B51B1CDD3E000166C0 /* reicast-osx */ = {
 			isa = PBXGroup;
 			children = (
-				84A388BC1B1CDD3E000166C0 /* MainMenu.xib */,
 				84A388BA1B1CDD3E000166C0 /* Images.xcassets */,
 				5312C07224081C3800C67C85 /* AppDelegate.h */,
 				5312C07324081C3800C67C85 /* AppDelegate.mm */,
@@ -3208,10 +3205,7 @@
 			files = (
 				5312CF6E24081FE600C67C85 /* bsd in Resources */,
 				5312CF6D24081FE600C67C85 /* lgpl in Resources */,
-				5312D03B24081FE700C67C85 /* COPYRIGHT in Resources */,
-				5381D70F2408886B0078E797 /* refsw_tsp_init.inl in Resources */,
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
-				84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */,
 				5312CF7024081FE600C67C85 /* gpl in Resources */,
 				5312CF6F24081FE600C67C85 /* dep_gpl in Resources */,
 			);
@@ -3622,17 +3616,6 @@
 		};
 /* End PBXTargetDependency section */
 
-/* Begin PBXVariantGroup section */
-		84A388BC1B1CDD3E000166C0 /* MainMenu.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				84A388BD1B1CDD3E000166C0 /* Base */,
-			);
-			name = MainMenu.xib;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
 		84A388CB1B1CDD3F000166C0 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -3770,7 +3753,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CC = /usr/local/opt/llvm/bin/clang;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_IDENTITY = "-";
@@ -3790,22 +3772,21 @@
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					../../../libswirl/deps,
-					../../../libswirl,
-					"../../../libswirl/gpl/deps/picotcp/**",
-					../../../libswirl/deps/flac/include,
-					../../../libswirl/deps/flac/src/libFLAC/include,
-					/usr/local/opt/llvm/lib/clang/9.0.1/include,
-					../../../libswirl/deps/khronos,
+					"$(PROJECT_DIR)/../../../libswirl/deps",
+					"$(PROJECT_DIR)/../../../libswirl",
+					"$(PROJECT_DIR)/../../../libswirl/gpl/deps/picotcp/**",
+					"$(PROJECT_DIR)/../../../libswirl/deps/flac/include",
+					"$(PROJECT_DIR)/../../../libswirl/deps/flac/src/libFLAC/include",
+					"$(PROJECT_DIR)/../../../libswirl/deps/khronos",
+					"$(PROJECT_DIR)/deps/libomp/include",
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/opt/llvm/lib,
-					/usr/local/Cellar/libomp/9.0.1/lib,
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/deps/libomp/lib";
+				OTHER_CFLAGS = (
+					"-Xpreprocessor",
+					"-fopenmp",
 				);
-				OTHER_CFLAGS = "-fopenmp";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = Reicast;
 			};
@@ -3815,7 +3796,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CC = /usr/local/opt/llvm/bin/clang;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_IDENTITY = "-";
@@ -3832,22 +3812,21 @@
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					../../../libswirl/deps,
-					../../../libswirl,
-					"../../../libswirl/gpl/deps/picotcp/**",
-					../../../libswirl/deps/flac/include,
-					../../../libswirl/deps/flac/src/libFLAC/include,
-					/usr/local/opt/llvm/lib/clang/9.0.1/include,
-					../../../libswirl/deps/khronos,
+					"$(PROJECT_DIR)/../../../libswirl/deps",
+					"$(PROJECT_DIR)/../../../libswirl",
+					"$(PROJECT_DIR)/../../../libswirl/gpl/deps/picotcp/**",
+					"$(PROJECT_DIR)/../../../libswirl/deps/flac/include",
+					"$(PROJECT_DIR)/../../../libswirl/deps/flac/src/libFLAC/include",
+					"$(PROJECT_DIR)/../../../libswirl/deps/khronos",
+					"$(PROJECT_DIR)/deps/libomp/include",
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/opt/llvm/lib,
-					/usr/local/Cellar/libomp/9.0.1/lib,
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/deps/libomp/lib";
+				OTHER_CFLAGS = (
+					"-Xpreprocessor",
+					"-fopenmp",
 				);
-				OTHER_CFLAGS = "-fopenmp";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = Reicast;
 			};

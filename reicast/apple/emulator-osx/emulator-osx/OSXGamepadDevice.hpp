@@ -1,5 +1,6 @@
 /*
     This file is part of reicast-osx
+        original code by flyinghead
 */
 #include "license/bsd"
 

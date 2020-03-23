@@ -172,9 +172,13 @@ elseif(CMAKE_HOST_APPLE)
     set(TARGET_IOS On)
     add_definitions(-DTARGET_IPHONE -DTARGET_IOS)
   else()
-    set(HOST_OS ${OS_DARWIN})  # todo ios check, check compiler/arch?
+    set(HOST_OS ${OS_DARWIN})  # todo ios check
     set(TARGET_OSX On)
-    add_definitions(-DTARGET_OSX)
+    if(${HOST_CPU} EQUAL ${CPU_X86})
+      add_definitions(-DTARGET_OSX)
+    else()
+      add_definitions(-DTARGET_OSX_X64)
+    endif()
   endif()
   
 elseif(CMAKE_HOST_UNIX) # GP UNIX MUST BE AFTER OTHER UNIX'ish options such as APPLE , it matches both 

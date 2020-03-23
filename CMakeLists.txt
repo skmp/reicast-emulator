@@ -380,7 +380,17 @@ if(${HOST_OS} EQUAL ${OS_DARWIN})
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Creating macOS app bundle..."
   )
+endif()
 
+# aica-dsp-asm
+if(${HOST_OS} EQUAL ${OS_DARWIN})
+  add_executable(aica-dsp-asm
+    aica-dsp-asm/main.cpp
+    aica-dsp-asm/macos_support.mm
+  )
+
+  # Link macOS Frameworks
+  target_link_libraries(aica-dsp-asm "-framework Foundation")
 endif()
 
 

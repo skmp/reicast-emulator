@@ -55,6 +55,9 @@ reicast/linux/dispframe.elf
 generated
 .vs
 
+# Visual Studio Code
+.vscode
+
 # Android General
 bin/
 gen/
@@ -75,3 +78,7 @@ reicast/android-studio/reicast/.cxx
 # JetBrains IDES
 .idea/
 cmake-build-*/
+
+# AICA DSP Compiler
+/aica-dsp-asm/aica-dsp-asm
+

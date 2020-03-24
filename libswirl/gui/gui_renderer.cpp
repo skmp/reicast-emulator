@@ -3,7 +3,7 @@
 */
 #include "license/bsd"
 
-
+#undef NO_GUI
 
 #include <atomic>
 
@@ -28,17 +28,25 @@ std::unique_ptr<GUIRenderer> g_GUIRenderer;
 
 static void findGLVersion()
 {
+    printf("A\n");
     gl.index_type = GL_UNSIGNED_INT;
     gl.rpi4_workaround = false;
-
-    while (true)
-        if (glGetError() == GL_NO_ERROR)
+ 
+    while (true) {
+        int rr = glGetError();
+        printf("GEt err %d\n",rr);
+        if (rr == GL_NO_ERROR)
             break;
+    }
+    printf("Bn");
+
     glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
     if (glGetError() == GL_INVALID_ENUM)
         gl.gl_major = 2;
     const char* version = (const char*)glGetString(GL_VERSION);
     printf("OpenGL version: %s\n", version);
+    printf("C\n");
+
     if (!strncmp(version, "OpenGL ES", 9))
     {
         gl.is_gles = true;
@@ -446,6 +454,13 @@ struct GUIRenderer_impl : GUIRenderer {
 
     virtual bool tryUIFrame() {
 
+                    g_GUI->RenderUI();
+
+         return os_gl_swap();
+
+		#ifdef NO_GUI
+		return true;
+		#endif
         bool rv = true;
 
         os_DoEvents();
@@ -489,10 +504,14 @@ struct GUIRenderer_impl : GUIRenderer {
             }
         }
 
+        rv = os_gl_swap();
         return rv;
     }
 
     virtual void UIFrame() {
+		#ifdef NO_GUI
+		return  ;
+		#endif
         if (!tryUIFrame()) {
             printf("UIFRAME: Re-creating context...\n");
             SleepMs(10);
@@ -533,7 +552,10 @@ struct GUIRenderer_impl : GUIRenderer {
         gl_osd.vao = 0;
     }
 
-    bool CreateContext() {
+   virtual bool CreateContext() {
+		#ifdef NO_GUI
+		return true;
+		#endif
         printf("CreateContext\n");
         if (!os_gl_init((void*)libPvr_GetRenderTarget(),
                         (void*)libPvr_GetRenderSurface()))
@@ -553,6 +575,9 @@ struct GUIRenderer_impl : GUIRenderer {
     }
 
     void DestroyContext() {
+		#ifdef NO_GUI
+		return  ;
+		#endif
         printf("DestroyContext\n");
         rend_term_renderer();	// also cleans texcache
         DestroyOSDResources();
@@ -562,6 +587,9 @@ struct GUIRenderer_impl : GUIRenderer {
     }
 
     virtual void UILoop() {
+		#ifdef NO_GUI
+		return  ;
+		#endif
         if (!CreateContext()) {
             msgboxf("Failed to create rendering context\n", MBX_ICONERROR);
             return;
@@ -579,6 +607,9 @@ struct GUIRenderer_impl : GUIRenderer {
     }
 
     virtual void QueueEmulatorFrame(std::function<bool()> cb) {
+		#ifdef NO_GUI
+		return  ;
+		#endif
         callback_mutex.Lock();
         frameDone = false;
         #if FEAT_TA == TA_LLE
@@ -589,6 +620,9 @@ struct GUIRenderer_impl : GUIRenderer {
     }
 
     virtual void WaitQueueEmpty() {
+		#ifdef NO_GUI
+		return  ;
+		#endif
         do {
             auto cb = callback;
 

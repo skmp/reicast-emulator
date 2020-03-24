@@ -13,6 +13,11 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  deps/libelf/ deps/cdipsr/ arm_emitter/ rend/ reios/ deps/libpng/ gpl/deps/xbrz/ \
  deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/ utils/ utils/glwrap/ gui/
 
+ifdef BUILD_RETROARCH_CORE
+	RZDCY_MODULES += libretro/
+	RZDCY_MODULES += libretro/reicore/
+endif
+
 ifdef SCRIPTING
 	RZDCY_MODULES += scripting/
 	RZDCY_MODULES += deps/lua/
@@ -139,7 +144,13 @@ ifdef CHD5_LZMA
 	RZDCY_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
 endif
 
-RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
+ifdef BUILD_RETROARCH_CORE
+	RZDCY_CFLAGS += -fPIC
+	RZDCY_CXXFLAGS := -shared  -fPIC $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
+else
+	RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
+endif
+
 
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cc))

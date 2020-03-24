@@ -1,5 +1,6 @@
 .DEFAULT_GOAL := all
 LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+BUILD_RETROARCH_CORE := 1
 #NO_REC := 1
 #NO_REND := 1
 WEBUI :=1
@@ -27,12 +28,20 @@ LDFLAGS := -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 INCS :=
 LIBS := -lm -lpthread -lutil #defaults
 
-CFLAGS := -g -O3 -D RELEASE -c -fopenmp # defaults
+ifdef BUILD_RETROARCH_CORE
+	CFLAGS := -shared -fPIC -g -O3 -D RELEASE -c -fopenmp # defaults
+else
+	CFLAGS := -g -O3 -D RELEASE -c -fopenmp # defaults
+endif
+
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS :=  -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14 # defaults
-
+ifdef BUILD_RETROARCH_CORE
+	CXXFLAGS := -shared -fPIC -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14 # defaults
+else
+	CXXFLAGS :=  -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14 # defaults
+endif
 
 
 # make install configuration
@@ -203,7 +212,11 @@ endif
 
 # executable name configuration
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
-ifdef NAOMI
+ifdef BUILD_RETROARCH_CORE
+    DC_PLATFORM=dreamcast
+    EXECUTABLE=reicast.so
+    EXECUTABLE_NAME=reicast
+else ifdef NAOMI
     CFLAGS += -D TARGET_NAOMI
     DC_PLATFORM=naomi
     EXECUTABLE=reicast_naomi.$(PLATFORM_EXT)

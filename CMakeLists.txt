@@ -7,11 +7,9 @@ if (CCACHE_FOUND)
 endif()
 
 set(TNAME reicast)
-#set(LIBRETRO_CORE ON)
+set(LIBRETRO_CORE ON)
 
-if (DEFINED LIBRETRO_CORE)
-    add_definitions(/DBUILD_RETROARCH_CORE)
-endif()
+
 
 project(${TNAME})
 
@@ -32,6 +30,7 @@ list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
 
 
 include(GetGitRevisionDescription)
+
 git_describe(GIT_VERSION --tags)
 configure_file(${reicast_core_path}/version.h.in ${reicast_core_path}/version.h @ONLY)
 
@@ -217,14 +216,22 @@ set(osd_SRCS "")
 
 list(APPEND osd_SRCS ${d_aout}/audiostream.cpp)
 
+if (DEFINED LIBRETRO_CORE)
+    list(APPEND osd_SRCS ${d_core}/libretro/reicore/libretro_proxy.cpp)
+	include_directories ("${d_core}/libretro-common/include")
+    #list(APPEND osd_SRCS ${d_core}/libretro-common/glsym/rlgen.c)
+endif()
+
 if (${HOST_OS} EQUAL ${OS_WINDOWS})
   list(APPEND osd_SRCS ${d_core}/windows/win_common.cpp)
   list(APPEND osd_SRCS ${d_core}/windows/winmain.cpp)
   list(APPEND osd_SRCS ${d_core}/windows/win_vmem.cpp)
   list(APPEND osd_SRCS ${d_core}/oslib/windows/threading.cpp)
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
-  list(APPEND osd_SRCS ${d_core}/libretro/reicore/libretro_proxy.cpp)
+
   
+
+
   link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
 
   
@@ -273,14 +280,21 @@ include_directories ("${reicast_core_path}")
 set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
 if (DEFINED LIBRETRO_CORE)
+
     include (GenerateExportHeader)
+ 
     add_library(${TNAME} SHARED ${reicast_SRCS})
+
+if (${HOST_OS} EQUAL ${OS_WINDOWS})
     GENERATE_EXPORT_HEADER (reicast
         BASE_NAME reicast
         EXPORT_MACRO_NAME reicast_EXPORT
         EXPORT_FILE_NAME reicast_Export.h
         STATIC_DEFINE reicast_BUILT_AS_STATIC
     )
+else()
+endif()
+
 else()
     add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
 endif()
@@ -301,12 +315,12 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
 
   find_package(OpenGL REQUIRED)
   if(OpenGL_EGL_FOUND)
-    target_compile_definitions(${TNAME} PUBLIC SUPPORT_EGL)
-    target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/egl/egl.cpp)
+    #target_compile_definitions(${TNAME} PUBLIC SUPPORT_EGL)
+    #target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/egl/egl.cpp)
     target_link_libraries(${TNAME} OpenGL::EGL)
   elseif(OpenGL_GLX_FOUND)
-    target_compile_definitions(${TNAME} PUBLIC SUPPORT_GLX)
-    target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/glx/glx.cpp)
+    #target_compile_definitions(${TNAME} PUBLIC SUPPORT_GLX)
+    #target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/glx/glx.cpp)
     target_link_libraries(${TNAME} OpenGL::GLX)
   else()
     message(FATAL_ERROR "EGL or GLX required")
@@ -358,10 +372,10 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
 
   find_package(X11 REQUIRED)
   if(X11_FOUND)
-    target_sources(${TNAME} PUBLIC ${d_core}/linux-dist/x11.cpp)
-    target_compile_definitions(${TNAME} PUBLIC SUPPORT_X11)
-    target_include_directories(${TNAME} PUBLIC ${X11_INCLUDE_DIR})
-    target_link_libraries(${TNAME} ${X11_LIBRARIES})
+    #target_sources(${TNAME} PUBLIC ${d_core}/linux-dist/x11.cpp)
+    #target_compile_definitions(${TNAME} PUBLIC SUPPORT_X11)
+    #target_include_directories(${TNAME} PUBLIC ${X11_INCLUDE_DIR})
+    #target_link_libraries(${TNAME} ${X11_LIBRARIES})
   endif()
 
   target_link_libraries(${TNAME} ${CMAKE_DL_LIBS} rt)
@@ -405,7 +419,12 @@ endif()
 
 
 
-
+if (DEFINED LIBRETRO_CORE)
+    add_definitions(/DBUILD_RETROARCH_CORE)
+	remove_definitions(/DSUPPORT_GLX)
+	remove_definitions(/DSUPPORT_EGL)
+	remove_definitions(/DSUPPORT_SDL)
+endif()
 
 
 

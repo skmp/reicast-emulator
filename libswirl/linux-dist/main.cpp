@@ -158,9 +158,11 @@ void UpdateInputState(u32 port)
 
 void os_DoEvents()
 {
+	#ifndef BUILD_RETROARCH_CORE
 	#if defined(SUPPORT_X11)
 		input_x11_handle();
 		event_x11_handle();
+	#endif
 	#endif
 }
 
@@ -364,6 +366,7 @@ std::vector<string> find_system_data_dirs()
 	return dirs;
 }
 
+#ifndef BUILD_RETROARCH_CORE
 bool os_gl_init(void* hwnd, void* hdc)
 {
 	#if defined(SUPPORT_GLX)
@@ -373,10 +376,11 @@ bool os_gl_init(void* hwnd, void* hdc)
 	#elif defined(SUPPORT_SDL)
 		return sdlgl_Init(sdl_win, sdl_win);
 	#else
-		#error "only glx/egl/sdl supported"
+		//#error "only glx/egl/sdl supported"
 		return true;
 	#endif
 }
+#endif
 
 bool os_gl_swap()
 {
@@ -387,7 +391,7 @@ bool os_gl_swap()
 	#elif defined(SUPPORT_SDL)
 		return sdlgl_Swap();
 	#else
-		#error "only glx/egl/sdl supported"
+	//	#error "only glx/egl/sdl supported"
 		return true;
 	#endif
 }
@@ -401,7 +405,7 @@ void os_gl_term()
 	#elif defined(SUPPORT_SDL)
 		return sdlgl_Term();
 	#else
-		#error "only glx/egl/sdl supported"
+		//#error "only glx/egl/sdl supported"
 	#endif
 }
 
@@ -409,9 +413,9 @@ void os_gl_term()
 int pty_master;
 #endif
 
-int main(int argc, wchar* argv[])
-{
+#ifdef BUILD_RETROARCH_CORE
 
+int libretro_prologue(int argc, wchar* argv[]) {
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
 		signal(SIGKILL, clean_exit);
@@ -429,6 +433,55 @@ int main(int argc, wchar* argv[])
 	dirs = find_system_data_dirs();
 	for(unsigned int i = 0; i < dirs.size(); i++)
 	{
+		add_system_data_dir(dirs[i]);
+	}
+	add_system_data_dir(find_user_data_dir());
+ 
+
+	common_linux_setup();
+
+	settings.profile.run_counts=0;
+
+	if (reicast_init(argc, argv))
+		die("Reicast initialization failed\n");
+    
+    #if FEAT_HAS_SERIAL_TTY
+    bool cleanup_pty_symlink = common_serial_pty_setup();
+    #endif
+
+	#if FEAT_HAS_NIXPROF
+	install_prof_handler(1);
+	#endif
+}
+
+void libretro_body() {
+
+}
+
+void libretro_epilogue() {
+ 
+}
+#else
+int main(int argc, wchar* argv[]) {
+
+
+	#ifdef TARGET_PANDORA
+		signal(SIGSEGV, clean_exit);
+		signal(SIGKILL, clean_exit);
+	#endif
+
+	/* Set directories */
+	set_user_config_dir(find_user_config_dir());
+	set_user_data_dir(find_user_data_dir());
+	std::vector<string> dirs;
+	dirs = find_system_config_dirs();
+	for(unsigned int i = 0; i < dirs.size(); i++)
+	{
+		add_system_data_dir(dirs[i]);
+	}
+	dirs = find_system_data_dirs();
+	for(unsigned int i = 0; i < dirs.size(); i++)
+{
 		add_system_data_dir(dirs[i]);
 	}
 	add_system_data_dir(find_user_data_dir());
@@ -515,7 +568,8 @@ int main(int argc, wchar* argv[])
 	return 0;
 }
 #endif
-
+#endif
+ 
 int get_mic_data(u8* buffer) { return 0; }
 
 void os_DebugBreak()

@@ -3361,11 +3361,16 @@ void ImGui::NewFrame()
     ImGuiTestEngineHook_PreNewFrame(&g);
 #endif
 
-    // Check user data
+    if (g.IO.DisplaySize.x <= 0.0f)
+        g.IO.DisplaySize.x  = 640.0f;
+    if (g.IO.DisplaySize.y<= 0.0f)
+        g.IO.DisplaySize.y  = 480.0f;
+    //printf("Disp %f %f\n",g.IO.DisplaySize.x,g.IO.DisplaySize.y );
+     // Check user data
     // (We pass an error message in the assert expression to make it visible to programmers who are not using a debugger, as most assert handlers display their argument)
     IM_ASSERT(g.Initialized);
     IM_ASSERT(g.IO.DeltaTime >= 0.0f                                    && "Need a positive DeltaTime (zero is tolerated but will cause some timing issues)");
-    IM_ASSERT(g.IO.DisplaySize.x >= 0.0f && g.IO.DisplaySize.y >= 0.0f  && "Invalid DisplaySize value");
+    //IM_ASSERT(g.IO.DisplaySize.x >= 0.0f && g.IO.DisplaySize.y >= 0.0f  && "Invalid DisplaySize value");
     IM_ASSERT(g.IO.Fonts->Fonts.Size > 0                                && "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?");
     IM_ASSERT(g.IO.Fonts->Fonts[0]->IsLoaded()                          && "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?");
     IM_ASSERT(g.Style.CurveTessellationTol > 0.0f                       && "Invalid style setting");

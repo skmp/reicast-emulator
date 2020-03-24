@@ -42,13 +42,16 @@ void gui_welcome(ImFont* font64) {
 		return;
 	}
 
+
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	
 	ImGui_Impl_NewFrame();
+
 	ImGui::NewFrame();
 
 	ImGui_ImplOpenGL3_DrawBackground();
 
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 

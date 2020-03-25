@@ -305,7 +305,7 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
   if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
     add_definitions(/DXBYAK_NO_OP_NAMES /DTARGET_NO_OPENMP)  #*FIXME* check openmp on clang-cl
     remove_definitions(/U_HAS_STD_BYTE)
-    set(_CXX_FLAGS "/std:c++14")	# /U_HAS_STD_BYTE not working, have to use c++14 not 17 :|
+    set(_CXX_FLAGS "-std:c++14")	# /U_HAS_STD_BYTE not working, have to use c++14 not 17 :|
     set(_C_FLAGS "-Wno-unused-function -Wno-unused-variable")
   endif()
 
@@ -420,9 +420,6 @@ option(USE_QT False "Use Qt5 for UI and support OS Deps.")
 
 add_definitions(-DCMAKE_BUILD)
 
-
-
-
 add_definitions(-DHOST_OS=${HOST_OS})
 add_definitions(-DHOST_CPU=${HOST_CPU})
 
@@ -441,7 +438,18 @@ add_definitions(-DDEF_CONSOLE)
 set(RE_CMAKE_CONFIGURED 1)
 #add_definitions(-D=${})
 
-
-
-
+# Host Booleans for cleaner if statements
+if(${HOST_OS} EQUAL ${OS_WINDOWS})
+  message("this is windows")
+  set(host_windows TRUE)
+elseif(${HOST_OS} EQUAL ${OS_LINUX})
+  message("this is linux")
+  set(host_linux TRUE)
+elseif(${HOST_OS} EQUAL ${OS_DARWIN})
+  message("this is macos")
+  set(host_macos TRUE)
+elseif(${HOST_OS} EQUAL ${OS_ANDROID})
+  message("this is android")
+  set(host_android TRUE)
+endif()
 

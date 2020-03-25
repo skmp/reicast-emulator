@@ -174,12 +174,14 @@ public:
 	#define DATA_PATH "/"
 #endif
 
-//Set the path !
-void set_user_config_dir(const string& dir);
-void set_user_data_dir(const string& dir);
-void add_system_config_dir(const string& dir);
-void add_system_data_dir(const string& dir);
-void clear_dirs();
+extern "C" {
+	//Set the path !
+	void set_user_config_dir(const string& dir);
+	void set_user_data_dir(const string& dir);
+	void add_system_config_dir(const string& dir);
+	void add_system_data_dir(const string& dir);
+	void clear_dirs();
+}
 
 //subpath format: /data/fsca-table.bit
 string get_writable_config_path(const string& filename);
@@ -192,7 +194,6 @@ bool make_directory(const string& path);
 string get_game_save_prefix();
 string get_game_basename();
 string get_game_dir();
-
 
 // Locked memory class, used for texture invalidation purposes.
 class VLockedMemory {

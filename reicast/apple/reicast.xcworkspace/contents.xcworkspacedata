@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:libswirl/libswirl.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:emulator-osx/reicast-osx.xcodeproj">
    </FileRef>
    <FileRef

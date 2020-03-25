@@ -6,71 +6,77 @@ if (CCACHE_FOUND)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif()
 
-set(TNAME reicast)
-
-project(${TNAME})
+project(reicast)
 
 enable_language(ASM)
 enable_language(ASM_MASM)
+enable_language(C)
+enable_language(CXX)
 
 set(DEBUG_CMAKE ON)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+# Paths
 set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
 set(reicast_core_path  "${reicast_root_path}/libswirl")
 set(reicast_shell_path "${reicast_root_path}/reicast")
 
+# Include config.cmake to set various values such as the HOST_OS
 list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
+include(config)			# configure build settings, must be first
 
+# Load 
 include(GetGitRevisionDescription)
 git_describe(GIT_VERSION --tags)
 configure_file(${reicast_core_path}/version.h.in ${reicast_core_path}/version.h @ONLY)
 
-## reicast build modules #
-#
-
 set(reicast_SRCS "")
 
-include(config)			# configure build settings, must be first
+################################################################################################
+### libswirl library ###########################################################################
+################################################################################################
+
+set(t_libswirl "swirl")
+add_library(${t_libswirl} STATIC)
 
 # FIXME: some better way?
-add_definitions(/DSCRIPTING)
+target_compile_definitions(${t_libswirl} PUBLIC -DSCRIPTING)
 
-### libdreamcast.cmake #########################################################################
+### core sources ###############################################################################
 
 set(d_core ${reicast_core_path})
 
-file(GLOB_RECURSE hw_SRCS	${d_core}/hw/*.cpp			${d_core}/hw/*.h)
-file(GLOB_RECURSE lxdream_SRCS	${d_core}/gpl/lxdream/*.cpp			${d_core}/gpl/lxdream/*.h)
+file(GLOB_RECURSE hw_SRCS       ${d_core}/hw/*.cpp           ${d_core}/hw/*.h)
+file(GLOB_RECURSE lxdream_SRCS  ${d_core}/gpl/lxdream/*.cpp  ${d_core}/gpl/lxdream/*.h)
 
-file(GLOB cfg_SRCS			${d_core}/cfg/*.cpp			${d_core}/cfg/*.h)
-file(GLOB rend_SRCS			${d_core}/rend/*.cpp		${d_core}/rend/*.h)
-file(GLOB input_SRCS		${d_core}/input/*.cpp		${d_core}/input/*.h)
-file(GLOB reios_SRCS		${d_core}/reios/*.cpp		${d_core}/reios/*.h)
-file(GLOB imgread_SRCS		${d_core}/imgread/*.cpp		${d_core}/imgread/*.h)
-file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
-file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)
-file(GLOB glwrap_SRCS		${d_core}/utils/glwrap/*.cpp )
-file(GLOB scripting_SRCS	${d_core}/scripting/*.cpp	${d_core}/scripting/*.h)
-file(GLOB utils_SRCS	${d_core}/utils/*.cpp	${d_core}/utils/*.h)
-file(GLOB gui_SRCS  ${d_core}/gui/*.cpp ${d_core}/gui/*.h)
-
-if(${HOST_OS} EQUAL ${OS_WINDOWS})
+file(GLOB cfg_SRCS        ${d_core}/cfg/*.cpp        ${d_core}/cfg/*.h)
+file(GLOB rend_SRCS       ${d_core}/rend/*.cpp       ${d_core}/rend/*.h)
+file(GLOB input_SRCS      ${d_core}/input/*.cpp      ${d_core}/input/*.h)
+file(GLOB reios_SRCS      ${d_core}/reios/*.cpp      ${d_core}/reios/*.h)
+file(GLOB imgread_SRCS    ${d_core}/imgread/*.cpp    ${d_core}/imgread/*.h)
+file(GLOB profiler_SRCS   ${d_core}/profiler/*.cpp   ${d_core}/profiler/*.h)
+file(GLOB archive_SRCS    ${d_core}/archive/*.cpp    ${d_core}/archive/*.h)
+file(GLOB scripting_SRCS  ${d_core}/scripting/*.cpp  ${d_core}/scripting/*.h)
+file(GLOB utils_SRCS      ${d_core}/utils/*.cpp	     ${d_core}/utils/*.h)
+file(GLOB gui_SRCS        ${d_core}/gui/*.cpp        ${d_core}/gui/*.h)
+file(GLOB glwrap_SRCS     ${d_core}/utils/glwrap/*.cpp)
+if(host_windows)
   file(GLOB wgl_SRCS  ${d_core}/utils/glinit/wgl/*.cpp )
 endif()
 
-#### option(rend)
-if(NOT ${HOST_OS} EQUAL ${OS_DARWIN})
-  file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
+if(NOT host_macos)
+  file(GLOB gl4_SRCS     ${d_core}/rend/gl4/*.cpp     ${d_core}/rend/gl4/*.h)
 endif()
-file(GLOB gles_SRCS				${d_core}/rend/gles/*.cpp	${d_core}/rend/gles/*.h)
-file(GLOB norend_SRCS			${d_core}/rend/norend/*.cpp	${d_core}/rend/norend/*.h)
-file(GLOB softrend_SRCS		${d_core}/rend/soft/*.cpp	${d_core}/rend/soft/*.h)
-if(${HOST_OS} EQUAL ${OS_WINDOWS})
-  file(GLOB d3d11_SRCS		${d_core}/rend/d3d11/*.cpp	${d_core}/rend/d3d11/*.h)
+file(GLOB gles_SRCS      ${d_core}/rend/gles/*.cpp    ${d_core}/rend/gles/*.h)
+file(GLOB norend_SRCS    ${d_core}/rend/norend/*.cpp  ${d_core}/rend/norend/*.h)
+file(GLOB softrend_SRCS  ${d_core}/rend/soft/*.cpp    ${d_core}/rend/soft/*.h)
+if(host_windows)
+  file(GLOB d3d11_SRCS   ${d_core}/rend/d3d11/*.cpp   ${d_core}/rend/d3d11/*.h)
 endif()
+
+set(lic_)
 
 set(core_SRCS
   ${lxdream_SRCS}
@@ -99,60 +105,58 @@ set(core_SRCS
   ${d_core}/serialize.cpp
 )
 
-if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG} AND ${HOST_OS} EQUAL ${OS_DARWIN})) # TODO: Test with Clang on other platforms
+if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG} AND host_macos)) # TODO: Test with Clang on other platforms
   list(APPEND core_SRCS ${archive_SRCS})
 endif()
 
 if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT}) 
-
   if(${HOST_CPU} EQUAL ${CPU_X86})
     list(APPEND core_SRCS 
       ${d_core}/jit/backend/x86/rec_x86_driver.cpp
       ${d_core}/jit/backend/x86/rec_x86_asm.cpp	# change for linux , rec_lin86_asm.S
-	  ${d_core}/jit/backend/x86/rec_x86_ngen.h
-
+	    ${d_core}/jit/backend/x86/rec_x86_ngen.h
       ${d_core}/jit/emitter/x86/x86_emitter.cpp
-     )
+    )
   elseif(${HOST_CPU} EQUAL ${CPU_ARM})
     list(APPEND core_SRCS 
       ${d_core}/rec-ARM/ngen_arm.S
       ${d_core}/rec-ARM/rec_arm.cpp
-	)
+	  )
   elseif(${HOST_CPU} EQUAL ${CPU_X64})
-
-    list(APPEND core_SRCS ${d_core}/jit/backend/x64/rec_x64.cpp ${d_core}/jit/backend/x64/x64_regalloc.h)
-
+    list(APPEND core_SRCS 
+      ${d_core}/jit/backend/x64/rec_x64.cpp 
+      ${d_core}/jit/backend/x64/x64_regalloc.h
+    )
   elseif(${HOST_CPU} EQUAL ${CPU_A64})
-    list(APPEND core_SRCS ${d_core}/rec-ARM64/rec_arm64.cpp ${d_core}/rec-ARM64/arm64_regalloc.h)
-
+    list(APPEND core_SRCS 
+      ${d_core}/rec-ARM64/rec_arm64.cpp 
+      ${d_core}/rec-ARM64/arm64_regalloc.h
+    )
   else()
-    message(" FEAT_SHREC==DYNAREC_JIT && HOST_CPU Unknown Default add arch or disable rec if not avail.")
-	error()
+    message("FEAT_SHREC==DYNAREC_JIT && HOST_CPU Unknown Default add arch or disable rec if not avail.")
+	  error()
   endif()
-
 elseif(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
     list(APPEND core_SRCS ${d_core}/jit/backend/cpp/rec_cpp.cpp)
 endif()
 
-add_definitions(/DFEAT_HAS_SOFTREND=1)
-
-if(${HOST_OS} EQUAL ${OS_LINUX})
-  add_definitions(-DLUA_USE_LINUX)
+if(host_linux)
+  target_compile_definitions(${t_libswirl} PUBLIC -DLUA_USE_LINUX)
 endif()
 
-### deps.cmake #################################################################################
+### deps sources ###############################################################################
 
-set(d_deps ${reicast_core_path}/deps)
-set(gpl_deps ${reicast_core_path}/gpl/deps)
+set(d_deps "${reicast_core_path}/deps")
+set(gpl_deps "${reicast_core_path}/gpl/deps")
 
-include_directories ("${d_deps}")
-include_directories ("${gpl_deps}/picotcp/include")
-include_directories ("${gpl_deps}/picotcp/modules")
+target_include_directories(${t_libswirl} PUBLIC "${d_deps}")
+target_include_directories(${t_libswirl} PUBLIC "${gpl_deps}/picotcp/include")
+target_include_directories(${t_libswirl} PUBLIC "${gpl_deps}/picotcp/modules")
 
 file(GLOB xbyak_H	${d_deps}/xbyak/*.h)		# include headers into cmake target/project view 
 
 file(GLOB chdr_SRCS  ${d_deps}/chdr/*.c)
-if(${HOST_OS} EQUAL ${OS_WINDOWS})
+if(host_windows)
   file(GLOB dirent_SRCS  ${d_deps}/dirent/*.c)
 endif()
 file(GLOB lzma_SRCS  ${d_deps}/lzma/*.c)
@@ -184,20 +188,20 @@ set(deps_SRCS
   ${xbyak_H}
 )
   
-if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG} AND ${HOST_OS} EQUAL ${OS_DARWIN})) # TODO: Test with Clang on other platforms
+if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG} AND host_macos)) # TODO: Test with Clang on other platforms
   list(APPEND deps_SRCS
     ${lzip_SRCS}
     ${lzma_SRCS}
     ${pico_SRCS}
   )
-  add_definitions(-D_7ZIP_ST -DCHD5_LZMA)
+  target_compile_definitions(${t_libswirl} PUBLIC -D_7ZIP_ST -DCHD5_LZMA)
 endif()
 
-### libosd.cmake ################################################################################
+### osd sources ################################################################################
 
 set(d_aout ${reicast_core_path}/oslib)
 
-include_directories ("${d_core}/khronos")
+target_include_directories(${t_libswirl} PUBLIC "${d_core}/khronos")
 
 ## I really should just glob all of the dirs and ;shrug; if guards don't do it all ##
 
@@ -205,35 +209,30 @@ set(osd_SRCS "")
 
 list(APPEND osd_SRCS ${d_aout}/audiostream.cpp)
 
-if (${HOST_OS} EQUAL ${OS_WINDOWS})
-
-  list(APPEND osd_SRCS ${d_core}/windows/winmain.cpp)
+if(host_windows)
+  list(APPEND reicast_SRCS ${d_core}/windows/winmain.cpp)
   list(APPEND osd_SRCS ${d_core}/windows/win_vmem.cpp)
   list(APPEND osd_SRCS ${d_core}/oslib/windows/threading.cpp)
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
-  
-  
   link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
 
-  
-elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
+elseif(host_linux OR host_android)
+  list(APPEND reicast_SRCS ${d_core}/linux-dist/main.cpp)
+  list(APPEND osd_SRCS
+    #${d_core}/linux-dist/main.cpp
+    ${d_core}/linux/common.cpp
+    ${d_core}/linux/context.cpp
+    ${d_core}/linux/posix_vmem.cpp
+    ${d_core}/linux/nixprof/nixprof.cpp
+    ${d_core}/oslib/posix/threading.cpp
 
-    list(APPEND osd_SRCS
-      ${d_core}/linux-dist/main.cpp
-      ${d_core}/linux/common.cpp
-      ${d_core}/linux/context.cpp
-      ${d_core}/linux/posix_vmem.cpp
-      ${d_core}/linux/nixprof/nixprof.cpp
-      ${d_core}/oslib/posix/threading.cpp
+    ${d_aout}/audiobackend_oss.cpp # add option
+  ) # todo: configure linux audio lib options
 
-      ${d_aout}/audiobackend_oss.cpp # add option
-    ) # todo: configure linux audio lib options
-
-elseif(${HOST_OS} EQUAL ${OS_DARWIN})
-
+elseif(host_macos)
   set(d_osx ${reicast_shell_path}/apple/emulator-osx/emulator-osx)
 
-  list(APPEND objc_SRCS
+  list(APPEND reicast_SRCS
     ${d_osx}/main.m
     ${d_osx}/input.mm
     ${d_osx}/AppDelegate.mm
@@ -250,120 +249,127 @@ elseif(${HOST_OS} EQUAL ${OS_DARWIN})
   )
 
 else()
-
   message("OS Unhandled")
   error()
 
 endif()
 
-include_directories ("${reicast_core_path}")
+set(t_reicast "${PROJECT_NAME}${binSuffix}")
+add_executable(${t_reicast}) 
 
-set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
+target_include_directories(${t_libswirl} PRIVATE "${reicast_core_path}")
+target_include_directories(${t_reicast} PRIVATE "${reicast_core_path}")
 
-add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+target_compile_features(${t_reicast} PRIVATE cxx_std_14)
+target_compile_features(${t_libswirl} PRIVATE cxx_std_14)
 
-target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
-
-if(${HOST_OS} EQUAL ${OS_LINUX})
+if(host_linux)
   # needed for opentty
-  target_link_libraries(${TNAME} -lutil)
+  target_link_libraries(${t_libswirl} -lutil)
 
   find_package(ALSA)
   if(ALSA_FOUND)
-    target_compile_definitions(${TNAME} PUBLIC USE_ALSA)
-    target_sources(${TNAME} PUBLIC ${d_aout}/audiobackend_alsa.cpp)
-    target_include_directories(${TNAME} PUBLIC ${ALSA_INCLUDE_DIRS})
-    target_link_libraries(${TNAME} ${ALSA_LIBRARIES})
+    target_compile_definitions(${t_libswirl} PUBLIC USE_ALSA)
+    target_sources(${t_libswirl} PUBLIC ${d_aout}/audiobackend_alsa.cpp)
+    target_include_directories(${t_libswirl} PUBLIC ${ALSA_INCLUDE_DIRS})
+    target_link_libraries(${t_libswirl} ${ALSA_LIBRARIES})
   endif()
 
   find_package(OpenGL REQUIRED)
   if(OpenGL_EGL_FOUND)
-    target_compile_definitions(${TNAME} PUBLIC SUPPORT_EGL)
-    target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/egl/egl.cpp)
-    target_link_libraries(${TNAME} OpenGL::EGL)
+    target_compile_definitions(${t_libswirl} PUBLIC SUPPORT_EGL)
+    target_sources(${t_libswirl} PUBLIC ${d_core}/utils/glinit/egl/egl.cpp)
+    target_link_libraries(${t_libswirl} OpenGL::EGL)
   elseif(OpenGL_GLX_FOUND)
-    target_compile_definitions(${TNAME} PUBLIC SUPPORT_GLX)
-    target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/glx/glx.cpp)
-    target_link_libraries(${TNAME} OpenGL::GLX)
+    target_compile_definitions(${t_libswirl} PUBLIC SUPPORT_GLX)
+    target_sources(${t_libswirl} PUBLIC ${d_core}/utils/glinit/glx/glx.cpp)
+    target_link_libraries(${t_libswirl} OpenGL::GLX)
   else()
     message(FATAL_ERROR "EGL or GLX required")
   endif()
 
   find_package(OpenMP)
   if(OpenMP_FOUND)
-    target_link_libraries(${TNAME} OpenMP::OpenMP_CXX)
+    target_link_libraries(${t_libswirl} OpenMP::OpenMP_CXX)
   else()
-    target_compile_definitions(${TNAME} PUBLIC TARGET_NO_OPENMP)
+    target_compile_definitions(${t_libswirl} PUBLIC TARGET_NO_OPENMP)
   endif()
 
   find_package(PkgConfig)
   if(PKG_CONFIG_FOUND)
     pkg_check_modules(AO ao)
     if(AO_FOUND)
-      target_compile_definitions(${TNAME} PUBLIC USE_LIBAO)
-      target_sources(${TNAME} PUBLIC ${d_aout}/audiobackend_libao.cpp)
-      target_include_directories(${TNAME} PUBLIC ${AO_INCLUDE_DIRS})
-      target_link_libraries(${TNAME} ${AO_LIBRARIES})
+      target_compile_definitions(${t_libswirl} PUBLIC USE_LIBAO)
+      target_sources(${t_libswirl} PUBLIC ${d_aout}/audiobackend_libao.cpp)
+      target_include_directories(${t_libswirl} PUBLIC ${AO_INCLUDE_DIRS})
+      target_link_libraries(${t_libswirl} ${AO_LIBRARIES})
     endif()
 
     pkg_check_modules(LIBEVDEV libevdev)
     if(LIBEVDEV_FOUND)
-      target_compile_definitions(${TNAME} PUBLIC USE_EVDEV)
-      target_sources(${TNAME} PUBLIC ${d_core}/linux-dist/evdev.cpp)
-      target_include_directories(${TNAME} PUBLIC ${LIBEVDEV_INCLUDE_DIRS})
-      target_link_libraries(${TNAME} ${LIBEVDEV_LIBRARIES})
+      target_compile_definitions(${t_libswirl} PUBLIC USE_EVDEV)
+      target_sources(${t_libswirl} PUBLIC ${d_core}/linux-dist/evdev.cpp)
+      target_include_directories(${t_libswirl} PUBLIC ${LIBEVDEV_INCLUDE_DIRS})
+      target_link_libraries(${t_libswirl} ${LIBEVDEV_LIBRARIES})
 
       pkg_check_modules(LIBUDEV libudev)
       if(LIBUDEV_FOUND)
-        target_compile_definitions(${TNAME} PUBLIC USE_UDEV)
-        target_include_directories(${TNAME} PUBLIC ${LIBUDEV_INCLUDE_DIRS})
-        target_link_libraries(${TNAME} ${LIBUDEV_LIBRARIES})
+        target_compile_definitions(${t_libswirl} PUBLIC USE_UDEV)
+        target_include_directories(${t_libswirl} PUBLIC ${LIBUDEV_INCLUDE_DIRS})
+        target_link_libraries(${t_libswirl} ${LIBUDEV_LIBRARIES})
       endif()
     endif()
 
     pkg_check_modules(LIBPULSE_SIMPLE libpulse-simple)
     if(LIBPULSE_SIMPLE_FOUND)
-      target_compile_definitions(${TNAME} PUBLIC USE_PULSEAUDIO)
-      target_sources(${TNAME} PUBLIC ${d_aout}/audiobackend_pulseaudio.cpp)
-      target_include_directories(${TNAME} PUBLIC ${LIBPULSE_SIMPLE_INCLUDE_DIRS})
-      target_link_libraries(${TNAME} ${LIBPULSE_SIMPLE_LIBRARIES})
+      target_compile_definitions(${t_libswirl} PUBLIC USE_PULSEAUDIO)
+      target_sources(${t_libswirl} PUBLIC ${d_aout}/audiobackend_pulseaudio.cpp)
+      target_include_directories(${t_libswirl} PUBLIC ${LIBPULSE_SIMPLE_INCLUDE_DIRS})
+      target_link_libraries(${t_libswirl} ${LIBPULSE_SIMPLE_LIBRARIES})
     endif()
   endif()
 
   find_package(Threads REQUIRED)
-  target_link_libraries(${TNAME} Threads::Threads)
+  target_link_libraries(${t_libswirl} Threads::Threads)
 
   find_package(X11 REQUIRED)
   if(X11_FOUND)
-    target_sources(${TNAME} PUBLIC ${d_core}/linux-dist/x11.cpp)
-    target_compile_definitions(${TNAME} PUBLIC SUPPORT_X11)
-    target_include_directories(${TNAME} PUBLIC ${X11_INCLUDE_DIR})
-    target_link_libraries(${TNAME} ${X11_LIBRARIES})
+    target_sources(${t_libswirl} PUBLIC ${d_core}/linux-dist/x11.cpp)
+    target_compile_definitions(${t_libswirl} PUBLIC SUPPORT_X11)
+    target_include_directories(${t_libswirl} PUBLIC ${X11_INCLUDE_DIR})
+    target_link_libraries(${t_libswirl} ${X11_LIBRARIES})
   endif()
 
-  target_link_libraries(${TNAME} ${CMAKE_DL_LIBS} rt)
+  target_link_libraries(${t_libswirl} ${CMAKE_DL_LIBS} rt)
 endif()
 
-if(${HOST_OS} EQUAL ${OS_DARWIN})
+if(host_macos)
   enable_language(OBJC)
   enable_language(OBJCXX)
 
   # Silence warnings about OpenGL deprecation on Mojave and greater (10.14+)
-  target_compile_options(${TNAME} PRIVATE -DGL_SILENCE_DEPRECATION)
+  target_compile_options(${t_reicast} PUBLIC -DGL_SILENCE_DEPRECATION)
+  target_compile_options(${t_libswirl} PUBLIC -DGL_SILENCE_DEPRECATION)
 
   # Enable ARC
-  target_compile_options(${TNAME} PRIVATE -fobjc-arc)
+  target_compile_options(${t_reicast} PUBLIC -fobjc-arc)
 
   # Enable OpenMP
-  target_compile_options(${TNAME} PRIVATE -Xpreprocessor -fopenmp)
-  target_link_libraries(${TNAME} "${d_osx}/../deps/libomp/lib/libomp.a")
-  target_include_directories(${TNAME} PRIVATE "${d_osx}/../deps/libomp/include")
+  target_compile_options(${t_libswirl} PUBLIC -Xpreprocessor -fopenmp)
+  # target_link_libraries(${t_libswirl} "${d_osx}/../deps/libomp/lib/libomp.a")
+  target_include_directories(${t_libswirl} PUBLIC "${d_osx}/../deps/libomp/include")
+  message("D_OSX=\"${d_osx}\" CMAKE_CURRENT_BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\" \"${d_osx}/../../merge_static_libs.sh\"")
+  add_custom_command(TARGET ${t_libswirl} POST_BUILD
+    COMMAND bash "-c" "D_OSX=\"${d_osx}\" CMAKE_CURRENT_BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\" \"${d_osx}/../../merge_static_libs.sh\""
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Merging static libraries..."
+  )
 
   # Include macOS *.hpp files
-  target_include_directories(${TNAME} PRIVATE "${d_osx}")
+  target_include_directories(${t_reicast} PUBLIC "${d_osx}")
  
   # Link macOS Frameworks
-  target_link_libraries(${TNAME}
+  target_link_libraries(${t_reicast}
     "-framework Cocoa"
     "-framework AppKit"
     "-framework CoreData"
@@ -375,23 +381,37 @@ if(${HOST_OS} EQUAL ${OS_DARWIN})
   )
 
   # Create the macOS app bundle
-  add_custom_command(TARGET ${TNAME} POST_BUILD
-    COMMAND bash "-c" "D_OSX=\"${d_osx}\" CMAKE_CURRENT_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\" CMAKE_CURRENT_BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\" \"${d_osx}/build_app_bundle.sh\""
+  add_custom_command(TARGET ${t_reicast} POST_BUILD
+    COMMAND bash "-c" "D_OSX=\"${d_osx}\" CMAKE_CURRENT_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\" CMAKE_CURRENT_BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\" \"${d_osx}/../../build_app_bundle.sh\""
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Creating macOS app bundle..."
   )
 endif()
 
-# aica-dsp-asm
-if(${HOST_OS} EQUAL ${OS_DARWIN})
-  add_executable(aica-dsp-asm
-    aica-dsp-asm/main.cpp
-    aica-dsp-asm/macos_support.mm
-  )
+set(libswirl_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
+target_sources(${t_libswirl} PRIVATE ${libswirl_SRCS})
 
-  # Link macOS Frameworks
-  target_link_libraries(aica-dsp-asm "-framework Foundation")
+target_sources(${t_reicast} PUBLIC ${reicast_SRCS})
+add_dependencies(${t_reicast} ${t_libswirl})
+
+if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
+  #set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -force_load ${CMAKE_CURRENT_BINARY_DIR}/lib${t_libswirl}.a")
+  target_link_libraries(${t_reicast} -force_load ${CMAKE_CURRENT_BINARY_DIR}/lib${t_libswirl}.a)
+elseif(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})
+  #set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -Wl,--whole-archive ${CMAKE_CURRENT_BINARY_DIR}/lib${t_libswirl}.a -Wl,--no-whole-archive")
+  target_link_libraries(${t_reicast} -Wl,--whole-archive ${CMAKE_CURRENT_BINARY_DIR}/lib${t_libswirl}.a -Wl,--no-whole-archive)
 endif()
+
+# aica-dsp-asm
+# if(host_macos)
+#   add_executable(aica-dsp-asm
+#     aica-dsp-asm/main.cpp
+#     aica-dsp-asm/macos_support.mm
+#   )
+
+#   # Link macOS Frameworks
+#   target_link_libraries(aica-dsp-asm "-framework Foundation")
+# endif()
 
 
 if(DEBUG_CMAKE)

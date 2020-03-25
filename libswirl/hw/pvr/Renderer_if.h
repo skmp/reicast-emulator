@@ -11,17 +11,18 @@
 extern u32 VertexCount;
 extern u32 FrameCount;
 
+extern "C" {
+	void rend_init_renderer(u8* vram);
+	void rend_term_renderer();
+	void rend_vblank();
 
-void rend_init_renderer(u8* vram);
-void rend_term_renderer();
-void rend_vblank();
+	void rend_start_render(u8* vram);
+	void rend_end_render();
 
-void rend_start_render(u8* vram);
-void rend_end_render();
-
-void rend_set_fb_scale(float x,float y);
-void rend_resize(int width, int height);
-void rend_text_invl(vram_block* bl);
+	void rend_set_fb_scale(float x,float y);
+	void rend_resize(int width, int height);
+	void rend_text_invl(vram_block* bl);
+}
 
 ///////
 extern TA_context* _pvrrc;

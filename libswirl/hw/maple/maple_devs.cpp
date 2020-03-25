@@ -1225,21 +1225,23 @@ struct maple_keyboard : maple_base
 	}
 };
 
-// Mouse buttons
-// bit 0: Button C
-// bit 1: Right button (B)
-// bit 2: Left button (A)
-// bit 3: Wheel button
-u32 mo_buttons = 0xFFFFFFFF;
-// Relative mouse coordinates [-512:511]
-f32 mo_x_delta;
-f32 mo_y_delta;
-f32 mo_wheel_delta;
-// Absolute mouse coordinates
-// Range [0:639] [0:479]
-// but may be outside this range if the pointer is offscreen or outside the 4:3 window.
-s32 mo_x_abs;
-s32 mo_y_abs;
+extern "C" {
+	// Mouse buttons
+	// bit 0: Button C
+	// bit 1: Right button (B)
+	// bit 2: Left button (A)
+	// bit 3: Wheel button
+	u32 mo_buttons = 0xFFFFFFFF;
+	// Relative mouse coordinates [-512:511]
+	f32 mo_x_delta;
+	f32 mo_y_delta;
+	f32 mo_wheel_delta;
+	// Absolute mouse coordinates
+	// Range [0:639] [0:479]
+	// but may be outside this range if the pointer is offscreen or outside the 4:3 window.
+	s32 mo_x_abs;
+	s32 mo_y_abs;
+}
 
 struct maple_mouse : maple_base
 {

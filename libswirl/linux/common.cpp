@@ -327,7 +327,8 @@ void linux_rpi2_init() {
 #endif
 }
 
-void common_linux_setup()
+
+extern "C" void common_linux_setup()
 {
 	linux_fix_personality();
 	linux_rpi2_init();
@@ -346,8 +347,8 @@ void common_linux_setup()
 }
 
 #if FEAT_HAS_SERIAL_TTY
-int pty_master;
-bool common_serial_pty_setup() {
+extern "C" int pty_master;
+extern "C" bool common_serial_pty_setup() {
     bool cleanup_pty_symlink = false;
     if (settings.debug.VirtualSerialPort) {
         int slave;

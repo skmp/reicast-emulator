@@ -4,19 +4,18 @@
 #include "license/bsd"
 
 #import "AppDelegate.h"
-#import "libswirl.h"
-#import "gui/gui_renderer.h"
+#include "libswirl.h"
+#include "linux/common.h"
+#include "deps/imgui/imgui.h"
+#include "gui/gui_renderer.h"
+#include "gui/gui_partials.h"
+#include "input/mapping.h"
+#include "rend/rend.h"
 
 #if FEAT_HAS_SERIAL_TTY
 #include <util.h>
 #include <sys/stat.h>
-bool common_serial_pty_setup();
 #endif
-
-void common_linux_setup();
-bool common_serial_pty_setup();
-void rend_resize(int width, int height);
-extern int screen_dpi;
 
 static AppDelegate *_sharedInstance;
 static CGFloat _backingScaleFactor;

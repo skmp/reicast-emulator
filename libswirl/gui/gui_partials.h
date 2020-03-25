@@ -30,25 +30,27 @@ extern bool game_started;
 extern bool renderer_changed;
 
 
-//TODO: MOVE TO PROPER FILES
-extern int screen_width, screen_height;
+extern "C" {
+	//TODO: MOVE TO PROPER FILES
+	extern int screen_width, screen_height;
 
-// ALSO THESE
-extern u8 kb_shift; 		// shift keys pressed (bitmask)
-extern u8 kb_key[6];		// normal keys pressed
-extern s32 mo_x_abs;
-extern s32 mo_y_abs;
-extern u32 mo_buttons;
-extern f32 mo_x_delta;
-extern f32 mo_y_delta;
-extern f32 mo_wheel_delta;
+	// ALSO THESE
+	extern u8 kb_shift; 		// shift keys pressed (bitmask)
+	extern u8 kb_key[6];		// normal keys pressed
+	extern s32 mo_x_abs;
+	extern s32 mo_y_abs;
+	extern u32 mo_buttons;
+	extern f32 mo_x_delta;
+	extern f32 mo_y_delta;
+	extern f32 mo_wheel_delta;
 
-//
+	//
 
 
-/// ALSO MOVE THESE ////
+	/// ALSO MOVE THESE ////
 
-extern int screen_dpi;
+	extern int screen_dpi;
+}
 
 typedef enum { Welcome, Closed, Commands, Settings, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
 extern GuiState gui_state;

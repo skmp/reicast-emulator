@@ -234,7 +234,18 @@
 		EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		5319C1F0242A7ABD00297A5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5319C1EC242A7ABD00297A5F /* swirl.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5319C1E0242A7A8D00297A5F;
+			remoteInfo = swirl;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		5319C1EC242A7ABD00297A5F /* swirl.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = swirl.xcodeproj; path = ../swirl/swirl.xcodeproj; sourceTree = "<group>"; };
 		84967C741B8F492C005F1140 /* arm_init.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = arm_init.c; sourceTree = "<group>"; };
 		84967C751B8F492C005F1140 /* filter_neon.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = filter_neon.S; sourceTree = "<group>"; };
 		84967C761B8F492C005F1140 /* filter_neon_intrinsics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = filter_neon_intrinsics.c; sourceTree = "<group>"; };
@@ -642,6 +653,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5319C1ED242A7ABD00297A5F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5319C1F1242A7ABD00297A5F /* libswirl.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		84967C731B8F492C005F1140 /* arm */ = {
 			isa = PBXGroup;
 			children = (
@@ -713,6 +732,7 @@
 		87078A7A18A47FE90034C7A0 = {
 			isa = PBXGroup;
 			children = (
+				5319C1EC242A7ABD00297A5F /* swirl.xcodeproj */,
 				87078A9018A47FE90034C7A0 /* reicast */,
 				87078A8518A47FE90034C7A0 /* Frameworks */,
 				87078A8418A47FE90034C7A0 /* Products */,
@@ -1471,6 +1491,10 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = 5319C1ED242A7ABD00297A5F /* Products */;
+					ProjectRef = 5319C1EC242A7ABD00297A5F /* swirl.xcodeproj */;
+				},
+				{
 					ProductGroup = 87D776E51EF5623300E08B55 /* Products */;
 					ProjectRef = 87D776E41EF5623300E08B55 /* zlib.xcodeproj */;
 				},
@@ -1481,6 +1505,16 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		5319C1F1242A7ABD00297A5F /* libswirl.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libswirl.a;
+			remoteRef = 5319C1F0242A7ABD00297A5F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		87078A8118A47FE90034C7A0 /* Resources */ = {

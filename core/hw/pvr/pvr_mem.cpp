@@ -82,6 +82,8 @@ static INLINE u8 GetUV420(int x, int y,u8* base)
 	return base[realx+realy*8];
 }
 
+#pragma GCC push_options
+#pragma GCC optimize ("-O2")
 void YUV_Block8x8(u8* inuv,u8* iny, u8* out)
 {
 	u8* line_out_0=out+0;
@@ -117,6 +119,7 @@ void YUV_Block8x8(u8* inuv,u8* iny, u8* out)
 		line_out_1+=YUV_x_size*4-8*2;
 	}
 }
+#pragma GCC pop_options
 
 static INLINE void YUV_Block384(u8* in, u8* out)
 {

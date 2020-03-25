@@ -1078,7 +1078,7 @@ void GDROM_DmaStart(u32 addr, u32 data)
 {
 	if (SB_GDEN==0)
 	{
-		INFO_LOG(GDROM, "Invalid GD-DMA start, SB_GDEN=0.Igoring it.");
+		INFO_LOG(GDROM, "Invalid GD-DMA start, SB_GDEN=0.Ignoring it.");
 		return;
 	}
 	SB_GDST|=data&1;

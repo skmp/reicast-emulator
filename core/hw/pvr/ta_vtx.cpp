@@ -1611,6 +1611,9 @@ bool ta_parse_vdrc(TA_context* ctx)
             ta_data =TaCmd(ta_data,ta_data_end);
          }while(ta_data<=ta_data_end);
 
+         if (ctx->rend.Overrun)
+            break;
+
          RenderPass *render_pass = vd_rc.render_passes.Append();
          render_pass->op_count = vd_rc.global_param_op.used();
          make_index(&vd_rc.global_param_op, op_poly_count,
@@ -1630,31 +1633,35 @@ bool ta_parse_vdrc(TA_context* ctx)
          render_pass->z_clear = ClearZBeforePass(pass);
 		}
 
-      if (screen_height > 480)
-      {
-      	fix_texture_bleeding(&vd_rc.global_param_op);
-      	fix_texture_bleeding(&vd_rc.global_param_pt);
-      	fix_texture_bleeding(&vd_rc.global_param_tr);
-      }
-      bool empty_context = true;
-		
-		// Don't draw empty contexts.
-		// Apparently the background plane is only drawn if it at least one polygon is drawn.
-		for (PolyParam *pp = vd_rc.global_param_op.head() + 1;
-			 empty_context && pp < vd_rc.global_param_op.LastPtr(0); pp++)
-			if (pp->count > 2)
-				empty_context = false;
-		for (PolyParam *pp = vd_rc.global_param_pt.head(); empty_context && pp < vd_rc.global_param_pt.LastPtr(0); pp++)
-			if (pp->count > 2)
-				empty_context = false;
-		for (PolyParam *pp = vd_rc.global_param_tr.head(); empty_context && pp < vd_rc.global_param_tr.LastPtr(0); pp++)
-			if (pp->count > 2)
-				empty_context = false;
-		rv = !empty_context;
+		if (!ctx->rend.Overrun)
+		{
+			if (screen_height > 480)
+			{
+				fix_texture_bleeding(&vd_rc.global_param_op);
+				fix_texture_bleeding(&vd_rc.global_param_pt);
+				fix_texture_bleeding(&vd_rc.global_param_tr);
+			}
+			bool empty_context = true;
+
+			// Don't draw empty contexts.
+			// Apparently the background plane is only drawn if it at least one polygon is drawn.
+			for (PolyParam *pp = vd_rc.global_param_op.head() + 1;
+				 empty_context && pp < vd_rc.global_param_op.LastPtr(0); pp++)
+				if (pp->count > 2)
+					empty_context = false;
+			for (PolyParam *pp = vd_rc.global_param_pt.head(); empty_context && pp < vd_rc.global_param_pt.LastPtr(0); pp++)
+				if (pp->count > 2)
+					empty_context = false;
+			for (PolyParam *pp = vd_rc.global_param_tr.head(); empty_context && pp < vd_rc.global_param_tr.LastPtr(0); pp++)
+				if (pp->count > 2)
+					empty_context = false;
+			rv = !empty_context;
+		}
 	}
 
    bool overrun = ctx->rend.Overrun;
-
+   if (overrun)
+   	  WARN_LOG(PVR, "TA Overrun");
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
    ctx->rend_inuse.Unlock();

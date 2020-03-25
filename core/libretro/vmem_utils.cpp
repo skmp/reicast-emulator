@@ -49,16 +49,16 @@ int ashmem_create_region(const char *name, size_t size) {
 #endif  // #ifdef _ANDROID
 
 #ifdef HAVE_LIBNX
-uintptr_t vmem_fd = -1;
-uintptr_t vmem_fd_page = -1;
-uintptr_t vmem_fd_codememory = -1;
+using mem_handle_t = uintptr_t;
+mem_handle_t vmem_fd = -1;
+mem_handle_t vmem_fd_page = -1;
+mem_handle_t vmem_fd_codememory = -1;
 
-static uintptr_t shmem_fd2 = -1;
-static uintptr_t shmem_fd2_page = -1;
-static uintptr_t shmem_fd2_codememory = -1;
+static mem_handle_t shmem_fd2 = -1;
 #else
-int vmem_fd = -1;
-static int shmem_fd2 = -1;
+using mem_handle_t = int;
+mem_handle_t vmem_fd = -1;
+static mem_handle_t shmem_fd2 = -1;
 #endif // HAVE_LIBNX
 
 static void *reserved_base;
@@ -186,13 +186,7 @@ bool mem_region_unmap_file(void *start, size_t len)
 }
 
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
-static
-#ifdef HAVE_LIBNX
-uintptr_t
-#else
-int
-#endif // HAVE_LIBNX
-allocate_shared_filemem(unsigned size) {
+static mem_handle_t allocate_shared_filemem(unsigned size) {
 	int fd = -1;
 	#if defined(_ANDROID)
 	// Use Android's specific shmem stuff.

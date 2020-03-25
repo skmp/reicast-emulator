@@ -510,9 +510,15 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(sch_list[vblank_sched].start) ;
 	LIBRETRO_S(sch_list[vblank_sched].end) ;
 
-    LIBRETRO_S(sch_list[modem_sched].tag) ;
-    LIBRETRO_S(sch_list[modem_sched].start) ;
-    LIBRETRO_S(sch_list[modem_sched].end) ;
+#ifdef HAVE_MODEM
+   LIBRETRO_S(sch_list[modem_sched].tag) ;
+   LIBRETRO_S(sch_list[modem_sched].start) ;
+   LIBRETRO_S(sch_list[modem_sched].end) ;
+#else
+   LIBRETRO_S(i);
+   LIBRETRO_S(i);
+   LIBRETRO_S(i);
+#endif
 
 	LIBRETRO_S(SCIF_SCFSR2);
 	LIBRETRO_S(BSC_PDTRA);
@@ -907,14 +913,18 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 		LIBRETRO_US(dummy_int); // sch_list[time_sync].end
 	}
 
-#ifdef HAVE_MODEM
 	if ( version >= V2 )
 	{
+#ifdef HAVE_MODEM
 		LIBRETRO_US(sch_list[modem_sched].tag) ;
 		LIBRETRO_US(sch_list[modem_sched].start) ;
 		LIBRETRO_US(sch_list[modem_sched].end) ;
-	}
+#else
+		LIBRETRO_US(dummy_int);
+		LIBRETRO_US(dummy_int);
+		LIBRETRO_US(dummy_int);
 #endif
+	}
 
 	if (version < V3)
 	{

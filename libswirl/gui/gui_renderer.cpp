@@ -337,7 +337,7 @@ static void osd_gen_vertices()
 
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
-
+extern int rfb;
 void OSD_DRAW(bool clear_screen)
 {
 #ifdef _ANDROID
@@ -383,7 +383,7 @@ void OSD_DRAW(bool clear_screen)
         glActiveTexture(GL_TEXTURE0);
         glcache.BindTexture(GL_TEXTURE_2D, gl_osd.tex);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, rfb);
 
         glBufferData(GL_ARRAY_BUFFER, osd_vertices.size() * sizeof(Vertex), &osd_vertices[0], GL_STREAM_DRAW); glCheck();
 
@@ -453,10 +453,6 @@ struct GUIRenderer_impl : GUIRenderer {
     }
 
     virtual bool tryUIFrame() {
-
-                    g_GUI->RenderUI();
-
-         return os_gl_swap();
 
 		#ifdef NO_GUI
 		return true;

@@ -1,8 +1,10 @@
+#include "rend/gles/glcache.h"
 
 #include "libretro-common/include/libretro.h"
 #include "libretro_proxy.h"
 #include "utils/glwrap/gl3w.h"
 #include "types.h"
+
 #ifdef _WIN32
 #include <Windows.h>
 
@@ -221,15 +223,17 @@ bool os_gl_init(void* hwnd, void* hdc)
 #include "gui/gui.h"
 #include "gui/gui_renderer.h"
 
+
+int rfb = 0;
 LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
      trace_plugin("retro_run");
-
+    rfb = hw_render.get_current_framebuffer();
    //glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
-         glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
+    glBindFramebuffer(RARCH_GL_FRAMEBUFFER, rfb);
 
-   glClearColor(0.3, 0.4, 0.5, 1.0);
-   glViewport(0, 0, screen_width, screen_height);
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+   //glClearColor(rand() / (float)RAND_MAX, 0.4, 0.5, 1.0);
+   //glViewport(0, 0, screen_width, screen_height);
+   //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
    /*
     glViewport(0, 0, 1024, 768);
@@ -238,6 +242,7 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
      
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);*/
 
+    glcache.Reset();
     g_GUIRenderer->UIFrame();
 
 /*
@@ -343,8 +348,9 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game(const struct retro_game_info* gam
 
 
     extern int libretro_prologue(int argc, wchar* argv[]) ;
-    wchar* e[] = {"",""};
-    libretro_prologue(0,e);
+    
+    wchar* e[] = {"",(char*)game->path};
+    libretro_prologue(2,e);
  
   //  extern bool gui_start_game(const std::string& path);
 //g_GUI->gui_start_game("/home/div22/reicast-roms/ika.chd");

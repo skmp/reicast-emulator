@@ -415,7 +415,7 @@ int pty_master;
 
 #ifdef BUILD_RETROARCH_CORE
 
-int libretro_prologue(int argc, wchar* argv[]) {
+int libretro_prologue(int argc, char* argv[]) {
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
 		signal(SIGKILL, clean_exit);
@@ -446,12 +446,14 @@ int libretro_prologue(int argc, wchar* argv[]) {
 		die("Reicast initialization failed\n");
     
     #if FEAT_HAS_SERIAL_TTY
-    bool cleanup_pty_symlink = common_serial_pty_setup();
+    //bool cleanup_pty_symlink = common_serial_pty_setup();
     #endif
 
 	#if FEAT_HAS_NIXPROF
 	install_prof_handler(1);
 	#endif
+
+	return 0;
 }
 
 void libretro_body() {

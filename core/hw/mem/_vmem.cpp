@@ -653,6 +653,7 @@ void _vmem_release() {
 	if (virt_ram_base)
 		vmem_platform_destroy();
 	else {
+		_vmem_unprotect_vram(0, VRAM_SIZE);
 		freedefptr(p_sh4rcb);
 		freedefptr(vram.data);
 		freedefptr(aica_ram.data);

@@ -298,7 +298,7 @@ struct ReicastUI_impl : GUI {
         scaling = max(1.f, screen_dpi / 100.f * 0.75f);
         if (scaling > 1)
             ImGui::GetStyle().ScaleAllSizes(scaling);
-
+ 
         font17 = io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17 * scaling);
         // don't use scaling for this one to avoid too big textures
 

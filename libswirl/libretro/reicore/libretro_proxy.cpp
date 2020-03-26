@@ -4,10 +4,11 @@
 #include "libretro_proxy.h"
 #include "utils/glwrap/gl3w.h"
 #include "types.h"
+#include "gui/gui.h"
+#include "gui/gui_renderer.h"
 
 #ifdef _WIN32
 #include <Windows.h>
-
 #endif
 
 #define RARCH_GL_FRAMEBUFFER GL_FRAMEBUFFER
@@ -91,6 +92,12 @@ static struct retro_hw_render_callback hw_render;
 extern void retro_reicast_entry_point();
 #endif
 
+int rfb = 0; //XXX HACK!
+extern int screen_width;
+extern int screen_height;
+static bool retro_init_gl_hw_ctx();
+static void update_vars() ;
+
 //Private bridge module functions
 static void __emu_log_provider(enum retro_log_level level, const char* fmt, ...) {
     (void)level;
@@ -99,22 +106,16 @@ static void __emu_log_provider(enum retro_log_level level, const char* fmt, ...)
     vfprintf(stderr, fmt, va);
     va_end(va);
 }
-    extern int screen_width;
-    extern int screen_height;
-static bool retro_init_gl_hw_ctx();
+
 LIBRETRO_PROXY_STUB_TYPE void  retro_init(void) {
     trace_plugin("retro_init");
 
-        screen_width = 640;
-        screen_height = 480;
+    screen_width = 640  ;
+    screen_height = 480 ;  
     if (!g_b_init_done) {
-
-      //  g_b_init_done = true;
+        //TODO
+        g_b_init_done = true;
     }
-
-#ifdef BUILD_RETROARCH_CORE
-    //retro_reicast_entry_point();
-#endif
 }
 
 LIBRETRO_PROXY_STUB_TYPE void  retro_deinit(void) {
@@ -142,7 +143,7 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_get_system_info(struct retro_system_info* i
 
     memset(info, 0, sizeof(*info));
     info->library_name = "Reicast";
-    info->library_version = "1.0.0.1";
+    info->library_version = "1.0.0.3";
     info->need_fullpath = true;
     info->block_extract = true;
     info->valid_extensions =   "bin|gdi|chd|cue|cdi";
@@ -151,16 +152,14 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_get_system_info(struct retro_system_info* i
 LIBRETRO_PROXY_STUB_TYPE void  retro_get_system_av_info(struct retro_system_av_info* info) {
     trace_plugin("retro_get_system_av_info");
  
-
     info->timing.fps = 60; 
     info->timing.sample_rate = 0;
 
     info->geometry.base_height = screen_width,
-        info->geometry.base_height = screen_height,
-        info->geometry.max_width = screen_width,
-        info->geometry.max_height = screen_height,
-        info->geometry.aspect_ratio =  4.0 / 3.0;
-     
+    info->geometry.base_height = screen_height,
+    info->geometry.max_width = screen_width,
+    info->geometry.max_height = screen_height,
+    info->geometry.aspect_ratio =   4.0 / 3.0;  //0 == auto
 }
 
 LIBRETRO_PROXY_STUB_TYPE void  retro_set_environment(retro_environment_t cb) {
@@ -172,18 +171,56 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_set_environment(retro_environment_t cb) {
         log_cb = logging.log;
     else
         log_cb = __emu_log_provider;
-
-   // retro_load_game(0);
-   // uint32_t pref_hw_rend;
-   // if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &pref_hw_rend))
-     //   pref_hw_rend = (uint32_t)-1U;
-
-   // trace_plugin(std::string("ENV = " + std::to_string(pref_hw_rend)).c_str());
+ 
+ 
     cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)k_static_ctl_ports);
 
     bool no_rom = false;
     cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_rom);
 
+       struct retro_variable variables[] = {
+      {
+         "libreicast_resolution",
+#ifdef HAVE_OPENGLES
+         "Internal resolution; 320x240|360x480|480x272|512x384|512x512|640x240|640x448|640x480|720x576|800x600|960x720|1024x768",
+#else
+         "Internal resolution; 640x480|720x576|800x600|960x720|1024x768|1024x1024|1280x720|1280x960|1600x1200|1920x1080|1920x1440|1920x1600|2048x2048",
+#endif
+      },
+#ifdef CORE
+      { "libreicast_multisample", "Multisampling; 1x|2x|4x" },
+#endif
+      { NULL, NULL },
+   };
+    cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
+}
+
+static void update_vars() {
+
+    bool updated = false;
+    environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) ;
+    if (  !updated)
+        return;
+
+    struct retro_variable var = {
+      .key = "libreicast_resolution",
+   };
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      char *pch;
+      char str[256];
+      snprintf(str, sizeof(str), "%s", var.value);
+      printf("Val = %s\n",var.value);
+      pch = strtok(str, "x");
+      if (pch)
+         screen_width = strtoul(pch, NULL, 0);
+      pch = strtok(NULL, "x");
+      if (pch)
+         screen_height = strtoul(pch, NULL, 0);
+
+      printf( "Gt size: %u x %u.\n", screen_width, screen_height);
+   }
 }
 
 LIBRETRO_PROXY_STUB_TYPE void  retro_set_audio_sample(retro_audio_sample_t cb) {
@@ -220,44 +257,26 @@ bool os_gl_init(void* hwnd, void* hdc)
     return true;
 }
 
-#include "gui/gui.h"
-#include "gui/gui_renderer.h"
 
-
-int rfb = 0;
 LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
      trace_plugin("retro_run");
+
+    std::string s;
+   // get_env_string(s);
+    //printf("AA=%s\n",s.c_str());
+    update_vars() ;
+
     rfb = hw_render.get_current_framebuffer();
    //glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
     glBindFramebuffer(RARCH_GL_FRAMEBUFFER, rfb);
 
-   //glClearColor(rand() / (float)RAND_MAX, 0.4, 0.5, 1.0);
-   //glViewport(0, 0, screen_width, screen_height);
-   //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-   /*
-    glViewport(0, 0, 1024, 768);
-
-    glClearColor(1, 0, 0, 1.0);
-     
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);*/
 
     glcache.Reset();
     g_GUIRenderer->UIFrame();
 
-/*
-    glViewport(0, 0, 1024, 768);
-
-    glClearColor(1, 0, 0, 1.0);
-     
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-   printf("gl err = %d\n",glGetError());*/
-   //RETRO_HW_FRAME_BUFFER_VALID
-      video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
+    video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 
 }
-
 
 static void context_reset(void)
 {
@@ -351,9 +370,15 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game(const struct retro_game_info* gam
     
     wchar* e[] = {"",(char*)game->path};
     libretro_prologue(2,e);
- 
+   				struct retro_message msg;
+				// Sadly, this callback is only able to display short messages, so we can't give proper explanations...
+				msg.msg = "hELLO";
+				msg.frames = 1200;
+				environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
   //  extern bool gui_start_game(const std::string& path);
 //g_GUI->gui_start_game("/home/div22/reicast-roms/ika.chd");
+ 
+ 
     return true;
 }
 

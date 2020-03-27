@@ -681,7 +681,6 @@ public:
 		TaCmd = ta_main;
 		CurrentList = ListType_None;
 		ListIsFinished[0] = ListIsFinished[1] = ListIsFinished[2] = ListIsFinished[3] = ListIsFinished[4] = false;
-		tileclip_val = 0;
 		VertexDataFP = NullVertexData;
 		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
 		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));

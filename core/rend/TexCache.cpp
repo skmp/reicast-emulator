@@ -24,7 +24,7 @@ u32 pal_hash_16[64];
 
 // Rough approximation of LoD bias from D adjust param
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
-		0.f, -4.f, -2.f, -1.f, 0.f, 0.3f, 0.5f, 0.75f, 1.f, 1.f, 1.5f, 1.5f, 1.5f, 1.5f, 1.75f, 2.f
+		0.f, -4.f, -2.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
 };
 
 u32 detwiddle[2][11][1024];
@@ -848,7 +848,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 				{
 					u16 src = pvr_read_area1_16(addr);
 					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
+					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat & 3);
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = 0xFF;
 					addr += bpp;

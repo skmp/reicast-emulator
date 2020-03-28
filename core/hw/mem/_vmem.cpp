@@ -521,7 +521,7 @@ static void _vmem_set_p0_mappings()
 
 bool _vmem_reserve(void)
 {
-	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
+	static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
 
 	VMemType vmemstatus = MemTypeError;
 

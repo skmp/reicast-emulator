@@ -218,6 +218,8 @@ list(APPEND osd_SRCS ${d_aout}/audiostream.cpp)
 
 if (DEFINED LIBRETRO_CORE)
     list(APPEND osd_SRCS ${d_core}/libretro/reicore/libretro_proxy.cpp)
+	list(APPEND osd_SRCS ${d_aout}/audiobackend_libretro.cpp)
+
 	include_directories ("${d_core}/libretro-common/include")
     #list(APPEND osd_SRCS ${d_core}/libretro-common/glsym/rlgen.c)
 endif()
@@ -228,13 +230,7 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   list(APPEND osd_SRCS ${d_core}/windows/win_vmem.cpp)
   list(APPEND osd_SRCS ${d_core}/oslib/windows/threading.cpp)
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
-
-  
-
-
   link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
-
-  
 elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
 
     list(APPEND osd_SRCS
@@ -305,6 +301,7 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
   # needed for opentty
   target_link_libraries(${TNAME} -lutil)
 
+#if (NOT DEFINED LIBRETRO_CORE)
   find_package(ALSA)
   if(ALSA_FOUND)
     target_compile_definitions(${TNAME} PUBLIC USE_ALSA)
@@ -312,7 +309,7 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
     target_include_directories(${TNAME} PUBLIC ${ALSA_INCLUDE_DIRS})
     target_link_libraries(${TNAME} ${ALSA_LIBRARIES})
   endif()
-
+#endif()
   find_package(OpenGL REQUIRED)
   if(OpenGL_EGL_FOUND)
     #target_compile_definitions(${TNAME} PUBLIC SUPPORT_EGL)
@@ -424,6 +421,7 @@ if (DEFINED LIBRETRO_CORE)
 	remove_definitions(/DSUPPORT_GLX)
 	remove_definitions(/DSUPPORT_EGL)
 	remove_definitions(/DSUPPORT_SDL)
+	remove_definitions(/DUSE_ALSA)
 endif()
 
 

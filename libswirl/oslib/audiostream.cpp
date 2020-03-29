@@ -137,9 +137,16 @@ public:
 	}
 };
 
+#if 1
+bool libretro_audio_hack_has_buffers = false;
+double libretro_audio_hack_test_ms = 99990.0;
+#include <chrono>
+#include "perf_tools/moving_average.hpp"
+#endif
 class PushBuffer_t {
 private:
 	static const u32 SAMPLE_COUNT = 512;
+	static const u32 SAMPLE_MOD =  SAMPLE_COUNT - 1;
 
 	SoundFrame RingBuffer[SAMPLE_COUNT];
 	const u32 RingBufferByteSize = sizeof(RingBuffer);
@@ -154,22 +161,37 @@ public:
 	u32 PushAudio(u32 amt, bool wait)
 	{
 		if (audiobackend_current != NULL) {
+			#ifdef BUILD_RETROARCH_CORE
+			static std::clock_t c_start = std::clock();
+    		static auto t_start = std::chrono::high_resolution_clock::now();
+    		static moving_average_c<double, 10> cpu_time_avg, time_avg;
+    		auto t_end = std::chrono::high_resolution_clock::now();
+    		std::clock_t c_end = std::clock();
+ 
+  printf("Audio took : %lf/avg=%lf ms(cpu) or %lf/avg=%lf ms time\n", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC,
+            cpu_time_avg.update(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC),
+            std::chrono::duration<double, std::milli>(t_end - t_start).count(),
+            time_avg.update(std::chrono::duration<double, std::milli>(t_end - t_start).count()) );
+			libretro_audio_hack_test_ms = time_avg.get();
+    		c_start = c_end;
+    		t_start = t_end;
+			#endif
 			return audiobackend_current->push(RingBuffer, amt, wait);
 		}
 		return 0;
 	}
 
-	void WriteSample(s16 r, s16 l, bool wait)
+	inline void WriteSample(s16 r, s16 l, bool wait)
 	{
-		const u32 ptr = (WritePtr + 1) % RingBufferSampleCount;
+		const u32 ptr = (WritePtr + 1) & SAMPLE_MOD ;// % RingBufferSampleCount;
 		RingBuffer[ptr].r = r;
 		RingBuffer[ptr].l = l;
 		WritePtr = ptr;
 
-		if (WritePtr == (SAMPLE_COUNT - 1))
-		{
-			PushAudio(SAMPLE_COUNT, wait);
-		}
+		if (WritePtr < SAMPLE_MOD)
+			return;
+
+		PushAudio(SAMPLE_COUNT, wait);
 	}
 };
 
@@ -227,6 +249,15 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 	return true;
 }
 
+static audiobackend_t* SearchAudioBackend(const std::string& s) {
+	for (unsigned int i = 0; i < audiobackends_num_registered;++i) {
+		if (audiobackends[i]->slug == s)
+			return audiobackends[i];
+	}
+	return nullptr;
+
+}
+
 audiobackend_t* GetAudioBackend(std::string slug)
 {
 	if (slug == "none")
@@ -237,6 +268,11 @@ audiobackend_t* GetAudioBackend(std::string slug)
 	{
 		if (slug == "auto")
 		{
+			#ifdef BUILD_RETROARCH_CORE
+				audiobackend_t* a = SearchAudioBackend("libretro");
+				if (a != nullptr)
+					return a;
+			#endif
 			/* FIXME: At some point, one might want to insert some intelligent
 				 algorithm for autoselecting the approriate audio backend here.
 				 I'm too lazy right now. */
@@ -245,13 +281,10 @@ audiobackend_t* GetAudioBackend(std::string slug)
 		}
 		else
 		{
-			for (unsigned int i = 0; i < audiobackends_num_registered; i++)
-			{
-				if (audiobackends[i]->slug == slug)
-				{
-					return audiobackends[i];
-				}
-			}
+			audiobackend_t* a = SearchAudioBackend(slug);
+			if (a != nullptr)
+				return a;
+
 			printf("WARNING: Audio backend \"%s\" not found!\n", slug.c_str());
 		}
 	}
@@ -301,7 +334,7 @@ struct AudioStream_impl : AudioStream {
 	}
 
 
-	bool IsPullMode()
+	inline bool IsPullMode()
 	{
 		if (audiobackend_current != NULL && audiobackend_current->prefer_pull != NULL) {
 			return audiobackend_current->prefer_pull();
@@ -309,7 +342,7 @@ struct AudioStream_impl : AudioStream {
 		return false;
 	}
 
-	void WriteSample(s16 r, s16 l)
+	inline void WriteSample(s16 r, s16 l)
 	{
 		bool wait = settings.aica.LimitFPS;
 

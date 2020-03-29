@@ -6,6 +6,9 @@
 #include "types.h"
 #include "gui/gui.h"
 #include "gui/gui_renderer.h"
+#include <chrono>
+#include "perf_tools/moving_average.hpp"
+#include <libswirl/gui/gui.h>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -22,11 +25,11 @@ extern "C" {
 #define trace_plugin(__s__) MessageBoxA(nullptr,__s__,"Trace",MB_OK)
 #else
 #define LIBRETRO_PROXY_STUB_TYPE
-#define trace_plugin(__s__)  printf("RAW_TRACE:%s\n",__s__)
+#define trace_plugin(__s__)  //printf("RAW_TRACE:%s\n",__s__)
 #endif
 #else
 #define LIBRETRO_PROXY_STUB_TYPE
-#define trace_plugin(__s__) printf("RAW_TRACE:%s\n",__s__)
+#define trace_plugin(__s__) //printf("RAW_TRACE:%s\n",__s__)
 #endif
 }
 
@@ -56,10 +59,11 @@ static const size_t k_libretro_hw_accellerated_count = sizeof(k_hw_accel_context
 
 static const struct retro_controller_description k_ctl_ports_default[] =
 {
-      { "Controller",	RETRO_DEVICE_JOYPAD },
-      { "Keyboard",		RETRO_DEVICE_KEYBOARD },
-      { "Mouse",		RETRO_DEVICE_MOUSE },
-      { "Light Gun",	RETRO_DEVICE_LIGHTGUN },
+    { "Keyboard",		RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_KEYBOARD, 0)  },
+      { "Controller",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)  },
+      
+      { "Mouse",		RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE ,2)  },
+      { "Light Gun",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 3)  },
       { nullptr },
 };
 
@@ -67,19 +71,19 @@ static const size_t k_ctl_port_count = (sizeof(k_ctl_ports_default) / sizeof(k_c
 
 static const struct retro_controller_info k_static_ctl_ports[] = {  
         { k_ctl_ports_default,  k_ctl_port_count },
-        { k_ctl_ports_default,  k_ctl_port_count },
-        { k_ctl_ports_default,  k_ctl_port_count },
-        { k_ctl_ports_default,  k_ctl_port_count },
-        { nullptr },
+        { NULL,0}
+       
 };
  
+ 
+static uint32_t input_states[k_ctl_port_count] = {0}; 
 
 //Private bridge module variables
 static retro_log_printf_t log_cb;
 static retro_environment_t environ_cb;
 static retro_video_refresh_t video_cb;
 static retro_audio_sample_t audio_cb;
-static retro_audio_sample_batch_t audio_batch_cb;
+retro_audio_sample_batch_t audio_batch_cb = nullptr;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 static struct retro_rumble_interface rumble;
@@ -153,7 +157,7 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_get_system_av_info(struct retro_system_av_i
     trace_plugin("retro_get_system_av_info");
  
     info->timing.fps = 60; 
-    info->timing.sample_rate = 0;
+    info->timing.sample_rate = 44100;
 
     info->geometry.base_height = screen_width,
     info->geometry.base_height = screen_height,
@@ -257,13 +261,39 @@ bool os_gl_init(void* hwnd, void* hdc)
     return true;
 }
 
+template <typename base_t>
+static void dump_bits(const base_t in,const std::string& field) {
+    const ssize_t num_bits = sizeof(in) << 3;
+     
+    printf("%s",field.c_str());
+    for (ssize_t i = num_bits-1;i>=0;--i)
+        printf("%d",!!(in &(1<<i)));
+
+    printf("\n");
+}
 
 LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
-     trace_plugin("retro_run");
+    trace_plugin("retro_run");
+    std::clock_t c_start = std::clock();
+    auto t_start = std::chrono::high_resolution_clock::now();
+    static moving_average_c<double, 10> cpu_time_avg, time_avg;
+    auto t_end = std::chrono::high_resolution_clock::now();
+    std::clock_t c_end = std::clock();
 
-    std::string s;
-   // get_env_string(s);
-    //printf("AA=%s\n",s.c_str());
+
+    input_states[0] = 0;
+
+    input_poll_cb();
+
+    //RETRO_DEVICE_ID_JOYPAD_UP t
+
+    for (uint32_t i = 0;i < 16;++i) //16 calls is UGLY!!
+        input_states[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, i))<<i;
+  
+    if (input_states[0] & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+    printf("Yes\n");
+    
+    dump_bits(input_states[0],"ctl0:");
     update_vars() ;
 
     rfb = hw_render.get_current_framebuffer();
@@ -275,6 +305,17 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     g_GUIRenderer->UIFrame();
 
     video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
+
+
+
+    
+    printf("Frame took : %lf/avg=%lf ms(cpu) or %lf/avg=%lf ms time\n", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC,
+            cpu_time_avg.update(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC),
+            std::chrono::duration<double, std::milli>(t_end - t_start).count(),
+            time_avg.update(std::chrono::duration<double, std::milli>(t_end - t_start).count()) );
+ 
+    c_start = c_end;
+    t_start = t_end;
 
 }
 
@@ -323,7 +364,7 @@ static bool retro_init_gl_hw_ctx()
     return false;
 }
 
-#include <libswirl/gui/gui.h>
+
 LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game(const struct retro_game_info* game) {
     trace_plugin("retro_load_game");
 
@@ -372,8 +413,8 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game(const struct retro_game_info* gam
     libretro_prologue(2,e);
    				struct retro_message msg;
 				// Sadly, this callback is only able to display short messages, so we can't give proper explanations...
-				msg.msg = "hELLO";
-				msg.frames = 1200;
+				msg.msg = "Now starting..";
+				msg.frames = 200;
 				environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
   //  extern bool gui_start_game(const std::string& path);
 //g_GUI->gui_start_game("/home/div22/reicast-roms/ika.chd");

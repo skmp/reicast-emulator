@@ -188,7 +188,7 @@ public:
 		RingBuffer[ptr].l = l;
 		WritePtr = ptr;
 
-		if (WritePtr < SAMPLE_MOD)
+		if (WritePtr != SAMPLE_MOD)
 			return;
 
 		PushAudio(SAMPLE_COUNT, wait);
@@ -266,13 +266,17 @@ audiobackend_t* GetAudioBackend(std::string slug)
 	}
 	else if (audiobackends_num_registered > 0)
 	{
-		if (slug == "auto")
-		{
 			#ifdef BUILD_RETROARCH_CORE
 				audiobackend_t* a = SearchAudioBackend("libretro");
-				if (a != nullptr)
+				if (a != nullptr) {
+					printf("Auto-selected audio backend \"%s\" (%s).\n", a>slug.c_str(), a->name.c_str());
 					return a;
+				}
+					
 			#endif
+		if (slug == "auto")
+		{
+
 			/* FIXME: At some point, one might want to insert some intelligent
 				 algorithm for autoselecting the approriate audio backend here.
 				 I'm too lazy right now. */

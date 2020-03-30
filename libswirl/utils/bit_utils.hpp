@@ -35,6 +35,35 @@ static inline void bit_set(base_t& in,const base_t which,const base_t state) {
 } 
 
 template <typename base_t>
+static inline bool bit_msk_isset(const base_t in,const base_t msk) {
+    return !!( in & msk );
+}
+
+template <typename base_t>
+static inline void bit_msk_set(base_t& in,const base_t msk) {
+    in |= msk;
+}
+
+template <typename base_t>
+static inline void bit_msk_unset(base_t& in,const base_t msk) {
+    in &= ~msk;
+}
+
+template <typename base_t>
+static inline void bit_msk_set(base_t& in,const base_t msk,const base_t state) {
+    if (state == 0) {
+        if (!bit_msk_isset(in,msk))
+            return;
+        bit_msk_unset(in,msk);
+        return;
+    }
+
+    if (bit_msk_isset(in,msk))
+        return;
+    bit_msk_set(in,msk);
+} 
+
+template <typename base_t>
 static void dump_bits(const base_t in,const std::string& field) {
     const ssize_t num_bits = sizeof(in) << 3;
      

@@ -646,6 +646,7 @@ int reicast_init(int argc, char* argv[])
     if (showOnboarding)
         g_GUI->OpenOnboarding();
 
+
     return 0;
 }
 

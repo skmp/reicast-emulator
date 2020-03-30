@@ -193,15 +193,11 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_set_environment(retro_environment_t cb) {
        struct retro_variable variables[] = {
       {
          "libreicast_resolution",
-#ifdef HAVE_OPENGLES
-         "Internal resolution; 320x240|360x480|480x272|512x384|512x512|640x240|640x448|640x480|720x576|800x600|960x720|1024x768",
-#else
+
          "Internal resolution; 640x480|720x576|800x600|960x720|1024x768|1024x1024|1280x720|1280x960|1600x1200|1920x1080|1920x1440|1920x1600|2048x2048",
-#endif
       },
-#ifdef CORE
       { "libreicast_multisample", "Multisampling; 1x|2x|4x" },
-#endif
+     // { "libreicast_multisample", "Multisampling; 1x|2x|4x" },
       { NULL, NULL },
    };
     cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
@@ -281,30 +277,47 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     input_poll_cb();
 
     //RETRO_DEVICE_ID_JOYPAD_UP t
+    input_states[0] = 0;
 
-    for (uint32_t i = 0;i < 16;++i) //16 calls is UGLY!!
+    for (uint32_t i = 0;i < 16;++i) {  
+        uint32_t r = (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, i))<<i;
+
         input_states[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, i))<<i;
+    }
 
     extern u16 kcode[4];
     extern u32 vks[4];
     extern s8 joyx[4], joyy[4];
     extern u8 rt[4], lt[4];
  
-    kcode[0]  = ~kcode[0];
-    bit_set<u16>(kcode[0],(u16)DC_BTN_START, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_START));
-    bit_set<u16>(kcode[0],(u16)DC_BTN_A, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_A));
-    bit_set<u16>(kcode[0],(u16)DC_BTN_B , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_B ));
-    bit_set<u16>(kcode[0],(u16)DC_BTN_X , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_X ));
-    bit_set<u16>(kcode[0],(u16)DC_BTN_Y , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_Y ));
+    s32 analog_x = 0,analog_y =0;
 
-    bit_set<u16>(kcode[0],(u16)DC_DPAD_UP , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_UP ));
-    bit_set<u16>(kcode[0],(u16)DC_DPAD_LEFT, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_LEFT ));
-    bit_set<u16>(kcode[0],(u16)DC_DPAD_RIGHT, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_RIGHT ));
-    bit_set<u16>(kcode[0],(u16)DC_DPAD_DOWN , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_DOWN ));
+    s16 s0,s1;
+    s0 = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+    s1 = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) ;
+
+    if (s0 != 0)
+        analog_x = (s32)((128.0f * (float)s0)  / 32767.0f);
+
+    if (s1 != 0)
+        analog_y = (s32)(128.0f * (float)s1  / 32767.0f);
+
+    kcode[0]  = 0;// ~kcode[0];
+    rt[0] = analog_x;
+    lt[0] = analog_y;
+    
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_START, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_A, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A ));
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_B , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_X , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_Y , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y)   );
+    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_UP , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_LEFT, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_RIGHT, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_DOWN , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN) ) ;
+    bit_msk_set<u16>(kcode[0],(u16)DC_AXIS_LT, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_AXIS_RT , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R)  );
  
-    bit_set<u16>(kcode[0],(u16)DC_AXIS_LT, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_L ));
-    bit_set<u16>(kcode[0],(u16)DC_AXIS_RT , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_R ));
-
     //dump_bits(input_states[0],"ctl0:");
     //dump_bits(kcode[0],"inp0:");
     update_vars() ;

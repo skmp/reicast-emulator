@@ -6,6 +6,8 @@
 
 #define NOMINMAX 1
 
+#define DISCORD_CLIENT_ID 693244556371558402
+
 #include <windows.h>
 #include <windowsx.h>
 
@@ -38,6 +40,8 @@
 
 #include "gui/gui.h"
 #include "gui/gui_renderer.h"
+
+#include "utils/discord/rich_presence.h"
 
 #undef ARRAY_SIZE	// macros are evil
 
@@ -785,6 +789,11 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		#ifdef _WIN64
 			setup_seh();
 		#endif
+
+		discord::RichPresence* richPresence = new discord::RichPresence(DISCORD_CLIENT_ID);
+		richPresence->SetLargeImage("logo");
+		richPresence->SetLargeText("Reicast");
+		richPresence->UpdateInformation();
 
         reicast_ui_loop();
 

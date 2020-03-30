@@ -262,6 +262,24 @@ set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
 add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
 
+# Discord
+set(has_discord_sdk ${HOST_CPU} EQUAL ${CPU_X64} OR ${HOST_CPU} EQUAL ${CPU_X86})
+if(has_discord_sdk)
+  # SDK
+  set(d_discord_sdk "${d_core}/deps/discord_game_sdk")
+  if(${HOST_CPU} EQUAL ${CPU_X64})
+    find_library(discord_LIB NAMES discord_game_sdk${CMAKE_SHARED_LIBRARY_SUFFIX} HINTS "${d_discord_sdk}/lib/x86_64")
+  elseif(${HOST_CPU} EQUAL ${CPU_X86})
+    find_library(discord_LIB NAMES discord_game_sdk${CMAKE_SHARED_LIBRARY_SUFFIX} HINTS "${d_discord_sdk}/lib/x86")
+  endif()
+  file(GLOB discord_SRCS "${d_discord_sdk}/cpp/*.cpp" "${d_discord_sdk}/cpp/*.h")
+  target_include_directories(${TNAME}${binSuffix} PRIVATE "${d_discord_sdk}/cpp")
+  target_link_libraries(${TNAME}${binSuffix} ${discord_LIB})
+  # Rich Presence Utility
+  set(d_discord_rp "${d_core}/utils/discord")
+  target_include_directories(${TNAME}${binSuffix} PRIVATE "${d_discord_rp}/*.h")
+endif()
+
 target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
 
 if(${HOST_OS} EQUAL ${OS_LINUX})

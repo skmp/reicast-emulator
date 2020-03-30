@@ -6,6 +6,7 @@
 
 #define NOMINMAX 1
 
+#define DISCORD_RICH_PRESENCE
 #define DISCORD_CLIENT_ID 693244556371558402
 
 #include <windows.h>
@@ -42,6 +43,7 @@
 #include "gui/gui_renderer.h"
 
 #include "utils/discord/rich_presence.h"
+#include <thread>
 
 #undef ARRAY_SIZE	// macros are evil
 
@@ -790,12 +792,28 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 			setup_seh();
 		#endif
 
+#ifdef DISCORD_RICH_PRESENCE
 		discord::RichPresence* richPresence = new discord::RichPresence(DISCORD_CLIENT_ID);
 		richPresence->SetLargeImage("logo");
 		richPresence->SetLargeText("Reicast");
 		richPresence->UpdateInformation();
 
+		volatile bool discordLoop{ true };
+
+		std::thread discordTick([&richPresence, &discordLoop]() {
+			do {
+				richPresence->Tick();
+				std::this_thread::sleep_for(std::chrono::milliseconds(16));
+			} while (discordLoop);
+		});
+#endif // DISCORD_RICH_PRESENCE
+
         reicast_ui_loop();
+
+#ifdef DISCORD_RICH_PRESENCE
+		discordLoop = false;
+		discordTick.join();
+#endif // DISCORD_RICH_PRESENCE
 
         reicast_term();
 	}

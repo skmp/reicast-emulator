@@ -94,4 +94,19 @@ namespace discord {
 		Timestamp startTimestamp;
 
 	};
+	
+	struct DiscordTickParams {
+		RichPresence* richPresence;
+		bool* discordLook;
+	};
+
+	void* discordTickFunc(void* params) {
+		DiscordTickParams* discordTickParams = (struct DiscordTickParams*)params;
+		do {
+			discordTickParams->richPresence->Tick();
+			SleepMs(16);
+		} while (*(discordTickParams->discordLook));
+		return nullptr;
+	}
+
 }

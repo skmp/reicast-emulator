@@ -797,22 +797,17 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		richPresence->SetLargeImage("logo");
 		richPresence->SetLargeText("Reicast");
 		richPresence->UpdateInformation();
-
-		volatile bool discordLoop{ true };
-
-		std::thread discordTick([&richPresence, &discordLoop]() {
-			do {
-				richPresence->Tick();
-				std::this_thread::sleep_for(std::chrono::milliseconds(16));
-			} while (discordLoop);
-		});
+		bool discordLoop{ true };
+		discord::DiscordTickParams params = { richPresence, &discordLoop };
+		cThread discordTick(discord::discordTickFunc, (void*)&params);
+		discordTick.Start();
 #endif // DISCORD_RICH_PRESENCE
 
         reicast_ui_loop();
 
 #ifdef DISCORD_RICH_PRESENCE
 		discordLoop = false;
-		discordTick.join();
+		discordTick.WaitToEnd();
 #endif // DISCORD_RICH_PRESENCE
 
         reicast_term();

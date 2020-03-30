@@ -3,9 +3,14 @@
 */
 #include "license/bsd"
 
+#define DISCORD_RICH_PRESENCE
+#define DISCORD_CLIENT_ID 693244556371558402
+
 #import "AppDelegate.h"
 #import "libswirl.h"
 #import "gui/gui_renderer.h"
+#include "utils/discord/rich_presence.h"
+#include "oslib/threading.h"
 
 #if FEAT_HAS_SERIAL_TTY
 #include <util.h>
@@ -143,9 +148,25 @@ static void gl_resize();
 - (void)setupUIThread {
     // Run the rendering in a dedicated thread
     _uiThread = [[NSThread alloc] initWithBlock:^{
+        #ifdef DISCORD_RICH_PRESENCE
+		discord::RichPresence* richPresence = new discord::RichPresence(DISCORD_CLIENT_ID);
+		richPresence->SetLargeImage("logo");
+		richPresence->SetLargeText("Reicast");
+		richPresence->UpdateInformation();
+		bool discordLoop{ true };
+		discord::DiscordTickParams params = { richPresence, &discordLoop };
+		cThread discordTick(discord::discordTickFunc, (void*)&params);
+		discordTick.Start();
+        #endif // DISCORD_RICH_PRESENCE
+
         NSLog(@"Starting UI Loop");
         reicast_ui_loop();
         NSLog(@"UI Loop ended");
+
+        #ifdef DISCORD_RICH_PRESENCE
+		discordLoop = false;
+		discordTick.WaitToEnd();
+        #endif // DISCORD_RICH_PRESENCE
         
         // Terminate emulator (must be done after UI Loop ends or it may crash, must be run on main thread or it will crash)
         [_sharedInstance performSelectorOnMainThread:@selector(uiThreadEnded) withObject:nil waitUntilDone:YES];

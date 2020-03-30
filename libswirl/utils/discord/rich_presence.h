@@ -1,6 +1,7 @@
 #include "deps/discord_game_sdk/cpp/discord.h"
 #include <memory>
 #include <string>
+#include <thread>
 #include <chrono>
 
 namespace discord {
@@ -104,7 +105,7 @@ namespace discord {
 		DiscordTickParams* discordTickParams = (struct DiscordTickParams*)params;
 		do {
 			discordTickParams->richPresence->Tick();
-			SleepMs(16);
+			std::this_thread::sleep_for(std::chrono::milliseconds(16));
 		} while (*(discordTickParams->discordLook));
 		return nullptr;
 	}

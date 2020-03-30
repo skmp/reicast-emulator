@@ -163,6 +163,7 @@ file(GLOB lelf_SRCS  ${d_deps}/libelf/el*.cpp)
 file(GLOB crypt_SRCS ${d_deps}/crypto/*.cpp)
 file(GLOB imgui_SRCS ${d_deps}/imgui/*.cpp)
 file(GLOB lua_SRCS   ${d_deps}/lua/*.c)
+file(GLOB discord_SRCS ${d_deps}/discord_game_sdk/cpp/*.cpp)
 
 file(GLOB picoModS   ${gpl_deps}/picotcp/modules/*.c)
 file(GLOB picoStkS   ${gpl_deps}/picotcp/stack/*.c)
@@ -177,6 +178,7 @@ set(deps_SRCS
   ${crypt_SRCS}
   ${imgui_SRCS}
   ${lua_SRCS}
+  ${discord_SRCS}
   ${gpl_deps}/xbrz/xbrz.cpp
   ${d_deps}/xxhash/xxhash.c
   ${d_deps}/cdipsr/cdipsr.cpp
@@ -272,8 +274,7 @@ if(has_discord_sdk)
   elseif(${HOST_CPU} EQUAL ${CPU_X86})
     find_library(discord_LIB NAMES discord_game_sdk${CMAKE_SHARED_LIBRARY_SUFFIX} HINTS "${d_discord_sdk}/lib/x86")
   endif()
-  file(GLOB discord_SRCS "${d_discord_sdk}/cpp/*.cpp" "${d_discord_sdk}/cpp/*.h")
-  target_include_directories(${TNAME}${binSuffix} PRIVATE "${d_discord_sdk}/cpp")
+  target_include_directories(${TNAME}${binSuffix} PUBLIC "${d_discord_sdk}/cpp")
   target_link_libraries(${TNAME}${binSuffix} ${discord_LIB})
   # Rich Presence Utility
   set(d_discord_rp "${d_core}/utils/discord")

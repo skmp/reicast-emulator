@@ -9,6 +9,12 @@
 #include <chrono>
 #include "perf_tools/moving_average.hpp"
 #include <libswirl/gui/gui.h>
+#include <libswirl/libswirl.h>
+#include <libswirl/input/gamepad.h>
+#include <libswirl/input/gamepad_device.h>
+#include <utils/bit_utils.hpp>
+
+using namespace bit_utils;
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -101,6 +107,8 @@ extern int screen_width;
 extern int screen_height;
 static bool retro_init_gl_hw_ctx();
 static void update_vars() ;
+ 
+
 
 //Private bridge module functions
 static void __emu_log_provider(enum retro_log_level level, const char* fmt, ...) {
@@ -261,17 +269,6 @@ bool os_gl_init(void* hwnd, void* hdc)
     return true;
 }
 
-template <typename base_t>
-static void dump_bits(const base_t in,const std::string& field) {
-    const ssize_t num_bits = sizeof(in) << 3;
-     
-    printf("%s",field.c_str());
-    for (ssize_t i = num_bits-1;i>=0;--i)
-        printf("%d",!!(in &(1<<i)));
-
-    printf("\n");
-}
-
 LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     trace_plugin("retro_run");
     std::clock_t c_start = std::clock();
@@ -281,19 +278,32 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     std::clock_t c_end = std::clock();
 
 
-    input_states[0] = 0;
-
     input_poll_cb();
 
     //RETRO_DEVICE_ID_JOYPAD_UP t
 
     for (uint32_t i = 0;i < 16;++i) //16 calls is UGLY!!
         input_states[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, i))<<i;
-  
-    if (input_states[0] & (1 << RETRO_DEVICE_ID_JOYPAD_START))
-    printf("Yes\n");
-    
-    dump_bits(input_states[0],"ctl0:");
+
+    extern u16 kcode[4];
+    extern u32 vks[4];
+    extern s8 joyx[4], joyy[4];
+    extern u8 rt[4], lt[4];
+ 
+    kcode[0]  = ~kcode[0];
+    bit_set<u16>(kcode[0],(u16)DC_BTN_START, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_START));
+    bit_set<u16>(kcode[0],(u16)DC_BTN_A, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_A));
+    bit_set<u16>(kcode[0],(u16)DC_BTN_B , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_B ));
+    bit_set<u16>(kcode[0],(u16)DC_BTN_X , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_X ));
+    bit_set<u16>(kcode[0],(u16)DC_BTN_Y , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_Y ));
+
+    bit_set<u16>(kcode[0],(u16)DC_DPAD_UP , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_UP ));
+    bit_set<u16>(kcode[0],(u16)DC_DPAD_LEFT, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_LEFT ));
+    bit_set<u16>(kcode[0],(u16)DC_DPAD_RIGHT, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_RIGHT ));
+    bit_set<u16>(kcode[0],(u16)DC_DPAD_DOWN , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_DOWN ));
+ 
+    //dump_bits(input_states[0],"ctl0:");
+    //dump_bits(kcode[0],"inp0:");
     update_vars() ;
 
     rfb = hw_render.get_current_framebuffer();
@@ -308,7 +318,6 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
 
 
 
-    
     printf("Frame took : %lf/avg=%lf ms(cpu) or %lf/avg=%lf ms time\n", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC,
             cpu_time_avg.update(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC),
             std::chrono::duration<double, std::milli>(t_end - t_start).count(),

@@ -24,12 +24,9 @@ static int libretro_getusedSamples()
 	 // (bufferSize-xaudio_getfreesz())/4;
 }
  
-static u32 libretro_push(void* frame, u32 samples, bool wait)
-{
-	
+static u32 libretro_push(void* frame, u32 samples, bool wait) {
 	if (audio_batch_cb == nullptr)
 		return 1;
-
 
 /*
    struct retro_audio_callback audio_cb = { audio_callback, audio_set_state };

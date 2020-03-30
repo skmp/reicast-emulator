@@ -302,6 +302,9 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     bit_set<u16>(kcode[0],(u16)DC_DPAD_RIGHT, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_RIGHT ));
     bit_set<u16>(kcode[0],(u16)DC_DPAD_DOWN , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_DOWN ));
  
+    bit_set<u16>(kcode[0],(u16)DC_AXIS_LT, bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_L ));
+    bit_set<u16>(kcode[0],(u16)DC_AXIS_RT , bit_isset((u16)input_states[0],(u16)RETRO_DEVICE_ID_JOYPAD_R ));
+
     //dump_bits(input_states[0],"ctl0:");
     //dump_bits(kcode[0],"inp0:");
     update_vars() ;
@@ -316,12 +319,12 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
 
     video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 
-
+/*
 
     printf("Frame took : %lf/avg=%lf ms(cpu) or %lf/avg=%lf ms time\n", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC,
             cpu_time_avg.update(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC),
             std::chrono::duration<double, std::milli>(t_end - t_start).count(),
-            time_avg.update(std::chrono::duration<double, std::milli>(t_end - t_start).count()) );
+            time_avg.update(std::chrono::duration<double, std::milli>(t_end - t_start).count()) ); */
  
     c_start = c_end;
     t_start = t_end;

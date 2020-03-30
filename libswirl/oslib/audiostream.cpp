@@ -168,10 +168,10 @@ public:
     		auto t_end = std::chrono::high_resolution_clock::now();
     		std::clock_t c_end = std::clock();
  
-  printf("Audio took : %lf/avg=%lf ms(cpu) or %lf/avg=%lf ms time\n", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC,
+  /*printf("Audio took : %lf/avg=%lf ms(cpu) or %lf/avg=%lf ms time\n", 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC,
             cpu_time_avg.update(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC),
             std::chrono::duration<double, std::milli>(t_end - t_start).count(),
-            time_avg.update(std::chrono::duration<double, std::milli>(t_end - t_start).count()) );
+            time_avg.update(std::chrono::duration<double, std::milli>(t_end - t_start).count()) );*/
 			libretro_audio_hack_test_ms = time_avg.get();
     		c_start = c_end;
     		t_start = t_end;

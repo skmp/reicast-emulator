@@ -14,6 +14,7 @@
 #include <libswirl/input/gamepad_device.h>
 #include <utils/bit_utils.hpp>
 #include <utils/string_utils.hpp>
+#include "version.h"
 
 using namespace bit_utils;
 
@@ -160,7 +161,7 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_get_system_info(struct retro_system_info* i
 
     memset(info, 0, sizeof(*info));
     info->library_name = "Reicast";
-    info->library_version = "1.0.0.5";
+    info->library_version =  REICAST_VERSION ;
     info->need_fullpath = true;
     info->block_extract = true;
     info->valid_extensions =   "bin|gdi|chd|cue|cdi";
@@ -304,28 +305,28 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
         s0 = input_state_cb(0, RETRO_DEVICE_MOUSE, RETRO_DEVICE_ID_MOUSE_X, RETRO_DEVICE_ID_ANALOG_X);
         s1 = input_state_cb(0, RETRO_DEVICE_MOUSE, RETRO_DEVICE_ID_MOUSE_Y, RETRO_DEVICE_ID_ANALOG_Y) ;
     }
-    
+
     if (s0 != 0)
         analog_x = (s32)((128.0f * (float)s0)  / 32767.0f);
 
     if (s1 != 0)
         analog_y = (s32)(128.0f * (float)s1  / 32767.0f);
 
-    kcode[0]  = 0;
+    kcode[0]  = -1U;
     rt[0] = (s8)analog_x;
     lt[0] = (s8)analog_y;
     
-    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_START, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START)  );
-    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_A, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A ));
-    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_B , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)  );
-    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_X , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X)  );
-    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_Y , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y)   );
-    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_UP , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)  );
-    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_LEFT, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)  );
-    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_RIGHT, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)  );
-    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_DOWN , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN) ) ;
-    bit_msk_set<u16>(kcode[0],(u16)DC_AXIS_LT, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L)  );
-    bit_msk_set<u16>(kcode[0],(u16)DC_AXIS_RT , input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_START, !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_A, !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A ));
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_B , !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_X , !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_BTN_Y , !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y)   );
+    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_UP , !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_LEFT, !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_RIGHT, !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_DPAD_DOWN , !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN) ) ;
+    bit_msk_set<u16>(kcode[0],(u16)DC_AXIS_LT, !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L)  );
+    bit_msk_set<u16>(kcode[0],(u16)DC_AXIS_RT , !input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R)  );
  
     //dump_bits(input_states[0],"ctl0:");
     //dump_bits(kcode[0],"inp0:");

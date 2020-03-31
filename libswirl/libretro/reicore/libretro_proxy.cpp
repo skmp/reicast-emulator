@@ -13,6 +13,7 @@
 #include <libswirl/input/gamepad.h>
 #include <libswirl/input/gamepad_device.h>
 #include <utils/bit_utils.hpp>
+#include <utils/string_utils.hpp>
 
 using namespace bit_utils;
 
@@ -66,10 +67,12 @@ static const size_t k_libretro_hw_accellerated_count = sizeof(k_hw_accel_context
 static const struct retro_controller_description k_ctl_ports_default[] =
 {
     { "Keyboard",		RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_KEYBOARD, 0)  },
+      { "Controller",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)  },
       { "Controller",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)  },
-      
-      { "Mouse",		RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE ,2)  },
-      { "Light Gun",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 3)  },
+      { "Controller",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)  },
+      { "Controller",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)  },
+      { "Mouse",		RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE ,1)  },
+      { "Light Gun",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 2)  },
       { nullptr },
 };
 
@@ -102,12 +105,14 @@ static struct retro_hw_render_callback hw_render;
 extern void retro_reicast_entry_point();
 #endif
 
+static bool mouse_enabled = false;
 int rfb = 0; //XXX HACK!
 extern int screen_width;
 extern int screen_height;
 static bool retro_init_gl_hw_ctx();
 static void update_vars() ;
  
+static void display_popup_msg(const char* text,const int32_t frame_cnt) ;
 
 
 //Private bridge module functions
@@ -155,7 +160,7 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_get_system_info(struct retro_system_info* i
 
     memset(info, 0, sizeof(*info));
     info->library_name = "Reicast";
-    info->library_version = "1.0.0.3";
+    info->library_version = "1.0.0.5";
     info->need_fullpath = true;
     info->block_extract = true;
     info->valid_extensions =   "bin|gdi|chd|cue|cdi";
@@ -193,14 +198,23 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_set_environment(retro_environment_t cb) {
        struct retro_variable variables[] = {
       {
          "libreicast_resolution",
-
          "Internal resolution; 640x480|720x576|800x600|960x720|1024x768|1024x1024|1280x720|1280x960|1600x1200|1920x1080|1920x1440|1920x1600|2048x2048",
       },
       { "libreicast_multisample", "Multisampling; 1x|2x|4x" },
-     // { "libreicast_multisample", "Multisampling; 1x|2x|4x" },
+      { "libreicast_aspectratio", "Aspect Ratio; 4:3|16:9" },
+      { "libreicast_mouse_enabled", "Mouse enabled; true|false" },
       { NULL, NULL },
    };
     cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
+}
+
+static inline const std::string get_var_data(const char* key) {
+    struct retro_variable var = { .key = key,nullptr};
+
+    if ( ! (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE,&var) && var.value)  )
+        return "nullptr";
+
+    return std::string(var.value);
 }
 
 static void update_vars() {
@@ -210,24 +224,23 @@ static void update_vars() {
     if (  !updated)
         return;
 
+    display_popup_msg("Config UPDATED.Restart emu!",200);
+
     struct retro_variable var = {
       .key = "libreicast_resolution",
    };
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
       char *pch;
       char str[256];
       snprintf(str, sizeof(str), "%s", var.value);
-      printf("Val = %s\n",var.value);
+      
       pch = strtok(str, "x");
       if (pch)
          screen_width = strtoul(pch, NULL, 0);
       pch = strtok(NULL, "x");
       if (pch)
          screen_height = strtoul(pch, NULL, 0);
-
-      printf( "Gt size: %u x %u.\n", screen_width, screen_height);
    }
 }
 
@@ -276,35 +289,31 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
 
     input_poll_cb();
 
-    //RETRO_DEVICE_ID_JOYPAD_UP t
-    input_states[0] = 0;
-
-    for (uint32_t i = 0;i < 16;++i) {  
-        uint32_t r = (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, i))<<i;
-
-        input_states[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, i))<<i;
-    }
 
     extern u16 kcode[4];
     extern u32 vks[4];
     extern s8 joyx[4], joyy[4];
     extern u8 rt[4], lt[4];
- 
     s32 analog_x = 0,analog_y =0;
-
     s16 s0,s1;
-    s0 = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
-    s1 = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) ;
 
+    if (!mouse_enabled) {
+        s0 = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+        s1 = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) ;
+    } else {
+        s0 = input_state_cb(0, RETRO_DEVICE_MOUSE, RETRO_DEVICE_ID_MOUSE_X, RETRO_DEVICE_ID_ANALOG_X);
+        s1 = input_state_cb(0, RETRO_DEVICE_MOUSE, RETRO_DEVICE_ID_MOUSE_Y, RETRO_DEVICE_ID_ANALOG_Y) ;
+    }
+    
     if (s0 != 0)
         analog_x = (s32)((128.0f * (float)s0)  / 32767.0f);
 
     if (s1 != 0)
         analog_y = (s32)(128.0f * (float)s1  / 32767.0f);
 
-    kcode[0]  = 0;// ~kcode[0];
-    rt[0] = analog_x;
-    lt[0] = analog_y;
+    kcode[0]  = 0;
+    rt[0] = (s8)analog_x;
+    lt[0] = (s8)analog_y;
     
     bit_msk_set<u16>(kcode[0],(u16)DC_BTN_START, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START)  );
     bit_msk_set<u16>(kcode[0],(u16)DC_BTN_A, input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A ));
@@ -350,9 +359,7 @@ static void context_reset(void)
 
     extern int gl3wInit2(GL3WGetProcAddressProc proc);
     int r = gl3wInit2(hw_render.get_proc_address);
-    printf("RES = %d\n",r);
-//   rglgen_resolve_symbols(hw_render.get_proc_address);
-
+    //printf("RES = %d\n",r);
 
     g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
     g_GUIRenderer->CreateContext();
@@ -389,33 +396,17 @@ static bool retro_init_gl_hw_ctx()
     return false;
 }
 
+static void display_popup_msg(const char* text,const int32_t frame_cnt) {
+   	struct retro_message msg;
+				
+	msg.msg = text ;
+	msg.frames = 200;
+	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+}
 
 LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game(const struct retro_game_info* game) {
     trace_plugin("retro_load_game");
 
-   // uint32_t pref_hw_rend;
-  //  if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &pref_hw_rend))
-      //  pref_hw_rend = (uint32_t)-1U;
-
-    //trace_plugin(std::string("ENV = " + std::to_string(pref_hw_rend)).c_str());
-  // bool no_rom = true;
-   // environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_rom);
-    /*
-    struct retro_variable variables[] = {
-   {
-      "testgl_resolution",
-#ifdef HAVE_OPENGLES
-         "Internal resolution; 320x240|360x480|480x272|512x384|512x512|640x240|640x448|640x480|720x576|800x600|960x720|1024x768",
-#else
-         "Internal resolution; 320x240|360x480|480x272|512x384|512x512|640x240|640x448|640x480|720x576|800x600|960x720|1024x768|1024x1024|1280x720|1280x960|1600x1200|1920x1080|1920x1440|1920x1600|2048x2048",
-#endif
-      },
-#ifdef CORE
-      { "testgl_multisample", "Multisampling; 1x|2x|4x" },
-#endif
-      { NULL, NULL },
-    };
-    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);*/
     enum retro_pixel_format fmt = retro_pixel_format::RETRO_PIXEL_FORMAT_XRGB8888;
     if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
     {
@@ -430,21 +421,13 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game(const struct retro_game_info* gam
 	}
 	else trace_plugin("FAILED retro_init_gl_hw_ctx");
 
-
-
     extern int libretro_prologue(int argc, wchar* argv[]) ;
     
     wchar* e[] = {"",(char*)game->path};
     libretro_prologue(2,e);
-   				struct retro_message msg;
-				// Sadly, this callback is only able to display short messages, so we can't give proper explanations...
-				msg.msg = "Now starting..";
-				msg.frames = 200;
-				environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
-  //  extern bool gui_start_game(const std::string& path);
-//g_GUI->gui_start_game("/home/div22/reicast-roms/ika.chd");
- 
- 
+
+    display_popup_msg("Starting...",150);
+
     return true;
 }
 

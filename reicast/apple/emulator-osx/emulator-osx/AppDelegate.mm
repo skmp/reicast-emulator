@@ -76,7 +76,9 @@ static void gl_resize();
     if (reicast_init(0, NULL) != 0) {
         [self alertAndTerminateWithMessage:@"Reicast initialization failed"];
     }
+    #if FEAT_HAS_SERIAL_TTY
     _removePTYSymlink = common_serial_pty_setup();
+    #endif
     [self setupUIThread];
 }
 

@@ -202,13 +202,13 @@ static void fill_id(u32 *d, const Vertex *v0, const Vertex *v1, const Vertex *v2
 	d[2] = (u32)(v2 - vb);
 }
 
-void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vector<u32>& vidx_sort)
+void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, std::vector<u32>& vidx_sort)
 {
 	u32 tess_gen=0;
 
 	pidx_sort.clear();
 
-	if (pvrrc.verts.used() == 0)
+	if (pvrrc.verts.used() == 0 || count == 0)
 		return;
 
 	const Vertex *vtx_base = pvrrc.verts.head();
@@ -234,7 +234,7 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 		return;
 
 	//make lists of all triangles, with their pid and vid
-	static vector<IndexTrig> lst;
+	static std::vector<IndexTrig> lst;
 
 	lst.resize(vtx_count*4);
 
@@ -250,7 +250,7 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 			const u32 *idx = idx_base + pp->first;
 			u32 flip = 0;
 
-			for (int i = 0; i < pp->count - 2; i++)
+			for (u32 i = 0; i < pp->count - 2; i++)
 			{
 				const Vertex *v0, *v1;
 				if (flip)
@@ -431,8 +431,8 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 
 			if (idx!=-1)
 			{
-				SortTrigDrawParam* last=&pidx_sort[pidx_sort.size()-1];
-				last->count=stdp.first-last->first;
+				SortTrigDrawParam& last = pidx_sort.back();
+				last.count = stdp.first - last.first;
 			}
 
 			pidx_sort.push_back(stdp);
@@ -440,8 +440,11 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 		}
 	}
 
-	SortTrigDrawParam* stdp=&pidx_sort[pidx_sort.size()-1];
-	stdp->count=aused*3-stdp->first;
+	if (!pidx_sort.empty())
+	{
+		SortTrigDrawParam& last = pidx_sort.back();
+		last.count = aused * 3 - last.first;
+	}
 
 #if PRINT_SORT_STATS
 	printf("Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);

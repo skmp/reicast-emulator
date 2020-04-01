@@ -270,6 +270,14 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
   # needed for opentty
   target_link_libraries(${TNAME} -lutil)
 
+  FIND_PACKAGE(CURL)
+  IF(CURL_FOUND)
+    INCLUDE_DIRECTORIES(${CURL_INCLUDE_DIR})
+    target_link_libraries(${TNAME} ${CURL_LIBRARIES})
+  ELSE(CURL_FOUND)
+    MESSAGE(FATAL_ERROR "Could not find the CURL library and development files.")
+  ENDIF(CURL_FOUND)
+
   find_package(ALSA)
   if(ALSA_FOUND)
     target_compile_definitions(${TNAME} PUBLIC USE_ALSA)

@@ -58,45 +58,32 @@ struct CoreFileLocal: CoreFile
 
 struct CoreFileHTTP: CoreFile
 {
-	string path;
-	string host;
-	int port;
-
+	string url;
+	
 	static CoreFile* open(const char* path)
 	{
 		string p = path;
 
-		if (p.substr(0,7)!="http://")
+		if (p.substr(0,7)!="http://" || p.substr(0,8)!="https://")
 			return nullptr;
 
 		CoreFileHTTP* rv = new CoreFileHTTP();
 
-		rv->host = p.substr(7,p.npos);
-		rv->host = rv->host.substr(0, rv->host.find_first_of("/"));
-
-		rv->path = url_encode(p.substr(p.find("/", 7), p.npos));
-		
-		rv->port = 80;
-		size_t pos = rv->host.find_first_of(":");
-		if (pos != rv->host.npos) {
-			string port = rv->host.substr(pos, rv->host.npos );
-			rv->host = rv->host.substr(0, rv->host.find_first_of(":"));
-			sscanf(port.c_str(),"%d",&rv->port);
-		}
+		rv->url = p;
 
 		return rv;
 	}
 
 	size_t read(void* buff, size_t len)
 	{
-		return HTTP(HM_GET, host, port, path, seek_ptr, len, buff);
+		return HTTP(HM_GET, url, seek_ptr, len, buff);
 	}
 
 	void seek() { }
 
 	size_t size()
 	{
-		return HTTP(HM_HEAD, host, port, path, 0, 0,0);
+		return HTTP(HM_HEAD, url, 0, 0,0);
 	}
 
 	~CoreFileHTTP() { }

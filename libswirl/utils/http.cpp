@@ -15,6 +15,10 @@
 #include <iomanip>
 #include <cctype>
 
+#define HTTP_NATIVE 0
+#define HTTP_LIBCURL 1
+
+#if HTTP_NATIVE
 #if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 	#include <sys/socket.h>
 	#include <netinet/in.h>
@@ -27,28 +31,7 @@
 	#pragma comment (lib, "wsock32.lib")
 #endif
 
-string url_encode(const string &value) {
-	ostringstream escaped;
-	escaped.fill('0');
-	escaped << hex;
-
-	for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
-		string::value_type c = (*i);
-
-		// Keep alphanumeric and other accepted characters intact
-		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c  == '/' || c =='%' ) {
-			escaped << c;
-			continue;
-		}
-
-		// Any other characters are percent-encoded
-		escaped << '%' << setw(2) << int((unsigned char)c);
-	}
-
-	return escaped.str();
-}
-
-size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs, size_t len, std::function<bool(void* data, size_t len)> cb)
+size_t HTTP(HTTP_METHOD method, string proto_host, int port, string path, size_t offs, size_t len, std::function<bool(void* data, size_t len)> cb)
 {
     string request;
     string response;
@@ -190,12 +173,12 @@ _data:
 			u32 chunk_remaining = chunk_max;
 
 			if (chunk_remaining > len)
-				chunk_remaining = (u32)len;
+				chunk_remaining = len;
 
 			u8* ptr = pdata;
 			do
 			{
-				int rcv = (int)recv(sock, (char*)ptr, chunk_remaining, 0);
+				int rcv = recv(sock, (char*)ptr, chunk_remaining, 0);
 				//printf("%d > %d\n", chunk_remaining, rcv);
 				verify(rcv >= 0);
 				verify(chunk_remaining > 0 && chunk_remaining>= rcv);
@@ -230,10 +213,99 @@ _data:
 
     return  rv;
 }
+#elif HTTP_LIBCURL
 
-size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs, size_t len, void* pdata)
+#include <curl/curl.h>
+
+size_t writef(char *ptr, size_t size, size_t nmemb, void *userdata) {
+	std::function<bool(void* data, size_t len)>* cb = reinterpret_cast<std::function<bool(void* data, size_t len)>*>(userdata);
+	if ((*cb)) {
+		(*cb)(ptr, nmemb);
+	}
+
+	return nmemb;
+}
+
+size_t HTTP(HTTP_METHOD method, string url, size_t offs, size_t len, std::function<bool(void* data, size_t len)> cb)
 {
-	return HTTP(method, host, port, path, offs, len, [&pdata](void* data, size_t len) {
+	CURL *curl;
+	struct curl_slist *chunk = NULL;
+	string str;
+
+	curl = curl_easy_init();
+
+	CURLcode res;
+
+	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+
+	if (offs != 0 || len != 0)
+	{
+		std::stringstream request2;
+		
+		request2 << "Range: bytes=" << offs << "-" << (offs + len-1);	
+
+		str = request2.str();
+		chunk = curl_slist_append(chunk, str.c_str());
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+	}
+
+	if (len == 0) {
+		curl_easy_setopt(curl, CURLOPT_HEADER, 1);
+		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+	} else {
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cb);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writef);
+	}
+
+	res = curl_easy_perform(curl);
+	verify(res == CURLE_OK);
+
+	curl_off_t cl;
+    res = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &cl);
+	verify(res == CURLE_OK);
+
+	if (len == 0) {
+		len = cl;
+	} else {
+		verify(len == cl);
+	}
+
+	
+	curl_easy_cleanup(curl);
+	
+	if (chunk) curl_slist_free_all(chunk);
+
+	return len;
+}
+#endif
+
+string url_encode(const string &value) {
+	ostringstream escaped;
+	escaped.fill('0');
+	escaped << hex;
+
+	for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+		string::value_type c = (*i);
+
+		// Keep alphanumeric and other accepted characters intact
+		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c  == '/' || c =='%' ) {
+			escaped << c;
+			continue;
+		}
+
+		// Any other characters are percent-encoded
+		escaped << '%' << setw(2) << int((unsigned char)c);
+	}
+
+	return escaped.str();
+}
+
+size_t HTTP(HTTP_METHOD method, string url, size_t offs, size_t len, void* pdata)
+{
+	return HTTP(method, url, offs, len, [&pdata](void* data, size_t len) {
 		memcpy(pdata, data, len);
 		(u8*&)pdata += len;
 
@@ -241,16 +313,16 @@ size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs,
 	});
 }
 
-string HTTP(HTTP_METHOD method, string host, int port, string path)
+string HTTP(HTTP_METHOD method, string url)
 {
-	auto size = HTTP(method, host, port, path, 0, 0, (void*)nullptr);
+	auto size = HTTP(method, url, 0, 0, (void*)nullptr);
 	
 	if (size == 0)
 		return "";
 
 	char* data = new char[size];
 
-	auto size2 = HTTP(method, host, port, path, 0, size, data);
+	auto size2 = HTTP(method, url, 0, size, data);
 
 	verify(size2 == size);
 

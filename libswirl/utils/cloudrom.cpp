@@ -9,9 +9,8 @@
 #include "utils/cloudrom.h"
 #include "oslib/threading.h"
 
-string onlimeRomsHost = "cloudroms.reicast.com";
-int onlimeRomsPort = 80;
-string onlimeRomsList = "/v0.lst";
+string onlimeRomsHost = "http://cloudroms.reicast.com";
+string onlimeRomsList = "/v1.lst";
 
 static float download_percent = 0;
 static bool download_cancel = false;
@@ -25,7 +24,7 @@ void* download_thread_func(void *p)
 {
 	string did = download_id;
 	string dfile = download_file;
-	string http_path = "/" + did;
+	string url = did;
 
 	printf("Download thread\n");
 	FILE* f = fopen(dfile.c_str(), "wb");
@@ -36,7 +35,7 @@ void* download_thread_func(void *p)
 		return nullptr;
 	}
 
-	auto size = HTTP(HM_HEAD, onlimeRomsHost, onlimeRomsPort, http_path, 0, 0, nullptr);
+	auto size = HTTP(HM_HEAD, url, 0, 0, nullptr);
 
 	if (size == 0)
 	{
@@ -46,7 +45,7 @@ void* download_thread_func(void *p)
 		return nullptr;
 	}
 
-	auto xfer = HTTP(HM_GET, onlimeRomsHost, onlimeRomsPort, http_path, 0, size, [f, size](void* data, size_t len){
+	auto xfer = HTTP(HM_GET, url, 0, size, [f, size](void* data, size_t len){
 		fwrite(data, 1, len, f);
 		download_percent += 100.0f * len / size;
 
@@ -134,7 +133,7 @@ void OnlineRomsProvider::fetchRomList()
 	status = "Loading list ...";
 	roms.clear();
 
-	auto list = HTTP(HM_GET, onlimeRomsHost, onlimeRomsPort, onlimeRomsList);
+	auto list = HTTP(HM_GET, onlimeRomsHost + onlimeRomsList);
 
 	if (list.size() == 0)
 	{
@@ -144,7 +143,7 @@ void OnlineRomsProvider::fetchRomList()
 
 	auto lines = SplitString(list, "\n");
 
-	if (lines[0] == "v0")
+	if (lines[0] == "v1")
 	{
 		for (int i = 1; i<lines.size(); i++)
 		{
@@ -200,7 +199,18 @@ void OnlineRomsProvider::download(string id)
 		printf("Downloading %s\n", rom->name.c_str());
 		rom->status = RS_DOWNLOADING;
 
-		start_download(id, romPath(id), rom->name);
+		string rom_file = id;
+
+		if (id.rfind("http", 0) == 0) {
+			// full htto link, use the name for the file
+			rom_file = rom->name;
+		} else {
+			// add the http://... part
+			id = onlimeRomsHost + "/" + id;
+		}
+		
+
+		start_download(id, romPath(rom_file), rom->name);
 	}
 }
 

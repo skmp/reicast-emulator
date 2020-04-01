@@ -577,44 +577,21 @@ else ifneq (,$(findstring odroid,$(platform)))
 
 	ifneq (,$(findstring ODROIDC,$(BOARD)))
 		# ODROID-C1
-		CFLAGS += -mcpu=cortex-a5
-		CXXFLAGS += -mcpu=cortex-a5
-	else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
-		# ODROID-XU3 & -XU3 Lite
+		MFLAGS += -mcpu=cortex-a5
+	else ifneq (,$(findstring ODROID-XU,$(BOARD)))
+		# ODROID-XU3, XU4  & XU3 Lite
 		ifeq ($(HAVE_CLANG),1)
-			CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
-			CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
+			MFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
 		else
-			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-				CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
-				CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
-			else
-				CFLAGS += -mcpu=cortex-a9 -mfpu=neon
-				CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
-			endif
-		endif
-	else ifneq (,$(findstring ODROID-XU4,$(BOARD)))
-		# ODROID-XU4 on newer kernels now identify as ODROID-XU4
-		ifeq ($(HAVE_CLANG),1)
-			CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
-			CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
-		else
-			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-				CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
-				CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
-			else
-				CFLAGS += -mcpu=cortex-a9 -mfpu=neon
-				CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
-			endif
+			MFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
 		endif
 	else
 		# ODROID-U2, -U3, -X & -X2
-		CFLAGS += -mcpu=cortex-a9 -mfpu=neon
-		CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
+		MFLAGS += -mcpu=cortex-a9 -mfpu=neon
 	endif
 
 	#Since we are using GCC, we use the CFLAGS and we add some extra parameters to be able to compile (taken from reicast/reicast-emulator)
-	ASFLAGS += $(CFLAGS) -c  -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+	ASFLAGS += $(CFLAGS) $(MFLAGS) -c  -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
@@ -932,24 +909,14 @@ RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-v
 
 ifeq ($(WITH_DYNAREC), arm)
 	ifneq (,$(findstring odroid,$(platform)))
+		HAVE_LTCG = 0
 		BOARD ?= $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
 		ifneq (,$(findstring ODROIDC,$(BOARD)))
 			# ODROID-C1
 			RZDCY_CFLAGS += -marm -mcpu=cortex-a5
-		else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
-			# ODROID-XU3 & -XU3 Lite
-			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-				RZDCY_CFLAGS += -marm -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
-			else
-				RZDCY_CFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon
-			endif
-		else ifneq (,$(findstring ODROID-XU4,$(BOARD)))
-			# ODROID-XU4 on newer kernels now identify as ODROID-XU4
-			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-				RZDCY_CFLAGS += -marm -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
-			else
-				RZDCY_CFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon
-			endif
+		else ifneq (,$(findstring ODROID-XU,$(BOARD)))
+			# ODROID-XU3, XU4 & XU3 Lite
+			RZDCY_CFLAGS += -marm -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
 		else
 			# ODROID-U2, -U3, -X & -X2
 			RZDCY_CFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon

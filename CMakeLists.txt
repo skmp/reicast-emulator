@@ -237,7 +237,9 @@ elseif(${HOST_OS} EQUAL ${OS_DARWIN})
     ${d_osx}/main.m
     ${d_osx}/input.mm
     ${d_osx}/AppDelegate.mm
+    ${d_osx}/ConsoleViewController.m
     ${d_osx}/EmuGLView.m
+    ${d_osx}/MainMenu.m
   )
   
   list(APPEND osd_SRCS ${objc_SRCS}

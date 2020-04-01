@@ -43,14 +43,16 @@ int SerialReadData(u8* buffer, size_t nbytes) {
 }
 
 void SerialWriteData(u8 data) {
-		if (settings.debug.SerialConsole) {
-			putc(data, stdout);
-		}
+    if (settings.debug.SerialConsole) {
+        putc(data, stdout);
+    }
 #if FEAT_HAS_SERIAL_TTY
-		if (pty_master != -1) {
-			while(write(pty_master, &data, 1) != 1 && errno != EAGAIN)
-				printf("SERIAL: PTY write failed, %s\n", strerror(errno));
-		}
+    if (pty_master != -1) {
+        while(write(pty_master, &data, 1) != 1 && errno != EAGAIN) {
+            // Some error other than "resource temporarily unavailable" aka "buffer is full" aka "nothing is consuming it" occurred during write
+            printf("SERIAL: PTY write failed, %s\n", strerror(errno));
+        }
+    }
 #endif
 }
 

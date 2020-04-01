@@ -337,6 +337,8 @@
 		5317CF4A24086456008A1850 /* posix_vmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8B24081FE500C67C85 /* posix_vmem.cpp */; };
 		5317CF4B24086456008A1850 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC8D24081FE500C67C85 /* context.cpp */; };
 		5317CF4C24086456008A1850 /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5312CC9024081FE500C67C85 /* nixprof.cpp */; };
+		5337C6512433CF3D0054BA28 /* ConsoleViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5337C6502433CF3D0054BA28 /* ConsoleViewController.m */; };
+		5337C6542433E94B0054BA28 /* MainMenu.m in Sources */ = {isa = PBXBuildFile; fileRef = 5337C6532433E94B0054BA28 /* MainMenu.m */; };
 		537E069D242699A10011E92A /* dsp_helpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 537E069C242699A10011E92A /* dsp_helpers.cpp */; };
 		5381D6D5240887FD0078E797 /* tacore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D65A240887FC0078E797 /* tacore.cpp */; };
 		5381D6D8240887FD0078E797 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5381D663240887FC0078E797 /* xbrz.cpp */; };
@@ -1145,6 +1147,10 @@
 		5317CF4524086353008A1850 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		5317CF4724086368008A1850 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		5317CF4E2408674A008A1850 /* libomp.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libomp.dylib; path = ../../../../../../../usr/local/Cellar/libomp/9.0.1/lib/libomp.dylib; sourceTree = "<group>"; };
+		5337C64F2433CF3D0054BA28 /* ConsoleViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConsoleViewController.h; sourceTree = "<group>"; };
+		5337C6502433CF3D0054BA28 /* ConsoleViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ConsoleViewController.m; sourceTree = "<group>"; };
+		5337C6522433E94B0054BA28 /* MainMenu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MainMenu.h; sourceTree = "<group>"; };
+		5337C6532433E94B0054BA28 /* MainMenu.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MainMenu.m; sourceTree = "<group>"; };
 		537E069C242699A10011E92A /* dsp_helpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_helpers.cpp; sourceTree = "<group>"; };
 		5381D65A240887FC0078E797 /* tacore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tacore.cpp; sourceTree = "<group>"; };
 		5381D65B240887FC0078E797 /* tacore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tacore.h; sourceTree = "<group>"; };
@@ -3076,28 +3082,24 @@
 		84A388B51B1CDD3E000166C0 /* reicast-osx */ = {
 			isa = PBXGroup;
 			children = (
-				84A388BA1B1CDD3E000166C0 /* Images.xcassets */,
+				53836183240EDBE2006AE5B4 /* main.m */,
+				5337C6522433E94B0054BA28 /* MainMenu.h */,
+				5337C6532433E94B0054BA28 /* MainMenu.m */,
 				5312C07224081C3800C67C85 /* AppDelegate.h */,
 				5312C07324081C3800C67C85 /* AppDelegate.mm */,
 				5312C07124080F0200C67C85 /* EmuGLView.h */,
 				5312C06F24080EDA00C67C85 /* EmuGLView.m */,
+				5337C64F2433CF3D0054BA28 /* ConsoleViewController.h */,
+				5337C6502433CF3D0054BA28 /* ConsoleViewController.m */,
 				AE60BD9F22256E2500FA8A5B /* OSXKeyboardDevice.hpp */,
 				AE60BDA02225725800FA8A5B /* OSXGamepadDevice.hpp */,
 				84B7BF841B72821900F9733F /* input.h */,
 				84B7BF821B727AD700F9733F /* input.mm */,
-				84A388B61B1CDD3E000166C0 /* Supporting Files */,
+				84A388BA1B1CDD3E000166C0 /* Images.xcassets */,
+				84A388B71B1CDD3E000166C0 /* Info.plist */,
 			);
 			name = "reicast-osx";
 			path = "emulator-osx";
-			sourceTree = "<group>";
-		};
-		84A388B61B1CDD3E000166C0 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				84A388B71B1CDD3E000166C0 /* Info.plist */,
-				53836183240EDBE2006AE5B4 /* main.m */,
-			);
-			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		84A388C61B1CDD3F000166C0 /* reicast-osxTests */ = {
@@ -3288,6 +3290,7 @@
 				5312D02624081FE600C67C85 /* lctype.c in Sources */,
 				5312CF6B24081FE600C67C85 /* sgc_if.cpp in Sources */,
 				5317CF3E24083020008A1850 /* CustomTexture.cpp in Sources */,
+				5337C6542433E94B0054BA28 /* MainMenu.m in Sources */,
 				5312D04E24081FE700C67C85 /* lpc.c in Sources */,
 				5312CFA024081FE600C67C85 /* gui_settings_advanced.cpp in Sources */,
 				5312D0FD2408216000C67C85 /* inftrees.c in Sources */,
@@ -3346,6 +3349,7 @@
 				5312D0FE2408216000C67C85 /* uncompr.c in Sources */,
 				5317CF4124083020008A1850 /* glesrend.cpp in Sources */,
 				5312D07424081FE700C67C85 /* zip_error.c in Sources */,
+				5337C6512433CF3D0054BA28 /* ConsoleViewController.m in Sources */,
 				5381D6FA240887FD0078E797 /* pico_dns_client.c in Sources */,
 				5312D0FB2408216000C67C85 /* infback.c in Sources */,
 				5312D0A024081FE700C67C85 /* 7zFile.c in Sources */,

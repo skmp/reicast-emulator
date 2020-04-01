@@ -8,7 +8,9 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface ConsoleViewController : NSViewController <NSTextStorageDelegate>
+@interface ConsoleViewController : NSViewController <NSTextStorageDelegate, NSTextFieldDelegate>
+
++ (NSDictionary *)defaultTextAttributes;
 
 - (instancetype)initWithTextStorage:(NSTextStorage *)textStorage;
 

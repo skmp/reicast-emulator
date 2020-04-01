@@ -153,7 +153,7 @@ static void gl_resize();
         if(readResult > 0) {
             // There was output, so write it to the console window's text storage
             NSString* string = [[NSString alloc] initWithBytesNoCopy:buffer length:readResult encoding:NSUTF8StringEncoding freeWhenDone:NO];
-            NSDictionary *attributes = @{NSForegroundColorAttributeName: [NSColor textColor]};
+            NSDictionary *attributes = [ConsoleViewController defaultTextAttributes];
             NSAttributedString* attributedString = [[NSAttributedString alloc] initWithString:string attributes:attributes];
             dispatch_sync(dispatch_get_main_queue(),^{
                 [self.consoleTextStorage appendAttributedString:attributedString];

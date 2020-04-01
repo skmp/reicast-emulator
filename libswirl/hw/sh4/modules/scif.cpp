@@ -48,7 +48,7 @@ void SerialWriteData(u8 data) {
 		}
 #if FEAT_HAS_SERIAL_TTY
 		if (pty_master != -1) {
-			while(write(pty_master, &data, 1) != 1)
+			while(write(pty_master, &data, 1) != 1 && errno != EAGAIN)
 				printf("SERIAL: PTY write failed, %s\n", strerror(errno));
 		}
 #endif

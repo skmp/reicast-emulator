@@ -346,7 +346,7 @@ void common_linux_setup()
 }
 
 #if FEAT_HAS_SERIAL_TTY
-int pty_master;
+int pty_master = -1;
 bool common_serial_pty_setup() {
     bool cleanup_pty_symlink = false;
     if (settings.debug.VirtualSerialPort) {

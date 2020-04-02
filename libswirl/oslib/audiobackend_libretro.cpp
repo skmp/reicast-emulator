@@ -40,7 +40,8 @@ static u32 libretro_push(void* frame, u32 samples, bool wait) {
 
 static void libretro_term()
 {
- 
+	printf("Libretro_audio : terminated!\n");
+	audio_batch_cb = nullptr;
 }
 
 audiobackend_t audiobackend_libretro = {

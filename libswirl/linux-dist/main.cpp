@@ -461,7 +461,7 @@ void libretro_body() {
 }
 
 void libretro_epilogue() {
- 
+	reicast_term();
 }
 #else
 int main(int argc, wchar* argv[]) {

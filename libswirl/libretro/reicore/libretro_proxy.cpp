@@ -33,11 +33,11 @@ extern "C" {
 #define trace_plugin(__s__) MessageBoxA(nullptr,__s__,"Trace",MB_OK)
 #else
 #define LIBRETRO_PROXY_STUB_TYPE
-#define trace_plugin(__s__)  //printf("RAW_TRACE:%s\n",__s__)
+#define trace_plugin(__s__)  printf("RAW_TRACE:%s\n",__s__)
 #endif
 #else
 #define LIBRETRO_PROXY_STUB_TYPE
-#define trace_plugin(__s__) //printf("RAW_TRACE:%s\n",__s__)
+#define trace_plugin(__s__) printf("RAW_TRACE:%s\n",__s__)
 #endif
 }
 
@@ -101,6 +101,10 @@ static struct retro_log_callback logging;
 static bool g_b_init_done = false;
 static surface_dims_t g_surf_dims{ 1024,768,1024,1024,0.0f };
 static struct retro_hw_render_callback hw_render;
+ 
+const double kd_spg_fps_mapping[] = {60.0f,59.94,50.0,59.94,50.0};
+const char*  ks_spg_str_mapping[] =   {"VGA:60fps","NTSC:59.94fps","PAL:50fs","Undocumented:50fps"};
+
 
 #ifdef BUILD_RETROARCH_CORE
 extern void retro_reicast_entry_point();
@@ -125,6 +129,19 @@ static void __emu_log_provider(enum retro_log_level level, const char* fmt, ...)
     va_end(va);
 }
 
+static inline double get_spg_fps_value()   {
+    return kd_spg_fps_mapping[ (SPG_CONTROL.full >> 6U) & 3U ];
+}
+
+static inline const char* get_spg_fps_mode_string()  {
+    return ks_spg_str_mapping[ (SPG_CONTROL.full >> 6U) & 3U ];
+}
+
+static inline const int get_spg_to_libretro_mode() {
+    const int64_t v = (int64_t)get_spg_fps_value() ;
+    return (v == 60) ? RETRO_REGION_NTSC : RETRO_REGION_PAL;
+}
+
 LIBRETRO_PROXY_STUB_TYPE void  retro_init(void) {
     trace_plugin("retro_init");
 
@@ -139,12 +156,9 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_init(void) {
 LIBRETRO_PROXY_STUB_TYPE void  retro_deinit(void) {
     trace_plugin("retro_deinit");
 
-    retro_unload_game();
+     
 
-    if (g_b_init_done) {
-        // TODO
-        g_b_init_done = false;
-    }
+  
 }
 
 LIBRETRO_PROXY_STUB_TYPE unsigned  retro_api_version(void) {
@@ -170,13 +184,13 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_get_system_info(struct retro_system_info* i
 LIBRETRO_PROXY_STUB_TYPE void  retro_get_system_av_info(struct retro_system_av_info* info) {
     trace_plugin("retro_get_system_av_info");
  
-    info->timing.fps = 60; 
+    const int gt = (screen_width > screen_height) ? screen_width : screen_height;
+    info->timing.fps = get_spg_fps_value(); 
     info->timing.sample_rate = 44100;
-
     info->geometry.base_height = screen_width,
     info->geometry.base_height = screen_height,
-    info->geometry.max_width = screen_width,
-    info->geometry.max_height = screen_height,
+    info->geometry.max_width = gt,
+    info->geometry.max_height = gt,
     info->geometry.aspect_ratio =   4.0 / 3.0;  //0 == auto
 }
 
@@ -204,9 +218,20 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_set_environment(retro_environment_t cb) {
       { "libreicast_multisample", "Multisampling; 1x|2x|4x" },
       { "libreicast_aspectratio", "Aspect Ratio; 4:3|16:9" },
       { "libreicast_mouse_enabled", "Mouse enabled; true|false" },
+      { "libreicast_pixel_clock","Pixel Clock; VGA|NTSC|PAL"},
       { NULL, NULL },
    };
     cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
+
+#define RETRO_ENVIRONMENT_RETROARCH_START_BLOCK 0x800000
+#define RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND (2 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
+#define RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB (3 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
+#define RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE (4 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
+
+    bool save_state_in_background = !false ;
+    unsigned poll_type_early      = 1; /* POLL_TYPE_EARLY */
+	environ_cb(RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND, &save_state_in_background);
+    environ_cb(RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE, &poll_type_early);
 }
 
 static inline const std::string get_var_data(const char* key) {
@@ -281,6 +306,9 @@ bool os_gl_init(void* hwnd, void* hdc)
 
 LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     trace_plugin("retro_run");
+    if (!g_b_init_done)
+        return;
+
     std::clock_t c_start = std::clock();
     auto t_start = std::chrono::high_resolution_clock::now();
     static moving_average_c<double, 10> cpu_time_avg, time_avg;
@@ -354,14 +382,23 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
 
 }
 
+
 static void context_reset(void)
 {
     trace_plugin("GOT Context");
-
+    printf("ctx reset\n");
     extern int gl3wInit2(GL3WGetProcAddressProc proc);
     int r = gl3wInit2(hw_render.get_proc_address);
     //printf("RES = %d\n",r);
+    
+    GLint major,minor;
 
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+
+    hw_render.version_major = (unsigned int)major;
+    hw_render.version_minor = (unsigned int)minor;
+    printf("Major GL_V = %d , Minor GLV = %d\n",major,minor);
     g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
     g_GUIRenderer->CreateContext();
     g_GUIRenderer->Start();
@@ -370,16 +407,24 @@ static void context_reset(void)
 
 static void context_destroy(void)
 {
+    printf("ctx destroy\n");
     trace_plugin("DROPPED Context");
+
+    if (virtualDreamcast && sh4_cpu->IsRunning()) {
+        virtualDreamcast->Stop([] { g_GUIRenderer->Stop();  });
+    } else {
+        g_GUIRenderer->Stop();
+    }
+
 }
 
 static bool retro_init_gl_hw_ctx()
 {
     trace_plugin("init GL CTX???");
-
+    printf("init gl\n");
     for (size_t i = 0; i < k_libretro_hw_accellerated_count; ++i) {
         hw_render.context_type = k_hw_accel_contexts[i].val;// RETRO_HW_CONTEXT_OPENGLES2; //force gles2 for now
-
+        //hw_render.version_major
  
         hw_render.context_reset = context_reset;
         hw_render.context_destroy = context_destroy;
@@ -388,6 +433,8 @@ static bool retro_init_gl_hw_ctx()
         hw_render.depth = true;
         hw_render.stencil = true;
         hw_render.bottom_left_origin = true;
+  
+        hw_render.cache_context      = false;
         if (environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render)) {
             trace_plugin("SET HW RENDER==");
             trace_plugin(k_hw_accel_contexts[i].alias);
@@ -410,17 +457,15 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game(const struct retro_game_info* gam
 
     enum retro_pixel_format fmt = retro_pixel_format::RETRO_PIXEL_FORMAT_XRGB8888;
     if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
-    {
-
         trace_plugin("XRGB8888 is not supported.\n");
-        //return  ;
-    } else trace_plugin("XRGB8888 is supported.\n");
+    else 
+        trace_plugin("XRGB8888 is supported.\n");
 
     //TODO
-    if (retro_init_gl_hw_ctx()) {
+    if (retro_init_gl_hw_ctx())
         trace_plugin("SUCCEED retro_init_gl_hw_ctx");
-	}
-	else trace_plugin("FAILED retro_init_gl_hw_ctx");
+	else 
+        trace_plugin("FAILED retro_init_gl_hw_ctx");
 
     extern int libretro_prologue(int argc, wchar* argv[]) ;
     
@@ -434,6 +479,20 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game(const struct retro_game_info* gam
 
 LIBRETRO_PROXY_STUB_TYPE void  retro_unload_game(void) {
     trace_plugin("retro_unload_game");
+    printf("UNLOADING\n");
+      if (g_b_init_done) {
+        // TODO
+        g_b_init_done = false;
+        SleepMs(1500);
+    }
+
+  
+
+    audio_batch_cb = nullptr;
+
+    extern void libretro_epilogue() ;
+    libretro_epilogue() ;
+
 }
 
 LIBRETRO_PROXY_STUB_TYPE unsigned  retro_get_region(void) {
@@ -471,17 +530,54 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_load_game_special(unsigned type, const stru
 
 LIBRETRO_PROXY_STUB_TYPE size_t  retro_serialize_size(void) {
     trace_plugin("retro_serialize_size");
-    return false;
+    unsigned int total_size = 0;
+    void *data = nullptr;
+ 
+    dc_serialize(&data, &total_size) ;
+
+    printf("Serialize set block sz %u\n",total_size);
+   return total_size;
 }
+
 
 LIBRETRO_PROXY_STUB_TYPE bool  retro_serialize(void* data_, size_t size) {
     trace_plugin("retro_serialize");
-    return true;
+    
+    unsigned int total_size = 0;
+    cResetEvent blah;
+    virtualDreamcast->Stop([&] {  blah.Set();  } );
+    blah.Wait();
+
+
+    //if (sh4_cpu->IsRunning())
+       // sh4_cpu->Stop();
+
+    bool res = dc_serialize(&data_, &total_size) ;
+    
+    virtualDreamcast->Resume();
+    //virtualDreamcast->Start();
+   
+    return res;
 }
 
 LIBRETRO_PROXY_STUB_TYPE bool   retro_unserialize(const void* data_, size_t size) {
     trace_plugin("retro_unserialize");
-    return true;
+    unsigned int total_size = 0;
+    void* pa = (void*)(data_);
+   
+    
+    cResetEvent blah;
+    virtualDreamcast->Stop([&] {  blah.Set();  } );
+    blah.Wait();
+ 
+    //if (sh4_cpu->IsRunning())
+        //sh4_cpu->Stop();
+
+    bool res = dc_unserialize(&pa, &total_size) ;
+
+    virtualDreamcast->Resume();
+
+    return res;
 }
 
 

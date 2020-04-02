@@ -758,6 +758,11 @@ struct Dreamcast_impl : VirtualDreamcast {
 
             g_GUIRenderer->WaitQueueEmpty();
 
+            if (nullptr == callback) {
+                printf("Waring callback==nullptr @libswirl 762\n");
+                return NULL;
+            }
+
             callback_lock.Lock();
             verify(callback != nullptr);
             callback();

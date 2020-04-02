@@ -15,8 +15,8 @@
 #include <iomanip>
 #include <cctype>
 
-#define HTTP_NATIVE 1
-#define HTTP_LIBCURL 0
+#define HTTP_NATIVE (!defined(BUILD_HAS_CURL) || !BUILD_HAS_CURL)
+#define HTTP_LIBCURL (defined(BUILD_HAS_CURL) && BUILD_HAS_CURL)
 
 #if HTTP_NATIVE
 #if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN

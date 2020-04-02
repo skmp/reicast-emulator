@@ -80,8 +80,9 @@ static bool operator<(const GameMedia& left, const GameMedia& right)
 
 static std::vector<GameMedia> game_list;
 
-static unique_ptr<OnlineRomsProvider> reicastCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/v0.lst"));
-static unique_ptr<OnlineRomsProvider> archiveCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/v1.lst"));
+static unique_ptr<OnlineRomsProvider> reicastCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/homebrew.lst"));
+static unique_ptr<OnlineRomsProvider> archiveChdCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/archive.org-chd.lst"));
+static unique_ptr<OnlineRomsProvider> archiveCueCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/archive.org-cue.lst"));
 
 
 #define VMU_WIDTH (70 * 48 * scaling / 32)
@@ -968,10 +969,13 @@ struct ReicastUI_impl : GUI {
 
             ImGui::Text("%s", "");
 
-            gui_render_online_roms("CLOUD ROMS", reicastCloudRoms.get());
+            gui_render_online_roms("HOMEBREW", reicastCloudRoms.get());
 
             ImGui::Text("%s", "");
-            gui_render_online_roms("ARCHIVE.ORG", archiveCloudRoms.get());
+            gui_render_online_roms("ARCHIVE.ORG (CHD)", archiveChdCloudRoms.get());
+
+            ImGui::Text("%s", "");
+            gui_render_online_roms("ARCHIVE.ORG (CUE / .7z)", archiveCueCloudRoms.get());
 
             ImGui::PopStyleVar();
         }
@@ -982,7 +986,9 @@ struct ReicastUI_impl : GUI {
         error_popup();
         downloading_popup(reicastCloudRoms.get());
 
-        downloading_popup(archiveCloudRoms.get());
+        downloading_popup(archiveChdCloudRoms.get());
+
+        downloading_popup(archiveCueCloudRoms.get());
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);

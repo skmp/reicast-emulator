@@ -22,6 +22,8 @@ struct OnlineRomInfo
 	string id;
 	string name;
 	string sha256;
+	string url;
+	string filename;
 };
 
 struct OnlineRomsProvider

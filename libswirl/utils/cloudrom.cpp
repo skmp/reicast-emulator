@@ -185,6 +185,20 @@ struct OnlineRomsProvider_impl: OnlineRomsProvider
 					rom.name = name;
 					rom.sha256 = sha256;
 
+					string rom_file = id;
+					string url = id;
+
+					if (url.rfind("http", 0) == 0) {
+						// full http link, use the name for the file
+						rom_file = name;
+					} else {
+						// add the http://... part
+						url = onlimeRomsHost + "/" + id;
+					}
+
+					rom.filename = rom_file;
+					rom.url = url;
+					
 					roms.push_back(rom);
 				}
 			}

@@ -64,7 +64,7 @@ struct CoreFileHTTP: CoreFile
 	{
 		string p = path;
 
-		if (p.substr(0,7)!="http://" || p.substr(0,8)!="https://")
+		if (p.substr(0,7)!="http://" && p.substr(0,8)!="https://")
 			return nullptr;
 
 		CoreFileHTTP* rv = new CoreFileHTTP();

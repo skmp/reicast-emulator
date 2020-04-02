@@ -239,6 +239,10 @@ _data:
 
 #include <curl/curl.h>
 
+size_t writenil(char *ptr, size_t size, size_t nmemb, void *userdata) {
+	return nmemb;
+}
+
 size_t writef(char *ptr, size_t size, size_t nmemb, void *userdata) {
 	std::function<bool(void* data, size_t len)>* cb = reinterpret_cast<std::function<bool(void* data, size_t len)>*>(userdata);
 	if ((*cb)) {
@@ -250,13 +254,16 @@ size_t writef(char *ptr, size_t size, size_t nmemb, void *userdata) {
 
 size_t HTTP(HTTP_METHOD method, string url, size_t offs, size_t len, std::function<bool(void* data, size_t len)> cb)
 {
-	CURL *curl;
+	printf("http: %d %s [%d, %d]\n", method, url.c_str(), offs, len);
+
 	struct curl_slist *chunk = NULL;
 	string str;
 
-	curl = curl_easy_init();
-
 	CURLcode res;
+
+	auto curl_local = unique_ptr<CURL, std::function<void(CURL*)>>(curl_easy_init(), [](CURL* f) { curl_easy_cleanup(f); });
+
+	auto curl = curl_local.get();
 
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
@@ -277,7 +284,13 @@ size_t HTTP(HTTP_METHOD method, string url, size_t offs, size_t len, std::functi
 	if (len == 0) {
 		curl_easy_setopt(curl, CURLOPT_HEADER, 1);
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, nullptr);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writenil);
 	} else {
+		curl_easy_setopt(curl, CURLOPT_HEADER, 0);
+		curl_easy_setopt(curl, CURLOPT_NOBODY, 0);
+
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cb);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writef);
 	}
@@ -295,9 +308,6 @@ size_t HTTP(HTTP_METHOD method, string url, size_t offs, size_t len, std::functi
 		verify(len == cl);
 	}
 
-	
-	curl_easy_cleanup(curl);
-	
 	if (chunk) curl_slist_free_all(chunk);
 
 	return len;
@@ -337,7 +347,7 @@ size_t HTTP(HTTP_METHOD method, string url, size_t offs, size_t len, void* pdata
 
 string HTTP(HTTP_METHOD method, string url)
 {
-	auto size = HTTP(method, url, 0, 0, (void*)nullptr);
+	auto size = HTTP(HM_HEAD, url, 0, 0, (void*)nullptr);
 	
 	if (size == 0)
 		return "";

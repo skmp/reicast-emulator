@@ -4,6 +4,8 @@
 */
 #include "license/bsd"
 
+#include "utils/http.h"
+
 
 
 #include "gui.h"
@@ -846,7 +848,7 @@ struct ReicastUI_impl : GUI {
         }
     }
 
-    void gui_render_online_roms(const char* name, OnlineRomsProvider* onlineRoms)
+    void gui_render_online_roms(bool showBuy, const char* name, OnlineRomsProvider* onlineRoms)
     {
         ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "%s", name);
         ImGui::SameLine();
@@ -861,7 +863,10 @@ struct ReicastUI_impl : GUI {
 
         if (ImGui::Button((string("Load ") + name).c_str()))
         {
-            onlineRoms->fetchRomList();
+            if (!showBuy || msgboxf("By pressing OK I declare that I have reviewed the laws and regulations that apply to me, and that it is legal for me to download this rom from https://archive.org.", MBX_OK) == MBX_RV_OK)
+            {
+                onlineRoms->fetchRomList();
+            }
         }
 
         auto roms = onlineRoms->getRoms();
@@ -869,7 +874,22 @@ struct ReicastUI_impl : GUI {
         for (auto it = roms.begin(); roms.end() != it; it++)
         {
             ImGui::PushID(it->id.c_str());
-            ImGui::Text("%s (%s)", it->name.c_str(), it->type.c_str()); ImGui::SameLine();
+            ImGui::Text("%s (%s)", it->name.c_str(), it->type.c_str());
+            
+            ImGui::SameLine();
+            
+            if (showBuy)
+            {   
+                if (ImGui::Button("Buy"))
+                {
+                    auto last_dot = it->name.find_last_of('.');
+                    string name = it->name.substr(0, last_dot);
+
+                    os_LaunchFromURL("https://www.amazon.com/s?k=" + url_encode("dreamcast " + name));
+                }
+
+                ImGui::SameLine();
+            }
 
             if (it->status == RS_DOWNLOADED)
             {
@@ -881,6 +901,17 @@ struct ReicastUI_impl : GUI {
             }
             else if (it->status == RS_MISSING)
             {
+                #if 0
+                // stream is too slow. We need to cache and batch and such.
+                if (ImGui::Button("Stream"))
+                {
+                    if (gui_start_game(it->url))
+                        gui_state = Closed;
+                }
+                #endif
+
+                ImGui::SameLine();
+
                 if (ImGui::Button("Download"))
                 {
                     onlineRoms->download(it->id);
@@ -969,13 +1000,13 @@ struct ReicastUI_impl : GUI {
 
             ImGui::Text("%s", "");
 
-            gui_render_online_roms("HOMEBREW", reicastCloudRoms.get());
+            gui_render_online_roms(false, "HOMEBREW", reicastCloudRoms.get());
 
             ImGui::Text("%s", "");
-            gui_render_online_roms("ARCHIVE.ORG (CHD)", archiveChdCloudRoms.get());
+            gui_render_online_roms(true, "ARCHIVE.ORG (CHD)", archiveChdCloudRoms.get());
 
             ImGui::Text("%s", "");
-            gui_render_online_roms("ARCHIVE.ORG (CUE / .7z)", archiveCueCloudRoms.get());
+            gui_render_online_roms(true, "ARCHIVE.ORG (CUE / .7z)", archiveCueCloudRoms.get());
 
             ImGui::PopStyleVar();
         }

@@ -190,7 +190,7 @@ if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILE
     ${lzma_SRCS}
     ${pico_SRCS}
   )
-  add_definitions(-D_7ZIP_ST -DCHD5_LZMA)
+  add_definitions(-D_7ZIP_ST -DCHD5_LZMA -DCHD5_FLAC)
 endif()
 
 ### libosd.cmake ################################################################################

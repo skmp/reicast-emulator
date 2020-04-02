@@ -40,9 +40,10 @@ cp ${LICENSE_ROOT}/lgpl ${BUNDLE_RESOURCES_ROOT}
 # done
 echo "Updating values in Info.plist"
 # TODO: Update Info.plist with new version number automatically
-sed -i .bak "s/\$(EXECUTABLE_NAME)/${APP_NAME}/g" ${INFO_PLIST}
-sed -i .bak "s/\$(PRODUCT_BUNDLE_IDENTIFIER)/${APP_BUNDLE_IDENTIFIER}/g" ${INFO_PLIST}
-sed -i .bak "s/\$(PRODUCT_NAME)/${APP_NAME}/g" ${INFO_PLIST}
-sed -i .bak "s/\$(MACOSX_DEPLOYMENT_TARGET)/${APP_DEPLOYMENT_TARGET}/g" ${INFO_PLIST}
-rm ${INFO_PLIST}.bak
+# Fix so this works with both Apple and GNU sed
+if sed --version &> /dev/null; then bak=""; else bak=".bak"; fi
+sed -i ${bak} "s/\$(EXECUTABLE_NAME)/${APP_NAME}/g" ${INFO_PLIST}
+sed -i ${bak} "s/\$(PRODUCT_BUNDLE_IDENTIFIER)/${APP_BUNDLE_IDENTIFIER}/g" ${INFO_PLIST}
+sed -i ${bak} "s/\$(PRODUCT_NAME)/${APP_NAME}/g" ${INFO_PLIST}
+sed -i ${bak} "s/\$(MACOSX_DEPLOYMENT_TARGET)/${APP_DEPLOYMENT_TARGET}/g" ${INFO_PLIST}
 echo "--- Done ---"

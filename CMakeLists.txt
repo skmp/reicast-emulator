@@ -157,6 +157,7 @@ if(${HOST_OS} EQUAL ${OS_WINDOWS})
 endif()
 file(GLOB lzma_SRCS  ${d_deps}/lzma/*.c)
 file(GLOB lz_SRCS    ${d_deps}/zlib/*.c)
+file(GLOB flac_SRCS  ${d_deps}/flac/src/libFLAC/*.c)
 file(GLOB lzip_SRCS  ${d_deps}/libzip/*.c)
 file(GLOB lpng_SRCS  ${d_deps}/libpng/*.c)
 file(GLOB lelf_SRCS  ${d_deps}/libelf/el*.cpp)
@@ -189,7 +190,13 @@ if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC} OR (${BUILD_COMPILER} EQUAL ${COMPILE
     ${lzip_SRCS}
     ${lzma_SRCS}
     ${pico_SRCS}
+    ${flac_SRCS}
   )
+
+  include_directories ("${d_deps}/flac/src/libFLAC/include")
+  include_directories ("${d_deps}/flac/include")
+
+	add_definitions(-DPACKAGE_VERSION=\"1.3.2\" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H)
   add_definitions(-D_7ZIP_ST -DCHD5_LZMA -DCHD5_FLAC)
 endif()
 

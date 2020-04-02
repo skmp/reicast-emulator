@@ -3,9 +3,14 @@ stages:
   jobs:
   - job: Build
     pool:
-      vmImage: ubuntu-16.04
+      vmImage: ubuntu-18.04
     steps:
-      - script: sudo dpkg --add-architecture i386 && sudo apt-get clean && sudo apt-get update && sudo apt-get install -y build-essential pkgconf libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev git && sudo apt-get install -y libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 g++-multilib gcc-multilib && sudo apt-get install -y g++-mingw-w64-x86-64 mingw-w64-x86-64-dev libz-mingw-w64-dev libnpth-mingw-w64-dev
+      - script: |
+          sudo dpkg --add-architecture i386 && 
+          sudo apt-get clean && sudo apt-get update && 
+          sudo apt-get install -y build-essential pkgconf libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev git && 
+          sudo apt-get install -y libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 g++-multilib gcc-multilib && \
+          sudo apt-get install -y g++-mingw-w64-x86-64 mingw-w64-x86-64-dev libz-mingw-w64-dev libnpth-mingw-w64-dev
         displayName: Install dependencies
       - script: gcc --version && x86_64-w64-mingw32-gcc --version
         displayName: Display toolchain info

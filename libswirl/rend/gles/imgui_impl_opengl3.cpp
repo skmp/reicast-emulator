@@ -149,7 +149,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     {
         if (gl.gl_major >= 3)
         {
-            if (!gl.is_gles && &glReadBuffer != NULL)
+            if (!gl.is_gles && glReadBuffer != NULL)
         		glReadBuffer(GL_FRONT);
 
     		// (Re-)create the background texture and reserve space for it
@@ -176,7 +176,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glcache.Disable(GL_DEPTH_TEST);
     glcache.Enable(GL_SCISSOR_TEST);
 
-    if (&glPolygonMode != NULL)
+    if (glPolygonMode != NULL)
     	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 
@@ -198,7 +198,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
 
-    if (gl.gl_major >= 3 && &glBindSampler != NULL)
+    if (gl.gl_major >= 3 && glBindSampler != NULL)
     	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 
     GLuint vao_handle = 0;

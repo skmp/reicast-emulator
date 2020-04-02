@@ -119,10 +119,8 @@
     [_textStorage.string enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
         NSRange range = [line rangeOfString:regexString options:NSRegularExpressionSearch | NSCaseInsensitiveSearch];
         if (range.location != NSNotFound) {
-            // Add the line and bold the match
+            // Add the line and highlight the match
             NSMutableAttributedString *attributedLine = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\n", line] attributes:attributes];
-                        
-            // Highlight the match
             [attributedLine addAttribute:NSFontAttributeName value:boldFont range:range];
             [attributedLine addAttribute:NSUnderlineStyleAttributeName value:@(NSUnderlineStyleSingle) range:range];
             [attributedLine addAttribute:NSForegroundColorAttributeName value:[NSColor redColor] range:range];

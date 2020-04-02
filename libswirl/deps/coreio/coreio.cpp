@@ -96,7 +96,7 @@ static CoreFile* (*vfs[])(const char* path) =
 	nullptr
 };
 
-core_file* core_fopen(const char* filename)
+extern "C" core_file* core_fopen(const char* filename)
 {
 	CoreFile* rv = nullptr;
 	for (int i = 0; vfs[i] != nullptr; i++)
@@ -120,7 +120,7 @@ core_file* core_fopen(const char* filename)
 	}
 }
 
-size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
+extern "C" size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
 	CoreFile* f = (CoreFile*)fc;
 	
 	if (origin == SEEK_SET)
@@ -135,12 +135,12 @@ size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
 	return 0;
 }
 
-size_t core_ftell(core_file* fc) {
+extern "C" size_t core_ftell(core_file* fc) {
 	CoreFile* f = (CoreFile*)fc;
 	return f->seek_ptr;
 }
 
-int core_fread(core_file* fc, void* buff, size_t len)
+extern "C" int core_fread(core_file* fc, void* buff, size_t len)
 {
 	CoreFile* f = (CoreFile*)fc;
 
@@ -151,7 +151,7 @@ int core_fread(core_file* fc, void* buff, size_t len)
 	return (int)rv;
 }
 
-int core_fclose(core_file* fc)
+extern "C" int core_fclose(core_file* fc)
 {
 	CoreFile* f = (CoreFile*)fc;
 
@@ -160,7 +160,7 @@ int core_fclose(core_file* fc)
 	return 0;
 }
 
-size_t core_fsize(core_file* fc)
+extern "C" size_t core_fsize(core_file* fc)
 {
 	CoreFile* f = (CoreFile*)fc;
 

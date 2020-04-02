@@ -901,7 +901,7 @@ struct ReicastUI_impl : GUI {
             }
             else if (it->status == RS_MISSING)
             {
-                #if 0
+                #if EXPERIMENTAL_STREAM_HTTP
                 // stream is too slow. We need to cache and batch and such.
                 if (ImGui::Button("Stream"))
                 {

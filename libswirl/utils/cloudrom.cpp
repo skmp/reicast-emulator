@@ -203,6 +203,16 @@ struct OnlineRomsProvider_impl: OnlineRomsProvider
 		return roms;
 	}
 
+	bool downloadingAny()
+	{
+		for (const auto& rom : roms) {
+			if (rom.status == RS_DOWNLOADING)
+				return true;
+		}
+		
+		return false;
+	}
+
 	void download(string id)
 	{
 		auto rom = findRom(id);
@@ -253,6 +263,16 @@ struct OnlineRomsProvider_impl: OnlineRomsProvider
 	bool hasDownloadErrored()
 	{
 		return download_error;
+	}
+
+	void clearDownloadStatus()
+	{
+		download_done = download_error = false;
+
+		for (auto& rom : roms)
+		{
+			rom.status = romExists(rom.id) ? RS_DOWNLOADED : RS_MISSING;
+		}
 	}
 
 	bool hasDownloadFinished()

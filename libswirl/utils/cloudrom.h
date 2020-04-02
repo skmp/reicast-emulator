@@ -29,6 +29,7 @@ struct OnlineRomsProvider
 	virtual void fetchRomList() = 0;
 
 	virtual string getStatus() = 0;
+	virtual bool downloadingAny() = 0;
 
 	virtual vector<OnlineRomInfo> getRoms() = 0;
 
@@ -41,6 +42,7 @@ struct OnlineRomsProvider
 	virtual void downloadCancel() = 0;
 	virtual bool hasDownloadErrored() = 0;
 	virtual bool hasDownloadFinished() = 0;
+	virtual void clearDownloadStatus() = 0;
 
 	virtual float getDownloadPercent() = 0;
 	virtual string getDownloadName() = 0;

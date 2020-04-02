@@ -83,8 +83,6 @@ static std::vector<GameMedia> game_list;
 static unique_ptr<OnlineRomsProvider> reicastCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/v0.lst"));
 static unique_ptr<OnlineRomsProvider> archiveCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/v1.lst"));
 
-static bool show_downloading_popup = false;
-
 
 #define VMU_WIDTH (70 * 48 * scaling / 32)
 #define VMU_HEIGHT (70 * scaling)
@@ -799,7 +797,7 @@ struct ReicastUI_impl : GUI {
 
     void downloading_popup(OnlineRomsProvider* onlineRoms)
     {
-        if (show_downloading_popup)
+        if (onlineRoms->downloadingAny())
         {
             if (ImGui::BeginPopupModal("Downloading", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
             {
@@ -821,8 +819,8 @@ struct ReicastUI_impl : GUI {
                 {
                     if (onlineRoms->hasDownloadErrored())
                     {
-                        show_downloading_popup = false;
                         onlineRoms->remove(onlineRoms->getDownloadId());
+                        onlineRoms->clearDownloadStatus();
                         RefreshFiles();
                         ImGui::CloseCurrentPopup();
                     }
@@ -834,7 +832,6 @@ struct ReicastUI_impl : GUI {
 
                 if (onlineRoms->hasDownloadFinished())
                 {
-                    show_downloading_popup = false;
                     onlineRoms->downloaded(onlineRoms->getDownloadId());
                     RefreshFiles();
                     ImGui::CloseCurrentPopup();
@@ -885,7 +882,6 @@ struct ReicastUI_impl : GUI {
             {
                 if (ImGui::Button("Download"))
                 {
-                    show_downloading_popup = true;
                     onlineRoms->download(it->id);
                     RefreshFiles();
                 }

@@ -15,8 +15,8 @@
 #include <iomanip>
 #include <cctype>
 
-#define HTTP_NATIVE 0
-#define HTTP_LIBCURL 1
+#define HTTP_NATIVE 1
+#define HTTP_LIBCURL 0
 
 #if HTTP_NATIVE
 #if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
@@ -31,8 +31,30 @@
 	#pragma comment (lib, "wsock32.lib")
 #endif
 
-size_t HTTP(HTTP_METHOD method, string proto_host, int port, string path, size_t offs, size_t len, std::function<bool(void* data, size_t len)> cb)
+size_t HTTP(HTTP_METHOD method, string url, size_t offs, size_t len, std::function<bool(void* data, size_t len)> cb)
 {
+	if (url.substr(0,7) != "http://")
+		return 0;
+	url = url.substr(7);
+
+	auto host_end = url.find_first_of(":/", 0, 2);
+
+	string host = url.substr(0, host_end);
+
+	url = url.substr(host_end);
+
+	int port = 80;
+	if (url[0] == ':') {
+		auto port_end = url.find_first_of('/');
+		auto port_str = url.substr(0, port_end);
+
+		port = atoi(port_str.c_str());
+
+		url = url.substr(port_end);
+	}
+	
+	string path = url;
+
     string request;
     string response;
 

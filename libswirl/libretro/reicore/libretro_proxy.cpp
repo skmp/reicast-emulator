@@ -546,6 +546,8 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_serialize(void* data_, size_t size) {
     unsigned int total_size = 0;
     cResetEvent blah;
     virtualDreamcast->Stop([&] {  blah.Set();  } );
+    // avoid deadlock here by flushing the renderer queue
+    g_GUIRenderer->FlushQueue();
     blah.Wait();
 
 
@@ -568,6 +570,8 @@ LIBRETRO_PROXY_STUB_TYPE bool   retro_unserialize(const void* data_, size_t size
     
     cResetEvent blah;
     virtualDreamcast->Stop([&] {  blah.Set();  } );
+    // avoid deadlock here by flushing the renderer queue
+    g_GUIRenderer->FlushQueue();
     blah.Wait();
  
     //if (sh4_cpu->IsRunning())

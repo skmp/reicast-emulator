@@ -629,6 +629,16 @@ struct GUIRenderer_impl : GUIRenderer {
             callback_mutex.Unlock();
         } while (callback || !frameDone);
     }
+
+    virtual void FlushQueue() {
+        callback_mutex.Lock();
+        {
+            auto cb = callback;
+            callback = nullptr;
+            frameDone = cb == nullptr;
+        }
+        callback_mutex.Unlock();
+    }
 };
 
 GUIRenderer* GUIRenderer::Create(GUI* gui) {

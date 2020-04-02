@@ -22,6 +22,8 @@ struct GUIRenderer {
 
     virtual void QueueEmulatorFrame(std::function<bool()> callback) = 0;
 
+    virtual void FlushQueue() = 0;
+    
     virtual void WaitQueueEmpty() = 0;
 	virtual void UIFrame() = 0;
 	virtual bool CreateContext() = 0;

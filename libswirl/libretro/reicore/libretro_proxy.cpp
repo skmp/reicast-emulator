@@ -67,7 +67,7 @@ static const size_t k_libretro_hw_accellerated_count = sizeof(k_hw_accel_context
 
 static const struct retro_controller_description k_ctl_ports_default[] =
 {
-    { "Keyboard",		RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_KEYBOARD, 0)  },
+      { "Keyboard",		RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_KEYBOARD, 0)  },
       { "Controller",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)  },
       { "Controller",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)  },
       { "Controller",	RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)  },
@@ -119,6 +119,7 @@ static void update_vars() ;
  
 static void display_popup_msg(const char* text,const int32_t frame_cnt) ;
 
+bool os_gl_init(void* hwnd, void* hdc) { return true; }
 
 //Private bridge module functions
 static void __emu_log_provider(enum retro_log_level level, const char* fmt, ...) {
@@ -220,15 +221,14 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_set_environment(retro_environment_t cb) {
    };
     cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
 
-    #define RETRO_ENVIRONMENT_RETROARCH_START_BLOCK 0x800000
-    #define RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND (2 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
-    #define RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB (3 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
-    #define RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE (4 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
-
+     
     bool save_state_in_background = false ;
+    bool clear_all_threads_wait_cb = false;
+    
     unsigned int poll_type_early      = 1; /* POLL_TYPE_EARLY */
-	environ_cb(RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND, &save_state_in_background);
-    environ_cb(RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE, &poll_type_early);
+	environ_cb(2 | 0x800000, &save_state_in_background);
+    environ_cb(3 | 0x800000, &clear_all_threads_wait_cb);
+    environ_cb(4 | 0x800000, &poll_type_early);
 }
 
 static inline const std::string get_var_data(const char* key) {
@@ -296,8 +296,6 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_reset(void) {
     trace_plugin("retro_reset");
 }
 
-bool os_gl_init(void* hwnd, void* hdc) { return true; }
-
 LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     trace_plugin("retro_run");
     if (!g_b_init_done)
@@ -357,8 +355,6 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     rfb = hw_render.get_current_framebuffer();
    //glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
     glBindFramebuffer(RARCH_GL_FRAMEBUFFER, rfb);
-
-
     glcache.Reset();
     g_GUIRenderer->UIFrame();
 

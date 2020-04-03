@@ -252,7 +252,7 @@ void bba_periodical()
 	{
 		u8 p[1520];
 		// FIXME
-		int len=0;//pcap_io_recv(p,1520);
+		int len=pcap_io_recv(p,1520);
 		if (len>0)
 		{
 			u32 fromaddr=nrc(opaq,p,len);
@@ -269,7 +269,7 @@ void bba_periodical()
 void qemu_send_packet(VLANClientState*,const uint8_t* p, int sz,u32 fromaddr)
 {
 	//FIXME
-	//pcap_io_send((void*)p,sz);
+	pcap_io_send((void*)p,sz);
 	printf("Sent Packet to %02X:%02X:%02X:%02X:%02X:%02X from %02X:%02X:%02X:%02X:%02X:%02X, proto 0x%04X, from addr 0x%04X sz %d bytes\n",
 		p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8],p[9],p[10],p[11],p[12]*256+p[13],fromaddr,sz);
 	ExaminePacket(p,p[12]*256+p[13]);
@@ -343,6 +343,7 @@ struct BBA_impl : MMIODevice {
 		memcpy(nd.macaddr,&virtual_mac,sizeof(virtual_mac));
 		opaq=0;//(((u8*)pcidev)+sizeof(PCIDevice));
 		pcidev=pci_rtl8139_init(0,&nd,0);
+		pcap_io_init("wlx107b449e14e5");
 	}
 	u32 Read(u32 addr,u32 sz)
 	{

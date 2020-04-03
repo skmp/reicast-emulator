@@ -2,7 +2,9 @@
 #include <stdarg.h>
 #include "pcap.h"
 #include "pcap_io.h"
-
+#include "types.h"
+#include "oslib/threading.h"
+#include <atomic>
 
 mac_address virtual_mac   = { 0x76, 0x6D, 0x61, 0x63, 0x30, 0x31 };
 //mac_address virtual_mac   = { 0x6D, 0x76, 0x63, 0x61, 0x31, 0x30 };
@@ -55,6 +57,7 @@ int GetMACaddress(char *adapter, mac_address* addr)
 }
 
 
+
 int gettimeofday (struct timeval *tv, void* tz)
 {
   unsigned __int64 ns100; /*time since 1 Jan 1601 in 100ns units */
@@ -64,14 +67,16 @@ int gettimeofday (struct timeval *tv, void* tz)
   tv->tv_sec = (long) ((ns100 - 116444736000000000L) / 10000000L);
   return (0);
 } 
+#endif
 
+#if 1
 int pcap_io_send(void* packet, int plen)
 {
 	struct pcap_pkthdr ph;
 
 	if(pcap_io_running<=0)
 		return -1;
-	//printf("WINPCAP:  * pcap io: Sending %d byte packet.\n",plen);
+	printf("WINPCAP:  * pcap io: Sending %d byte packet.\n",plen);
 
 	if(dump_pcap)
 	{
@@ -102,6 +107,7 @@ int pcap_io_send(void* packet, int plen)
 		fprintf(packet_log,"\n");
 	}
 
+	#if why_did_it_do_that
 	if(mac_compare(((ethernet_header*)packet)->dst,broadcast_mac)==0)
 	{
 		static u_char pack[65536];
@@ -110,6 +116,7 @@ int pcap_io_send(void* packet, int plen)
 		((ethernet_header*)packet)->dst=host_mac;
 		pcap_sendpacket(adhandle, pack, plen);
 	}
+	#endif
 
 	return pcap_sendpacket(adhandle, (const u_char*)packet, plen);
 }
@@ -166,19 +173,16 @@ int pcap_io_recv_blocking(void* packet, int max_len)
 #define PacketBufferSize (2048*64)
 #define PacketBufferMask (PacketBufferSize-1)
 
-volatile long PacketCount;
+std::atomic<int> PacketCount;
 volatile u8 PacketBuffer[PacketBufferSize+2048];
-volatile u32 WriteCursor;
-volatile u32 ReadCursor;
+std::atomic<u32> WriteCursor;
+std::atomic<u32> ReadCursor;
 
 // statement.
 
 
-DWORD WINAPI rx_thread( LPVOID p)
+void* rx_thread(void* p)
 {
-	if (SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_TIME_CRITICAL))
-		printf("rx_thread : THREAD_PRIORITY_TIME_CRITICAL ;)\n");
-
 	PacketCount=0;
 	WriteCursor=0;
 
@@ -188,7 +192,7 @@ DWORD WINAPI rx_thread( LPVOID p)
 		if (WriteCursor<RCval && (WriteCursor+2048)>RCval)
 		{
 			printf("rx_thread : buffer full !\n");
-			Sleep(10);//whee ?
+			//Sleep(10);//whee ?
 		}
 		else
 		{
@@ -202,10 +206,7 @@ DWORD WINAPI rx_thread( LPVOID p)
 					WriteCursor=0;
 
 				//This however, needs to be interlocked
-				_InterlockedIncrement(&PacketCount);
-				//EnterCriticalSection(&cs);
-				//PacketCount++;
-				//ExitCriticalSection(&cs);
+				PacketCount++;
 			}
 		}
 	}
@@ -234,7 +235,7 @@ int pcap_io_recv(void* packet, int max_len)
 	ReadCursor=RCpos;
 
 	//This however, needs to be interlocked
-	_InterlockedDecrement(&PacketCount);
+	PacketCount--;
 	//EnterCriticalSection(&cs);
 	//PacketCount--;
 	//ExitCriticalSection(&cs);
@@ -323,11 +324,13 @@ char* pcap_io_get_dev_desc(int num)
 	return NULL;
 }
 
+cThread rxthd(rx_thread, 0);
+
 int pcap_io_init(char *adapter)
 {
 	printf("WINPCAP: Opening adapter '%s'...",adapter);
 
-	GetMACaddress(adapter,&host_mac);
+	//GetMACaddress(adapter,&host_mac);
 		
 	/* Open the adapter */
 	if ((adhandle= pcap_open_live(adapter,	// name of the device
@@ -353,7 +356,8 @@ int pcap_io_init(char *adapter)
 
 	dump_pcap = pcap_dump_open(adhandle,"logs/pkt_log.pcap");
 
-	CreateThread(0,0,rx_thread,0,0,0);
+
+	rxthd.Start();
 	pcap_io_running=1;
 	printf("WINPCAP: Ok.\n");
 	return 0;

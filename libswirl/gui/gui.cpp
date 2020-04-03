@@ -998,15 +998,21 @@ struct ReicastUI_impl : GUI {
                 }
 
 
-            ImGui::Text("%s", "");
+            if (!settings.cloudroms.HideHomebrew)
+            {
+                ImGui::Text("%s", "");
 
-            gui_render_online_roms(false, "HOMEBREW", reicastCloudRoms.get());
+                gui_render_online_roms(false, "HOMEBREW", reicastCloudRoms.get());
+            }
 
-            ImGui::Text("%s", "");
-            gui_render_online_roms(true, "ARCHIVE.ORG (CHD)", archiveChdCloudRoms.get());
+            if (settings.cloudroms.ShowArchiveOrg)
+            {
+                ImGui::Text("%s", "");
+                gui_render_online_roms(true, "ARCHIVE.ORG (CHD)", archiveChdCloudRoms.get());
 
-            ImGui::Text("%s", "");
-            gui_render_online_roms(true, "ARCHIVE.ORG (CUE / .7z)", archiveCueCloudRoms.get());
+                ImGui::Text("%s", "");
+                gui_render_online_roms(true, "ARCHIVE.ORG (CUE / .7z)", archiveCueCloudRoms.get());
+            }
 
             ImGui::PopStyleVar();
         }

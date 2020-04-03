@@ -296,10 +296,60 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_reset(void) {
     trace_plugin("retro_reset");
 }
 
+static cResetEvent retro_run_alive;
+std::atomic<bool> monitor_thread_running;
+std::atomic<bool> monitor_thread_stopping;
+
+static cThread monitor_thread([](void*) { 
+    cResetEvent stop_finished;
+    
+    verify(sh4_cpu->IsRunning());
+
+    retro_run_alive.Reset();
+
+    for (;;) {
+        if (!retro_run_alive.Wait(100)) {
+            printf("retro_pause detected\n");
+            break;
+        }
+    }
+
+    monitor_thread_stopping = true;
+    virtualDreamcast->Stop([&]() {
+        stop_finished.Set();
+    });
+
+    while (!stop_finished.Wait(10)) {
+        g_GUIRenderer->UIFrame();
+    }
+
+    monitor_thread_stopping = false;
+
+    monitor_thread_running = false;
+}, nullptr);
+
 LIBRETRO_PROXY_STUB_TYPE void  retro_run(void) {
     trace_plugin("retro_run");
     if (!g_b_init_done)
         return;
+
+    while(monitor_thread_stopping) ;
+
+    if (sh4_cpu) {
+        if (!sh4_cpu->IsRunning()) {
+            // start monitoring thread
+            monitor_thread.WaitToEnd();
+            verify(!monitor_thread_running);
+            virtualDreamcast->Resume();
+            monitor_thread_running = true;
+            monitor_thread.Start();
+        } else if (!monitor_thread_running) {
+            monitor_thread_running = true;
+            monitor_thread.Start();
+        }
+    }
+
+    retro_run_alive.Set();
 
     std::clock_t c_start = std::clock();
     auto t_start = std::chrono::high_resolution_clock::now();
@@ -502,20 +552,12 @@ LIBRETRO_PROXY_STUB_TYPE bool  retro_serialize(void* data_, size_t size) {
     trace_plugin("retro_serialize");
     
     unsigned int total_size = 0;
-    cResetEvent blah;
-    virtualDreamcast->Stop([&] {  blah.Set();  } );
-    // avoid deadlock here by flushing the renderer queue
-    g_GUIRenderer->FlushQueue();
-    blah.Wait();
 
-
-    //if (sh4_cpu->IsRunning())
-       // sh4_cpu->Stop();
+    // wait for cpu to stop
+    while(sh4_cpu->IsRunning())
+        ;
 
     bool res = dc_serialize(&data_, &total_size) ;
-    
-    virtualDreamcast->Resume();
-    //virtualDreamcast->Start();
    
     return res;
 }
@@ -524,20 +566,13 @@ LIBRETRO_PROXY_STUB_TYPE bool   retro_unserialize(const void* data_, size_t size
     trace_plugin("retro_unserialize");
     unsigned int total_size = 0;
     void* pa = (void*)(data_);
-   
-    
-    cResetEvent blah;
-    virtualDreamcast->Stop([&] {  blah.Set();  } );
-    // avoid deadlock here by flushing the renderer queue
-    g_GUIRenderer->FlushQueue();
-    blah.Wait();
  
-    //if (sh4_cpu->IsRunning())
-        //sh4_cpu->Stop();
+
+    // wait for cpu to stop
+    while(sh4_cpu->IsRunning())
+        ;
 
     bool res = dc_unserialize(&pa, &total_size) ;
-
-    virtualDreamcast->Resume();
 
     return res;
 }

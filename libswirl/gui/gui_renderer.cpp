@@ -337,7 +337,7 @@ static void osd_gen_vertices()
 
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
-extern int rfb;
+extern int g_gl_bound_render_frame_buffer;
 void OSD_DRAW(bool clear_screen)
 {
 #ifdef _ANDROID

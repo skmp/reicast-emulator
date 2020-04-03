@@ -7,7 +7,7 @@
 #include <unordered_set>
 
 namespace string_utils {
-static inline bool split_string(const std::string& s,const std::string& delim_list,std::vector<std::string>& out) {
+static inline bool split_string(const std::string& s,const std::string& delim_list,std::vector<std::string>& out,const bool skip_ws = false) {
     out.clear();
     std::string buf;
 
@@ -16,7 +16,18 @@ static inline bool split_string(const std::string& s,const std::string& delim_li
     for (size_t i = 0;i < delim_list.size();++i)
         set.insert(delim_list[i]);
 
-    for (size_t l = 0,m=s.length();l < m;++l) {
+    size_t l = 0,m=s.length();
+
+    //skip initial whitespace
+    if (skip_ws) {
+        while (l < m) {
+            if (!isspace(s[l]))
+                break;
+            ++l;
+        }
+    }
+
+    for (;l < m;++l) {
         const char ld = s[l];
         if (set.find(ld) != set.end()) {
             if (!buf.empty())
@@ -34,9 +45,9 @@ static inline bool split_string(const std::string& s,const std::string& delim_li
     return !out.empty();
 }
  
-static inline bool split_string(const std::string& s,const std::string& delim_list,std::vector<int>& out) {
+static inline bool split_string(const std::string& s,const std::string& delim_list,std::vector<int>& out,const bool skip_ws = false){
     std::vector<std::string> tmp;
-    split_string(s,delim_list,tmp);
+    split_string(s,delim_list,tmp,skip_ws);
     out.clear();
     if (tmp.empty())
         return false;
@@ -50,9 +61,9 @@ static inline bool split_string(const std::string& s,const std::string& delim_li
     return true;
 }
 
-static inline bool split_string(const std::string& s,const std::string& delim_list,std::vector<double>& out) {
+static inline bool split_string(const std::string& s,const std::string& delim_list,std::vector<double>& out,const bool skip_ws = false){
     std::vector<std::string> tmp;
-    split_string(s,delim_list,tmp);
+    split_string(s,delim_list,tmp,skip_ws);
     out.clear();
     if (tmp.empty())
         return false;

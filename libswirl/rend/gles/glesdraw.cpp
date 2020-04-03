@@ -1183,7 +1183,7 @@ void DrawFramebuffer(float w, float h)
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
 }
-extern int rfb;
+extern int g_gl_bound_render_frame_buffer;
 bool render_output_framebuffer()
 {
 	glcache.Disable(GL_SCISSOR_TEST);
@@ -1192,7 +1192,7 @@ bool render_output_framebuffer()
 		glViewport(0, 0, screen_width, screen_height);
 		if (gl.ofbo.tex == 0)
 			return false;
-		glBindFramebuffer(GL_FRAMEBUFFER, rfb);
+		glBindFramebuffer(GL_FRAMEBUFFER, g_gl_bound_render_frame_buffer);
 		float scl = 480.f / screen_height;
 		float tx = (screen_width * scl - 640.f) / 2;
 		DrawQuad(gl.ofbo.tex, -tx, 0, 640.f + tx * 2, 480.f, 0, 1, 1, 0);
@@ -1202,11 +1202,11 @@ bool render_output_framebuffer()
 		if (gl.ofbo.fbo == 0)
 			return false;
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rfb);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_gl_bound_render_frame_buffer);
 		glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
 				0, 0, screen_width, screen_height,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR);
-    	glBindFramebuffer(GL_FRAMEBUFFER, rfb);
+    	glBindFramebuffer(GL_FRAMEBUFFER, g_gl_bound_render_frame_buffer);
 	}
 	return true;
 }

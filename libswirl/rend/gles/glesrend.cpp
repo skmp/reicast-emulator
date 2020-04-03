@@ -763,7 +763,7 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-extern int rfb;
+int g_gl_bound_render_frame_buffer = 0;
 
 bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 {
@@ -1093,7 +1093,7 @@ bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 		{
 #if HOST_OS != OS_DARWIN
 			//Fix this in a proper way
-			glBindFramebuffer(GL_FRAMEBUFFER,rfb);
+			glBindFramebuffer(GL_FRAMEBUFFER,g_gl_bound_render_frame_buffer);
 #endif
 			glViewport(0, 0, screen_width, screen_height);
 		}

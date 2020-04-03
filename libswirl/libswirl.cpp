@@ -36,6 +36,7 @@
 
 #include "hw/maple/maple_if.h"
 #include "hw/modem/modem.h"
+#include "hw/bba/bba.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/aica/aica_mmio.h"
 #include "hw/arm7/SoundCPU.h"
@@ -938,7 +939,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 #endif
         ;
 
-        MMIODevice* extDevice_010 = Create_ExtDevice_010();
+        MMIODevice* extDevice_010 = Create_BBA(asic);//Create_ExtDevice_010();
 
         MMIODevice* rtcDevice = AICA::CreateRTC();
 

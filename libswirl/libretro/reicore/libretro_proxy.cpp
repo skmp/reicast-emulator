@@ -31,14 +31,14 @@ extern "C" {
 #ifdef _WIN32
 #ifdef BUILD_RETROARCH_CORE
 #define LIBRETRO_PROXY_STUB_TYPE RETRO_API
-#define trace_plugin(__s__) MessageBoxA(nullptr,__s__,"Trace",MB_OK)
+#define trace_plugin(__s__) //MessageBoxA(nullptr,__s__,"Trace",MB_OK)
 #else
 #define LIBRETRO_PROXY_STUB_TYPE
-#define trace_plugin(__s__)  printf("RAW_TRACE:%s\n",__s__)
+#define trace_plugin(__s__)  //printf("RAW_TRACE:%s\n",__s__)
 #endif
 #else
 #define LIBRETRO_PROXY_STUB_TYPE
-#define trace_plugin(__s__) printf("RAW_TRACE:%s\n",__s__)
+#define trace_plugin(__s__) //printf("RAW_TRACE:%s\n",__s__)
 #endif
 }
 
@@ -589,4 +589,4 @@ LIBRETRO_PROXY_STUB_TYPE void  retro_cheat_reset(void) {
 LIBRETRO_PROXY_STUB_TYPE void  retro_cheat_set(unsigned index, bool enabled, const char* code) {
     trace_plugin("retro_cheat_set");
 }
- #define trace_plugin(__s__)  printf("RAW_TRACE:%s\n",__s__)
+

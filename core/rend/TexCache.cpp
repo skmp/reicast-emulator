@@ -123,9 +123,9 @@ void palette_update(void)
          break;
    }
    for (int i = 0; i < 64; i++)
-	  pal_hash_16[i] = XXH32(&palette32_ram[i << 4], 16 * 4, 7);
+		pal_hash_16[i] = XXH32(&PALETTE_RAM[i << 4], 16 * 4, 7);
    for (int i = 0; i < 4; i++)
-	  pal_hash_256[i] = XXH32(&palette32_ram[i << 8], 256 * 4, 7);
+		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
 
 using namespace std;

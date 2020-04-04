@@ -405,7 +405,7 @@ void TextureCacheData::Update()
 			custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, textype, temp_tex_buffer);
 		}
 	}
-	else {
+	else if (pData) {
 		#if FEAT_HAS_SOFTREND
 			if (textype == GL_UNSIGNED_SHORT_5_6_5)
 				tex_type = 0;

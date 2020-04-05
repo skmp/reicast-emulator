@@ -105,7 +105,7 @@ namespace discord {
 		DiscordTickParams* discordTickParams = (struct DiscordTickParams*)params;
 		do {
 			discordTickParams->richPresence->Tick();
-			std::this_thread::sleep_for(std::chrono::milliseconds(16));
+			SleepMs(16);
 		} while (*(discordTickParams->discordLook));
 		return nullptr;
 	}

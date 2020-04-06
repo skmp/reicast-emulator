@@ -14,7 +14,6 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     
-    NSLog(@"initWithFrame");
     NSOpenGLPixelFormatAttribute attrs[] = {
         NSOpenGLPFADoubleBuffer,
         NSOpenGLPFADepthSize, 24,

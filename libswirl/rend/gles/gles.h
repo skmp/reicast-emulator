@@ -208,7 +208,9 @@ struct TextureCacheData
 	u8* vram;
 	
 	GLuint texID;   //gl texture
+	u32 texDataSize; //size of texture data in bytes, size of pData
 	u16* pData;
+	u32 numMipMapLevels; //number of mipmaps
 	int tex_type;
 	
 	u32 Lookups;

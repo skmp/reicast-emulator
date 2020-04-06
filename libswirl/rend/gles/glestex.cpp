@@ -33,6 +33,7 @@ Compression
 
 #if FEAT_HAS_SOFTREND
 	#include <xmmintrin.h>
+	#include <cmath>
 #endif
 
 extern u32 decoded_colors[3][65536];
@@ -249,7 +250,40 @@ void TextureCacheData::Create(bool isGL)
 	else {
 		texID = 0;
 		#if FEAT_HAS_SOFTREND
-			pData = (u16*)_mm_malloc(w * h * 16, 16);
+			//No mipmapping used
+			const u32 bytesPerPixel = 16;
+			texDataSize = w * h * bytesPerPixel;
+			numMipMapLevels = 1;
+
+			if (tcw.MipMapped && settings.rend.UseMipmaps)
+			{
+				//MipMapping enabled, allocate extra space for mipmaps
+
+				//calculation from https://vulkan-tutorial.com/Generating_Mipmaps
+				u32 mipLevelsQuick = std::floor(std::log2(max(w, h))) + 1;
+
+				u32 curr_w = w;
+				u32 curr_h = h;
+				while (curr_w != 1 && curr_h != 1)
+				{
+					numMipMapLevels += 1;
+
+					//calculate mipmap dimensions
+					curr_w = max(curr_w / 2, (u32)1);
+					curr_h = max(curr_h / 2, (u32)1);
+
+					//add new image size
+					texDataSize += curr_w * curr_h * bytesPerPixel;
+				}
+
+				if (numMipMapLevels != mipLevelsQuick)
+				{
+					printf("\n!\tTEXCACHE: SW: MipMap Level Calculations don't match (Loop: %u) (Quick: %u) !\n", numMipMapLevels, mipLevelsQuick);
+					die("TEXCACHE: SW: MipMap Level Calculations don't match");
+				}
+			}
+
+			pData = (u16*)_mm_malloc(texDataSize, bytesPerPixel);
 		#else
 			die("softrend disabled, invalid codepath");
 		#endif
@@ -321,12 +355,12 @@ void TextureCacheData::Update()
 	if (settings.rend.CustomTextures)
 		custom_texture.LoadCustomTextureAsync(this);
 
-	void *temp_tex_buffer = NULL;
+	void *temp_tex_buffers[numMipMapLevels];
 	u32 upscaled_w = w;
 	u32 upscaled_h = h;
 
-	PixelBuffer<u16> pb16;
-	PixelBuffer<u32> pb32;
+	PixelBuffer<u16> pb16[numMipMapLevels];
+	PixelBuffer<u32> pb32[numMipMapLevels];
 
 	// Figure out if we really need to use a 32-bit pixel buffer
 	bool need_32bit_buffer = true;
@@ -339,56 +373,72 @@ void TextureCacheData::Update()
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
-	if (texconv32 != NULL && need_32bit_buffer)
+	u32 curr_h = h;
+	u32 curr_w = stride;
+	u32 previous_mips_offset = 0;
+	//PETODO: The notes here indicate that a game doesn't load all of a texture as it hits end of VRAM,
+	//        this could potentially fail if mipmapping is enabled on that texture
+	for (int m = 0; m < numMipMapLevels; m++)
 	{
-		// Force the texture type since that's the only 32-bit one we know
-		textype = GL_UNSIGNED_BYTE;
+		if (texconv32 != NULL && need_32bit_buffer)
+		{
+			// Force the texture type since that's the only 32-bit one we know
+			textype = GL_UNSIGNED_BYTE;
 
-		pb32.init(w, h);
+			pb32[m].init(w, h);
 
-		texconv32(&pb32, (u8*)&vram[sa], stride, h);
+			texconv32(&pb32[m], (u8*)&vram[sa], stride, h);
 
 #ifdef DEPOSTERIZE
-		{
-			// Deposterization
-			PixelBuffer<u32> tmp_buf;
-			tmp_buf.init(w, h);
+			{
+				// Deposterization
+				PixelBuffer<u32> tmp_buf;
+				tmp_buf.init(w, h);
 
-			DePosterize(pb32.data(), tmp_buf.data(), w, h);
-			pb32.steal_data(tmp_buf);
-		}
+				DePosterize(pb32[m].data(), tmp_buf.data(), w, h);
+				pb32[m].steal_data(tmp_buf);
+			}
 #endif
 
-		// xBRZ scaling
-		if (settings.rend.TextureUpscale > 1)
-		{
-			PixelBuffer<u32> tmp_buf;
-			tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
+			// xBRZ scaling
+			if (settings.rend.TextureUpscale > 1)
+			{
+				PixelBuffer<u32> tmp_buf;
+				tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
 
-			if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
-				// Alpha channel formats. Palettes with alpha are already handled
-				has_alpha = true;
-			UpscalexBRZ(settings.rend.TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
-			pb32.steal_data(tmp_buf);
-			upscaled_w *= settings.rend.TextureUpscale;
-			upscaled_h *= settings.rend.TextureUpscale;
+				if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
+					// Alpha channel formats. Palettes with alpha are already handled
+					has_alpha = true;
+				UpscalexBRZ(settings.rend.TextureUpscale, pb32[m].data(), tmp_buf.data(), w, h, has_alpha);
+				pb32[m].steal_data(tmp_buf);
+				upscaled_w *= settings.rend.TextureUpscale;
+				upscaled_h *= settings.rend.TextureUpscale;
+			}
+			temp_tex_buffers[m] = pb32[m].data();
 		}
-		temp_tex_buffer = pb32.data();
-	}
-	else if (texconv != NULL)
-	{
-		pb16.init(w, h);
+		else if (texconv != NULL)
+		{
+			//fill it in with a temp color
+			printf("Converting texture with mip level: %u\n", m);
+			printf("Texture dimensions: %u, %u\n", curr_w, curr_h);
+			pb16[m].init(curr_w, curr_h);
+			texconv(&pb16[m],(u8*)&vram[sa],curr_w,curr_h);
 
-		texconv(&pb16,(u8*)&vram[sa],stride,h);
-		temp_tex_buffer = pb16.data();
-	}
-	else
-	{
-		//fill it in with a temp color
-		printf("UNHANDLED TEXTURE\n");
-		pb16.init(w, h);
-		memset(pb16.data(), 0x80, w * h * 2);
-		temp_tex_buffer = pb16.data();
+			temp_tex_buffers[m] = pb16[m].data();
+		}
+		else
+		{
+			//fill it in with a temp color
+			printf("UNHANDLED TEXTURE\n");
+			pb16[m].init(curr_w, curr_h);
+			memset(pb16[m].data(), 0x80, curr_w * curr_h * 2);
+			temp_tex_buffers[m] = pb16[m].data();
+		}
+
+		//calculate the next mipmap dimensions
+		previous_mips_offset += curr_h * curr_w;
+		curr_w = max(curr_w / 2, (u32)1);
+		curr_h = max(curr_h / 2, (u32)1);
 	}
 	// Restore the original texture height if it was constrained to VRAM limits above
 	h = original_h;
@@ -398,11 +448,11 @@ void TextureCacheData::Update()
 
 	if (texID) {
 		//upload to OpenGL !
-		UploadToGPU(textype, upscaled_w, upscaled_h, (u8*)temp_tex_buffer);
+		UploadToGPU(textype, upscaled_w, upscaled_h, (u8*)temp_tex_buffers[0]);
 		if (settings.rend.DumpTextures)
 		{
 			ComputeHash();
-			custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, textype, temp_tex_buffer);
+			custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, textype, temp_tex_buffers[0]);
 		}
 	}
 	else {
@@ -414,17 +464,42 @@ void TextureCacheData::Update()
 			else if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
 				tex_type = 2;
 
-			u16 *tex_data = (u16 *)temp_tex_buffer;
+			u32 curr_h = h;
+			u32 curr_w = w;
+			u32 previous_mips_offset = 0;
+			for (int m = 0; m < numMipMapLevels; m++)
+			{
+				printf("\n!\tTEXCACHE: SW: Copying mip level %u !\n", m);
+				for (int y = 0; y < curr_h; y++) {
+					for (int x = 0; x < curr_w; x++) {
+						//PETODO: add an offset for previous mipmaps
+						//PETODO: current expected behaviour is to copy the top of mip0 into all mips
 
-			for (int y = 0; y < h; y++) {
-				for (int x = 0; x < w; x++) {
-					u32* data = (u32*)&pData[(x + y*w) * 8];
+						//The 8 here is 2*u16's per channel, 4 channels
+						//Each pixel is turned into 4 pixels
 
-					data[0] = decoded_colors[tex_type][tex_data[(x + 1) % w + (y + 1) % h * w]];
-					data[1] = decoded_colors[tex_type][tex_data[(x + 0) % w + (y + 1) % h * w]];
-					data[2] = decoded_colors[tex_type][tex_data[(x + 1) % w + (y + 0) % h * w]];
-					data[3] = decoded_colors[tex_type][tex_data[(x + 0) % w + (y + 0) % h * w]];
+						printf("\n!\tTEXCACHE: SW: Copying texture with %u mipmaps, current mip level %u !\n", numMipMapLevels, m);
+
+						u16 *tex_data = (u16 *)temp_tex_buffers[m];
+
+						u32* data = (u32*)&pData[(x + y*curr_w) * 8];
+
+						data[0] = decoded_colors[tex_type][tex_data[((x + 1) % curr_w + (y + 1) % curr_h * curr_w)]];
+						data[1] = decoded_colors[tex_type][tex_data[((x + 0) % curr_w + (y + 1) % curr_h * curr_w)]];
+						data[2] = decoded_colors[tex_type][tex_data[((x + 1) % curr_w + (y + 0) % curr_h * curr_w)]];
+						data[3] = decoded_colors[tex_type][tex_data[((x + 0) % curr_w + (y + 0) % curr_h * curr_w)]];
+					}
 				}
+
+				//calculate the next mipmap dimensions
+				previous_mips_offset += curr_h * curr_w;
+				curr_w = max(curr_w / 2, (u32)1);
+				curr_h = max(curr_h / 2, (u32)1);
+			}
+
+			if (tcw.MipMapped && settings.rend.UseMipmaps)
+			{
+				//printf("\n!\tTEXCACHE: SW: Mipmaps aren't being copied, when they should be !\n");
 			}
 		#else
 			die("Soft rend disabled, invalid code path");

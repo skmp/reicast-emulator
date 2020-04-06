@@ -376,7 +376,7 @@ void OSD_DRAW(bool clear_screen)
         glActiveTexture(GL_TEXTURE0);
         glcache.BindTexture(GL_TEXTURE_2D, gl_osd.tex);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, gl.screen_fb);
 
         glBufferData(GL_ARRAY_BUFFER, osd_vertices.size() * sizeof(Vertex), &osd_vertices[0], GL_STREAM_DRAW); glCheck();
 

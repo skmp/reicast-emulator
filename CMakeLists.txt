@@ -7,6 +7,7 @@ if (CCACHE_FOUND)
 endif()
 
 set(TNAME reicast)
+option(LIBRETRO_CORE "Build as libretro core" OFF)
 
 project(${TNAME})
 
@@ -212,17 +213,21 @@ set(osd_SRCS "")
 
 list(APPEND osd_SRCS ${d_aout}/audiostream.cpp)
 
-if (${HOST_OS} EQUAL ${OS_WINDOWS})
+if (LIBRETRO_CORE)
 
+  list(APPEND osd_SRCS ${d_core}/libretro/reicore/libretro_proxy.cpp)
+	list(APPEND osd_SRCS ${d_aout}/audiobackend_libretro.cpp)
+
+	include_directories ("${d_core}/libretro-common/include")
+endif()
+
+if (${HOST_OS} EQUAL ${OS_WINDOWS})
+  list(APPEND osd_SRCS ${d_core}/windows/win_common.cpp)
   list(APPEND osd_SRCS ${d_core}/windows/winmain.cpp)
   list(APPEND osd_SRCS ${d_core}/windows/win_vmem.cpp)
   list(APPEND osd_SRCS ${d_core}/oslib/windows/threading.cpp)
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
-  
-  
   link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
-
-  
 elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
 
     list(APPEND osd_SRCS
@@ -269,7 +274,23 @@ include_directories ("${reicast_core_path}")
 
 set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
-add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+if (LIBRETRO_CORE)
+
+    include (GenerateExportHeader)
+ 
+    add_library(${TNAME} SHARED ${reicast_SRCS})
+
+    if (${HOST_OS} EQUAL ${OS_WINDOWS})
+      GENERATE_EXPORT_HEADER (reicast
+        BASE_NAME reicast
+        EXPORT_MACRO_NAME reicast_EXPORT
+        EXPORT_FILE_NAME reicast_Export.h
+        STATIC_DEFINE reicast_BUILT_AS_STATIC
+      )
+endif()
+else()
+  add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+endif()
 
 target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
 
@@ -298,6 +319,7 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
     target_link_libraries(${TNAME} ${ALSA_LIBRARIES})
   endif()
 
+  if (NOT LIBRETRO_CORE)
   find_package(OpenGL REQUIRED)
   if(OpenGL_EGL_FOUND)
     target_compile_definitions(${TNAME} PUBLIC SUPPORT_EGL)
@@ -309,6 +331,7 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
     target_link_libraries(${TNAME} OpenGL::GLX)
   else()
     message(FATAL_ERROR "EGL or GLX required")
+  endif()
   endif()
 
   find_package(OpenMP)
@@ -355,12 +378,14 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
   find_package(Threads REQUIRED)
   target_link_libraries(${TNAME} Threads::Threads)
 
+  if (NOT LIBRETRO_CORE)
   find_package(X11 REQUIRED)
   if(X11_FOUND)
     target_sources(${TNAME} PUBLIC ${d_core}/linux-dist/x11.cpp)
     target_compile_definitions(${TNAME} PUBLIC SUPPORT_X11)
     target_include_directories(${TNAME} PUBLIC ${X11_INCLUDE_DIR})
     target_link_libraries(${TNAME} ${X11_LIBRARIES})
+  endif()
   endif()
 
   target_link_libraries(${TNAME} ${CMAKE_DL_LIBS} rt)
@@ -420,12 +445,11 @@ endif()
 
 
 
-
-
-
-
-
-
+if (LIBRETRO_CORE)
+  add_definitions(/DBUILD_RETROARCH_CORE=1)
+else()
+  add_definitions(/DBUILD_RETROARCH_CORE=0)
+endif()
 
 
 

@@ -187,6 +187,7 @@ struct MapleConfigMap : IMapleConfigMap
 	void GetMouse(u32 *buttons, f32 *delta_x, f32 *delta_y, f32 *delta_wheel)
 	{
 	   int pnum = player_num == -1 ? dev->bus_id : player_num;
+	   UpdateInputState(pnum);
 	   *buttons = mo_buttons[pnum];
 	   *delta_x = mo_x_delta[pnum];
 	   *delta_y = mo_y_delta[pnum];

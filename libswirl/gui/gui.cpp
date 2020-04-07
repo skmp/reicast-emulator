@@ -863,7 +863,7 @@ struct ReicastUI_impl : GUI {
 
         if (ImGui::Button((string("Load ") + name).c_str()))
         {
-            if (!showBuy || msgboxf("By pressing OK I declare that I have reviewed the laws and regulations that apply to me, and that it is legal for me to download this rom from https://archive.org.", MBX_OK) == MBX_RV_OK)
+            if (!showBuy || msgboxf("By pressing OK I declare that I have reviewed the laws and regulations that apply to me, and that it is legal for me to download roms from https://archive.org.", MBX_OK) == MBX_RV_OK)
             {
                 onlineRoms->fetchRomList();
             }
@@ -878,6 +878,7 @@ struct ReicastUI_impl : GUI {
             
             ImGui::SameLine();
             
+            #if EXPERIMENTAL_SHOW_BUY
             if (showBuy)
             {   
                 if (ImGui::Button("Buy"))
@@ -890,6 +891,7 @@ struct ReicastUI_impl : GUI {
 
                 ImGui::SameLine();
             }
+            #endif
 
             if (it->status == RS_DOWNLOADED)
             {

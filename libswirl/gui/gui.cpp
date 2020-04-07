@@ -4,6 +4,8 @@
 */
 #include "license/bsd"
 
+#include "utils/http.h"
+
 
 
 #include "gui.h"
@@ -80,8 +82,9 @@ static bool operator<(const GameMedia& left, const GameMedia& right)
 
 static std::vector<GameMedia> game_list;
 
-static OnlineRomsProvider onlineRoms;
-static bool show_downloading_popup = false;
+static unique_ptr<OnlineRomsProvider> reicastCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/homebrew.lst"));
+static unique_ptr<OnlineRomsProvider> archiveChdCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/archive.org-chd.lst"));
+static unique_ptr<OnlineRomsProvider> archiveCueCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/archive.org-cue.lst"));
 
 
 #define VMU_WIDTH (70 * 48 * scaling / 32)
@@ -795,45 +798,44 @@ struct ReicastUI_impl : GUI {
         }
     }
 
-    void downloading_popup()
+    void downloading_popup(OnlineRomsProvider* onlineRoms)
     {
-        if (show_downloading_popup)
+        if (onlineRoms->downloadingAny())
         {
             if (ImGui::BeginPopupModal("Downloading", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
             {
                 ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
 
-                if (onlineRoms.hasDownloadErrored())
+                if (onlineRoms->hasDownloadErrored())
                 {
                     ImGui::TextWrapped("Download failed");
                 }
                 else
                 {
-                    ImGui::TextWrapped("%s\n\n%.2f %%", onlineRoms.getDownloadName().c_str(), onlineRoms.getDownloadPercent());
+                    ImGui::TextWrapped("%s\n\n%.2f %%", onlineRoms->getDownloadName().c_str(), onlineRoms->getDownloadPercent());
                 }
 
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
                 float currentwidth = ImGui::GetContentRegionAvailWidth();
                 ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-                if (ImGui::Button(onlineRoms.hasDownloadErrored() ? "Close" : "Cancel", ImVec2(80.f * scaling, 0.f)))
+                if (ImGui::Button(onlineRoms->hasDownloadErrored() ? "Close" : "Cancel", ImVec2(80.f * scaling, 0.f)))
                 {
-                    if (onlineRoms.hasDownloadErrored())
+                    if (onlineRoms->hasDownloadErrored())
                     {
-                        show_downloading_popup = false;
-                        onlineRoms.remove(onlineRoms.getDownloadId());
+                        onlineRoms->remove(onlineRoms->getDownloadId());
+                        onlineRoms->clearDownloadStatus();
                         RefreshFiles();
                         ImGui::CloseCurrentPopup();
                     }
                     else
                     {
-                        onlineRoms.downloadCancel();
+                        onlineRoms->downloadCancel();
                     }
                 }
 
-                if (onlineRoms.hasDownloadFinished())
+                if (onlineRoms->hasDownloadFinished())
                 {
-                    show_downloading_popup = false;
-                    onlineRoms.downloaded(onlineRoms.getDownloadId());
+                    onlineRoms->downloaded(onlineRoms->getDownloadId());
                     RefreshFiles();
                     ImGui::CloseCurrentPopup();
                 }
@@ -846,12 +848,12 @@ struct ReicastUI_impl : GUI {
         }
     }
 
-    void gui_render_online_roms()
+    void gui_render_online_roms(bool showBuy, const char* name, OnlineRomsProvider* onlineRoms)
     {
-        ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "CLOUD ROMS");
+        ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "%s", name);
         ImGui::SameLine();
 
-        auto status = onlineRoms.getStatus();
+        auto status = onlineRoms->getStatus();
 
         if (status.length())
         {
@@ -859,32 +861,62 @@ struct ReicastUI_impl : GUI {
             ImGui::SameLine();
         }
 
-        if (ImGui::Button("Load List"))
+        if (ImGui::Button((string("Load ") + name).c_str()))
         {
-            onlineRoms.fetchRomList();
+            if (!showBuy || msgboxf("By pressing OK I declare that I have reviewed the laws and regulations that apply to me, and that it is legal for me to download roms from https://archive.org.", MBX_OK) == MBX_RV_OK)
+            {
+                onlineRoms->fetchRomList();
+            }
         }
 
-        auto roms = onlineRoms.getRoms();
+        auto roms = onlineRoms->getRoms();
 
         for (auto it = roms.begin(); roms.end() != it; it++)
         {
             ImGui::PushID(it->id.c_str());
-            ImGui::Text("%s (%s)", it->name.c_str(), it->type.c_str()); ImGui::SameLine();
+            ImGui::Text("%s (%s)", it->name.c_str(), it->type.c_str());
+            
+            ImGui::SameLine();
+            
+            #if EXPERIMENTAL_SHOW_BUY
+            if (showBuy)
+            {   
+                if (ImGui::Button("Buy"))
+                {
+                    auto last_dot = it->name.find_last_of('.');
+                    string name = it->name.substr(0, last_dot);
+
+                    os_LaunchFromURL("https://www.amazon.com/s?k=" + url_encode("dreamcast " + name));
+                }
+
+                ImGui::SameLine();
+            }
+            #endif
 
             if (it->status == RS_DOWNLOADED)
             {
                 if (ImGui::Button("Delete"))
                 {
-                    onlineRoms.remove(it->id);
+                    onlineRoms->remove(it->id);
                     RefreshFiles();
                 }
             }
             else if (it->status == RS_MISSING)
             {
+                #if EXPERIMENTAL_STREAM_HTTP
+                // stream is too slow. We need to cache and batch and such.
+                if (ImGui::Button("Stream"))
+                {
+                    if (gui_start_game(it->url))
+                        gui_state = Closed;
+                }
+                #endif
+
+                ImGui::SameLine();
+
                 if (ImGui::Button("Download"))
                 {
-                    show_downloading_popup = true;
-                    onlineRoms.download(it->id);
+                    onlineRoms->download(it->id);
                     RefreshFiles();
                 }
             }
@@ -968,9 +1000,21 @@ struct ReicastUI_impl : GUI {
                 }
 
 
-            ImGui::Text("%s", "");
+            if (!settings.cloudroms.HideHomebrew)
+            {
+                ImGui::Text("%s", "");
 
-            gui_render_online_roms();
+                gui_render_online_roms(false, "HOMEBREW", reicastCloudRoms.get());
+            }
+
+            if (settings.cloudroms.ShowArchiveOrg)
+            {
+                ImGui::Text("%s", "");
+                gui_render_online_roms(true, "ARCHIVE.ORG (CHD)", archiveChdCloudRoms.get());
+
+                ImGui::Text("%s", "");
+                gui_render_online_roms(true, "ARCHIVE.ORG (CUE / .7z)", archiveCueCloudRoms.get());
+            }
 
             ImGui::PopStyleVar();
         }
@@ -979,7 +1023,11 @@ struct ReicastUI_impl : GUI {
         ImGui::PopStyleVar();
 
         error_popup();
-        downloading_popup();
+        downloading_popup(reicastCloudRoms.get());
+
+        downloading_popup(archiveChdCloudRoms.get());
+
+        downloading_popup(archiveCueCloudRoms.get());
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);

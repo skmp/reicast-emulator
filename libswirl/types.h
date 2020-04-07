@@ -598,6 +598,11 @@ struct settings_t
 		bool HideCallToAction;
 	} social;
 
+	struct {
+		bool HideHomebrew;
+		bool ShowArchiveOrg;
+	} cloudroms;
+
 };
 
 extern settings_t settings;

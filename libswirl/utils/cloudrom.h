@@ -22,40 +22,33 @@ struct OnlineRomInfo
 	string id;
 	string name;
 	string sha256;
+	string url;
+	string filename;
 };
 
-class OnlineRomsProvider
+struct OnlineRomsProvider
 {
-	bool loggedIn = false;
-	string status;
+	virtual void fetchRomList() = 0;
 
-	vector<OnlineRomInfo> roms;
+	virtual string getStatus() = 0;
+	virtual bool downloadingAny() = 0;
 
-	OnlineRomInfo* findRom(string id);
+	virtual vector<OnlineRomInfo> getRoms() = 0;
 
-	string romPath(string id);
+	virtual void download(string id) = 0;
 
-	bool romExists(string id);
+	virtual void downloaded(string id) = 0;
 
-public:
-
-	void fetchRomList();
-
-	string getStatus();
-
-	vector<OnlineRomInfo> getRoms();
-
-	void download(string id);
-
-	void downloaded(string id);
-
-	void remove(string id);
+	virtual void remove(string id) = 0;
 	
-	void downloadCancel();
-	bool hasDownloadErrored();
-	bool hasDownloadFinished();
+	virtual void downloadCancel() = 0;
+	virtual bool hasDownloadErrored() = 0;
+	virtual bool hasDownloadFinished() = 0;
+	virtual void clearDownloadStatus() = 0;
 
-	float getDownloadPercent();
-	string getDownloadName();
-	string getDownloadId();
+	virtual float getDownloadPercent() = 0;
+	virtual string getDownloadName() = 0;
+	virtual string getDownloadId() = 0;
+
+	static OnlineRomsProvider* CreateHttpProvider(string host, string path);
 };

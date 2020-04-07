@@ -87,6 +87,18 @@ void gui_settings_advanced()
 			gui_ShowHelpMarker("Use the DSP interpreter. Very slow but may help in case of a DSP dynarec problem");
 			ImGui::Columns(1, NULL, false);
 		}
+		
+		if (ImGui::CollapsingHeader("Cloudroms", ImGuiTreeNodeFlags_DefaultOpen))
+	    {
+			ImGui::Checkbox("Hide Homebrew", &settings.cloudroms.HideHomebrew);
+            ImGui::SameLine();
+            gui_ShowHelpMarker("Hide the homebrew category on cloudroms");
+
+			ImGui::Checkbox("Show archive.org", &settings.cloudroms.ShowArchiveOrg);
+            ImGui::SameLine();
+            gui_ShowHelpMarker("Show the archive.org category on cloudroms. Please check your local laws on whenever this is legal for you.");
+		}
+
 		if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 	    {
 #ifndef _ANDROID

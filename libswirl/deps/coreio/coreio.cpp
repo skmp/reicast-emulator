@@ -58,45 +58,32 @@ struct CoreFileLocal: CoreFile
 
 struct CoreFileHTTP: CoreFile
 {
-	string path;
-	string host;
-	int port;
-
+	string url;
+	
 	static CoreFile* open(const char* path)
 	{
 		string p = path;
 
-		if (p.substr(0,7)!="http://")
+		if (p.substr(0,7)!="http://" && p.substr(0,8)!="https://")
 			return nullptr;
 
 		CoreFileHTTP* rv = new CoreFileHTTP();
 
-		rv->host = p.substr(7,p.npos);
-		rv->host = rv->host.substr(0, rv->host.find_first_of("/"));
-
-		rv->path = url_encode(p.substr(p.find("/", 7), p.npos));
-		
-		rv->port = 80;
-		size_t pos = rv->host.find_first_of(":");
-		if (pos != rv->host.npos) {
-			string port = rv->host.substr(pos, rv->host.npos );
-			rv->host = rv->host.substr(0, rv->host.find_first_of(":"));
-			sscanf(port.c_str(),"%d",&rv->port);
-		}
+		rv->url = p;
 
 		return rv;
 	}
 
 	size_t read(void* buff, size_t len)
 	{
-		return HTTP(HM_GET, host, port, path, seek_ptr, len, buff);
+		return HTTP(HM_GET, url, seek_ptr, len, buff);
 	}
 
 	void seek() { }
 
 	size_t size()
 	{
-		return HTTP(HM_HEAD, host, port, path, 0, 0,0);
+		return HTTP(HM_HEAD, url, 0, 0,0);
 	}
 
 	~CoreFileHTTP() { }
@@ -109,7 +96,7 @@ static CoreFile* (*vfs[])(const char* path) =
 	nullptr
 };
 
-core_file* core_fopen(const char* filename)
+extern "C" core_file* core_fopen(const char* filename)
 {
 	CoreFile* rv = nullptr;
 	for (int i = 0; vfs[i] != nullptr; i++)
@@ -133,7 +120,7 @@ core_file* core_fopen(const char* filename)
 	}
 }
 
-size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
+extern "C" size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
 	CoreFile* f = (CoreFile*)fc;
 	
 	if (origin == SEEK_SET)
@@ -148,12 +135,12 @@ size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
 	return 0;
 }
 
-size_t core_ftell(core_file* fc) {
+extern "C" size_t core_ftell(core_file* fc) {
 	CoreFile* f = (CoreFile*)fc;
 	return f->seek_ptr;
 }
 
-int core_fread(core_file* fc, void* buff, size_t len)
+extern "C" int core_fread(core_file* fc, void* buff, size_t len)
 {
 	CoreFile* f = (CoreFile*)fc;
 
@@ -164,7 +151,7 @@ int core_fread(core_file* fc, void* buff, size_t len)
 	return (int)rv;
 }
 
-int core_fclose(core_file* fc)
+extern "C" int core_fclose(core_file* fc)
 {
 	CoreFile* f = (CoreFile*)fc;
 
@@ -173,7 +160,7 @@ int core_fclose(core_file* fc)
 	return 0;
 }
 
-size_t core_fsize(core_file* fc)
+extern "C" size_t core_fsize(core_file* fc)
 {
 	CoreFile* f = (CoreFile*)fc;
 

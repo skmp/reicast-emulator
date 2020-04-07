@@ -1,0 +1,3 @@
+[submodule "libswirl/deps/discord_game_sdk"]
+	path = libswirl/deps/discord_game_sdk
+	url = https://github.com/Kamaropoulos/discord_game_sdk.git

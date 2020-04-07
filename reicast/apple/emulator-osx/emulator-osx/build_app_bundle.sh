@@ -13,6 +13,7 @@ readonly BUNDLE="${BUILD_ROOT}/${APP_NAME}.app"
 readonly BUNDLE_CONENTS_ROOT="${BUNDLE}/Contents"
 readonly BUNDLE_MACOS_ROOT="${BUNDLE_CONENTS_ROOT}/MacOS"
 readonly BUNDLE_RESOURCES_ROOT="${BUNDLE_CONENTS_ROOT}/Resources"
+readonly BUNDLE_FRAMEWORKS_ROOT="${BUNDLE_CONENTS_ROOT}/Frameworks"
 readonly INFO_PLIST="${BUNDLE_CONENTS_ROOT}/Info.plist"
 
 echo "--- Building Mac App Bundle ---"
@@ -21,6 +22,7 @@ rm -rf ${BUNDLE}
 echo "Creating the app bundle directories"
 mkdir -p ${BUNDLE_MACOS_ROOT}
 mkdir -p ${BUNDLE_RESOURCES_ROOT}
+mkdir -p ${BUNDLE_FRAMEWORKS_ROOT}
 echo "Copying the bundle root directory files"
 cp ${MACOS_SOURCE_ROOT}/Info.plist ${INFO_PLIST}
 echo "Copying the bundle MacOS directory files"
@@ -31,6 +33,8 @@ cp ${LICENSE_ROOT}/bsd ${BUNDLE_RESOURCES_ROOT}
 cp ${LICENSE_ROOT}/dep_gpl ${BUNDLE_RESOURCES_ROOT}
 cp ${LICENSE_ROOT}/gpl ${BUNDLE_RESOURCES_ROOT}
 cp ${LICENSE_ROOT}/lgpl ${BUNDLE_RESOURCES_ROOT}
+echo "Copying the bundle Frameworks directory files"
+cp ${BUILD_ROOT}/discord_game_sdk.dylib ${BUNDLE_FRAMEWORKS_ROOT}
 # TODO: Process and include language files
 # for cat in $(CATALOGS); do \
 #     catname=`basename "$$cat"`; \
@@ -40,6 +44,7 @@ cp ${LICENSE_ROOT}/lgpl ${BUNDLE_RESOURCES_ROOT}
 # done
 echo "Updating values in Info.plist"
 # TODO: Update Info.plist with new version number automatically
+# TODO: Detect gnu-sed and use the appropriate commands
 sed -i .bak "s/\$(EXECUTABLE_NAME)/${APP_NAME}/g" ${INFO_PLIST}
 sed -i .bak "s/\$(PRODUCT_BUNDLE_IDENTIFIER)/${APP_BUNDLE_IDENTIFIER}/g" ${INFO_PLIST}
 sed -i .bak "s/\$(PRODUCT_NAME)/${APP_NAME}/g" ${INFO_PLIST}

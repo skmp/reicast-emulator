@@ -164,6 +164,7 @@ file(GLOB lelf_SRCS  ${d_deps}/libelf/el*.cpp)
 file(GLOB crypt_SRCS ${d_deps}/crypto/*.cpp)
 file(GLOB imgui_SRCS ${d_deps}/imgui/*.cpp)
 file(GLOB lua_SRCS   ${d_deps}/lua/*.c)
+file(GLOB discord_SRCS ${d_deps}/discord_game_sdk/cpp/*.cpp)
 
 file(GLOB picoModS   ${gpl_deps}/picotcp/modules/*.c)
 file(GLOB picoStkS   ${gpl_deps}/picotcp/stack/*.c)
@@ -178,6 +179,7 @@ set(deps_SRCS
   ${crypt_SRCS}
   ${imgui_SRCS}
   ${lua_SRCS}
+  ${discord_SRCS}
   ${gpl_deps}/xbrz/xbrz.cpp
   ${d_deps}/xxhash/xxhash.c
   ${d_deps}/cdipsr/cdipsr.cpp
@@ -270,6 +272,32 @@ include_directories ("${reicast_core_path}")
 set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
 add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+
+# Discord
+set(has_discord_sdk (${HOST_CPU} EQUAL ${CPU_X64} OR ${HOST_CPU} EQUAL ${CPU_X86}) AND NOT ${HOST_OS} EQUAL ${OS_ANDROID})
+if(has_discord_sdk)
+  # SDK
+  set(d_discord_sdk "${d_core}/deps/discord_game_sdk")
+  if(${HOST_CPU} EQUAL ${CPU_X64})
+    find_library(discord_LIB NAMES discord_game_sdk${CMAKE_SHARED_LIBRARY_SUFFIX} HINTS "${d_discord_sdk}/lib/x86_64")
+    if(${HOST_OS} EQUAL ${OS_WINDOWS})
+      configure_file("${d_discord_sdk}/lib/x86_64/discord_game_sdk.dll" discord_game_sdk.dll COPYONLY)
+    else()
+      configure_file(${discord_LIB} discord_game_sdk${CMAKE_SHARED_LIBRARY_SUFFIX} COPYONLY)
+    endif()
+  elseif(${HOST_CPU} EQUAL ${CPU_X86})
+    find_library(discord_LIB NAMES discord_game_sdk${CMAKE_SHARED_LIBRARY_SUFFIX} HINTS "${d_discord_sdk}/lib/x86")
+    if(${HOST_OS} EQUAL ${OS_WINDOWS})
+      configure_file("${d_discord_sdk}/lib/x86/discord_game_sdk.dll" discord_game_sdk.dll COPYONLY)
+    endif()
+  endif()
+  target_include_directories(${TNAME}${binSuffix} PRIVATE "${d_discord_sdk}/cpp")
+  target_include_directories(${TNAME}${binSuffix} PRIVATE "${d_discord_rp}")
+  target_link_libraries(${TNAME}${binSuffix} ${discord_LIB})
+  # Rich Presence Utility
+  set(d_discord_rp "${d_core}/utils/discord")
+  
+endif()
 
 target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
 

@@ -939,7 +939,12 @@ struct Dreamcast_impl : VirtualDreamcast {
 #endif
         ;
 
-        MMIODevice* extDevice_010 = Create_BBA(asic);//Create_ExtDevice_010();
+        MMIODevice* extDevice_010 = 
+        #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_BBA)
+            Create_BBA(asic);
+        #else
+            Create_ExtDevice_010();
+        #endif
 
         MMIODevice* rtcDevice = AICA::CreateRTC();
 

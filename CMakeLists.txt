@@ -276,20 +276,20 @@ set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
 if (LIBRETRO_CORE)
 
-    include (GenerateExportHeader)
- 
     add_library(${TNAME} SHARED ${reicast_SRCS})
+    set_property(TARGET ${TNAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     if (${HOST_OS} EQUAL ${OS_WINDOWS})
+      include (GenerateExportHeader)
       GENERATE_EXPORT_HEADER (reicast
         BASE_NAME reicast
         EXPORT_MACRO_NAME reicast_EXPORT
         EXPORT_FILE_NAME reicast_Export.h
         STATIC_DEFINE reicast_BUILT_AS_STATIC
       )
-endif()
+    endif()
 else()
-  add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+  add_executable(${TNAME}${binSuffix} ${reicast_SRCS}) 
 endif()
 
 target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)

@@ -9,10 +9,17 @@ build:
                 sudo apt-get clean && sudo apt-get update && \
                 sudo apt-get install -y build-essential pkgconf libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev git && \
                 sudo apt-get install -y libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 g++-multilib gcc-multilib && \
-                sudo apt-get install -y g++-mingw-w64-x86-64 mingw-w64-x86-64-dev libz-mingw-w64-dev libnpth-mingw-w64-dev
+                sudo apt-get install -y g++-mingw-w64-x86-64 mingw-w64-x86-64-dev libz-mingw-w64-dev libnpth-mingw-w64-dev && \
+                sudo apt-get install -y cmake ninja-build
         - script:
             name: toolchain info
             code: gcc --version && x86_64-w64-mingw32-gcc --version
+        - script:
+            name: reicast Linux x64 cmake
+            code: mkdir build-standalone && cd build-standalone && cmake .. -G Ninja && ninja
+        - script:
+            name: reicast Linux x64 cmake libretro
+            code: mkdir build-libretro && cd build-libretro && cmake .. -DLIBRETRO_CORE=ON -G Ninja && ninja
         - script:
             name: reicast Linux x64 build
             code: make -C reicast/linux -j `nproc` platform=x64

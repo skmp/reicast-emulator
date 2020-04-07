@@ -1,6 +1,13 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
 #include "bba.h"
-#include "pcap_io.h"
+#include "VirtualNetwork.h"
+#include "ethernet.h"
 #include "rtl8139c.h"
+#include "hw/holly/holly_intc.h"
 
 const char* chip_id="GAPSPCI_BRIDGE_2";
 
@@ -22,6 +29,7 @@ void* opaq;
 bool inttr_pending=false;
 bool GAPS_INTTRON=false;
 ASIC* asic;
+VirtualNetwork* virtualNetwork;
 NICInfo nd;
 
 //GAPS PCI emulation .. well more like checks to ensure nothing funny is writen :P
@@ -252,12 +260,15 @@ void bba_periodical()
 	{
 		u8 p[1520];
 		// FIXME
-		int len=pcap_io_recv(p,1520);
+		
+		int len=virtualNetwork->RecvEthernetPacket(p, 1520);
+
 		if (len>0)
 		{
 			u32 fromaddr=nrc(opaq,p,len);
 			printf("Got Packet to %02X:%02X:%02X:%02X:%02X:%02X from %02X:%02X:%02X:%02X:%02X:%02X, proto 0x%04X, to addr 0x%04X sz %d bytes\n",
 				p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8],p[9],p[10],p[11],p[12]*256+p[13],fromaddr,len);
+			
 			ExaminePacket(p,p[12]*256+p[13]);
 		}
 		else
@@ -269,9 +280,10 @@ void bba_periodical()
 void qemu_send_packet(VLANClientState*,const uint8_t* p, int sz,u32 fromaddr)
 {
 	//FIXME
-	pcap_io_send((void*)p,sz);
+	virtualNetwork->SendEthernetPacket(p, sz);
 	printf("Sent Packet to %02X:%02X:%02X:%02X:%02X:%02X from %02X:%02X:%02X:%02X:%02X:%02X, proto 0x%04X, from addr 0x%04X sz %d bytes\n",
 		p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8],p[9],p[10],p[11],p[12]*256+p[13],fromaddr,sz);
+	
 	ExaminePacket(p,p[12]*256+p[13]);
 }
 
@@ -337,13 +349,16 @@ void pci_register_io_region(PCIDevice *pci_dev, int region_num,
 
 
 struct BBA_impl : MMIODevice {
-	BBA_impl(ASIC* asic)
+	BBA_impl(ASIC* asic, VirtualNetwork* virtualNetwork)
 	{
 		::asic = asic;
+		::virtualNetwork = virtualNetwork;
+		
+		mac_address virtual_mac;
+		virtualNetwork->GetMacAddress(&virtual_mac);
 		memcpy(nd.macaddr,&virtual_mac,sizeof(virtual_mac));
 		opaq=0;//(((u8*)pcidev)+sizeof(PCIDevice));
 		pcidev=pci_rtl8139_init(0,&nd,0);
-		pcap_io_init("wlx107b449e14e5");
 	}
 	u32 Read(u32 addr,u32 sz)
 	{
@@ -505,6 +520,6 @@ struct BBA_impl : MMIODevice {
 	}
 };
 
-MMIODevice* Create_BBA(ASIC* asic) {
-	return new BBA_impl(asic);
+MMIODevice* Create_BBA(ASIC* asic, VirtualNetwork* virtualNetwork) {
+	return new BBA_impl(asic, virtualNetwork);
 }

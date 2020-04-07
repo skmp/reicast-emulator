@@ -276,7 +276,9 @@ target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
 if(${HOST_OS} EQUAL ${OS_LINUX})
   # needed for opentty
   target_link_libraries(${TNAME} -lutil)
-  target_link_libraries(${TNAME} -lpcap)
+
+  #target_compile_definitions(${TNAME} PUBLIC HAS_PCAP)
+  #target_link_libraries(${TNAME} -lpcap)
 
   FIND_PACKAGE(CURL)
   IF(CURL_FOUND)

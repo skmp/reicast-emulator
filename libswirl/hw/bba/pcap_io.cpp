@@ -1,8 +1,15 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+#include "types.h"
+
+#if HAS_PCAP
 #include <stdio.h>
 #include <stdarg.h>
 #include "pcap.h"
-#include "pcap_io.h"
-#include "types.h"
+#include "ethernet.h"
 #include "oslib/threading.h"
 #include <atomic>
 
@@ -69,7 +76,7 @@ int gettimeofday (struct timeval *tv, void* tz)
 } 
 #endif
 
-#if 1
+
 int pcap_io_send(void* packet, int plen)
 {
 	struct pcap_pkthdr ph;
@@ -133,7 +140,7 @@ int pcap_io_recv_blocking(void* packet, int max_len)
 	if((res = pcap_next_ex(adhandle, &header, &pkt_data)) > 0)
 	{
 		ethernet_header *ph=(ethernet_header*)pkt_data;
-		if((mac_compare(ph->dst,virtual_mac)!=0)&&(mac_compare(ph->dst,broadcast_mac)!=0))
+		if(ph->dst != virtual_mac && ph->dst != broadcast_mac)
 		{
 			return 0;
 		}

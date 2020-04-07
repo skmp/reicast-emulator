@@ -941,7 +941,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         MMIODevice* extDevice_010 = 
         #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_BBA)
-            Create_BBA(asic);
+            Create_BBA(asic, CreateNullNetwork());
         #else
             Create_ExtDevice_010();
         #endif

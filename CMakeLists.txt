@@ -277,6 +277,9 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
   # needed for opentty
   target_link_libraries(${TNAME} -lutil)
 
+  #target_compile_definitions(${TNAME} PUBLIC HAS_PCAP)
+  #target_link_libraries(${TNAME} -lpcap)
+
   FIND_PACKAGE(CURL)
   IF(CURL_FOUND)
     INCLUDE_DIRECTORIES(${CURL_INCLUDE_DIR})

@@ -303,7 +303,7 @@ T DYNACALL ReadMem_area0(void* ctx, u32 addr)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
 	{
-        sh4->devices[A0H_EXTDEV_010]->Read(addr, sz);
+        return sh4->devices[A0H_EXTDEV_010]->Read(addr, sz);
 	}
 	return 0;
 }

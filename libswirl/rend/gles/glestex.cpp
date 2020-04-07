@@ -264,7 +264,7 @@ void TextureCacheData::Create(bool isGL)
 
 				u32 curr_w = w;
 				u32 curr_h = h;
-				while (curr_w != 1 && curr_h != 1)
+				while (curr_w != 1 || curr_h != 1)
 				{
 					numMipMapLevels += 1;
 
@@ -278,7 +278,7 @@ void TextureCacheData::Create(bool isGL)
 
 				if (numMipMapLevels != mipLevelsQuick)
 				{
-					printf("\n!\tTEXCACHE: SW: MipMap Level Calculations don't match (Loop: %u) (Quick: %u) !\n", numMipMapLevels, mipLevelsQuick);
+					printf("\n!\tTEXCACHE: SW: MipMap Level Calculations don't match (Loop: %u) (Quick: %u), originalRes h = %u, w = %u !\n", numMipMapLevels, mipLevelsQuick, h, w);
 					die("TEXCACHE: SW: MipMap Level Calculations don't match");
 				}
 			}
@@ -418,11 +418,20 @@ void TextureCacheData::Update()
 		}
 		else if (texconv != NULL)
 		{
-			//fill it in with a temp color
 			printf("Converting texture with mip level: %u\n", m);
 			printf("Texture dimensions: %u, %u\n", curr_w, curr_h);
 			pb16[m].init(curr_w, curr_h);
-			texconv(&pb16[m],(u8*)&vram[sa],curr_w,curr_h);
+			//PETODO: unsigned int, underflow
+			//PETODO: Pixel conversions fail on textures under 4x4 pixels in size, so currently mips this size or smaller aren't copied
+			u32 maxMips = numMipMapLevels - 3;
+			if (maxMips > numMipMapLevels)
+			{
+				maxMips = 1;
+			}
+			if (m < maxMips || m == 0)
+			{
+				texconv(&pb16[m],(u8*)&vram[sa],curr_w,curr_h);
+			}
 
 			temp_tex_buffers[m] = pb16[m].data();
 		}
@@ -467,9 +476,11 @@ void TextureCacheData::Update()
 			u32 curr_h = h;
 			u32 curr_w = w;
 			u32 previous_mips_offset = 0;
-			for (int m = 0; m < numMipMapLevels; m++)
+			for (int m = 0; m < numMipMapLevels - 1 || m == 0; m++)
 			{
-				printf("\n!\tTEXCACHE: SW: Copying mip level %u !\n", m);
+				printf("\n!\tTEXCACHE: SW: decoding and copying mip level %u !\n", m);
+				//PETODO: Add special case handling for 1x1 mipmaps
+				//		Make a separate loop so that the check isn't happening every pixel
 				for (int y = 0; y < curr_h; y++) {
 					for (int x = 0; x < curr_w; x++) {
 						//PETODO: add an offset for previous mipmaps
@@ -478,7 +489,10 @@ void TextureCacheData::Update()
 						//The 8 here is 2*u16's per channel, 4 channels
 						//Each pixel is turned into 4 pixels
 
-						printf("\n!\tTEXCACHE: SW: Copying texture with %u mipmaps, current mip level %u !\n", numMipMapLevels, m);
+						if(numMipMapLevels > 1)
+						{
+							//printf("\n!\tTEXCACHE: SW: Copying texture with %u mipmaps, current mip level %u !\n", numMipMapLevels, m);
+						}
 
 						u16 *tex_data = (u16 *)temp_tex_buffers[m];
 

@@ -245,6 +245,18 @@ void TextureCacheData::Create(bool isGL)
 	//ask GL for texture ID
 	if (isGL) {
 		texID = glcache.GenTexture();
+		numMipMapLevels = 1;
+		
+		if (tcw.MipMapped && settings.rend.UseMipmaps)
+		{
+			numMipMapLevels = std::floor(std::log2(max(w, h))) + 1;
+
+			printf("\n!\tTEXCACHE: GLES: MipMap mapping enabled, max_level = %u!\n", numMipMapLevels - 1);
+			
+			glcache.BindTexture(GL_TEXTURE_2D, texID);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, numMipMapLevels - 1);
+		}
 		pData = 0;
 	}
 	else {
@@ -356,6 +368,10 @@ void TextureCacheData::Update()
 		custom_texture.LoadCustomTextureAsync(this);
 
 	void *temp_tex_buffers[numMipMapLevels];
+	for (int i = 0; i < numMipMapLevels; i++)
+	{
+		temp_tex_buffers[i] = 0;
+	}
 	u32 upscaled_w = w;
 	u32 upscaled_h = h;
 
@@ -376,8 +392,10 @@ void TextureCacheData::Update()
 	u32 curr_h = h;
 	u32 curr_w = stride;
 	u32 previous_mips_offset = 0;
+	u32 sa_previous_mips_offset = 0;
 	//PETODO: The notes here indicate that a game doesn't load all of a texture as it hits end of VRAM,
 	//        this could potentially fail if mipmapping is enabled on that texture
+	printf(" About to convert text with Texture dimensions: %u, %u\n", curr_w, curr_h);
 	for (int m = 0; m < numMipMapLevels; m++)
 	{
 		if (texconv32 != NULL && need_32bit_buffer)
@@ -421,17 +439,22 @@ void TextureCacheData::Update()
 			printf("Converting texture with mip level: %u\n", m);
 			printf("Texture dimensions: %u, %u\n", curr_w, curr_h);
 			pb16[m].init(curr_w, curr_h);
-			//PETODO: unsigned int, underflow
+
 			//PETODO: Pixel conversions fail on textures under 4x4 pixels in size, so currently mips this size or smaller aren't copied
-			u32 maxMips = numMipMapLevels - 3;
-			if (maxMips > numMipMapLevels)
+			if(curr_w > 4 && curr_h > 4)
 			{
-				maxMips = 1;
+				texconv(&pb16[m],(u8*)&vram[sa+sa_previous_mips_offset],curr_w,curr_h);
 			}
-			if (m < maxMips || m == 0)
+			else
 			{
-				texconv(&pb16[m],(u8*)&vram[sa],curr_w,curr_h);
+				//fill it in with a temp color
+				printf("UNHANDLED MIP MAP\n");
+				pb16[m].init(curr_w, curr_h);
+				memset(pb16[m].data(), 0x80, curr_w * curr_h * 2);
+				temp_tex_buffers[m] = pb16[m].data();
 			}
+			
+			sa_previous_mips_offset += curr_w * curr_h * (tex->bpp/8);
 
 			temp_tex_buffers[m] = pb16[m].data();
 		}
@@ -455,9 +478,20 @@ void TextureCacheData::Update()
 	//lock the texture to detect changes in it
 	lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
+	printf("\n!\tTEXCACHE: ALL: Uploading to GPU/SW buffer, num mip maps: %u !\n", numMipMapLevels);
 	if (texID) {
 		//upload to OpenGL !
-		UploadToGPU(textype, upscaled_w, upscaled_h, (u8*)temp_tex_buffers[0]);
+		u32 curr_h = upscaled_h;
+		u32 curr_w = upscaled_w;
+		for (int m = 0; m < numMipMapLevels; m++)
+		{
+			UploadToGPU(textype, curr_w, curr_h, m, (u8*)temp_tex_buffers[m]);
+			printf("!\tTEXCACHE: GLES: Uploading to GPU, mip: %u !\n", m);
+
+			//calculate the next mipmap dimensions
+			curr_w = max(curr_w / 2, (u32)1);
+			curr_h = max(curr_h / 2, (u32)1);
+		}
 		if (settings.rend.DumpTextures)
 		{
 			ComputeHash();
@@ -483,19 +517,10 @@ void TextureCacheData::Update()
 				//		Make a separate loop so that the check isn't happening every pixel
 				for (int y = 0; y < curr_h; y++) {
 					for (int x = 0; x < curr_w; x++) {
-						//PETODO: add an offset for previous mipmaps
-						//PETODO: current expected behaviour is to copy the top of mip0 into all mips
+						u16 *tex_data = (u16 *)temp_tex_buffers[m];
 
 						//The 8 here is 2*u16's per channel, 4 channels
 						//Each pixel is turned into 4 pixels
-
-						if(numMipMapLevels > 1)
-						{
-							//printf("\n!\tTEXCACHE: SW: Copying texture with %u mipmaps, current mip level %u !\n", numMipMapLevels, m);
-						}
-
-						u16 *tex_data = (u16 *)temp_tex_buffers[m];
-
 						u32* data = (u32*)&pData[(x + y*curr_w) * 8];
 
 						data[0] = decoded_colors[tex_type][tex_data[((x + 1) % curr_w + (y + 1) % curr_h * curr_w)]];
@@ -510,32 +535,26 @@ void TextureCacheData::Update()
 				curr_w = max(curr_w / 2, (u32)1);
 				curr_h = max(curr_h / 2, (u32)1);
 			}
-
-			if (tcw.MipMapped && settings.rend.UseMipmaps)
-			{
-				//printf("\n!\tTEXCACHE: SW: Mipmaps aren't being copied, when they should be !\n");
-			}
 		#else
 			die("Soft rend disabled, invalid code path");
 		#endif
 	}
+	printf("!\tTEXCACHE: ALL: Finished Uploading to GPU/SW buffer !\n");
 }
 
-void TextureCacheData::UploadToGPU(GLuint textype, int width, int height, u8 *temp_tex_buffer)
+void TextureCacheData::UploadToGPU(GLuint textype, int width, int height, int mipmaplevel, u8 *temp_tex_buffer)
 {
 	//upload to OpenGL !
 	glcache.BindTexture(GL_TEXTURE_2D, texID);
 	GLuint comps=textype == GL_UNSIGNED_SHORT_5_6_5 ? GL_RGB : GL_RGBA;
-	glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, textype, temp_tex_buffer);
-	if (tcw.MipMapped && settings.rend.UseMipmaps)
-		glGenerateMipmap(GL_TEXTURE_2D);
+	glTexImage2D(GL_TEXTURE_2D, mipmaplevel,comps, width, height, 0, comps, textype, temp_tex_buffer);
 }
 
 void TextureCacheData::CheckCustomTexture()
 {
 	if (custom_load_in_progress == 0 && custom_image_data != NULL)
 	{
-		UploadToGPU(GL_UNSIGNED_BYTE, custom_width, custom_height, custom_image_data);
+		UploadToGPU(GL_UNSIGNED_BYTE, custom_width, custom_height, 0, custom_image_data);
 		delete [] custom_image_data;
 		custom_image_data = NULL;
 	}

@@ -252,7 +252,7 @@ struct TextureCacheData
 	void Create(bool isGL);
 	void ComputeHash();
 	void Update();
-	void UploadToGPU(GLuint textype, int width, int height, u8 *temp_tex_buffer);
+	void UploadToGPU(GLuint textype, int width, int height, int mipmaplevel, u8 *temp_tex_buffer);
 	void CheckCustomTexture();
 	//true if : dirty or paletted texture and hashes don't match
 	bool NeedsUpdate();

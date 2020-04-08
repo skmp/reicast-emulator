@@ -24,6 +24,9 @@ struct GUIRenderer {
 
     virtual void WaitQueueEmpty() = 0;
 
+    virtual void UIFrame() = 0;
+    virtual bool CreateContext() = 0;
+
     virtual ~GUIRenderer() { }
 
     static GUIRenderer* Create(GUI* gui);

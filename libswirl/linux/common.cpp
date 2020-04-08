@@ -79,7 +79,7 @@ static unat trap_pc;
 static bool trap_handled = true;
 static bool in_handler = false;
 
-extern "C" u8* generic_fault_handler ()
+u8* generic_fault_handler ()
 {
 	fault_printf("generic_fault_handler\n");
 	rei_host_context_t ctx;
@@ -119,28 +119,24 @@ naked void re_raise_fault()
 	__asm__ __volatile__(
 		#if HOST_CPU == CPU_X86
 	        "movl %0, %%esp\n"
-	        "call generic_fault_handler\n"
+	        "call *%1\n"
 	        "movb $0, (%%eax)"
         #elif HOST_CPU == CPU_X64
             "movq %0, %%rsp\n"
-            #if HOST_OS == OS_DARWIN
-                "call _generic_fault_handler\n"
-            #else
-                "call generic_fault_handler\n"
-            #endif
+            "call *%1\n"
             "movb $0, (%%rax)"
         #elif HOST_CPU == CPU_ARM
 			"mov sp, %0\n"
-	        "bl generic_fault_handler\n"
+	        "blx %1\n"
 	        "ldr r1, [r0]"
 	    #elif HOST_CPU == CPU_ARM64
 	        "mov sp, %0\n"
-	        "bl generic_fault_handler\n"
+	        "blr %1\n"
 	        "ldr w1, [x0]"
 	    #else
 	    	#error missing cpu
         #endif
-	        : : "r"(trap_ptr_stack_top) : "memory"
+	        : : "r"(trap_ptr_stack_top), "r"(generic_fault_handler) : "memory"
 
     );
 }

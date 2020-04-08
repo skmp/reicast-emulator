@@ -650,13 +650,17 @@ int reicast_init(int argc, char* argv[])
     else
         LoadSettings(false);
 
+#if BUILD_RETROARCH_CORE == 0
     os_CreateWindow();
+#endif
     os_SetupInput();
 
     g_GUI.reset(GUI::Create());
     g_GUI->Init();
 
+#if BUILD_RETROARCH_CORE == 0
     g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
+#endif
 
     if (showOnboarding)
         g_GUI->OpenOnboarding();

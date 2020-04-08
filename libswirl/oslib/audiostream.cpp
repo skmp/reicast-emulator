@@ -227,6 +227,15 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 	return true;
 }
 
+static audiobackend_t* SearchAudioBackend(const std::string& s) {
+	for (unsigned int i = 0; i < audiobackends_num_registered;++i) {
+		if (audiobackends[i]->slug == s)
+			return audiobackends[i];
+	}
+	
+	return nullptr;
+}
+
 audiobackend_t* GetAudioBackend(std::string slug)
 {
 	if (slug == "none")
@@ -235,6 +244,13 @@ audiobackend_t* GetAudioBackend(std::string slug)
 	}
 	else if (audiobackends_num_registered > 0)
 	{
+		#if BUILD_RETROARCH_CORE==1
+			audiobackend_t* rv = SearchAudioBackend("libretro");
+			if (rv != nullptr) {
+				printf("Auto-selected audio backend \"%s\" (%s).\n", rv->slug.c_str(), rv->name.c_str());
+				return rv;
+			}
+		#endif
 		if (slug == "auto")
 		{
 			/* FIXME: At some point, one might want to insert some intelligent
@@ -245,13 +261,10 @@ audiobackend_t* GetAudioBackend(std::string slug)
 		}
 		else
 		{
-			for (unsigned int i = 0; i < audiobackends_num_registered; i++)
-			{
-				if (audiobackends[i]->slug == slug)
-				{
-					return audiobackends[i];
-				}
-			}
+			audiobackend_t* rv = SearchAudioBackend(slug);
+			if (rv != nullptr)
+				return rv;
+
 			printf("WARNING: Audio backend \"%s\" not found!\n", slug.c_str());
 		}
 	}

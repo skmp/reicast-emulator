@@ -828,9 +828,9 @@ static bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 		}
 		else
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER,0);
+			glBindFramebuffer(GL_FRAMEBUFFER, gl.screen_fb);
 			glViewport(0, 0, screen_width, screen_height);
-			output_fbo = 0;
+			output_fbo = gl.screen_fb;
 		}
 	}
 
@@ -1063,6 +1063,6 @@ struct gl4rend : Renderer
 
 #include "hw/pvr/Renderer_if.h"
 
-#if FEAT_TA == TA_HLE
+#if FEAT_TA == TA_HLE && !defined(BUILD_RETROARCH_CORE)
 static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1 (Per Pixel Sort)", 2, [](u8* vram){ return (Renderer*) new gl4rend(vram); } });
 #endif

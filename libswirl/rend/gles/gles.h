@@ -55,6 +55,8 @@ struct PipelineShader
 
 struct gl_ctx
 {
+	GLuint screen_fb; // usually 0 but not always
+	
 	struct
 	{
 		GLuint program;

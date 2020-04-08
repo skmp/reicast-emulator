@@ -253,11 +253,15 @@ void CustomTexture::LoadMap()
 
 		std::string name = retro_dirent_get_name(dir);
 		std::string child_path = textures_path + name;
-		char *extension = path_get_extension(name.c_str());
+
+		const char *extension_ro = path_get_extension(name.c_str());
+		char extension[5];
+		strncpy(extension, extension_ro, 4);
+		extension[4] = '\0';
 		string_to_lower(extension);
-// FIXME lowercase extension
 		if (strcmp(extension, "jpg") && strcmp(extension, "jpeg") && strcmp(extension, "png"))
 			continue;
+
 		std::string::size_type dotpos = name.find_last_of('.');
 		std::string basename = name.substr(0, dotpos);
 		char *endptr;

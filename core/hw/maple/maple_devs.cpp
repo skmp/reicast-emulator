@@ -2147,6 +2147,8 @@ struct maple_naomi_jamma : maple_sega_controller
 				   fwrite(EEPROM, 1, 0x80, f);
 				   fclose(f);
 				}
+				else
+					WARN_LOG(MAPLE, "Cannot save EEPROM to file %s", eeprom_file);
 
 				w8(MDRS_JVSReply);
 				w8(0x00);

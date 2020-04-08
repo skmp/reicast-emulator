@@ -18,9 +18,12 @@
  */
 #pragma once
 
-#include <string>
-#include <set>
 #include "TexCache.h"
+#include "stdclass.h"
+
+#include <string>
+#include <vector>
+#include <map>
 
 class CustomTexture {
 public:
@@ -36,17 +39,18 @@ private:
 	void LoaderThread();
 	u8* LoadPNG(const std::string& fname, int &width, int &height);
 	std::string GetGameId();
+	void LoadMap();
 	
 	static void *loader_thread_func(void *param) { ((CustomTexture *)param)->LoaderThread(); return NULL; }
 	
 	bool initialized = false;
 	bool custom_textures_available = false;
 	std::string textures_path;
-	std::set<u32> unknown_hashes;
 	cThread loader_thread;
 	cResetEvent wakeup_thread;
 	std::vector<BaseTextureCacheData *> work_queue;
 	cMutex work_queue_mutex;
+	std::map<u32, std::string> texture_map;
 };
 
 extern CustomTexture custom_texture;

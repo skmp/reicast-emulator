@@ -20,8 +20,16 @@
 
 #include <algorithm>
 #include <sstream>
+#include <sys/stat.h>
+#include "retro_dirent.h"
+#include "string/stdstring.h"
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_JPEG
+#define STBI_ONLY_PNG
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
-#include "deps/libpng/png.h"
 #include "reios/reios.h"
 #include "file/file_path.h"
 #include "hw/naomi/naomi_cart.h"
@@ -32,6 +40,7 @@ CustomTexture custom_texture;
 
 void CustomTexture::LoaderThread()
 {
+	LoadMap();
 	while (initialized)
 	{
 		BaseTextureCacheData *texture;
@@ -127,21 +136,19 @@ void CustomTexture::Terminate()
 		work_queue_mutex.Unlock();
 		wakeup_thread.Set();
 		loader_thread.WaitToEnd();
+		texture_map.clear();
 	}
 }
 
 u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 {
-	if (unknown_hashes.find(hash) != unknown_hashes.end())
-		return NULL;
-	std::stringstream path;
-	path << textures_path << std::hex << hash << ".png";
+	auto it = texture_map.find(hash);
+	if (it == texture_map.end())
+		return nullptr;
 
-	u8 *image_data = LoadPNG(path.str(), width, height);
-	if (image_data == NULL)
-		unknown_hashes.insert(hash);
-
-	return image_data;
+	int n;
+	stbi_set_flip_vertically_on_load(1);
+	return stbi_load(it->second.c_str(), &width, &height, &n, STBI_rgb_alpha);
 }
 
 void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
@@ -156,145 +163,7 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 	wakeup_thread.Set();
 }
 
-static FILE* pngfile;
-
-static void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
-{
-	fread(data,1, length,pngfile);
-}
-
-u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
-{
-	const char* filename = fname.c_str();
-	FILE* file = fopen(filename, "rb");
-	pngfile = file;
-
-	if (!file)
-	{
-		WARN_LOG(RENDERER, "Error opening %s", filename);
-		return NULL;
-	}
-
-	//header for testing if it is a png
-	png_byte header[8];
-
-	//read the header
-	fread(header,1,8,file);
-
-	//test if png
-	int is_png = !png_sig_cmp(header, 0, 8);
-	if (!is_png)
-	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
-		return NULL;
-	}
-
-	//create png struct
-	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL,
-		NULL, NULL);
-	if (!png_ptr)
-	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Unable to create PNG struct : %s", filename);
-		return (NULL);
-	}
-
-	//create png info struct
-	png_infop info_ptr = png_create_info_struct(png_ptr);
-	if (!info_ptr)
-	{
-		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		WARN_LOG(RENDERER, "Unable to create PNG info : %s", filename);
-		fclose(file);
-		return (NULL);
-	}
-
-	//create png info struct
-	png_infop end_info = png_create_info_struct(png_ptr);
-	if (!end_info)
-	{
-		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		WARN_LOG(RENDERER, "Unable to create PNG end info : %s", filename);
-		fclose(file);
-		return (NULL);
-	}
-
-	//png error stuff, not sure libpng man suggests this.
-	if (setjmp(png_jmpbuf(png_ptr)))
-	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Error during setjmp : %s", filename);
-		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		return (NULL);
-	}
-
-	//init png reading
-	//png_init_io(png_ptr, fp);
-	png_set_read_fn(png_ptr, NULL, png_cstd_read);
-
-	//let libpng know you already read the first 8 bytes
-	png_set_sig_bytes(png_ptr, 8);
-
-	// read all the info up to the image data
-	png_read_info(png_ptr, info_ptr);
-
-	//variables to pass to get info
-	int bit_depth, color_type;
-	png_uint_32 twidth, theight;
-
-	// get info about png
-	png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type,
-		NULL, NULL, NULL);
-
-	//update width and height based on png info
-	width = twidth;
-	height = theight;
-
-	// Update the png info struct.
-	png_read_update_info(png_ptr, info_ptr);
-
-	// Row size in bytes.
-	int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
-
-	// Allocate the image_data as a big block, to be given to opengl
-	png_byte *image_data = new png_byte[rowbytes * height];
-	if (!image_data)
-	{
-		//clean up memory and close stuff
-		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		WARN_LOG(RENDERER, "Unable to allocate image_data while loading %s", filename);
-		fclose(file);
-		return NULL;
-	}
-
-	//row_pointers is for pointing to image_data for reading the png with libpng
-	png_bytep *row_pointers = new png_bytep[height];
-	if (!row_pointers)
-	{
-		//clean up memory and close stuff
-		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		delete[] image_data;
-		WARN_LOG(RENDERER, "Unable to allocate row_pointer while loading %s", filename);
-		fclose(file);
-		return NULL;
-	}
-
-	// set the individual row_pointers to point at the correct offsets of image_data
-	for (int i = 0; i < height; ++i)
-		row_pointers[height - i - 1] = image_data + i * rowbytes;
-
-	//read the png into image_data through row_pointers
-	png_read_image(png_ptr, row_pointers);
-
-	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-	delete[] row_pointers;
-	fclose(file);
-
-	return image_data;
-}
-
-void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *temp_tex_buffer)
+void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer)
 {
 	std::string base_dump_dir = get_writable_data_path("/texdump/");
 	if (!path_is_valid(base_dump_dir.c_str()))
@@ -309,20 +178,13 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 
 	std::stringstream path;
 	path << base_dump_dir << std::hex << hash << ".png";
-	FILE *fp = fopen(path.str().c_str(), "wb");
-	if (fp == NULL)
-	{
-		WARN_LOG(RENDERER, "Failed to open %s for writing", path.str().c_str());
-		return;
-	}
 
-	u16 *src = (u16 *)temp_tex_buffer;
+	u16 *src = (u16 *)src_buffer;
+	u8 *dst_buffer = (u8 *)malloc(w * h * 4);	// 32-bit per pixel
+	u8 *dst = dst_buffer;
 
-	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
 	for (int y = 0; y < h; y++)
 	{
-		rows[h - y - 1] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
-		u8 *dst = (u8 *)rows[h - y - 1];
 		switch (textype)
 		{
 		case TextureType::_4444:
@@ -365,35 +227,48 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 			break;
 		default:
 			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
-			fclose(fp);
-			free(rows[0]);
-			free(rows);
+			free(dst_buffer);
 			return;
 		}
 	}
 
-	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	png_infop info_ptr = png_create_info_struct(png_ptr);
+	stbi_flip_vertically_on_write(1);
+	stbi_write_png(path.str().c_str(), w, h, STBI_rgb_alpha, dst_buffer, 0);
 
-	png_init_io(png_ptr, fp);
+	free(dst_buffer);
+}
 
+void CustomTexture::LoadMap()
+{
+	texture_map.clear();
+	RDIR *dir = retro_opendir(textures_path.c_str());
+	if (dir == nullptr)
+		return;
+	while (true)
+	{
+		if (!retro_readdir(dir))
+			break;
+		if (retro_dirent_is_dir(dir, nullptr))
+				continue;
 
-	// write header
-	png_set_IHDR(png_ptr, info_ptr, w, h,
-			 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
-			 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-
-	png_write_info(png_ptr, info_ptr);
-
-
-	// write bytes
-	png_write_image(png_ptr, rows);
-
-	// end write
-	png_write_end(png_ptr, NULL);
-	fclose(fp);
-
-	for (int y = 0; y < h; y++)
-		free(rows[y]);
-	free(rows);
+		std::string name = retro_dirent_get_name(dir);
+		std::string child_path = textures_path + name;
+		char *extension = path_get_extension(name.c_str());
+		string_to_lower(extension);
+// FIXME lowercase extension
+		if (strcmp(extension, "jpg") && strcmp(extension, "jpeg") && strcmp(extension, "png"))
+			continue;
+		std::string::size_type dotpos = name.find_last_of('.');
+		std::string basename = name.substr(0, dotpos);
+		char *endptr;
+		u32 hash = (u32)strtoll(basename.c_str(), &endptr, 16);
+		if (endptr - basename.c_str() < (ptrdiff_t)basename.length())
+		{
+			INFO_LOG(RENDERER, "Invalid hash %s", basename.c_str());
+			continue;
+		}
+		texture_map[hash] = child_path;
+	}
+	retro_closedir(dir);
+	custom_textures_available = !texture_map.empty();
 }

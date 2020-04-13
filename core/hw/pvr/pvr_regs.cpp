@@ -4,9 +4,6 @@
 #include "ta.h"
 #include "spg.h"
 
-// TODO/FIXME - forward decls
-void rend_start_render(void);
-
 extern bool pal_needs_update;
 bool fog_needs_update=true;
 

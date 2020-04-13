@@ -561,13 +561,13 @@ struct maple_sega_vmu: maple_base
 
 		if (!file)
 		{
-			INFO_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
+			WARN_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
 		}
 		else
 		{
 			fread(flash_data,1,sizeof(flash_data),file);
+			NOTICE_LOG(MAPLE, "Loaded VMU from file \"%s\"", apath.c_str());
 		}
-
 	}
 	virtual ~maple_sega_vmu()
 	{

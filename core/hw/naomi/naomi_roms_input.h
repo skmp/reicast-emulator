@@ -340,6 +340,29 @@ InputDescriptors cvs2_inputs = {
 	  },
 };
 
+InputDescriptors tokyobus_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "HORN" },
+			{ NAOMI_DOWN_KEY, "VIEW CHANGE" },
+			{ NAOMI_LEFT_KEY, "ANNOUNCE" },
+			{ NAOMI_RIGHT_KEY, "DOOR CLOSE" },
+			// These buttons uses P2 inputs for P1
+			{ NAOMI_BTN1_KEY, "WINKER RIGHT", NAOMI_BTN0_KEY },
+			{ NAOMI_BTN2_KEY, "WINKER LEFT", NAOMI_BTN1_KEY },
+			{ NAOMI_BTN3_KEY, "SHIFT FRONT", NAOMI_UP_KEY },
+			{ NAOMI_BTN4_KEY, "SHIFT REVERSE", NAOMI_DOWN_KEY },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
+			{ NULL },
+	  },
+};
+
 //
 // AtomisWave games
 //

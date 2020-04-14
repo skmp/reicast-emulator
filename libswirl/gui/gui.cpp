@@ -61,10 +61,11 @@ static bool touch_up;
 
 extern bool subfolders_read;
 
-static std::string file_toRename = "";
-static std::string path_toRename = "";
-static std::string currentDirectory = "";
-std::vector<std::string> dirs; 
+static std::string file_toRename = ""; //used for rename function
+static std::string path_toRename = ""; //same
+static std::string currentDirectory = ""; //this stores the current file open
+std::vector<std::string> dirs; //store of all the paths that contain a relative file (inside the selected content path(s))
+std::vector<std::string> content_paths; //store of the content path(s)
 
 
 static double last_render;
@@ -79,7 +80,6 @@ int dynarec_enabled;
 struct GameMedia {
     std::string name;
     std::string path;
-    std::string parent_directory;
 };
 
 static bool operator<(const GameMedia& left, const GameMedia& right)
@@ -718,7 +718,7 @@ struct ReicastUI_impl : GUI {
                     //printf("  found game %s ext %s\n", entry->d_name, extension.c_str());
                     if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue"))
                         continue;
-                    game_list.push_back({ name, child_path, path });
+                    game_list.push_back({ name, child_path });
                 }
 #else
                 std::string::size_type dotpos = name.find_last_of(".");
@@ -739,36 +739,65 @@ struct ReicastUI_impl : GUI {
     {
         if (game_list_done)
             return;
+
         game_list.clear();
+        content_paths.clear();
         dirs.clear();
+        bool isMultiple = false;
+
+        if (settings.dreamcast.ContentPath.size() > 1)
+            isMultiple = true;
+
         for (auto path : settings.dreamcast.ContentPath) {
             add_game_directory(path, game_list);
-            currentDirectory = path;
+            if (isMultiple) 
+                currentDirectory = "ShowAll";
+            else 
+                currentDirectory = path;
+            
+            content_paths.push_back(path.c_str());
         }
         initDirectoryVector();
         std::stable_sort(game_list.begin(), game_list.end());
         game_list_done = true;
     }
 
-    void fetch_game_list(const std::string& path)
+    void fetch_game_list(const std::string& path, bool multiplePaths) //this fetch_game_list runs when browsing from directories bar
     {
-        if (game_list_done)
-            return;
-        currentDirectory = path;
-        game_list.clear();
-        add_game_directory(path, game_list);
-        std::stable_sort(game_list.begin(), game_list.end());
-        game_list_done = true;
+        if (multiplePaths) {
+            currentDirectory = "ShowAll";
+            game_list.clear();
+            for (auto all_dirs : settings.dreamcast.ContentPath) {
+                add_game_directory(all_dirs, game_list);
+                std::stable_sort(game_list.begin(), game_list.end());
+            }
+            game_list_done = true;
+        }
+        else {
+            currentDirectory = path;
+            game_list.clear();
+            add_game_directory(path, game_list);
+            std::stable_sort(game_list.begin(), game_list.end());
+            game_list_done = true;
+        }
+        
+        
     }
 
-    void initDirectoryVector() {
+    void initDirectoryVector() {  //initialization of the vectors used
         for (auto parent_dirs : game_list) {
-            dirs.push_back(parent_dirs.parent_directory.c_str());
+            std::string splitter = parent_dirs.path.substr(0, parent_dirs.path.find_last_of("/\\"));
+            dirs.push_back(splitter.c_str());
         }
 
         for (auto path : settings.dreamcast.ContentPath)
             dirs.push_back(path);
 
+        if (settings.dreamcast.ContentPath.size() > 1) {
+            content_paths.push_back("ShowAll");
+            dirs.push_back("ShowAll");
+        }
+        
         std::sort(dirs.begin(), dirs.end());
         dirs.erase(std::unique(dirs.begin(), dirs.end()), dirs.end());
         for (int i = 0; i < dirs.size(); i++) {
@@ -779,25 +808,57 @@ struct ReicastUI_impl : GUI {
 
     }
 
-    void showDirectoriesBar() {
+    std::string getFormattedDirs(const std::string dir_str) { //formatting the appearence of vectors elements
+        std::string forTitle;
+        bool compare = false;
+
+        if (dir_str.compare("ShowAll") == 0) 
+            return "All Roms";
+
+       
+
+        for (auto paths : content_paths) {
+            if (paths.compare(dir_str) == 0) {
+                compare = true;
+            }
+        }
+
+        if (!compare) {
+            for (auto paths : content_paths) {
+                if (dir_str.find(paths.c_str()) != std::string::npos) {
+                    std::size_t foundinTitle = paths.find_last_of("/\\");
+                    std::string temp_holder = dir_str.substr(foundinTitle + 1);
+                    return forTitle.append("/").append(temp_holder);
+                }
+            }
+        }
+        else {
+            std::size_t foundinTitle = dir_str.find_last_of("/\\");
+            return forTitle = dir_str.substr(foundinTitle + 1);
+        }
+
+    }
+
+    void showDirectoriesBar() {  //Directories bar itself!
        
         ImGui::Text("Current Directory: ");
         ImGui::SameLine();
-        
-        std::size_t foundinTitle = currentDirectory.find_last_of("/\\");
-        std::string forTitle = currentDirectory.substr(foundinTitle + 1);
-
+        std::string forTitle = getFormattedDirs(currentDirectory);
         if (ImGui::BeginCombo(" ", forTitle.c_str(), ImGuiComboFlags_None))
         {
-            
             for (int i = 0; i < dirs.size(); i++)
             {
-                std::size_t found = dirs[i].find_last_of("/\\");
-                std::string forSelectable =dirs[i].substr(found + 1);
+                std::string forSelectable = getFormattedDirs(dirs[i]);
                 bool is_selected = false;
                 if (ImGui::Selectable(forSelectable.c_str(), &is_selected)) {
-                    RefreshFiles();
-                    fetch_game_list(dirs[i]);
+                    if (forSelectable.compare("All Roms") != 0) {
+                        RefreshFiles();
+                        fetch_game_list(dirs[i], false);
+                    }
+                    else {
+                        RefreshFiles();
+                        fetch_game_list(dirs[i] , true);
+                    }
                 }
             }
             ImGui::EndCombo();
@@ -1017,7 +1078,7 @@ struct ReicastUI_impl : GUI {
         return s;
     }
 
-    void loadExplorerPopups() {
+    void loadExplorerPopups() { //various popups, saved in this function to keep things (relatively) tidy
 
         if (!file_toRename.empty()) {
             static char buf[64]{ "" };
@@ -1043,6 +1104,7 @@ struct ReicastUI_impl : GUI {
                             buf[0] = '\0';
                             ImGui::CloseCurrentPopup();
                             RefreshFiles();
+                            
                         }
                         else  
                             buf[0] = '\0';
@@ -1160,7 +1222,7 @@ struct ReicastUI_impl : GUI {
             int gamelistSelection = -1;
             std::string game_name;
             std::string game_path;
-            const char* rom_extras[] = { "Play", "Rename", "Delete" };
+            const char* rom_extras[] = { "Play", "Rename", "Delete" }; //new buttons
             for (auto game : game_list)
                 if (filter.PassFilter(game.name.c_str()))
                 {
@@ -1173,7 +1235,7 @@ struct ReicastUI_impl : GUI {
                     ImGui::SetItemAllowOverlap();
                     ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize(" ...").x  /*+ ImGui::GetStyle().ItemSpacing.x*/);
                     
-                    if (ImGui::BeginCombo("##gamesCombo", " ... ", ImGuiComboFlags_NoArrowButton))
+                    if (ImGui::BeginCombo("##gamesCombo", " ... ", ImGuiComboFlags_NoArrowButton))  //combo inside PushID
                     {
                         for (int i = 0; i < IM_ARRAYSIZE(rom_extras); i++)
                         {
@@ -1193,7 +1255,7 @@ struct ReicastUI_impl : GUI {
                 }
 
 
-            if (gamelistSelection != -1) {
+            if (gamelistSelection != -1) { //drawing user selection out of loop, to avoid ImGUI scope issues and running unnecessary functions over and over again.
                 if (gamelistSelection == 0) {
                     if (gui_start_game(game_path))
                         gui_state = Closed;
@@ -1207,11 +1269,12 @@ struct ReicastUI_impl : GUI {
                 else {
                     
 #ifdef _ANDROID
-                    std::string showvirtualKeyboard(const std::string & new_vk);
+                    std::string showvirtualKeyboard(const std::string & new_vk);  //JNI function, can be found under NativeGLActivity.java and Android.cpp
                     std::string android_response = showvirtualKeyboard(game_name.c_str());
                     if (android_response.compare("..") != 0) {
                         if(renameFile(game_path, android_response))
                             RefreshFiles();
+                            fetch_game_list();
                     }
 #else
                     file_toRename = game_name;

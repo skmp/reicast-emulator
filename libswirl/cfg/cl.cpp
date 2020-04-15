@@ -102,13 +102,22 @@ int setconfig(wchar** arg,int cl)
 	return rv;
 }
 
-int showhelp(wchar** arg,int cl)
+int showhelp(wchar** argv,int cl)
 {
-	printf("\nAvailable commands :\n");
+    printf("\nUsage:\n");
+    printf("  Load emulator GUI: %s\n", argv[0]);
+    printf("  Directly load disc image: %s image_path.[cdi/gdi]\n\n", argv[0]);
+    
+	printf("Available commands:\n");
 
-	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.\n");
-	printf("-portable: look for data and discs in the current directory\n");
-	printf("\n-help: show help info\n");
+    printf("  -config section:key=value [, ..]\n");
+    printf("      Add a virtual config value unless a different value is written to em\n");
+    printf("      Note: You can specify many settings in the xx:yy=zz , gg:hh=jj , ... format.\n");
+    printf("            The spaces between the values and ',' are needed.\n");
+    printf("  -portable:\n");
+    printf("      Look for data and discs in the current directory\n");
+    printf("  -help:\n");
+    printf("      Show the help info that you're reading now\n\n");
 
 	return 0;
 }
@@ -122,7 +131,7 @@ bool ParseCommandLine(int argc,wchar* argv[])
 	{
 		if (stricmp(*arg,"-help")==0 || stricmp(*arg,"--help")==0)
 		{
-			showhelp(arg,cl);
+			showhelp(argv,cl);
 			return true;
 		}
 		else if (stricmp(*arg,"-config")==0 || stricmp(*arg,"--config")==0)

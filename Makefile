@@ -20,8 +20,6 @@ HAVE_CHD      := 1
 HAVE_CLANG    ?= 0
 HAVE_CDROM    := 0
 HAVE_MODEM    := 1
-THREADED_RENDERING_DEFAULT := 0
-
 
 TARGET_NAME   := flycast
 
@@ -165,7 +163,6 @@ else ifneq (,$(findstring rpi,$(platform)))
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
 	SINGLE_PREC_FLAGS = 1
-	THREADED_RENDERING_DEFAULT = 1
 	
 	ifneq (,$(findstring rpi4,$(platform)))
 		# rpi4 flags are taken from rockpro64
@@ -258,7 +255,6 @@ else ifeq ($(platform), classic_armv8_a35)
 	SINGLE_PREC_FLAGS = 1
 	HAVE_LTCG = 0
 	HAVE_OPENMP = 0
-	THREADED_RENDERING_DEFAULT = 1
 	CFLAGS += -Ofast \
 	-flto -fuse-linker-plugin \
 	-fno-stack-protector -fno-ident -fomit-frame-pointer \
@@ -328,7 +324,6 @@ else ifeq ($(platform), sun8i_legacy)
 	SINGLE_PREC_FLAGS = 1
 	HAVE_LTCG = 0
 	HAVE_OPENMP = 0
-	THREADED_RENDERING_DEFAULT = 1
 	CFLAGS += -Ofast \
 	-flto -fuse-linker-plugin \
 	-fno-stack-protector -fno-ident -fomit-frame-pointer \
@@ -416,7 +411,6 @@ else ifeq ($(platform), libnx)
    HAVE_MODEM = 1
    HAVE_LTCG = 0
    NO_NVMEM = 1
-   THREADED_RENDERING_DEFAULT = 1
    # stubs
    SOURCES_C += $(CORE_DIR)/core/deps/switch/stubs.c
 #######################################
@@ -645,7 +639,6 @@ else ifneq (,$(findstring ios,$(platform)))
 	GLES = 1
 	WITH_DYNAREC=
 	PLATFORM_EXT := unix
-	THREADED_RENDERING_DEFAULT = 1
 	#HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
 
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
@@ -687,7 +680,6 @@ else ifneq (,$(findstring theos_ios,$(platform)))
 	FORCE_GLES = 1
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
-	THREADED_RENDERING_DEFAULT = 1
 
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
 	PLATCFLAGS += -DIOS -marm
@@ -729,10 +721,8 @@ else ifeq ($(platform), qnx)
 	FORCE_GLES = 1
 	DEFINES += -DTHREADED_RENDERING_DEFAULT
 	PLATCFLAGS += -DNO_ASM -D__BLACKBERRY_QNX__
-	THREADED_RENDERING_DEFAULT = 1
 	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -D__QNX__
-	THREADED_RENDERING_DEFAULT = 1
 
 	PLATFORM_EXT := unix
 
@@ -746,7 +736,6 @@ else ifneq (,$(findstring armv,$(platform)))
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
 	PLATCFLAGS += -DARM
-	THREADED_RENDERING_DEFAULT = 1
 	ifneq (,$(findstring gles,$(platform)))
 		FORCE_GLES = 1
 	endif

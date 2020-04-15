@@ -10,14 +10,6 @@ INCFLAGS    += -I$(CORE_DIR)/core/libretro \
 					-I$(DEPS_DIR)/vixl \
 					-I$(DEPS_DIR)/stb
 
-ifeq ($(THREADED_RENDERING_DEFAULT), 1)
-CORE_DEFINES += -DTHREADED_RENDERING_DEFAULT
-endif
-
-ifeq ($(THREADED_RENDERING_DEFAULT), 1)
-CORE_DEFINES += -DTHREADED_RENDERING_DEFAULT
-endif
-
 SOURCES_C   ?=
 SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/arm7/arm_mem.cpp \

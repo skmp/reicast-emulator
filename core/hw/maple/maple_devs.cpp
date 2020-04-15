@@ -1460,7 +1460,7 @@ public:
 protected:
 	virtual const char *get_id() = 0;
 	virtual u32 remap_buttons(u32 keycode) { return keycode; }
-	virtual u16 read_analog_axis(int player_num, int player_axis);
+	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted);
 	virtual u32 read_digital_in(int player_num) {
 		u32 keycode = player_num > 3 ? 0 : ~kcode[player_num];
 		return remap_buttons(keycode);
@@ -1604,7 +1604,7 @@ public:
 protected:
 	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
 
-	virtual u16 read_analog_axis(int player_num, int player_axis) override {
+	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
 		if (mo_x_abs[player_num] < 0 || mo_x_abs[player_num] > 639 || mo_y_abs[player_num] < 0 || mo_y_abs[player_num] > 479)
@@ -1669,7 +1669,7 @@ protected:
 		return (0xff - axis_y) << 8;
 	}
 
-	virtual u16 read_analog_axis(int player_num, int player_axis) override {
+	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		switch (player_num)
 		{
 		case 0:
@@ -1761,7 +1761,7 @@ protected:
 		return (0xff - axis_y) << 8;
 	}
 
-	virtual u16 read_analog_axis(int player_num, int player_axis) override {
+	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		switch (player_num)
 		{
 		case 0:
@@ -2412,25 +2412,33 @@ struct maple_naomi_jamma : maple_sega_controller
 	}
 };
 
-u16 jvs_io_board::read_analog_axis(int player_num, int player_axis)
+u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverted)
 {
+	u16 v;
 	switch (player_axis)
 	{
 	case 0:
-		return joyx[player_num] << 8;
+		v = joyx[player_num];
+		break;
 	case 1:
-		return joyy[player_num] << 8;
+		v = joyy[player_num];
+		break;
 	case 2:
-		return joyrx[player_num] << 8;
+		v = joyrx[player_num];
+		break;
 	case 3:
-		return joyry[player_num] << 8;
+		v = joyry[player_num];
+		break;
 	case 4:
-		return rt[player_num] << 8;
+		v = rt[player_num];
+		break;
 	case 5:
-		return lt[player_num] << 8;
+		v = lt[player_num];
+		break;
 	default:
 		return 0x8000;
 	}
+	return (inverted ? 0xff - v : v) << 8;
 }
 
 u16 jvs_io_board::read_rotary_encoder(f32 &encoder_value, f32 delta_value)
@@ -2713,9 +2721,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						   u16 axis_value = 0x8000;
 						   if (player_num < 4)
 						   {
-							  if (naomi_game_inputs != NULL)
-							     player_axis = naomi_game_inputs->axes[player_axis].axis;
-							  axis_value = read_analog_axis(player_num, player_axis);
+						   	bool inverted = false;
+						   	if (naomi_game_inputs != NULL)
+						   	{
+						   		inverted = naomi_game_inputs->axes[player_axis].inverted;
+						   		player_axis = naomi_game_inputs->axes[player_axis].axis;
+						   	}
+						   	axis_value = read_analog_axis(player_num, player_axis, inverted);
 						   }
 						   LOGJVS("P%d.%d:%4x ", player_num + 1, player_axis + 1, axis_value);
 						   JVS_OUT(axis_value >> 8);

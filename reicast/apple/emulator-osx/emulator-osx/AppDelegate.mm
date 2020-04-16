@@ -25,9 +25,6 @@ static CGFloat _backingScaleFactor;
 static CGSize _glViewSize;
 static void gl_resize();
 
-// Terminal arguments
-static int _argc;
-static char** _argv;
 static bool _isInitializing = true;
 
 @interface AppDelegate()
@@ -41,6 +38,10 @@ static bool _isInitializing = true;
     // Console redirection
     dispatch_source_t _stdoutSource;
     dispatch_source_t _stderrSource;
+    
+    // Terminal arguments
+    int _argc;
+    char** _argv;
 }
 
 #pragma mark - Delegate Methods -
@@ -58,7 +59,7 @@ static bool _isInitializing = true;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     _sharedInstance = self;
-    [self mainSetupWithArgc:_argc andArgv:_argv];
+    [self mainSetup];
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
@@ -135,10 +136,10 @@ static bool _isInitializing = true;
 
 #pragma mark - Setup Methods -
 
-- (void)mainSetupWithArgc:(int)argc andArgv:(char**)argv {
+- (void)mainSetup {
     [self setupPaths];
     common_linux_setup();
-    int result = reicast_init(argc, argv);
+    int result = reicast_init(_argc, _argv);
     if (result == 0) {
         _isInitializing = false;
         [self captureConsoleOutput];

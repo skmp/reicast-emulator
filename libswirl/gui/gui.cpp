@@ -37,6 +37,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "libswirl.h"
 #include "utils/cloudrom.h"
+#include "utils/archivedrom.h"
 
 #include "gui_partials.h"
 #include "input/keyboard_device.h"
@@ -74,8 +75,10 @@ std::vector<float> render_times;
 bool game_list_done;		// Set to false to refresh the game list
 bool maple_devices_changed;
 
+
 ImVec2 normal_padding;
 int dynarec_enabled;
+static bool show_extract_popup = false;
 
 struct GameMedia {
     std::string name;
@@ -88,6 +91,9 @@ static bool operator<(const GameMedia& left, const GameMedia& right)
 }
 
 static std::vector<GameMedia> game_list;
+static std::vector<GameMedia> archived_game_list; //treating archives as games.
+
+static ArchivedRomsCustom new_archive; //new item waiting for input
 
 static unique_ptr<OnlineRomsProvider> reicastCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/homebrew.lst"));
 static unique_ptr<OnlineRomsProvider> archiveChdCloudRoms(OnlineRomsProvider::CreateHttpProvider("http://cloudroms.reicast.com", "/archive.org-chd.lst"));
@@ -715,10 +721,14 @@ struct ReicastUI_impl : GUI {
                 if (name.size() >= 4)
                 {
                     std::string extension = name.substr(name.size() - 4).c_str();
+                    std::string extension_7z = name.substr(name.size() - 3).c_str();
                     //printf("  found game %s ext %s\n", entry->d_name, extension.c_str());
-                    if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue"))
+                    if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue") && stricmp(extension_7z.c_str(), ".7z") && stricmp(extension.c_str(), ".zip"))
                         continue;
-                    game_list.push_back({ name, child_path });
+                    if(!stricmp(extension.c_str(), ".zip") || !stricmp(extension_7z.c_str(), ".7z")) //checking for files with  .zip and .7z extensions
+                        archived_game_list.push_back({name, child_path});
+                    else
+                        game_list.push_back({name, child_path});
                 }
 #else
                 std::string::size_type dotpos = name.find_last_of(".");
@@ -741,6 +751,7 @@ struct ReicastUI_impl : GUI {
             return;
 
         game_list.clear();
+        archived_game_list.clear();
         content_paths.clear();
         dirs.clear();
         bool isMultiple = false;
@@ -759,6 +770,7 @@ struct ReicastUI_impl : GUI {
         }
         initDirectoryVector();
         std::stable_sort(game_list.begin(), game_list.end());
+        std::stable_sort(archived_game_list.begin(), archived_game_list.end());
         game_list_done = true;
     }
 
@@ -767,17 +779,21 @@ struct ReicastUI_impl : GUI {
         if (multiplePaths) {
             currentDirectory = "ShowAll";
             game_list.clear();
+            archived_game_list.clear();
             for (auto all_dirs : settings.dreamcast.ContentPath) {
                 add_game_directory(all_dirs, game_list);
                 std::stable_sort(game_list.begin(), game_list.end());
+                std::stable_sort(archived_game_list.begin(), archived_game_list.end());
             }
             game_list_done = true;
         }
         else {
             currentDirectory = path;
             game_list.clear();
+            archived_game_list.clear();
             add_game_directory(path, game_list);
             std::stable_sort(game_list.begin(), game_list.end());
+            std::stable_sort(archived_game_list.begin(), archived_game_list.end());
             game_list_done = true;
         }
         
@@ -787,6 +803,11 @@ struct ReicastUI_impl : GUI {
     void initDirectoryVector() {  //initialization of the vectors used
         for (auto parent_dirs : game_list) {
             std::string splitter = parent_dirs.path.substr(0, parent_dirs.path.find_last_of("/\\"));
+            dirs.push_back(splitter.c_str());
+        }
+
+        for (auto arc_parent_dirs : archived_game_list) {
+            std::string splitter = arc_parent_dirs.path.substr(0, arc_parent_dirs.path.find_last_of("/\\"));
             dirs.push_back(splitter.c_str());
         }
 
@@ -974,6 +995,97 @@ struct ReicastUI_impl : GUI {
             }
             ImGui::OpenPopup("Downloading");
         }
+    }
+
+    void gui_render_archives() {
+
+        static ImGuiTextFilter filter;
+        ImGui::Text("%s", "");
+        ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "ARCHIVED ROMS");
+        int archiveSelection = -1;
+        std::string arc_name;
+        std::string arc_path;
+        const char *archive_extras[] = {"Extract", "Rename", "Delete"};
+
+        for (auto arc : archived_game_list)
+            if (filter.PassFilter(arc.name.c_str())) {
+                ImGui::PushID(arc.path.c_str());
+                if (ImGui::Selectable(arc.name.c_str())) {
+                    arc_name = arc.name;
+                    arc_path = arc.path;
+                    archiveSelection = 0;
+                }
+                ImGui::SetItemAllowOverlap();
+                ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize(
+                        " ...").x  /*+ ImGui::GetStyle().ItemSpacing.x*/);
+                if (ImGui::BeginCombo("##archivesCombo", " ... ", ImGuiComboFlags_NoArrowButton)) {
+                    for (int i = 0; i < IM_ARRAYSIZE(archive_extras); i++) {
+                        bool is_selected = false;
+                        if (ImGui::Selectable(archive_extras[i], &is_selected)) {
+                            arc_name = arc.name;
+                            arc_path = arc.path;
+                            archiveSelection = i;
+                        }
+                        if (is_selected) {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::PopID();
+            }
+
+        if (archiveSelection != -1){
+            if (archiveSelection == 0 ) {
+                show_extract_popup  = true;
+                new_archive.startExport(arc_path ,arc_name);
+            }
+            else if (archiveSelection == 2) {
+                if (deleteFile(arc_path))
+                    ImGui::OpenPopup("File Deleted");
+                else
+                    ImGui::OpenPopup("Error on Delete");
+            } else {
+#ifdef _ANDROID
+                std::string showvirtualKeyboard(const std::string & new_vk);  //JNI function, can be found under NativeGLActivity.java and Android.cpp
+                    std::string android_response = showvirtualKeyboard(arc_name.c_str());
+                    if (android_response.compare("..") != 0) {
+                        if(renameFile(arc_path, android_response))
+                            RefreshFiles();
+                            fetch_game_list();
+                    }
+#else
+                file_toRename = arc_name;
+                path_toRename = arc_path;
+                ImGui::OpenPopup("Rename File");
+#endif
+            }
+        }
+        extractPopup();
+    }
+
+    void extractPopup(){
+        if (show_extract_popup) {
+            if (ImGui::BeginPopupModal("Warning")) {
+                ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 250.f * scaling);
+                ImGui::Text(
+                        "Extracting files from an archive may take some time depending on your system and the size of the file.");
+                ImGui::Text("Loading  %c", "|/-\\"[(int) (ImGui::GetTime() / 0.05f) & 3]);
+                float currentwidth = ImGui::GetContentRegionAvailWidth();
+                ImGui::SetCursorPosX(
+                        (currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+                ImGui::SetItemDefaultFocus();
+                if (new_archive.isExtracted()) {
+                    show_extract_popup = false;
+                    RefreshFiles();
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+            ImGui::OpenPopup("Warning");
+
+        }
+
     }
 
     void gui_render_online_roms(bool showBuy, const char* name, OnlineRomsProvider* onlineRoms)
@@ -1284,6 +1396,8 @@ struct ReicastUI_impl : GUI {
 
                 }
             }
+
+            gui_render_archives();
 
 
 

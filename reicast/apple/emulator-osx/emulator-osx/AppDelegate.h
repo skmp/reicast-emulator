@@ -19,6 +19,8 @@
 
 + (AppDelegate *)sharedInstance;
 
+- (instancetype)initWithArgc:(int)argc andArgv:(char**)argv;
+
 - (void)showConsoleWindow:(NSMenuItem *)menuItem;
 - (void)hideConsoleWindow:(NSMenuItem *)menuItem;
 

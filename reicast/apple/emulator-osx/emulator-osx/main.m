@@ -12,11 +12,11 @@ int main(int argc, char *argv[]) {
         // Create Application and AppDelegate
         NSApplication *app = [NSApplication sharedApplication];
         [app setActivationPolicy:NSApplicationActivationPolicyRegular];
-        [app setDelegate:(id)[[AppDelegate alloc] init]];
+        [app setDelegate:(id)[[AppDelegate alloc] initWithArgc:argc andArgv:argv]];
         
         // Create the Main Menu
         [MainMenu create];
-                
+             
         // Start the Application
         [app activateIgnoringOtherApps:YES];
         [app run];

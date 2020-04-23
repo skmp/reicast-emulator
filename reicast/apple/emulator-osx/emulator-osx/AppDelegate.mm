@@ -7,6 +7,7 @@
 #import "MainMenu.h"
 #import "libswirl.h"
 #import "gui/gui_renderer.h"
+#include <cstdio>
 
 #if FEAT_HAS_SERIAL_TTY
 #include <util.h>
@@ -24,6 +25,8 @@ static CGFloat _backingScaleFactor;
 static CGSize _glViewSize;
 static void gl_resize();
 
+static bool _isInitializing = true;
+
 @interface AppDelegate()
 @property (strong) NSTextStorage *consoleTextStorage;
 @end
@@ -35,12 +38,23 @@ static void gl_resize();
     // Console redirection
     dispatch_source_t _stdoutSource;
     dispatch_source_t _stderrSource;
+    
+    // Terminal arguments
+    int _argc;
+    char** _argv;
 }
 
 #pragma mark - Delegate Methods -
 
 + (AppDelegate *)sharedInstance {
     return _sharedInstance;
+}
+
+- (instancetype)initWithArgc:(int)argc andArgv:(char **)argv {
+    self = [super init];
+    _argc = argc;
+    _argv = argv;
+    return self;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
@@ -123,18 +137,22 @@ static void gl_resize();
 #pragma mark - Setup Methods -
 
 - (void)mainSetup {
-    [self captureConsoleOutput];
-    [self setupWindow];
-    [self setupScreenDPI];
     [self setupPaths];
     common_linux_setup();
-    if (reicast_init(0, NULL) != 0) {
+    int result = reicast_init(_argc, _argv);
+    if (result == 0) {
+        _isInitializing = false;
+        [self captureConsoleOutput];
+        #if FEAT_HAS_SERIAL_TTY
+        _removePTYSymlink = common_serial_pty_setup();
+        #endif
+        [self setupUIThread];
+    } else if (result == 69) {
+        // We showed the usage text, so don't show an error, just exit
+        exit(0);
+    } else {
         [self alertAndTerminateWithMessage:@"Reicast initialization failed"];
     }
-    #if FEAT_HAS_SERIAL_TTY
-    _removePTYSymlink = common_serial_pty_setup();
-    #endif
-    [self setupUIThread];
 }
 
 - (void)captureConsoleOutput {
@@ -189,39 +207,6 @@ static void gl_resize();
     dispatch_resume(_stdoutSource);
 }
 
-- (void)setupWindow {
-    // Create the OpenGL view and context
-    // TODO: BEN See why background color is red when resizing window tall (it's likely due to default GL framebuffer color)
-    _glView = [[EmuGLView alloc] init];
-    _glView.delegate = self;
-    
-    // Create the Window
-    NSWindowStyleMask styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
-    _mainWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 640, 480) styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
-    _mainWindow.delegate = self;
-    _mainWindow.contentView = _glView;
-    _mainWindow.acceptsMouseMovedEvents = YES;
-    [_mainWindow makeKeyAndOrderFront:_mainWindow];
-    [_mainWindow center];
-    
-    // Set initial scale factor and view size
-    _backingScaleFactor = _mainWindow.screen.backingScaleFactor;
-    _glViewSize = _glView.bounds.size;
-}
-
-- (void)setupScreenDPI {
-    // Calculate screen DPI
-    NSScreen *screen = _mainWindow.screen;
-    NSDictionary *description = [screen deviceDescription];
-    NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
-    // Must multiply by the scale factor to account for retina displays
-    displayPixelSize.width *= screen.backingScaleFactor;
-    displayPixelSize.height *= screen.backingScaleFactor;
-    CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
-    screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
-    NSLog(@"displayPixelSize: %@  displayPhysicalSize: %@  screen_dpi: %d", NSStringFromSize(displayPixelSize), NSStringFromSize(displayPhysicalSize), screen_dpi);
-}
-
 - (void)setupPaths {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *configDirPath = [[NSURL fileURLWithPathComponents:@[NSHomeDirectory(), @".reicast"]] path];
@@ -247,6 +232,41 @@ static void gl_resize();
     // Set system data path
     std::string data_dir([[[NSBundle mainBundle] resourcePath] UTF8String]);
     add_system_data_dir(data_dir);
+}
+
+- (void)setupWindow {
+    // Create the OpenGL view and context
+    // TODO: BEN See why background color is red when resizing window tall (it's likely due to default GL framebuffer color)
+    _glView = [[EmuGLView alloc] init];
+    _glView.delegate = self;
+    
+    // Create the Window
+    NSWindowStyleMask styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
+    _mainWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 640, 480) styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
+    _mainWindow.delegate = self;
+    _mainWindow.contentView = _glView;
+    _mainWindow.acceptsMouseMovedEvents = YES;
+    [_mainWindow makeKeyAndOrderFront:_mainWindow];
+    [_mainWindow center];
+    
+    // Set initial scale factor and view size
+    _backingScaleFactor = _mainWindow.screen.backingScaleFactor;
+    _glViewSize = _glView.bounds.size;
+    
+    [self setupScreenDPI];
+}
+
+- (void)setupScreenDPI {
+    // Calculate screen DPI
+    NSScreen *screen = _mainWindow.screen;
+    NSDictionary *description = [screen deviceDescription];
+    NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
+    // Must multiply by the scale factor to account for retina displays
+    displayPixelSize.width *= screen.backingScaleFactor;
+    displayPixelSize.height *= screen.backingScaleFactor;
+    CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
+    screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
+    NSLog(@"displayPixelSize: %@  displayPhysicalSize: %@  screen_dpi: %d", NSStringFromSize(displayPixelSize), NSStringFromSize(displayPhysicalSize), screen_dpi);
 }
 
 - (void)setupUIThread {
@@ -293,7 +313,9 @@ static void gl_resize();
         });
     } else {
         // Stop the UI thread (which will then complete the shutdown, otherwise doing it here will crash)
-        g_GUIRenderer->Stop();
+        if (g_GUIRenderer) {
+            g_GUIRenderer->Stop();
+        }
     }
 }
 
@@ -303,7 +325,8 @@ static void gl_resize();
     alert.messageText = message;
     [alert addButtonWithTitle:@"Exit"];
     [alert runModal];
-    [NSApp terminate:nil];
+    // NOTE: Using [NSApp terminate:] here will hang, so using exit() instead
+    exit(1);
 }
 
 #pragma mark - Reicast OS Functions -
@@ -329,7 +352,7 @@ void UpdateInputState(u32 port) {
 
 // Called by libswirl to create the emulator window
 void os_CreateWindow() {
-    // Left empty on purpose as we have nothing to run here
+    [AppDelegate.sharedInstance setupWindow];
 }
 
 // Called by libswirl when OpenGL is initialized
@@ -381,9 +404,13 @@ int darw_printf(const wchar* text,...) {
     va_start(args, text);
     vsprintf(temp, text, args);
     va_end(args);
-
-    NSLog(@"%s", temp);
-
+    
+    if (_isInitializing) {
+        fprintf(stdout, "%s", temp);
+    } else {
+        NSLog(@"%s", temp);
+    }
+    
     return 0;
 }
 

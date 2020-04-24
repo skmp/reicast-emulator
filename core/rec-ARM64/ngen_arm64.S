@@ -19,8 +19,7 @@ ngen_LinkBlock_Generic_stub:
 .hidden ngen_LinkBlock_Shared_stub	
 .globl ngen_LinkBlock_Shared_stub	
 ngen_LinkBlock_Shared_stub:			
-    mov x0, lr							
-    sub x0, x0, #4							// go before the call
+    sub x0, lr, #4							// go before the call
     bl rdv_LinkBlock							// returns an RX addr
     br x0
 

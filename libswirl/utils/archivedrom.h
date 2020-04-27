@@ -23,6 +23,8 @@ private:
     CFileInStream archiveStream;
     CLookToRead2 lookStream;
 
+
+
 public:
 
     ArchivedRomsCustom() : out_buffer(NULL) {
@@ -41,7 +43,14 @@ public:
 
     bool DecompressZip();
 
+    bool isDecompressedZip();
+    bool gdi_chdZip();
+
     bool Decompress7z();
+
+    bool isDecompressed7z( int index );
+
+    bool gdi_chd7z ();
 
     void writeFile(char *content, size_t tsize);
 

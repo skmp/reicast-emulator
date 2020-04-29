@@ -42,7 +42,6 @@ static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags,
         u32 out_size = abl->mBuffers[i].mDataByteSize;
         u8* out_buffer = reinterpret_cast<u8*>(abl->mBuffers[i].mData);
         if ((samples_wptr - samples_rptr + SAMPLES_BUFSIZE) % SAMPLES_BUFSIZE < out_size) {
-            printf("Core Audio: buffer underrun\n");
             memset(out_buffer, '\0', out_size);
         } else {
             if (samples_rptr + out_size > SAMPLES_BUFSIZE) {

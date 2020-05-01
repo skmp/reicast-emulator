@@ -566,6 +566,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 	ARM_FLOAT_ABI_HARD = 1
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
+	HAVE_LTCG = 0
 
 	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
 	CFLAGS += -marm -mfloat-abi=hard $(CPUFLAGS)
@@ -900,7 +901,6 @@ RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-v
 
 ifeq ($(WITH_DYNAREC), arm)
 	ifneq (,$(findstring odroid,$(platform)))
-		HAVE_LTCG = 0
 		BOARD ?= $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
 		ifneq (,$(findstring ODROIDC,$(BOARD)))
 			# ODROID-C1

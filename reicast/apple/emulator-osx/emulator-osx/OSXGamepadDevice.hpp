@@ -70,3 +70,41 @@ public:
 			return GamepadDevice::gamepad_btn_input(code, pressed);
 	}
 };
+
+enum OSXGameControllerKeys : u32 {
+    OSX_BTN_A, OSX_BTN_B, OSX_BTN_X, OSX_BTN_Y,
+    OSX_BTN_START, OSX_BTN_SELECT,
+    OSX_DPAD_UP, OSX_DPAD_DOWN, OSX_DPAD_LEFT, OSX_DPAD_RIGHT,
+    OSX_BTN_LB, OSX_BTN_RB,
+    OSX_AXIS_LT, OSX_AXIS_RT,
+    OSX_AXIS_LS_X, OSX_AXIS_LS_Y,
+    OSX_AXIS_RS_X, OSX_AXIS_RS_Y
+};
+
+class GameControllerInputMapping : public InputMapping {
+public:
+    GameControllerInputMapping() {
+        name = "OSX Game Controller";
+        set_button(DC_BTN_A, OSX_BTN_A);
+        set_button(DC_BTN_B, OSX_BTN_B);
+        set_button(DC_BTN_X, OSX_BTN_X);
+        set_button(DC_BTN_Y, OSX_BTN_Y);
+        set_button(DC_DPAD_UP, OSX_DPAD_UP);
+        set_button(DC_DPAD_DOWN, OSX_DPAD_DOWN);
+        set_button(DC_DPAD_LEFT, OSX_DPAD_LEFT);
+        set_button(DC_DPAD_RIGHT, OSX_DPAD_RIGHT);
+        set_button(DC_BTN_START, OSX_BTN_START);
+        set_button(EMU_BTN_MENU, OSX_BTN_SELECT);
+        
+        set_axis(DC_AXIS_LT, OSX_AXIS_LT, false);
+        set_axis(DC_AXIS_RT, OSX_AXIS_RT, false);
+        set_axis(DC_AXIS_X, OSX_AXIS_LS_X, false);
+        set_axis(DC_AXIS_Y, OSX_AXIS_LS_Y, false);
+        
+        set_axis(DC_AXIS_X2, OSX_AXIS_RS_X, false);
+        set_axis(DC_AXIS_Y2, OSX_AXIS_RS_Y, false);
+        
+        dirty = false;
+    }
+    
+};

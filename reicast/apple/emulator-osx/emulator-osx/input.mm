@@ -190,6 +190,9 @@ void connect_controller(GCExtendedGamepad *gamepad) {
     gamepad.rightTrigger.valueChangedHandler = ^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed) {
         dev->gamepad_axis_input(OSX_AXIS_RT, (int)(value * OSXGameControllerGamepadDevice::MAX_ANALOG_VALUE));
     };
+    if (g_num_controller_gamepads < MAPLE_PORTS) {
+        settings.input.maple_devices[g_num_controller_gamepads] = MDT_SegaController;
+    }
     
     register_device_for_gamepad(gamepad, dev);
 }

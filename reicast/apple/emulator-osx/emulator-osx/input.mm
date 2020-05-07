@@ -12,39 +12,8 @@
 #import "types.h"
 #import "hw/maple/maple_cfg.h"
 #import "gui/gui.h"
-#import "OSXKeyboardDevice.hpp"
-#import "OSXGamepadDevice.hpp"
-
-class OSXGameControllerGamepadDevice : public GamepadDevice {
-public:
-    static constexpr int MIN_ANALOG_VALUE = -32768;
-    static constexpr int MAX_ANALOG_VALUE = 32768;
-    
-    OSXGameControllerGamepadDevice(int maple_port, GCExtendedGamepad *gamepad) : GamepadDevice(maple_port, "OSX"), gamepad(gamepad), is_paused(false) {
-        _name = gamepad.controller.vendorName.UTF8String;
-        {
-            char controller_id[48];
-            snprintf(controller_id, sizeof(controller_id), "osx_%s", gamepad.controller.vendorName.UTF8String);
-            _unique_id = std::string(controller_id);
-            
-        }
-        
-        if (!find_mapping()) {
-            input_mapper = new GameControllerInputMapping();
-            save_mapping();
-        }
-        
-    }
-    
-    virtual void load_axis_min_max(u32 axis) override
-    {
-        axis_min_values[axis] = MIN_ANALOG_VALUE;
-        axis_ranges[axis] = -MIN_ANALOG_VALUE + MAX_ANALOG_VALUE;
-    }
-    
-    bool is_paused; //used for macOS earlier than 10.15
-    GCExtendedGamepad __strong *gamepad;
-};
+#import "OSXKeyboardDevice.h"
+#import "OSXGamepadDevice.h"
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
@@ -57,7 +26,7 @@ u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
-u64 hashU64(u64 key)  {
+static u64 hashU64(u64 key)  {
     key ^= (key >> 33);
     key *= 0xff51afd7ed558ccd;
     key ^= (key >> 33);
@@ -134,7 +103,10 @@ void connect_controller(GCExtendedGamepad *gamepad) {
         NSLog(@"Number of controllers connected exceeds %d", g_num_controller_gamepads);
         return;
     }
+    
     auto dev = std::make_shared<OSXGameControllerGamepadDevice>(g_num_controller_gamepads, gamepad);
+    register_device_for_gamepad(gamepad, dev);
+    
     gamepad.buttonA.valueChangedHandler = ^(GCControllerButtonInput *button, float value, BOOL pressed) {
         dev->gamepad_btn_input(OSX_BTN_A, pressed);
     };
@@ -190,11 +162,19 @@ void connect_controller(GCExtendedGamepad *gamepad) {
     gamepad.rightTrigger.valueChangedHandler = ^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed) {
         dev->gamepad_axis_input(OSX_AXIS_RT, (int)(value * OSXGameControllerGamepadDevice::MAX_ANALOG_VALUE));
     };
-    if (g_num_controller_gamepads < MAPLE_PORTS) {
-        settings.input.maple_devices[g_num_controller_gamepads] = MDT_SegaController;
-    }
     
-    register_device_for_gamepad(gamepad, dev);
+    if (g_num_controller_gamepads < MAPLE_PORTS) {
+        //TODO: we will need to add more device types once we support more of them
+        switch (settings.input.maple_devices[g_num_controller_gamepads]) {
+            //don't want to override device types if they are explicitly set
+            case MDT_Keyboard:
+            case MDT_Mouse:
+                break;
+            default:
+                settings.input.maple_devices[g_num_controller_gamepads] = MDT_SegaController;
+        }
+        
+    }
 }
 
 void disconnect_controller(GCExtendedGamepad *gamepad) {

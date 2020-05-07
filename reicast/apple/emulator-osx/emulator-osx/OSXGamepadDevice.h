@@ -108,3 +108,37 @@ public:
     }
     
 };
+
+class OSXGameControllerGamepadDevice : public GamepadDevice {
+public:
+    static constexpr int MIN_ANALOG_VALUE = -32768;
+    static constexpr int MAX_ANALOG_VALUE = 32768;
+    
+    OSXGameControllerGamepadDevice(int maple_port, GCExtendedGamepad *gamepad) : GamepadDevice(maple_port, "OSX"), gamepad(gamepad), is_paused(false) {
+        const char *controller_name =
+            [@"_GCSonyDualShock4ControllerProfile" isEqualToString:[gamepad className]] ?
+                "PS4 Controller" : gamepad.controller.vendorName.UTF8String;
+        _name = controller_name;
+        {
+            char controller_id[48];
+            snprintf(controller_id, sizeof(controller_id), "osx_%s", controller_name);
+            _unique_id = std::string(controller_id);
+            
+        }
+        
+        if (!find_mapping()) {
+            input_mapper = new GameControllerInputMapping();
+            save_mapping();
+        }
+        
+    }
+    
+    virtual void load_axis_min_max(u32 axis) override
+    {
+        axis_min_values[axis] = MIN_ANALOG_VALUE;
+        axis_ranges[axis] = -MIN_ANALOG_VALUE + MAX_ANALOG_VALUE;
+    }
+    
+    bool is_paused; //used for macOS earlier than 10.15
+    GCExtendedGamepad __strong *gamepad;
+};

@@ -167,7 +167,8 @@ else ifneq (,$(findstring rpi,$(platform)))
 	ifneq (,$(findstring rpi4,$(platform)))
 		# rpi4 flags are taken from rockpro64
 		CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-		CORE_DEFINES += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG
+		# as of 2020-05-07, the following workaround doesn't seem required
+		# CORE_DEFINES += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG
 		CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
 		CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
 		ifeq ($(HAVE_CLANG),0)

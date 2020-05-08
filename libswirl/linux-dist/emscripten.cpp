@@ -31,12 +31,6 @@ public:
 		set_button(EMU_BTN_TRIGGER_LEFT, 70);
 		set_button(EMU_BTN_TRIGGER_RIGHT, 86);
 		set_button(EMU_BTN_MENU, 9);
-        
-                //TODO:
-        //        set_button(EMU_BTN_STICK_UP, kVK_ANSI_P);
-        //        set_button(EMU_BTN_STICK_DOWN, kVK_ANSI_Semicolon);
-        //        set_button(EMU_BTN_STICK_LEFT, kVK_ANSI_L);
-        //        set_button(EMU_BTN_STICK_RIGHT, kVK_ANSI_Quote);
 
 		dirty = false;
 	}

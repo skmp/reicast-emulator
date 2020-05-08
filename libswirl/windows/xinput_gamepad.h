@@ -229,12 +229,6 @@ public:
 		set_button(EMU_BTN_TRIGGER_LEFT, 'F');
 		set_button(EMU_BTN_TRIGGER_RIGHT, 'V');
 		set_button(EMU_BTN_MENU, VK_TAB);
-        
-                //TODO:
-        //        set_button(EMU_BTN_STICK_UP, kVK_ANSI_P);
-        //        set_button(EMU_BTN_STICK_DOWN, kVK_ANSI_Semicolon);
-        //        set_button(EMU_BTN_STICK_LEFT, kVK_ANSI_L);
-        //        set_button(EMU_BTN_STICK_RIGHT, kVK_ANSI_Quote);
 
 		dirty = false;
 	}

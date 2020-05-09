@@ -31,7 +31,7 @@
 #define CC_RX2RW(ptr) (ptr)
 
 DECL_ALIGN(4096) static u8 CodeBuffer[32 * 1024]
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__HAIKU__)
 	;
 #elif defined(__linux__)
 	__attribute__((section(".text")));

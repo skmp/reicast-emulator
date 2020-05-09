@@ -128,6 +128,7 @@ ifneq (,$(findstring unix,$(platform)))
 		LIBS += -lroot -lnetwork
 	else
 		LIBS += -lrt
+		HAVE_VULKAN = 1
 	endif
 
 	ifneq ($(HAVE_GL2), 1)
@@ -151,7 +152,6 @@ ifneq (,$(findstring unix,$(platform)))
 		LDFLAGS += -m32
 		HAVE_GENERIC_JIT = 0
 	endif
-	HAVE_VULKAN = 1
 	PLATFORM_EXT := unix
 
 # Raspberry Pi

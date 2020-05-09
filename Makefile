@@ -485,6 +485,7 @@ else ifneq (,$(findstring RK,$(platform)))
   FORCE_GLES = 1
   SINGLE_PREC_FLAGS = 1
   CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+  HAVE_LTCG = 0
 
   ifneq (,$(findstring RK33,$(platform)))
     CFLAGS += -march=armv8-a+crc -mfpu=neon-fp-armv8

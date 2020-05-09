@@ -257,7 +257,7 @@ else ifeq ($(platform), classic_armv8_a35)
 	HAVE_LTCG = 0
 	HAVE_OPENMP = 0
 	CFLAGS += -Ofast \
-	-flto -fuse-linker-plugin \
+	-fuse-linker-plugin \
 	-fno-stack-protector -fno-ident -fomit-frame-pointer \
 	-fmerge-all-constants -ffast-math -funroll-all-loops \
 	-marm -mcpu=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard

@@ -81,22 +81,22 @@ jobs:
       PLATFORM: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
-      - name: Print platform
-        run: echo "$env:PLATFORM"
       - name: Reicast - Windows ${{ matrix.platform }} - Cmake Only
         run: |
-          $BUILD_PATH=build-cmake-only
+          $BUILD_PATH="build-cmake-only"
           New-Item -Name $BUILD_PATH -ItemType Directory
           Push-Location $BUILD_PATH
+          echo "Platform $env:PLATFORM"
           cmake -A "$env:PLATFORM" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
           cmake --build .
           dir
           Pop-Location
       - name: Reicast - Windows ${{ matrix.platform }} - Cmake MSBuild
         run: |
-          $BUILD_PATH=build-cmake-msbuild
+          $BUILD_PATH="build-cmake-msbuild"
           New-Item -Name $BUILD_PATH -ItemType Directory
           Push-Location $BUILD_PATH
+          echo "Platform $env:PLATFORM"
           cmake -A "$env:PLATFORM" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
           msbuild reicast.sln
           dir

@@ -329,7 +329,7 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
     target_compile_definitions(${TNAME} PUBLIC SUPPORT_GLX)
     target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/glx/glx.cpp)
     target_link_libraries(${TNAME} OpenGL::GLX)
-  elseid(OPENGL_FOUND)
+  elseif(OPENGL_FOUND)
     # Support Ubuntu 16.04 and other older distros without GLVND
     target_compile_definitions(${TNAME} PUBLIC SUPPORT_GLX)
     target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/glx/glx.cpp)

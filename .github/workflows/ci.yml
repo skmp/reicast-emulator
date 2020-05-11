@@ -20,7 +20,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get clean && sudo apt-get update
-          sudo apt-get install -y pkg-config ninja-build libgl1-mesa-glx libcurl4-openssl-dev libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev
+          sudo apt-get install -y pkg-config ninja-build libcurl4-openssl-dev libglvnd-dev libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev
       - name: Print Toolchain Info
         run: gcc --version
       - name: Reicast - Linux x64 - Cmake and Ninja

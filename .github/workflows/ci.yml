@@ -29,18 +29,16 @@ jobs:
     #     run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -DTARGET_LINUX_X86=1 -G Ninja && ninja
     #   - name: Reicast - Linux x86 Libretro Core - Cmake and Ninja
     #     run: mkdir build-libretro-ninja && cd build-libretro-ninja && cmake .. -DTARGET_LINUX_X86=1 -DLIBRETRO_CORE=ON -G Ninja && ninja
-    #   - name: Reicast - Linux x86 - Cmake and Make
-    #     run: mkdir build-standalone-make && cd build-standalone-make && cmake .. -DTARGET_LINUX_X86=1 && make -j `nproc`
+      - name: Reicast - Linux x86 - Cmake and Make
+        run: mkdir build-standalone-make && cd build-standalone-make && cmake .. -DTARGET_LINUX_X86=1 && make -j `nproc`
     #   - name: Reicast - Linux x86 Libretro Core - Cmake and Make
     #     run: mkdir build-libretro-make && cd build-libretro-make && cmake .. -DTARGET_LINUX_X86=1 -DLIBRETRO_CORE=ON && make -j `nproc`
-      - name: Reicast - Linux x86 - Standalone Make
-        run: make -C reicast/linux -j `nproc` platform=x86
-      - name: Reicast - Linux Naomi x86 - Standalone Make
-        run: make -C reicast/linux -j `nproc` platform=x86 NAOMI=1
-      - name: Reicast - Linux x86 (No Exceptions) - Standalone Make
-        run: make -C reicast/linux -j `nproc` platform="x86 noexceptions"
-      - name: Reicast - Linux x86 (No RWX pages) - Standalone Make
-        run: make -C reicast/linux -j `nproc` platform="x86 norwxpages"
+    #   - name: Reicast - Linux x86 - Standalone Make
+    #     run: make -C reicast/linux -j `nproc` platform=x86
+    #   - name: Reicast - Linux Naomi x86 - Standalone Make
+    #     run: make -C reicast/linux -j `nproc` platform=x86 NAOMI=1
+    #   - name: Reicast - Linux x86 (No Exceptions) - Standalone Make
+    #     run: make -C reicast/linux -j `nproc` platform="x86 noexceptions"
 
 #   build-ubuntu-x64-gcc:
 #     name: Ubuntu x64 GCC

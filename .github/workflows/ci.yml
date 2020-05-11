@@ -1,0 +1,105 @@
+# NOTE: Matrix version numbers are quoted to ensure they are parsed as strings
+
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build-ubuntu-18.04:
+    name: Ubuntu Linux 18.04
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive && \
+          sudo dpkg --add-architecture i386 && \
+          sudo apt-get clean && sudo apt-get update && \
+          sudo apt-get install -y build-essential pkgconf libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev git && \
+          sudo apt-get install -y libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 g++-multilib gcc-multilib && \
+          sudo apt-get install -y g++-mingw-w64-x86-64 mingw-w64-x86-64-dev libz-mingw-w64-dev libnpth-mingw-w64-dev && \
+          sudo apt-get install -y cmake ninja-build
+      - name: Print Toolchain Info
+        run: gcc --version && x86_64-w64-mingw32-gcc --version
+      - name: Reicast - Linux x64 - Cmake and Ninja
+        run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -G Ninja && ninja
+      - name: Reicast - Linux x64 Libretro Core - Cmake and Ninja
+        run: mkdir build-libretro-ninja && cd build-libretro-ninja && cmake .. -DLIBRETRO_CORE=ON -G Ninja && ninja
+      - name: Reicast - Linux x64 - Cmake and Make
+        run: mkdir build-standalone-make && cd build-standalone-make && cmake .. && make -j `nproc`
+      - name: Reicast - Linux x64 Libretro Core - Cmake and Make
+        run: mkdir build-libretro-make && cd build-libretro-make && cmake .. -DLIBRETRO_CORE=ON && make -j `nproc`
+      - name: Reicast - Linux x64 - Standalone Make
+        run: make -C reicast/linux -j `nproc` platform=x64
+      - name: Reicast - Linux Naomi x64 - Standalone Make
+        run: make -C reicast/linux -j `nproc` platform=x64 NAOMI=1
+      - name: Reicast - Linux x86 - Standalone Make
+        run: make -C reicast/linux -j `nproc` platform=x86
+      - name: Reicast - Windows x64 (MinGW) - Standalone Make
+        run: make -C reicast/linux -j `nproc` platform=win32 CC_PREFIX=x86_64-w64-mingw32-
+      - name: Reicast - Linux x64 (No Exceptions) - Standalone Make
+        run: make -C reicast/linux -j `nproc` platform="x64 noexceptions"
+      - name: Reicast - Linux x64 (No RWX pages) - Standalone Make
+        run: make -C reicast/linux -j `nproc` platform="x64 norwxpages"
+
+  build-macos-xcode:
+    name: MacOS Xcode
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        version: ["11.4.1", "10.3"]
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.version }}.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v2
+      - name: Reicast - MacOS - Xcode Build
+        run: cd reicast/apple/emulator-osx && xcodebuild -configuration Release
+
+  build-macos-cmake:
+    name: MacOS Cmake
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        version: ["11.4.1", "10.3"]
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.version }}.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: brew install ninja
+      - name: Reicast - MacOS - Cmake and Ninja
+        run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -G Ninja && ninja
+      - name: Reicast - MacOS - Cmake and Make
+        run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. && make -j `nproc`
+
+  build-windows-msvc:
+    name: Windows MSVC (Latest)
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        platform: ["Win32", "x64"]
+    env:
+      PLATFORM: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print platform
+        run: echo "%PLATFORM%"
+      - name: Reicast - Windows ${{ matrix.platform }} - Cmake Only
+        run: |
+          $ErrorActionPreference="Stop"
+          $BUILD_PATH=build-cmake-only
+          New-Item -Name $BUILD_PATH -ItemType Directory
+          Push-Location $BUILD_PATH
+          cmake -A "%PLATFORM%" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
+          cmake --build .
+          dir
+          Pop-Location
+      - name: Reicast - Windows ${{ matrix.platform }} - Cmake MSBuild
+        run: |
+          $ErrorActionPreference="Stop" 
+          $BUILD_PATH=build-cmake-msbuild
+          New-Item -Name $BUILD_PATH -ItemType Directory
+          Push-Location $BUILD_PATH
+          cmake -A "%PLATFORM%" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
+          msbuild reicast.sln
+          dir
+          Pop-Location

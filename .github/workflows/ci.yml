@@ -23,9 +23,8 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           sudo dpkg --add-architecture i386
           sudo apt-get clean && sudo apt-get update
-          sudo apt-get install -y pkgconf ninja-build \
-            libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 \
-            g++-${{ matrix.gcc }}-multilib gcc-${{ matrix.gcc }}-multilib
+          sudo apt-get install -y pkgconf ninja-build libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev
+          sudo apt-get install -y libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 g++-${{ matrix.gcc }}-multilib gcc-${{ matrix.gcc }}-multilib
       - name: Reicast - Linux x86 - Cmake and Ninja
         run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -DTARGET_LINUX_X86=1 -G Ninja && ninja
       - name: Reicast - Linux x86 Libretro Core - Cmake and Ninja

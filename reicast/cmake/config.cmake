@@ -106,7 +106,8 @@ endif()
 #		AMD64/x86_64:x64, i*86:x86, ppc/powerpc[64][b|l]e:ppc[64] etc 
 #
 if(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686") OR
-   ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "X86"))   # todo: check MATCHES "i.86" ?
+   ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "X86") OR # todo: check MATCHES "i.86" ?
+   TARGET_LINUX_X86)
   set(host_arch "x86")
   set(HOST_CPU ${CPU_X86})
 #
@@ -311,10 +312,14 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   
   if(USE_32B OR TARGET_LINUX_X86)
     set(_C_FLAGS "${_C_FLAGS} -m32")
+    set(_CXX_FLAGS "${_CXX_FLAGS} -m32")
+    set(_ASM_FLAGS "${_ASM_FLAGS} -m32")
   endif()
   
   if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}))
     set(_C_FLAGS "${_C_FLAGS} -msse4")
+    set(_CXX_FLAGS "${_C_FLAGS} -msse4")
+    set(_ASM_FLAGS "${_C_FLAGS} -msse4")
   endif() # X86 family
   
     
@@ -332,6 +337,7 @@ set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS}")
 
 set(CMAKE_C_FLAGS " ${_C_FLAGS}") # ${CMAKE_C_FLAGS}   -- these hold default VC flags for non VC Build ?
 set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
+set(CMAKE_ASM_FLAGS " ${_ASM_FLAGS}")  # ${CMAKE_ASM_FLAGS}
 
 
 

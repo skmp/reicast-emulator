@@ -13,20 +13,18 @@ PLATFORM_EXT := elf
 SCRIPTING := 1
 
 # Fix building with different GCC versions by allowing the CC and GCC environment variables to be used
-CXX_MAIN=${CCX}
-CC_MAIN=${CC}
 ifndef CXX
-    CXX_MAIN=g++
+    CXX := g++
 endif
 ifndef CC
-    CC_MAIN=gcc
+    CC := gcc
 endif
-CXX=${CC_PREFIX}${CXX_MAIN}
-CC=${CC_PREFIX}${CC_MAIN}
-AS=${CC_PREFIX}${CC_MAIN}
-STRIP=${CC_PREFIX}strip
-LD=${CC_MAIN}
-WINDRES=${CC_PREFIX}windres
+CXX := ${CC_PREFIX}${CXX}
+CC := ${CC_PREFIX}${CC}
+AS := ${CC_PREFIX}${CC}
+STRIP := ${CC_PREFIX}strip
+LD := ${CC}
+WINDRES := ${CC_PREFIX}windres
 CHD5_LZMA := 1
 CHD5_FLAC := 1
 

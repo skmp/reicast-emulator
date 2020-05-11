@@ -9,8 +9,9 @@ jobs:
     runs-on: ubuntu-${{ matrix.os }}
     strategy:
       matrix:
-        os: ["18.04", "16.04"]
-        #gcc: ["9", "8", "7"]
+        # os: ["18.04", "16.04"]
+        os: ["18.04"]
+        # gcc: ["9", "8", "7"]
         gcc: ["9", "8"]
     env:
       CC: gcc-${{ matrix.gcc }}

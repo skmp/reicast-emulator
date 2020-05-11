@@ -88,7 +88,7 @@ jobs:
           Push-Location $BUILD_PATH
           echo "Platform $env:PLATFORM"
           cmake -A "$env:PLATFORM" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
-          cmake --build .
+          cmake --build . --config RelWithDebInfo
           dir
           Pop-Location
       - name: Reicast - Windows ${{ matrix.platform }} - Cmake MSBuild

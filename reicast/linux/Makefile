@@ -12,9 +12,16 @@ USE_MODEM := 1
 PLATFORM_EXT := elf
 SCRIPTING := 1
 
-CXX=${CC_PREFIX}g++
-CC=${CC_PREFIX}gcc
-AS=${CC_PREFIX}gcc
+# Fix building with different GCC versions by allowing the CC and GCC environment variables to be used
+ifndef CC
+CC=gcc
+endif
+ifndef CXX
+CXX=g++
+endif
+CXX=${CC_PREFIX}${CXX}
+CC=${CC_PREFIX}${CC}
+AS=${CC_PREFIX}${CC}
 STRIP=${CC_PREFIX}strip
 LD=${CC}
 WINDRES=${CC_PREFIX}windres

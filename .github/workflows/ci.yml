@@ -12,7 +12,7 @@ jobs:
         # os: ["18.04", "16.04"]
         # gcc: ["9", "8", "7"]
         os: ["18.04"]
-        gcc: ["8", "7"]
+        gcc: ["8"]
     env:
       CC: gcc-${{ matrix.gcc }}
       CXX: g++-${{ matrix.gcc }}

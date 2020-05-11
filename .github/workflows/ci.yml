@@ -12,7 +12,7 @@ jobs:
         # os: ["18.04", "16.04"]
         # gcc: ["9", "8", "7"]
         os: ["18.04"]
-        gcc: ["9"]
+        gcc: ["8", "7"]
     env:
       CC: gcc-${{ matrix.gcc }}
       CXX: g++-${{ matrix.gcc }}
@@ -23,15 +23,17 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           sudo dpkg --add-architecture i386
           sudo apt-get clean && sudo apt-get update
-          sudo apt-get install -y pkgconf ninja-build libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 g++-multilib gcc-multilib
+          sudo apt-get install -y pkgconf ninja-build \
+            libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 \
+            g++-${{ matrix.gcc }}-multilib gcc-${{ matrix.gcc }}-multilib
       - name: Reicast - Linux x86 - Cmake and Ninja
-        run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -DTARGET_LINUX_X86 -G Ninja && ninja
+        run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -DTARGET_LINUX_X86=1 -G Ninja && ninja
       - name: Reicast - Linux x86 Libretro Core - Cmake and Ninja
-        run: mkdir build-libretro-ninja && cd build-libretro-ninja && cmake .. -DTARGET_LINUX_X86 -DLIBRETRO_CORE=ON -G Ninja && ninja
+        run: mkdir build-libretro-ninja && cd build-libretro-ninja && cmake .. -DTARGET_LINUX_X86=1 -DLIBRETRO_CORE=ON -G Ninja && ninja
       - name: Reicast - Linux x86 - Cmake and Make
-        run: mkdir build-standalone-make && cd build-standalone-make && cmake .. -DTARGET_LINUX_X86 && make -j `nproc`
+        run: mkdir build-standalone-make && cd build-standalone-make && cmake .. -DTARGET_LINUX_X86=1 && make -j `nproc`
       - name: Reicast - Linux x86 Libretro Core - Cmake and Make
-        run: mkdir build-libretro-make && cd build-libretro-make && cmake .. -DTARGET_LINUX_X86 -DLIBRETRO_CORE=ON && make -j `nproc`
+        run: mkdir build-libretro-make && cd build-libretro-make && cmake .. -DTARGET_LINUX_X86=1 -DLIBRETRO_CORE=ON && make -j `nproc`
       - name: Reicast - Linux x86 - Standalone Make
         run: make -C reicast/linux -j `nproc` platform=x86
       - name: Reicast - Linux Naomi x86 - Standalone Make

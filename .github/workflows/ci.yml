@@ -69,10 +69,10 @@ jobs:
       - name: Reicast - MacOS - Cmake and Ninja
         run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -G Ninja && ninja
       - name: Reicast - MacOS - Cmake and Make
-        run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. && make -j `nproc`
+        run: mkdir build-standalone-make && cd build-standalone-make && cmake .. && make -j `nproc`
 
   build-windows-msvc:
-    name: Windows MSVC (Latest)
+    name: Windows MSVC
     runs-on: windows-latest
     strategy:
       matrix:
@@ -82,14 +82,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Print platform
-        run: echo "%PLATFORM%"
+        run: echo "$env:PLATFORM"
       - name: Reicast - Windows ${{ matrix.platform }} - Cmake Only
         run: |
           $ErrorActionPreference="Stop"
           $BUILD_PATH=build-cmake-only
           New-Item -Name $BUILD_PATH -ItemType Directory
           Push-Location $BUILD_PATH
-          cmake -A "%PLATFORM%" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
+          cmake -A "$env:PLATFORM" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
           cmake --build .
           dir
           Pop-Location
@@ -99,7 +99,7 @@ jobs:
           $BUILD_PATH=build-cmake-msbuild
           New-Item -Name $BUILD_PATH -ItemType Directory
           Push-Location $BUILD_PATH
-          cmake -A "%PLATFORM%" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
+          cmake -A "$env:PLATFORM" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo ..
           msbuild reicast.sln
           dir
           Pop-Location

@@ -91,6 +91,7 @@ jobs:
           cmake --build . --config RelWithDebInfo
           dir
           Pop-Location
+      - uses: microsoft/setup-msbuild@v1.0.0
       - name: Reicast - Windows ${{ matrix.platform }} - Cmake MSBuild
         run: |
           $BUILD_PATH="build-cmake-msbuild"

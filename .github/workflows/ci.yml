@@ -25,14 +25,14 @@ jobs:
           sudo apt-get clean && sudo apt-get update
           sudo apt-get install -y pkgconf ninja-build libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev
           sudo apt-get install -y libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 g++-${{ matrix.gcc }}-multilib gcc-${{ matrix.gcc }}-multilib
-      - name: Reicast - Linux x86 - Cmake and Ninja
-        run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -DTARGET_LINUX_X86=1 -G Ninja && ninja
-      - name: Reicast - Linux x86 Libretro Core - Cmake and Ninja
-        run: mkdir build-libretro-ninja && cd build-libretro-ninja && cmake .. -DTARGET_LINUX_X86=1 -DLIBRETRO_CORE=ON -G Ninja && ninja
-      - name: Reicast - Linux x86 - Cmake and Make
-        run: mkdir build-standalone-make && cd build-standalone-make && cmake .. -DTARGET_LINUX_X86=1 && make -j `nproc`
-      - name: Reicast - Linux x86 Libretro Core - Cmake and Make
-        run: mkdir build-libretro-make && cd build-libretro-make && cmake .. -DTARGET_LINUX_X86=1 -DLIBRETRO_CORE=ON && make -j `nproc`
+    #   - name: Reicast - Linux x86 - Cmake and Ninja
+    #     run: mkdir build-standalone-ninja && cd build-standalone-ninja && cmake .. -DTARGET_LINUX_X86=1 -G Ninja && ninja
+    #   - name: Reicast - Linux x86 Libretro Core - Cmake and Ninja
+    #     run: mkdir build-libretro-ninja && cd build-libretro-ninja && cmake .. -DTARGET_LINUX_X86=1 -DLIBRETRO_CORE=ON -G Ninja && ninja
+    #   - name: Reicast - Linux x86 - Cmake and Make
+    #     run: mkdir build-standalone-make && cd build-standalone-make && cmake .. -DTARGET_LINUX_X86=1 && make -j `nproc`
+    #   - name: Reicast - Linux x86 Libretro Core - Cmake and Make
+    #     run: mkdir build-libretro-make && cd build-libretro-make && cmake .. -DTARGET_LINUX_X86=1 -DLIBRETRO_CORE=ON && make -j `nproc`
       - name: Reicast - Linux x86 - Standalone Make
         run: make -C reicast/linux -j `nproc` platform=x86
       - name: Reicast - Linux Naomi x86 - Standalone Make

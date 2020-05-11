@@ -318,8 +318,8 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   
   if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}))
     set(_C_FLAGS "${_C_FLAGS} -msse4")
-    set(_CXX_FLAGS "${_C_FLAGS} -msse4")
-    set(_ASM_FLAGS "${_C_FLAGS} -msse4")
+    set(_CXX_FLAGS "${_CXX_FLAGS} -msse4")
+    set(_ASM_FLAGS "${_ASM_FLAGS} -msse4")
   endif() # X86 family
   
     

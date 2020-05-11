@@ -97,17 +97,24 @@ endif()
 #
 
 if(MSVC)
-    set(CMAKE_SYSTEM_PROCESSOR ${MSVC_CXX_ARCHITECTURE_ID})
+  set(CMAKE_SYSTEM_PROCESSOR ${MSVC_CXX_ARCHITECTURE_ID})
 endif()
 
+if(TARGET_LINUX_X86)
+  # Make sure correct flags are set to compile for 32bit
+  set(CMAKE_SYSTEM_PROCESSOR i686)
+  # Make sure we look for 32bit libraries/packages
+  set(CMAKE_LIBRARY_ARCHITECTURE i386-linux-gnu) 
+  # Match standard Makefile configuration for x86
+  set(TARGET_NO_AREC ON) 
+endif()
 
 
 ## strings are used to append to path/file names, and to filter multiple possibilities down to one 
 #		AMD64/x86_64:x64, i*86:x86, ppc/powerpc[64][b|l]e:ppc[64] etc 
 #
 if(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686") OR
-   ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "X86") OR # todo: check MATCHES "i.86" ?
-   TARGET_LINUX_X86)
+   ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "X86")) # todo: check MATCHES "i.86" ?
   set(host_arch "x86")
   set(HOST_CPU ${CPU_X86})
 #
@@ -313,12 +320,6 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   if(USE_32B OR TARGET_LINUX_X86)
     set(_C_FLAGS "${_C_FLAGS} -m32")
     set(_ASM_FLAGS "${_ASM_FLAGS} -m32")
-    set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB32_PATHS TRUE)
-    message(STATUS "CMAKE_SYSTEM: ${CMAKE_SYSTEM}")
-    message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
-    message(STATUS "CMAKE_SYSTEM_VERSION: ${CMAKE_SYSTEM_VERSION}")
-    message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
-    message(STATUS "CMAKE_LIBRARY_ARCHITECTURE: ${CMAKE_LIBRARY_ARCHITECTURE}")
   endif()
   
   if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}))

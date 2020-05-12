@@ -107,6 +107,7 @@ if(TARGET_LINUX_X86)
   set(CMAKE_LIBRARY_ARCHITECTURE i386-linux-gnu) 
   # Match standard Makefile configuration for x86
   set(TARGET_NO_AREC ON) 
+  set(_C_FLAGS "${_C_FLAGS} -DTARGET_LINUX_x86")
 endif()
 
 
@@ -319,7 +320,7 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   
   if(USE_32B OR TARGET_LINUX_X86)
     set(_C_FLAGS "${_C_FLAGS} -m32")
-    # set(_ASM_FLAGS "${_ASM_FLAGS} -m32")
+    set(_ASM_FLAGS "${_ASM_FLAGS} -m32")
   endif()
   
   if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}))
@@ -341,7 +342,7 @@ set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS}")
 
 set(CMAKE_C_FLAGS " ${_C_FLAGS}") # ${CMAKE_C_FLAGS}   -- these hold default VC flags for non VC Build ?
 set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
-# set(CMAKE_ASM_FLAGS " ${_ASM_FLAGS}")  # ${CMAKE_ASM_FLAGS}
+set(CMAKE_ASM_FLAGS " ${_ASM_FLAGS}")  # ${CMAKE_ASM_FLAGS}
 
 
 

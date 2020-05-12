@@ -109,11 +109,13 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
   if(${HOST_CPU} EQUAL ${CPU_X86})
     list(APPEND core_SRCS 
       ${d_core}/jit/backend/x86/rec_x86_driver.cpp
-      ${d_core}/jit/backend/x86/rec_x86_asm.cpp	# change for linux , rec_lin86_asm.S
-	  ${d_core}/jit/backend/x86/rec_x86_ngen.h
-
+      ${d_core}/jit/backend/x86/rec_x86_ngen.h
       ${d_core}/jit/emitter/x86/x86_emitter.cpp
-     )
+      ${d_core}/jit/backend/x86/rec_x86_asm.cpp
+    )
+    if(${HOST_OS} EQUAL ${OS_LINUX})
+      list(APPEND core_SRCS ${d_core}/jit/backend/x86/rec_lin86_asm.S)
+    endif()
   elseif(${HOST_CPU} EQUAL ${CPU_ARM})
     list(APPEND core_SRCS 
       ${d_core}/rec-ARM/ngen_arm.S

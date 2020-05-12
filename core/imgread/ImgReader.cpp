@@ -83,7 +83,7 @@ s32 libGDR_Init()
 		return -1;
 	libCore_gdrom_disc_change();
 	LoadSettings();
-	settings.imgread.PatchRegion=true;
+
 	return 0;
 }
 

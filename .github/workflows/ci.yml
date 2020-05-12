@@ -14,6 +14,7 @@ jobs:
     env:
       CC: gcc-${{ matrix.gcc }}
       CXX: g++-${{ matrix.gcc }}
+      PKG_CONFIG_PATH: /usr/lib/i386-linux-gnu/pkgconfig
     steps:
       - uses: actions/checkout@v2
       - name: Install Dependencies

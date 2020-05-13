@@ -2,7 +2,7 @@
     This file is part of reicast-osx
 */
 #include "license/bsd"
-
+#import <GameController/GameController.h>
 #import "EmuGLView.h"
 #import "input.h"
 
@@ -28,7 +28,27 @@
     self.pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
     self.openGLContext = [[NSOpenGLContext alloc] initWithFormat:self.pixelFormat shareContext:nil];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(controllerConnected:) name:GCControllerDidConnectNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(controllerDisconnected:) name:GCControllerDidDisconnectNotification object:nil];
+   
     return self;
+}
+- (void)controllerConnected:(NSNotification*)notification {
+    assert([NSThread isMainThread]);
+    GCController *connectedController = notification.object;
+    if (!connectedController.extendedGamepad) {
+        return;
+    }
+    connect_controller(connectedController.extendedGamepad);
+}
+
+- (void)controllerDisconnected:(NSNotification*)notification {
+    assert([NSThread isMainThread]);
+    GCController *disconnectedController = notification.object;
+    if (!disconnectedController.extendedGamepad) {
+        return;
+    }
+    disconnect_controller(disconnectedController.extendedGamepad);
 }
 
 - (BOOL)acceptsFirstResponder {

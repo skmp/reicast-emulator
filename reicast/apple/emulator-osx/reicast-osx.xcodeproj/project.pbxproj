@@ -372,6 +372,7 @@
 		53D572EB2427099200E3FAFE /* libomp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 53D572EA2427099200E3FAFE /* libomp.a */; };
 		84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BA1B1CDD3E000166C0 /* Images.xcassets */; };
 		84B7BF831B727AD700F9733F /* input.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* input.mm */; };
+		85B994012460F5DD00EEC5DA /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85B994002460F5DC00EEC5DA /* GameController.framework */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
 /* End PBXBuildFile section */
@@ -1285,8 +1286,9 @@
 		84A388C81B1CDD3F000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84B7BF821B727AD700F9733F /* input.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = input.mm; sourceTree = "<group>"; };
 		84B7BF841B72821900F9733F /* input.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = input.h; sourceTree = "<group>"; };
-		AE60BD9F22256E2500FA8A5B /* OSXKeyboardDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = OSXKeyboardDevice.hpp; sourceTree = "<group>"; };
-		AE60BDA02225725800FA8A5B /* OSXGamepadDevice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = OSXGamepadDevice.hpp; sourceTree = "<group>"; };
+		85B994002460F5DC00EEC5DA /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
+		AE60BD9F22256E2500FA8A5B /* OSXKeyboardDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OSXKeyboardDevice.h; sourceTree = "<group>"; };
+		AE60BDA02225725800FA8A5B /* OSXGamepadDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OSXGamepadDevice.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		EBDF37521BB969F8001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -1298,6 +1300,7 @@
 			files = (
 				53D572EB2427099200E3FAFE /* libomp.a in Frameworks */,
 				539D7B282409EC32004E57BD /* OpenGL.framework in Frameworks */,
+				85B994012460F5DD00EEC5DA /* GameController.framework in Frameworks */,
 				5317CF4624086353008A1850 /* Cocoa.framework in Frameworks */,
 				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
@@ -2848,6 +2851,7 @@
 		5317CF4424086352008A1850 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				85B994002460F5DC00EEC5DA /* GameController.framework */,
 				53D572EA2427099200E3FAFE /* libomp.a */,
 				5317CF4E2408674A008A1850 /* libomp.dylib */,
 				5317CF4724086368008A1850 /* OpenGL.framework */,
@@ -3091,8 +3095,8 @@
 				5312C06F24080EDA00C67C85 /* EmuGLView.m */,
 				5337C64F2433CF3D0054BA28 /* ConsoleViewController.h */,
 				5337C6502433CF3D0054BA28 /* ConsoleViewController.m */,
-				AE60BD9F22256E2500FA8A5B /* OSXKeyboardDevice.hpp */,
-				AE60BDA02225725800FA8A5B /* OSXGamepadDevice.hpp */,
+				AE60BD9F22256E2500FA8A5B /* OSXKeyboardDevice.h */,
+				AE60BDA02225725800FA8A5B /* OSXGamepadDevice.h */,
 				84B7BF841B72821900F9733F /* input.h */,
 				84B7BF821B727AD700F9733F /* input.mm */,
 				84A388BA1B1CDD3E000166C0 /* Images.xcassets */,

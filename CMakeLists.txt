@@ -419,6 +419,7 @@ if(${HOST_OS} EQUAL ${OS_DARWIN})
     "-framework AudioToolbox"
     "-framework Foundation"
     "-framework OpenGL"
+    "-framework GameController"
   )
 
   # Create the macOS app bundle

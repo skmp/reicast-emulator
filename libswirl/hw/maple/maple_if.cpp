@@ -308,10 +308,14 @@ MMIODevice* Create_MapleDevice(SystemBus* sb, ASIC* asic) {
 
 void maple_vblank()
 {
+    if (!sh4_cpu) return;
+    
 	sh4_cpu->GetA0H<MapleDevice>(A0H_MAPLE)->OnVblank();
 }
 
 void maple_ReconnectDevices()
 {
+    if (!sh4_cpu) return;
+    
 	sh4_cpu->GetA0H<MapleDevice>(A0H_MAPLE)->ReconnectDevices();
 }

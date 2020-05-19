@@ -538,6 +538,7 @@ else ifeq ($(platform), rockpro64)
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
+	HAVE_LTCG = 0
 
 # Tinkerboard
 else ifeq ($(platform), tinkerboard)

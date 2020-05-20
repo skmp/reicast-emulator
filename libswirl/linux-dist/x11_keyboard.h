@@ -176,12 +176,10 @@ public:
 		set_button(EMU_BTN_TRIGGER_LEFT, KEY_F);
 		set_button(EMU_BTN_TRIGGER_RIGHT, KEY_V);
 		set_button(EMU_BTN_MENU, KEY_TAB);
-
-        //TODO:
-//        set_button(EMU_BTN_STICK_UP, kVK_ANSI_P);
-//        set_button(EMU_BTN_STICK_DOWN, kVK_ANSI_Semicolon);
-//        set_button(EMU_BTN_STICK_LEFT, kVK_ANSI_L);
-//        set_button(EMU_BTN_STICK_RIGHT, kVK_ANSI_Quote);
+        set_button(EMU_BTN_STICK_UP, KEY_P);
+        set_button(EMU_BTN_STICK_DOWN, KEY_SEMICOLON);
+        set_button(EMU_BTN_STICK_LEFT, KEY_L);
+        set_button(EMU_BTN_STICK_RIGHT, KEY_QUOTE);
 
 		dirty = false;
 	}

@@ -1965,7 +1965,17 @@ bool retro_load_game(const struct retro_game_info *game)
       preferred = RETRO_HW_CONTEXT_DUMMY;
    bool foundRenderApi = false;
 
-   if (preferred == RETRO_HW_CONTEXT_DUMMY)
+   if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE
+    || preferred == RETRO_HW_CONTEXT_OPENGLES2 || preferred == RETRO_HW_CONTEXT_OPENGLES3
+    || preferred == RETRO_HW_CONTEXT_OPENGLES_VERSION)
+   {
+      foundRenderApi = set_opengl_hw_render(preferred);
+   }
+   else if (preferred == RETRO_HW_CONTEXT_VULKAN)
+   {
+      foundRenderApi = set_vulkan_hw_render();
+   }
+   else
    {
       // fallback when not supported (or auto-switching disabled), let's try all supported drivers
       foundRenderApi = set_vulkan_hw_render();
@@ -1980,16 +1990,6 @@ bool retro_load_game(const struct retro_game_info *game)
       if (!foundRenderApi)
          foundRenderApi = set_opengl_hw_render(RETRO_HW_CONTEXT_OPENGL);
 #endif
-   }
-   else if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE
-    || preferred == RETRO_HW_CONTEXT_OPENGLES2 || preferred == RETRO_HW_CONTEXT_OPENGLES3
-    || preferred == RETRO_HW_CONTEXT_OPENGLES_VERSION)
-   {
-      foundRenderApi = set_opengl_hw_render(preferred);
-   }
-   else
-   {
-      foundRenderApi = set_vulkan_hw_render();
    }
 
    if (!foundRenderApi)

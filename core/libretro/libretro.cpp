@@ -1789,18 +1789,18 @@ static bool set_opengl_hw_render(u32 preferred)
 #ifdef HAVE_OIT
 	if (settings.pvr.rend == 3)
 	{
-	  params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
-	  params.major                 = 4;
-	  params.minor                 = 3;
+		params.context_type          = (retro_hw_context_type)preferred;
+		params.major                 = 4;
+		params.minor                 = 3;
 	}
 	else
 	{
-		params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+		params.context_type          = (retro_hw_context_type)preferred;
 		params.major                 = 3;
 		params.minor                 = 0;
 	}
 #elif defined(HAVE_GL3)
-	params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+	params.context_type          = (retro_hw_context_type)preferred;
 	params.major                 = 3;
 	params.minor                 = 0;
 #endif
@@ -1809,17 +1809,17 @@ static bool set_opengl_hw_render(u32 preferred)
 		return true;
 
 #if defined(HAVE_GL3)
-	params.context_type       = RETRO_HW_CONTEXT_OPENGL_CORE;
+	params.context_type       = (retro_hw_context_type)preferred;
 	params.major              = 3;
 	params.minor              = 0;
 #else
-	params.context_type       = RETRO_HW_CONTEXT_OPENGL;
+	params.context_type       = (retro_hw_context_type)preferred;
 	params.major              = 0;
 	params.minor              = 0;
 #endif
-   return glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params);
+	return glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params);
 #else
-   return false;
+	return false;
 #endif
 }
 
@@ -1962,26 +1962,38 @@ bool retro_load_game(const struct retro_game_info *game)
 
    u32 preferred;
    if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred))
-   	preferred = 0xFFFFFFFF;
+      preferred = RETRO_HW_CONTEXT_DUMMY;
    bool foundRenderApi = false;
 
-   if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE
-   		|| preferred == RETRO_HW_CONTEXT_OPENGLES2 || preferred == RETRO_HW_CONTEXT_OPENGLES3
-			|| preferred == RETRO_HW_CONTEXT_OPENGLES_VERSION || preferred == 0xFFFFFFFF)
+   if (preferred == RETRO_HW_CONTEXT_DUMMY)
    {
-   	foundRenderApi = set_opengl_hw_render(preferred);
-   	if (!foundRenderApi)
-   		foundRenderApi = set_vulkan_hw_render();
+      // fallback when not supported (or auto-switching disabled), let's try all supported drivers
+      foundRenderApi = set_vulkan_hw_render();
+#if defined(HAVE_OPENGLES)
+      if (!foundRenderApi)
+         foundRenderApi = set_opengl_hw_render(RETRO_HW_CONTEXT_OPENGLES3);
+      if (!foundRenderApi)
+         foundRenderApi = set_opengl_hw_render(RETRO_HW_CONTEXT_OPENGLES2);
+#else
+      if (!foundRenderApi)
+         foundRenderApi = set_opengl_hw_render(RETRO_HW_CONTEXT_OPENGL_CORE);
+      if (!foundRenderApi)
+         foundRenderApi = set_opengl_hw_render(RETRO_HW_CONTEXT_OPENGL);
+#endif
+   }
+   else if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE
+    || preferred == RETRO_HW_CONTEXT_OPENGLES2 || preferred == RETRO_HW_CONTEXT_OPENGLES3
+    || preferred == RETRO_HW_CONTEXT_OPENGLES_VERSION)
+   {
+      foundRenderApi = set_opengl_hw_render(preferred);
    }
    else
    {
-		foundRenderApi = set_vulkan_hw_render();
-		if (!foundRenderApi)
-      	foundRenderApi = set_opengl_hw_render(0xFFFFFFFF);
+      foundRenderApi = set_vulkan_hw_render();
    }
 
    if (!foundRenderApi)
-   	return false;
+      return false;
 
    if (settings.System != DC_PLATFORM_DREAMCAST)
    {

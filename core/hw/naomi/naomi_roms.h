@@ -4261,7 +4261,7 @@ Games[] =
     // Pokasuka Ghost *** BAD DUMP ***
     {
         "pokasuka",
-        NULL,
+        "manicpnc",
         0x14000000,
         0x5505,
         "naomi",
@@ -4269,18 +4269,18 @@ Games[] =
         REGION_JAPAN,
         ROT0,
         {
-            { "fpr-24365.ic8",  0x00000000, 0x4000000, 0x00000000 },
-            { "fpr-24366.ic9",  0x04000000, 0x4000000, 0x00000000 },
-            { "fpr-24367.ic10", 0x08000000, 0x4000000, 0x00000000 },
-            { "fpr-24368.ic11", 0x0c000000, 0x4000000, 0x00000000 },
-            { "fpr-24369.ic12", 0x10000000, 0x4000000, 0x00000000 },
+            { "fpr-24365.ic8",  0x00000000, 0x4000000, 0x11489cda },
+            { "fpr-24366.ic9",  0x04000000, 0x4000000, 0x7429714a },
+            { "fpr-24367.ic10", 0x08000000, 0x4000000, 0xdee87bab },
+            { "fpr-24368.ic11", 0x0c000000, 0x4000000, 0x124f55e2 },
+            { "fpr-24369.ic12", 0x10000000, 0x4000000, 0x35b544ab },
             
             //ROM_REGION( 0x200000, "ioboard", 0) // touch screen I/O board, program disassembles as little-endian SH-4
             //ROM_LOAD( "fpr24351.ic14", 0x000000, 0x200000, CRC(4d1b7b89) SHA1(965b8c6b5a2e7b3f1b1e2eac19c86000c3b66754) )
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0461-com.ic3", 0, 0x800, BAD_DUMP CRC(c9282cdd) SHA1(23933e489d763515428e2714cc6e7676df1d5323) )
-            { "317-0461-com.ic3", 0, 0x800, 0x00000000, Key },
+            { "317-0461-com.ic3", 0, 0x800, 0xc9282cdd, Key },
             
             { NULL, 0, 0, 0x00000000 },
         }

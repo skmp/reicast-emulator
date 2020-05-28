@@ -185,7 +185,7 @@ bool rend_single_frame();
 void rend_cancel_emu_wait();
 bool acquire_mainloop_lock();
 
-static void refresh_devices(bool descriptors_only);
+static void refresh_devices(bool first_startup);
 static void init_disk_control_interface(void);
 static bool read_m3u(const char *file);
 
@@ -2349,19 +2349,17 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 	}
 }
 
-static void refresh_devices(bool descriptors_only)
+static void refresh_devices(bool first_startup)
 {
 	if (devices_need_refresh)
 	{
 		devices_need_refresh = false;
 		set_input_descriptors();
 
-		if (!descriptors_only)
+		if (!first_startup)
 		{
 			if (settings.System == DC_PLATFORM_DREAMCAST)
-			{
 				maple_ReconnectDevices();
-			}
 
 			if (rumble.set_rumble_state)
 			{
@@ -2372,7 +2370,7 @@ static void refresh_devices(bool descriptors_only)
 				}
 			}
 		}
-		if (settings.System != DC_PLATFORM_DREAMCAST)
+		else
 		{
 			mcfg_DestroyDevices();
 			mcfg_CreateDevices();

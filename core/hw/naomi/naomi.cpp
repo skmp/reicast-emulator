@@ -435,7 +435,7 @@ void Naomi_DmaStart(u32 addr, u32 data)
 		SB_GDST = 0;
 		if (CurrentCartridge != NULL)
 		{
-			u32 len = SB_GDLEN;
+			u32 len = (SB_GDLEN + 30) & ~30;
 			u32 offset = 0;
 			while (len > 0)
 			{

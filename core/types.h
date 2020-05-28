@@ -506,12 +506,15 @@ enum class JVS {
 	Analog,
 	LightGun,
 	Mazan,
+	GunSurvivor,
 	DogWalking,
 	TouchDeUno,
 	WorldKicks,
 	WorldKicksPCB,
 	Keyboard,
-	OutTrigger
+	OutTrigger,
+	LightGunAsAnalog,
+	WaveRunnerGP,
 };
 
 struct settings_t

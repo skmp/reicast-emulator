@@ -620,8 +620,39 @@ struct maple_sega_vmu: maple_base
 					{
 						w32(MFID_1_Storage);
 						
-						// Get data from the vmu system area (block 0xFF)
-						wptr(flash_data + 0xFF * 512 + 0x40, 24);
+						if (*(u16*)&flash_data[0xFF * 512 + 0x40] != 0xFF)
+						{
+							// Unformatted state: return predetermined media information
+							//total_size;
+							w16(0xff);
+							//partition_number;
+							w16(0);
+							//system_area_block;
+							w16(0xFF);
+							//fat_area_block;
+							w16(0xfe);
+							//number_fat_areas_block;
+							w16(1);
+							//file_info_block;
+							w16(0xfd);
+							//number_info_blocks;
+							w16(0xd);
+							//volume_icon;
+							w8(0);
+							//reserved1;
+							w8(0);
+							//save_area_block;
+							w16(0xc8);
+							//number_of_save_blocks;
+							w16(0x1f);
+							//reserverd0 (something for execution files?)
+							w32(0);
+						}
+						else
+						{
+							// Get data from the vmu system area (block 0xFF)
+							wptr(flash_data + 0xFF * 512 + 0x40, 24);
+						}
 
 						return MDRS_DataTransfer;//data transfer
 					}

@@ -3156,7 +3156,9 @@ Games[] =
             { "mpr-22218.ic11",  0x5800000, 0x0800000, 0x00000000 },
             { "mpr-22219.ic12s", 0x6000000, 0x0800000, 0x00000000 },
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
+		  NULL,
+		  &marine_fishing_std_inputs,
     },
     // Spawn In the Demon's Hand (JPN, USA, EUR, ASI, AUS) (Rev B)
     {

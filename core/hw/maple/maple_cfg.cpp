@@ -132,7 +132,6 @@ lightgun_params_t lightgun_params[4] ;
 
 MapleDeviceType maple_devices[MAPLE_PORTS] =
    { MDT_SegaController, MDT_SegaController, MDT_SegaController, MDT_SegaController };
-bool use_lightgun = false;	// Naomi only
 
 u8 GetBtFromSgn(s8 val)
 {
@@ -269,11 +268,6 @@ void mcfg_CreateDevices()
    }
    else if (settings.System == DC_PLATFORM_NAOMI)
    {
-      use_lightgun = false;
-      for (int i = 0; i < MAPLE_PORTS; i++)
-      	if (maple_devices[i] == MDT_LightGun)
-      		use_lightgun = true;
-
       bus = 0;
       mcfg_Create(MDT_NaomiJamma, bus++, 5);
       for (int i = 0; i < MAPLE_PORTS; i++)

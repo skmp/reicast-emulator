@@ -370,6 +370,8 @@ static bool naomi_cart_LoadZip(const char *filename)
 	CurrentCartridge->Init();
 
 	strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
+	if (naomi_game_id[0] == '\0')
+		strcpy(naomi_game_id, game->name);
 	NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
 
 	return true;
@@ -956,10 +958,12 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		return;
 
 	case NAOMI_DMA_COUNT_addr&255:
-		{
-			DmaCount=data;
-		}
+		DmaCount=data;
 		return;
+
+	case NAOMI_STATUS_LEDS_addr & 255:
+		return;
+
 	case NAOMI_BOARDID_WRITE_addr&255:
 		NaomiGameIDWrite((u16)data);
 		return;

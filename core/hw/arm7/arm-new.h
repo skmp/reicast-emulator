@@ -492,6 +492,7 @@
       clockTicks++;\
       int base = (opcode >> 16) & 0x0F;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       bool C_OUT = C_FLAG;\
       u32 value;\
@@ -531,6 +532,7 @@
       clockTicks++;\
       int base = (opcode >> 16) & 0x0F;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       bool C_OUT = C_FLAG;\
       u32 value;\
@@ -570,6 +572,7 @@
       clockTicks++;\
       int base = (opcode >> 16) & 0x0F;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       bool C_OUT = C_FLAG;\
       u32 value;\
@@ -611,6 +614,7 @@
       clockTicks++;\
       int base = (opcode >> 16) & 0x0F;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       bool C_OUT = C_FLAG;\
       u32 value;\
@@ -816,6 +820,7 @@
        /* OP Rd,Rb,Rm LSL Rs */\
       clockTicks++;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       bool C_OUT = C_FLAG;\
       u32 value;\
@@ -852,6 +857,7 @@
        /* OP Rd,Rb,Rm LSR Rs */ \
       clockTicks++;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       bool C_OUT = C_FLAG;\
       u32 value;\
@@ -888,6 +894,7 @@
        /* OP Rd,Rb,Rm ASR Rs */ \
       clockTicks++;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       bool C_OUT = C_FLAG;\
       u32 value;\
@@ -926,6 +933,7 @@
        /* OP Rd,Rb,Rm ROR Rs */\
       clockTicks++;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       bool C_OUT = C_FLAG;\
       u32 value;\
@@ -1123,6 +1131,7 @@
       clockTicks++;\
       int base = (opcode >> 16) & 0x0F;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       u32 value;\
       if(shift) {\
@@ -1157,6 +1166,7 @@
       clockTicks++;\
       int base = (opcode >> 16) & 0x0F;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       u32 value;\
       if(shift) {\
@@ -1191,6 +1201,7 @@
       clockTicks++;\
       int base = (opcode >> 16) & 0x0F;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       u32 value;\
       if(shift < 32) {\
@@ -1227,6 +1238,7 @@
       clockTicks++;\
       int base = (opcode >> 16) & 0x0F;\
       int shift = reg[(opcode >> 8)&15].B.B0;\
+      reg[15].I += 4;\
       int dest = (opcode>>12) & 15;\
       u32 value;\
       if(shift) {\

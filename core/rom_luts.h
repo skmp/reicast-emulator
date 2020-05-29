@@ -123,7 +123,7 @@ static struct game_type_naomi lut_games_naomi[] =
    /* Div matching disabled */
    { "ALIEN FRONT"                       , -1, -1, -1, -1,  1, JVS::Default,  1 },                /* Alien Front */
    { "METAL SLUG 6"                      , -1, -1, -1, -1,  1, JVS::Default,  1 },                /* Metal Slug 6 */
-   { "WAVE RUNNER GP"                    , -1, -1, -1, -1,  1, JVS::Default,  1 },                /* WaveRunner GP */
+   { "WAVE RUNNER GP"                    , -1, -1, -1, -1,  1, JVS::WaveRunnerGP,  1 },           /* WaveRunner GP */
    { "STREET FIGHTER ZERO3 UPPER"        , -1, -1, -1, -1,  1, JVS::Default,  1 },                /* Street Fighter Zero 3 Upper */
 
    /* Extra Depth Scaling */
@@ -134,6 +134,7 @@ static struct game_type_naomi lut_games_naomi[] =
 
    /* Alternate Jamma I/O Setup */
    { "POWER STONE 2 JAPAN"               , -1, -1, -1, -1,  -1, JVS::FourPlayers, 1 },            /* Power Stone 2 (4 players, also needs to be set in service menu) */
+   { "GUILTY GEAR isuka"                 , -1, -1, -1, -1,  -1, JVS::FourPlayers, 1 },            /* Guilty Gear (AW) */
    { "SHOOTOUT POOL"                     , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Shootout Pool: rotary encoders */
    { "SHOOTOUT POOL MEDAL"               , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Shootout Pool The Medal: rotary encoders */
    { "DYNAMIC GOLF"                      , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Virtua Golf/Dynamic Golf: rotary encoders */
@@ -156,10 +157,18 @@ static struct game_type_naomi lut_games_naomi[] =
    { "MAZAN"                             , -1, -1, -1, -1,  -1, JVS::Mazan, 1 },                  /* Mazan */
    { "WORLD KICKS"                       , -1, -1, -1, -1,  -1, JVS::WorldKicks, 1 },             /* World Kicks */
    { "WORLD KICKS PCB"                   , -1, -1, -1, -1,  -1, JVS::WorldKicksPCB, 1 },          /* World Kicks 2 kit a.k.a. World Kicks PCB */
+   { "THE MAZE OF THE KINGS"             , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },
+   { " CONFIDENTIAL MISSION ---------"   , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },
+   { "hotd2"                             , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },		  /* The House of The Dead 2 */
+   { "hotd2o"                            , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },		  /* The House of The Dead 2 */
+   { "hotd2e"                            , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },		  /* The House of The Dead 2 (export) */
+   { "hotd2p"                            , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },		  /* The House of The Dead 2 (prototype) */
+   { "INU NO OSANPO"                     , -1, -1, -1, -1,  -1, JVS::DogWalking, 1 },   		  	  /* Dog Walking */
+   { " TOUCH DE UNOH -------------"      , -1, -1, -1, -1,  -1, JVS::TouchDeUno, 1 },				  /* Touch de Uno! */
 
    /* Input descriptors */
-   { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1,  -1, JVS::Default, 1, &gunsur2_inputs },/* Gun Survivor 2 Biohazard Code: Veronica */
+   { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1,  -1, JVS::GunSurvivor, 1, &gunsur2_inputs }, /* Gun Survivor 2 Biohazard Code: Veronica */
    { "MONKEY BALL JAPAN VERSION"         , -1, -1, -1, -1,  -1, JVS::Default, 1, &monkeyba_inputs },/* Monkey Ball */
    { "CAPCOM VS SNK 2  JAPAN"            , -1, -1, -1, -1,  -1, JVS::Default, 1, &cvs2_inputs },  /* Capcom Vs. SNK 2 Mark Of The Millennium 2001 */
-   { "DEATH CRIMSON OX"                  , -1, -1, -1, -1,  -1, JVS::Default, 1, &deathcox_inputs }, /* Death Crimson OX */
+   { "DEATH CRIMSON OX"                  , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1, &deathcox_inputs }, /* Death Crimson OX */
 };

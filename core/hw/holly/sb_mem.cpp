@@ -78,9 +78,16 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 
 		memset(block, 0, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 1, block);
+		strcpy((char *)block + 32, "AT&F");
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 2, block);
+		memset(block, 0, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 3, block);
 		memset(block + 27, 0xFF, sizeof(block) - 27);
+		block[10] = 1;
+		block[14] = 1;
+		block[16] = 1;
+		block[19] = 6;
+		block[26] = 5;
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 4, block);
 		memset(block, 0xFF, sizeof(block));
 		for (u32 i = FLASH_USER_INET + 5; i <= 0xbf; i++)
@@ -88,10 +95,7 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 
 		flash_isp1_block isp1;
 		memset(&isp1, 0, sizeof(isp1));
-		isp1._unknown[0] = 0xFF;
-		isp1._unknown[1] = 0xFE;
-		isp1._unknown[2] = 0xFF;
-		isp1._unknown[3] = 0xFF;
+		isp1._unknown[3] = 1;
 		memcpy(isp1.sega, "SEGA", 4);
 		strcpy(isp1.username, "flycast1");
 		strcpy(isp1.password, "password");
@@ -99,16 +103,12 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1, &isp1) != 1)
 			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
 
-		memset(block, 0xFF, sizeof(block));
-		block[34] = 0;
+		memset(block, 0, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 1, block);
-		memset(block, 0xFF, sizeof(block));
-		block[9] = 0;
-		memset(block + 49, 0, 13);
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 2, block);
-		memset(block, 0xFF, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 3, block);
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 4, block);
+		block[60] = 1;
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 5, block);
 
 		flash_isp2_block isp2;
@@ -120,13 +120,15 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2, &isp2) != 1)
 			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
 		u8 block[64];
-		memset(block, 0xFF, sizeof(block));
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2 + 1, block);
-		block[9] = 0;
-		memset(block + 49, 0, 13);
-		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2 + 2, block);
-		for (u32 i = FLASH_USER_ISP2 + 3; i <= 0xEA; i++)
+		memset(block, 0, sizeof(block));
+		for (u32 i = FLASH_USER_ISP2 + 1; i <= 0xEA; i++)
+		{
+			if (i == 0xcb)
+				block[56] = 1;
+			else
+				block[56] = 0;
 			flash->WriteBlock(FLASH_PT_USER, i, block);
+		}
 	}
 }
 

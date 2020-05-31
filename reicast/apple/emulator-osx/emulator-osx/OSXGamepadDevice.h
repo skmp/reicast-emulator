@@ -11,20 +11,26 @@
 class KbInputMapping : public InputMapping {
 public:
 	KbInputMapping() {
-		name = "OSX Keyboard";
-		set_button(DC_BTN_A, kVK_ANSI_X);
-		set_button(DC_BTN_B, kVK_ANSI_C);
-		set_button(DC_BTN_X, kVK_ANSI_S);
-		set_button(DC_BTN_Y, kVK_ANSI_D);
+        name = "OSX Keyboard";
+        set_button(DC_BTN_A, kVK_ANSI_X);
+        set_button(DC_BTN_B, kVK_ANSI_C);
+        set_button(DC_BTN_X, kVK_ANSI_S);
+        set_button(DC_BTN_Y, kVK_ANSI_D);
+
 		set_button(DC_DPAD_UP, kVK_UpArrow);
 		set_button(DC_DPAD_DOWN, kVK_DownArrow);
 		set_button(DC_DPAD_LEFT, kVK_LeftArrow);
 		set_button(DC_DPAD_RIGHT, kVK_RightArrow);
 		set_button(DC_BTN_START, kVK_Return);
-		set_button(EMU_BTN_TRIGGER_LEFT, kVK_ANSI_F);
-		set_button(EMU_BTN_TRIGGER_RIGHT, kVK_ANSI_V);
+        set_button(EMU_BTN_TRIGGER_LEFT, kVK_ANSI_F);
+        set_button(EMU_BTN_TRIGGER_RIGHT, kVK_ANSI_V);
 		set_button(EMU_BTN_MENU, kVK_Tab);
 		
+        set_button(EMU_BTN_STICK_UP, kVK_ANSI_P);
+        set_button(EMU_BTN_STICK_DOWN, kVK_ANSI_Semicolon);
+        set_button(EMU_BTN_STICK_LEFT, kVK_ANSI_L);
+        set_button(EMU_BTN_STICK_RIGHT, kVK_ANSI_Quote);
+        
 		dirty = false;
 	}
 };

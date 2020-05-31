@@ -99,6 +99,18 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		case EMU_BTN_TRIGGER_RIGHT:
 			rt[_maple_port] = pressed ? 255 : 0;
 			break;
+        case EMU_BTN_STICK_LEFT:
+            joyx[_maple_port] = pressed ? -128 : 0;
+            break;
+        case EMU_BTN_STICK_RIGHT:
+            joyx[_maple_port] = pressed ? 127 : 0;
+            break;
+        case EMU_BTN_STICK_UP:
+            joyy[_maple_port] = pressed ? -128 : 0;
+            break;
+        case EMU_BTN_STICK_DOWN:
+            joyy[_maple_port] = pressed ? 127 : 0;
+            break;
 		default:
 			return false;
 		}

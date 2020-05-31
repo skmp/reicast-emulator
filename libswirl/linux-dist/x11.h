@@ -75,6 +75,8 @@ const int KEY_RSHIFT = 62;
 const int KEY_LCTRL = 37;
 const int KEY_RCTRL = 105;
 const int KEY_LALT = 64;
+const int KEY_SEMICOLON = 47;
+const int KEY_QUOTE = 48;
 
 const int KEY_F1	=  67;
 const int KEY_F2	=  68;

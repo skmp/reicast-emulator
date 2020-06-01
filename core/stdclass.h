@@ -290,7 +290,7 @@ public:
 };
 
 int ExeptionHandler(u32 dwCode, void* pExceptionPointers);
-int msgboxf(const wchar* text,unsigned int type,...);
+int msgboxf(const char* text,unsigned int type,...);
 
 #define MBX_OK                       0x00000000L
 #define MBX_OKCANCEL                 0x00000001L

@@ -395,7 +395,7 @@ void dc_reset()
 	sh4_cpu.Reset(true);
 }
 
-int dc_init(int argc,wchar* argv[])
+int dc_init(int argc, char* argv[])
 {
 	setbuf(stdin,0);
 	setbuf(stdout,0);

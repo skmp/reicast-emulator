@@ -83,14 +83,14 @@ struct MemChip
 
 	bool Load(const string& root,const char *prefix,const char *names_ro,const char *title)
 	{
-		wchar base[512];
-		wchar temp[512];
-		wchar names[512];
+		char base[512];
+		char temp[512];
+		char names[512];
 		strcpy(names,names_ro);
 		sprintf(base,"%s",root.c_str());
 
-		wchar* curr=names;
-		wchar* next;
+		char* curr=names;
+		char* next;
 		do
 		{
 			next=strstr(curr,";");
@@ -118,7 +118,7 @@ struct MemChip
 	}
 	void Save(const string& root,const string& prefix,const string& name_ro,const string& title)
 	{
-		wchar path[512];
+		char path[512];
 
 		sprintf(path,"%s%s%s",root.c_str(),prefix.c_str(),name_ro.c_str());
 		Save(path);

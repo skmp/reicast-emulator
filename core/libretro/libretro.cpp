@@ -173,7 +173,7 @@ retro_environment_t        environ_cb = NULL;
 retro_environment_t        frontend_clear_thread_waits_cb = NULL;
 static retro_rumble_interface rumble;
 
-int dc_init(int argc,wchar* argv[]);
+int dc_init(int argc, char* argv[]);
 void dc_reset();
 void dc_run();
 void dc_term(void);
@@ -190,7 +190,7 @@ static void init_disk_control_interface(void);
 static bool read_m3u(const char *file);
 
 static int co_argc;
-static wchar** co_argv;
+static char** co_argv;
 
 char *game_data;
 char g_base_name[128];

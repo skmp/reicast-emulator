@@ -324,7 +324,7 @@ static void LoadSpecialSettingsNaomi(const char *name)
    }
 }
 
-void dc_prepare_system(void)
+void dc_prepare_system()
 {
    BBSRAM_SIZE             = (32*1024);
 
@@ -395,7 +395,7 @@ void dc_reset()
 	sh4_cpu.Reset(true);
 }
 
-int dc_init(int argc, char* argv[])
+int dc_init()
 {
 	setbuf(stdin,0);
 	setbuf(stdout,0);
@@ -483,12 +483,12 @@ int dc_init(int argc, char* argv[])
 	return rv;
 }
 
-void dc_run(void)
+void dc_run()
 {
    sh4_cpu.Run();
 }
 
-void dc_term(void)
+void dc_term()
 {
 	SaveRomFiles(get_writable_data_path(""));
 	sh4_cpu.Term();

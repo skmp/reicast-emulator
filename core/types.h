@@ -95,8 +95,6 @@ typedef size_t unat;
 #define X64
 #endif
 
-typedef char wchar;
-
 #ifndef CDECL
 #define CDECL __cdecl
 #endif

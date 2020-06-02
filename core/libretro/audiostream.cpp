@@ -1,10 +1,9 @@
 #include "types.h"
+#include "emulator.h"
 
 #include <libretro.h>
 
 extern retro_audio_sample_batch_t audio_batch_cb;
-
-bool dc_is_running();
 
 SoundFrame RingBuffer[SAMPLE_COUNT];
 

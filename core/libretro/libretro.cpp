@@ -37,6 +37,7 @@ char* strdup(const char *str)
 #ifdef HAVE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
 #endif
+#include "emulator.h"
 #include "../rend/rend.h"
 #include "../hw/sh4/sh4_mem.h"
 #include "../hw/sh4/sh4_sched.h"
@@ -173,14 +174,7 @@ retro_environment_t        environ_cb = NULL;
 retro_environment_t        frontend_clear_thread_waits_cb = NULL;
 static retro_rumble_interface rumble;
 
-int dc_init(int argc,wchar* argv[]);
-void dc_reset();
-void dc_run();
-void dc_term(void);
-void dc_stop();
-void dc_start();
 void FlushCache();	// Arm dynarec (arm and x86 only)
-bool dc_is_running();
 bool rend_single_frame();
 void rend_cancel_emu_wait();
 bool acquire_mainloop_lock();
@@ -188,9 +182,6 @@ bool acquire_mainloop_lock();
 static void refresh_devices(bool first_startup);
 static void init_disk_control_interface(void);
 static bool read_m3u(const char *file);
-
-static int co_argc;
-static wchar** co_argv;
 
 char *game_data;
 char g_base_name[128];
@@ -1916,6 +1907,8 @@ bool retro_load_game(const struct retro_game_info *game)
 	  else
 		 return false;
    }
+   if (settings.System != DC_PLATFORM_DREAMCAST)
+   	boot_to_bios = false;
 
    if (!boot_to_bios)
    {
@@ -2021,7 +2014,7 @@ bool retro_load_game(const struct retro_game_info *game)
 
    dc_prepare_system();
 
-   if (dc_init(co_argc,co_argv))
+   if (dc_init())
    {
    	ERROR_LOG(BOOT, "Flycast emulator initialization failed");
    	return false;

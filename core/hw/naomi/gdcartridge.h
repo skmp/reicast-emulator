@@ -20,7 +20,10 @@ class GDCartridge: public NaomiCartridge {
 public:
 	GDCartridge(u32 size) : NaomiCartridge(size)
 	{
-		gdrom_name = NULL;
+	}
+	~GDCartridge()
+	{
+		free(dimm_data);
 	}
 	virtual void Init() override
 	{
@@ -37,12 +40,12 @@ public:
 private:
 	enum { FILENAME_LENGTH=24 };
 
-	const char *gdrom_name;
+	const char *gdrom_name = nullptr;
 
-	u32 dimm_cur_address;
+	u32 dimm_cur_address = 0;
 
-	u8 *dimm_data;
-	u32 dimm_data_size;
+	u8 *dimm_data = nullptr;
+	u32 dimm_data_size = 0;
 
 	static const u32 DES_LEFTSWAP[];
 	static const u32 DES_RIGHTSWAP[];
@@ -63,11 +66,10 @@ private:
 
 	inline void permutate(u32 &a, u32 &b, u32 m, int shift);
 	void des_generate_subkeys(const u64 key, u32 *subkeys);
-	u64 des_encrypt_decrypt(bool decrypt, u64 src, const u32 *des_subkeys);
+	template<bool decrypt>
+	u64 des_encrypt_decrypt(u64 src, const u32 *des_subkeys);
 	u64 rev64(u64 src);
-	u64 read_to_qword(const u8 *region);
-	void write_from_qword(u8 *region, u64 qword);
-	void read_gdrom(Disc *gdrom, u32 sector, u8* dst);
+	void read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count = 1);
 };
 
 #endif /* CORE_HW_NAOMI_GDCARTRIDGE_H_ */

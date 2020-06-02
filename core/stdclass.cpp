@@ -47,7 +47,7 @@ string get_writable_vmu_path(const char *logical_port)
    extern char vmu_dir_no_slash[PATH_MAX];
    extern char content_name[PATH_MAX];
    extern unsigned per_content_vmus;
-   wchar filename[512];
+   char filename[512];
 
    if ((per_content_vmus == 1 && !strcmp("A1", logical_port)) ||
        (per_content_vmus == 2))

@@ -1,14 +1,14 @@
 #include "common.h"
 
-Disc* chd_parse(const wchar* file);
-Disc* gdi_parse(const wchar* file);
-Disc* cdi_parse(const wchar* file);
-Disc* cue_parse(const wchar* file);
+Disc* chd_parse(const char* file);
+Disc* gdi_parse(const char* file);
+Disc* cdi_parse(const char* file);
+Disc* cue_parse(const char* file);
 
 u32 NullDriveDiscType;
 Disc* disc;
 
-Disc*(*drivers[])(const wchar* path)=
+Disc*(*drivers[])(const char* path)=
 {
 	chd_parse,
 	gdi_parse,
@@ -109,7 +109,7 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
    return true;
 }
 
-Disc* OpenDisc(const wchar* fn)
+Disc* OpenDisc(const char* fn)
 {
 	Disc* rv;
 	
@@ -118,7 +118,7 @@ Disc* OpenDisc(const wchar* fn)
 	return rv;
 }
 
-bool InitDrive_(wchar* fn)
+bool InitDrive_(char* fn)
 {
 	TermDrive();
 
@@ -153,7 +153,7 @@ bool InitDrive(u32 fileflags)
       return true;
 	}
 
-	wchar fn[512];
+	char fn[512];
 	fn[0] = '\0';
    int gfrv = 0;
    if (settings.System == DC_PLATFORM_DREAMCAST)
@@ -211,7 +211,7 @@ bool DiscSwap(u32 fileflags)
       return true;
 	}
 
-	wchar fn[512];
+	char fn[512];
 	fn[0] = '\0';
    int gfrv = 0;
    if (settings.System == DC_PLATFORM_DREAMCAST)

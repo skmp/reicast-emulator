@@ -5,6 +5,7 @@
 
 #include "types.h"
 #include "sb.h"
+#include "emulator.h"
 
 #include "holly_intc.h"
 #include "hw/pvr/pvr_sb_regs.h"
@@ -14,8 +15,6 @@
 #include "hw/modem/modem.h"
 
 #include "hw/naomi/naomi.h"
-
-extern void dc_request_reset();
 
 Array<RegisterStruct> sb_regs(0x540, false);
 

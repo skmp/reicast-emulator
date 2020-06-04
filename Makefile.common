@@ -4,8 +4,6 @@ LIBRETRO_COMM_DIR = $(CORE_DIR)/core/libretro-common
 INCFLAGS    += -I$(CORE_DIR)/core/libretro \
 					-I$(CORE_DIR)/core/ \
 					-I$(DEPS_DIR) \
-					-I$(DEPS_DIR)/picotcp/include \
-					-I$(DEPS_DIR)/picotcp/modules \
 					-I$(LIBRETRO_COMM_DIR)/include \
 					-I$(DEPS_DIR)/vixl \
 					-I$(DEPS_DIR)/stb
@@ -99,7 +97,6 @@ SOURCES_CXX := \
 					$(DEPS_DIR)/libelf/elf64.cpp \
 					$(DEPS_DIR)/chdpsr/cdipsr.cpp \
 					\
-					\
 					$(CORE_DIR)/core/reios/reios_elf.cpp \
 					$(CORE_DIR)/core/reios/reios.cpp \
 					$(CORE_DIR)/core/reios/gdrom_hle.cpp \
@@ -107,15 +104,83 @@ SOURCES_CXX := \
 					\
 					$(CORE_DIR)/core/archive/archive.cpp \
 					$(CORE_DIR)/core/archive/7zArchive.cpp \
-					$(CORE_DIR)/core/archive/ZipArchive.cpp
+					$(CORE_DIR)/core/archive/ZipArchive.cpp \
 
-SOURCES_C +=   \
+GLSLANG_INCFLAGS = \
+					-I$(DEPS_DIR)/khronos \
+					-I$(DEPS_DIR)/glslang
+
+GLSLANG_SOURCES_CXX = \
+					$(DEPS_DIR)/glslang/glslang/glslang.js.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ParseContextBase.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Versions.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/RemoveTree.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/parseConst.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Intermediate.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/limits.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/attribute.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/InfoSink.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Constant.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/SymbolTable.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Scan.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/IntermTraverse.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/intermOut.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/glslang_tab.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/propagateNoContraction.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ShaderLang.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/reflection.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ParseHelper.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/iomapper.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/linkValidate.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Initialize.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/PoolAlloc.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/pch.cpp \
+					$(DEPS_DIR)/glslang/glslang/GenericCodeGen/CodeGen.cpp \
+					$(DEPS_DIR)/glslang/glslang/GenericCodeGen/Link.cpp \
+					$(DEPS_DIR)/glslang/OGLCompilersDLL/InitializeDll.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/SpvTools.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/disassemble.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/GlslangToSpv.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/SPVRemapper.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/Logger.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/SpvPostProcess.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/InReadableOrder.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/SpvBuilder.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/doc.cpp
+
+ifeq ($(platform), win)
+	GLSLANG_SOURCES_CXX += $(DEPS_DIR)/glslang/glslang/OSDependent/Windows/ossource.cpp
+else
+	GLSLANG_SOURCES_CXX += $(DEPS_DIR)/glslang/glslang/OSDependent/Unix/ossource.cpp
+endif
+
+LIBCHDR_INCFLAGS = -I$(DEPS_DIR)/flac/include
+
+LIBCHDR_SOURCES_C = \
 					$(DEPS_DIR)/chdr/bitstream.c \
 					$(DEPS_DIR)/chdr/cdrom.c \
 					$(DEPS_DIR)/chdr/chd.c \
 					$(DEPS_DIR)/chdr/flac.c \
 					$(DEPS_DIR)/chdr/huffman.c \
 					\
+					$(DEPS_DIR)/flac/bitmath.c \
+					$(DEPS_DIR)/flac/bitreader.c \
+					$(DEPS_DIR)/flac/cpu.c \
+					$(DEPS_DIR)/flac/crc.c \
+					$(DEPS_DIR)/flac/fixed.c \
+					$(DEPS_DIR)/flac/float.c \
+					$(DEPS_DIR)/flac/format.c \
+					$(DEPS_DIR)/flac/lpc.c \
+					$(DEPS_DIR)/flac/md5.c \
+					$(DEPS_DIR)/flac/memory.c \
+					$(DEPS_DIR)/flac/stream_decoder.c
+
+LIBZIP_SOURCES_C = \
 					$(DEPS_DIR)/libzip/mkstemp.c \
 					$(DEPS_DIR)/libzip/zip_add.c \
 					$(DEPS_DIR)/libzip/zip_add_dir.c \
@@ -171,15 +236,20 @@ SOURCES_C +=   \
 					$(DEPS_DIR)/libzip/zip_unchange_all.c \
 					$(DEPS_DIR)/libzip/zip_unchange_archive.c \
 					$(DEPS_DIR)/libzip/zip_unchange.c \
-					$(DEPS_DIR)/libzip/zip_unchange_data.c \
-					\
+					$(DEPS_DIR)/libzip/zip_unchange_data.c
+
+PICOTCP_INCFLAGS = \
+					-I$(DEPS_DIR)/picotcp/include \
+					-I$(DEPS_DIR)/picotcp/modules
+
+PICOTCP_SOURCES_C = \
 					$(DEPS_DIR)/picotcp/modules/pico_arp.c \
 					$(DEPS_DIR)/picotcp/modules/pico_dev_ppp.c \
 					$(DEPS_DIR)/picotcp/modules/pico_dns_client.c \
 					$(DEPS_DIR)/picotcp/modules/pico_dns_common.c \
 					$(DEPS_DIR)/picotcp/modules/pico_ethernet.c \
 					$(DEPS_DIR)/picotcp/modules/pico_fragments.c \
-					$(DEPS_DIR)/picotcp/modules/pico_ipv4.c\
+					$(DEPS_DIR)/picotcp/modules/pico_ipv4.c \
 					$(DEPS_DIR)/picotcp/modules/pico_socket_tcp.c \
 					$(DEPS_DIR)/picotcp/modules/pico_socket_udp.c \
 					$(DEPS_DIR)/picotcp/modules/pico_tcp.c \
@@ -191,92 +261,94 @@ SOURCES_C +=   \
 					$(DEPS_DIR)/picotcp/stack/pico_socket_multicast.c \
 					$(DEPS_DIR)/picotcp/stack/pico_socket.c \
 					$(DEPS_DIR)/picotcp/stack/pico_stack.c \
-					$(DEPS_DIR)/picotcp/stack/pico_tree.c \
-					$(DEPS_DIR)/xxhash/xxhash.c
+					$(DEPS_DIR)/picotcp/stack/pico_tree.c
+
+XXHASH_SOURCES_C = $(DEPS_DIR)/xxhash/xxhash.c
+
+ZLIB_SOURCES_C = \
+					$(DEPS_DIR)/zlib/deflate.c \
+					$(DEPS_DIR)/zlib/gzlib.c \
+					$(DEPS_DIR)/zlib/uncompr.c \
+					$(DEPS_DIR)/zlib/zutil.c \
+					$(DEPS_DIR)/zlib/inffast.c \
+					$(DEPS_DIR)/zlib/gzread.c \
+					$(DEPS_DIR)/zlib/crc32.c \
+					$(DEPS_DIR)/zlib/gzwrite.c \
+					$(DEPS_DIR)/zlib/inflate.c \
+					$(DEPS_DIR)/zlib/infback.c \
+					$(DEPS_DIR)/zlib/inftrees.c \
+					$(DEPS_DIR)/zlib/trees.c \
+					$(DEPS_DIR)/zlib/gzclose.c \
+					$(DEPS_DIR)/zlib/compress.c \
+					$(DEPS_DIR)/zlib/adler32.c
 
 SOURCES_ASM :=
 
+ifeq ($(SYSTEM_LIBZIP), 1)
+	CFLAGS += $(shell pkg-config --cflags libzip)
+	LIBS += $(shell pkg-config --libs libzip)
+else
+	SOURCES_C += $(LIBZIP_SOURCES_C)
+endif
+
+ifeq ($(SYSTEM_PICOTCP), 1)
+	CFLAGS += $(shell pkg-config --cflags picotcp)
+	LIBS += $(shell pkg-config --libs picotcp)
+else
+	INCFLAGS += $(PICOTCP_INCFLAGS)
+	SOURCES_C += $(PICOTCP_SOURCES_C)
+endif
+
+ifeq ($(SYSTEM_XXHASH), 1)
+	CFLAGS += $(shell pkg-config --cflags xxhash)
+	LIBS += $(shell pkg-config --libs xxhash)
+else
+	SOURCES_C += $(XXHASH_SOURCES_C)
+endif
+
 ifeq ($(NO_REND), 1)
-SOURCES_CXX += $(CORE_DIR)/core/rend/norend/norend.cpp
+	SOURCES_CXX += $(CORE_DIR)/core/rend/norend/norend.cpp
 endif
 
 ifeq ($(HAVE_MODEM), 1)
-SOURCES_CXX += $(CORE_DIR)/core/hw/modem/dns.cpp \
-				$(CORE_DIR)/core/hw/modem/modem.cpp \
-				$(CORE_DIR)/core/hw/modem/picoppp.cpp
+	SOURCES_CXX += $(CORE_DIR)/core/hw/modem/dns.cpp \
+					$(CORE_DIR)/core/hw/modem/modem.cpp \
+					$(CORE_DIR)/core/hw/modem/picoppp.cpp
 
-CORE_DEFINES += -DHAVE_MODEM
+	CORE_DEFINES += -DHAVE_MODEM
 endif
 
 ifeq ($(HAVE_GL), 1)
-
-SOURCES_CXX += $(CORE_DIR)/core/rend/gles/gles.cpp \
-					$(CORE_DIR)/core/rend/gles/gldraw.cpp \
-					$(CORE_DIR)/core/rend/gles/gltex.cpp \
-					$(CORE_DIR)/core/rend/gles/postprocess.cpp
-ifeq ($(HAVE_OIT), 1)
-SOURCES_CXX += $(CORE_DIR)/core/rend/gl4/gles.cpp \
-					$(CORE_DIR)/core/rend/gl4/gldraw.cpp \
-					$(CORE_DIR)/core/rend/gl4/gltex.cpp \
-					$(CORE_DIR)/core/rend/gl4/abuffer.cpp
-endif
-SOURCES_C   += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
-					$(LIBRETRO_COMM_DIR)/glsm/glsm.c
-ifeq ($(GLES), 1)
-	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es2.c
-else
-	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
-endif
+	SOURCES_CXX += $(CORE_DIR)/core/rend/gles/gles.cpp \
+						$(CORE_DIR)/core/rend/gles/gldraw.cpp \
+						$(CORE_DIR)/core/rend/gles/gltex.cpp \
+						$(CORE_DIR)/core/rend/gles/postprocess.cpp
+	ifeq ($(HAVE_OIT), 1)
+		SOURCES_CXX += $(CORE_DIR)/core/rend/gl4/gles.cpp \
+							$(CORE_DIR)/core/rend/gl4/gldraw.cpp \
+							$(CORE_DIR)/core/rend/gl4/gltex.cpp \
+							$(CORE_DIR)/core/rend/gl4/abuffer.cpp
+	endif
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
+						$(LIBRETRO_COMM_DIR)/glsm/glsm.c
+	ifeq ($(GLES), 1)
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es2.c
+	else
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
+	endif
 endif
 
 ifeq ($(HAVE_VULKAN), 1)
-	ifeq ($(platform), win)
-		SOURCES_CXX += $(DEPS_DIR)/glslang/glslang/OSDependent/Windows/ossource.cpp
+	ifeq ($(SYSTEM_GLSLANG), 1)
+	    CFLAGS += -I/usr/include/glslang
+		LIBS +=
 	else
-		SOURCES_CXX += $(DEPS_DIR)/glslang/glslang/OSDependent/Unix/ossource.cpp
+		INCFLAGS += $(GLSLANG_INCFLAGS)
+		SOURCES_CXX += $(GLSLANG_SOURCES_CXX)
 	endif
+
 	SOURCES_C += $(LIBRETRO_COMM_DIR)/vulkan/vulkan_symbol_wrapper.c
-	SOURCES_CXX += $(DEPS_DIR)/glslang/glslang/glslang.js.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ParseContextBase.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Versions.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/RemoveTree.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/parseConst.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Intermediate.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/limits.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/attribute.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/InfoSink.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Constant.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/SymbolTable.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Scan.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/IntermTraverse.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/intermOut.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/glslang_tab.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/propagateNoContraction.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ShaderLang.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/reflection.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ParseHelper.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/iomapper.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/linkValidate.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Initialize.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/PoolAlloc.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp \
-					$(DEPS_DIR)/glslang/glslang/MachineIndependent/pch.cpp \
-					$(DEPS_DIR)/glslang/glslang/GenericCodeGen/CodeGen.cpp \
-					$(DEPS_DIR)/glslang/glslang/GenericCodeGen/Link.cpp \
-					$(DEPS_DIR)/glslang/OGLCompilersDLL/InitializeDll.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/SpvTools.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/disassemble.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/GlslangToSpv.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/SPVRemapper.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/Logger.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/SpvPostProcess.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/InReadableOrder.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/SpvBuilder.cpp \
-					$(DEPS_DIR)/glslang/SPIRV/doc.cpp \
+	SOURCES_CXX += \
 					$(CORE_DIR)/core/rend/vulkan/vulkan_context.cpp \
 					$(CORE_DIR)/core/rend/vulkan/vmallocator.cpp \
 					$(CORE_DIR)/core/rend/vulkan/buffer.cpp \
@@ -293,8 +365,6 @@ ifeq ($(HAVE_VULKAN), 1)
 					$(CORE_DIR)/core/rend/vulkan/oit/oit_renderer.cpp \
 					$(CORE_DIR)/core/rend/vulkan/oit/oit_renderpass.cpp \
 					$(CORE_DIR)/core/rend/vulkan/oit/oit_shaders.cpp
-					
-	INCFLAGS += -I$(DEPS_DIR)/khronos -I$(DEPS_DIR)/glslang
 endif
 
 SOURCES_CXX += $(CORE_DIR)/core/hw/naomi/naomi.cpp \
@@ -306,74 +376,69 @@ SOURCES_CXX += $(CORE_DIR)/core/hw/naomi/naomi.cpp \
 					$(CORE_DIR)/core/hw/naomi/gdcartridge.cpp
 
 ifeq ($(HAVE_GENERIC_JIT), 1)
-DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/core/rec-cpp/rec_cpp.cpp
+	DYNAREC_USED = 1
+	SOURCES_CXX += $(CORE_DIR)/core/rec-cpp/rec_cpp.cpp
 endif
 
 # Recompiler (x64)
-
 ifneq ($(filter $(WITH_DYNAREC), x86_64 x64),)
-DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/core/rec-x64/rec_x64.cpp 
+	DYNAREC_USED = 1
+	SOURCES_CXX += $(CORE_DIR)/core/rec-x64/rec_x64.cpp 
+
 # Recompiler (x86 32bit)
-#
 else ifneq ($(filter $(WITH_DYNAREC), i386 i686 x86),)
-DYNAREC_USED = 1
-ifneq ($(filter $(platform), unix android),)
-SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_lin86_asm.S
-else
-SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_win86_asm.S
-#SOURCES_ASM += $(CORE_DIR)/core/hw/arm7/arm7_win86_asm.S
-endif
-SOURCES_CXX += $(CORE_DIR)/core/rec-x86/rec_x86_asm.cpp \
-					$(CORE_DIR)/core/rec-x86/rec_x86_driver.cpp \
-					$(CORE_DIR)/core/rec-x86/rec_x86_il.cpp \
-					$(CORE_DIR)/core/rec-x86/x86_emitter.cpp
+	DYNAREC_USED = 1
+	ifneq ($(filter $(platform), unix android),)
+		SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_lin86_asm.S
+	else
+		SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_win86_asm.S
+		#SOURCES_ASM += $(CORE_DIR)/core/hw/arm7/arm7_win86_asm.S
+	endif
+	SOURCES_CXX += $(CORE_DIR)/core/rec-x86/rec_x86_asm.cpp \
+						$(CORE_DIR)/core/rec-x86/rec_x86_driver.cpp \
+						$(CORE_DIR)/core/rec-x86/rec_x86_il.cpp \
+						$(CORE_DIR)/core/rec-x86/x86_emitter.cpp
 endif
 
 
 # Recompiler (ARM)
 ifeq ($(WITH_DYNAREC), arm)
-DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/core/rec-ARM/rec_arm.cpp
-endif
-
-ifeq ($(WITH_DYNAREC), arm)
-SOURCES_ASM += $(CORE_DIR)/core/rec-ARM/ngen_arm.S
+	DYNAREC_USED = 1
+	SOURCES_CXX += $(CORE_DIR)/core/rec-ARM/rec_arm.cpp
+	SOURCES_ASM += $(CORE_DIR)/core/rec-ARM/ngen_arm.S
 endif
 
 # Recompiler (ARM64)
 ifeq ($(WITH_DYNAREC), arm64)
-DYNAREC_USED = 1
-SOURCES_ASM += $(CORE_DIR)/core/rec-ARM64/ngen_arm64.S
-SOURCES_CXX += $(CORE_DIR)/core/rec-ARM64/rec_arm64.cpp \
-				$(DEPS_DIR)/vixl/code-buffer-vixl.cc \
-				$(DEPS_DIR)/vixl/compiler-intrinsics-vixl.cc \
-				$(DEPS_DIR)/vixl/cpu-features.cc \
-				$(DEPS_DIR)/vixl/utils-vixl.cc \
-				$(DEPS_DIR)/vixl/aarch64/assembler-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/cpu-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/cpu-features-auditor-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/decoder-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/disasm-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/instructions-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/instrument-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/logic-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/macro-assembler-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/operands-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/pointer-auth-aarch64.cc \
-				$(DEPS_DIR)/vixl/aarch64/simulator-aarch64.cc
+	DYNAREC_USED = 1
+	SOURCES_ASM += $(CORE_DIR)/core/rec-ARM64/ngen_arm64.S
+	SOURCES_CXX += $(CORE_DIR)/core/rec-ARM64/rec_arm64.cpp \
+					$(DEPS_DIR)/vixl/code-buffer-vixl.cc \
+					$(DEPS_DIR)/vixl/compiler-intrinsics-vixl.cc \
+					$(DEPS_DIR)/vixl/cpu-features.cc \
+					$(DEPS_DIR)/vixl/utils-vixl.cc \
+					$(DEPS_DIR)/vixl/aarch64/assembler-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/cpu-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/cpu-features-auditor-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/decoder-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/disasm-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/instructions-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/instrument-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/logic-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/macro-assembler-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/operands-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/pointer-auth-aarch64.cc \
+					$(DEPS_DIR)/vixl/aarch64/simulator-aarch64.cc
 endif
 
-ifeq ($(DYNAREC_USED),1)
-SOURCES_CXX += $(CORE_DIR)/core/rec.cpp
 # Dynarec
-SOURCES_CXX += $(CORE_DIR)/core/hw/sh4/dyna/decoder.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/driver.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/blockmanager.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/ssa.cpp 
-
+ifeq ($(DYNAREC_USED), 1)
+	SOURCES_CXX += $(CORE_DIR)/core/rec.cpp
+	SOURCES_CXX += $(CORE_DIR)/core/hw/sh4/dyna/decoder.cpp \
+						$(CORE_DIR)/core/hw/sh4/dyna/driver.cpp \
+						$(CORE_DIR)/core/hw/sh4/dyna/blockmanager.cpp \
+						$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp \
+						$(CORE_DIR)/core/hw/sh4/dyna/ssa.cpp 
 endif
 
 SOURCES_CXX += $(CORE_DIR)/core/libretro/libretro.cpp \
@@ -381,7 +446,7 @@ SOURCES_CXX += $(CORE_DIR)/core/libretro/libretro.cpp \
 					$(CORE_DIR)/core/libretro/common.cpp \
 					$(CORE_DIR)/core/libretro/vmem_utils.cpp
 
-SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
+SOURCES_C += $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
 					$(LIBRETRO_COMM_DIR)/file/file_path.c \
 					$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 					$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
@@ -391,68 +456,52 @@ SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
 					$(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
 					$(LIBRETRO_COMM_DIR)/string/stdstring.c
 
-ifeq ($(NO_THREADS),1)
+ifeq ($(NO_THREADS), 1)
 else
-SOURCES_C += $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
 endif
 
-ifeq ($(HAVE_TEXUPSCALE),1)
-SOURCES_CXX += $(DEPS_DIR)/xbrz/xbrz.cpp
+ifeq ($(HAVE_TEXUPSCALE), 1)
+	SOURCES_CXX += $(DEPS_DIR)/xbrz/xbrz.cpp
 endif
 
-ifeq ($(HAVE_CHD),1)
-INCFLAGS += -I$(DEPS_DIR)/flac/include
+ifeq ($(HAVE_CHD), 1)
+	ifeq ($(SYSTEM_LIBCHDR), 1)
+		CFLAGS += $(shell pkg-config --cflags libchdr)
+		LIBS += $(shell pkg-config --libs libchdr)
+	else
+		INCFLAGS += $(LIBCHDR_INCFLAGS)
+		SOURCES_C += $(LIBCHDR_SOURCES_C)
+	endif
+endif
 
 SOURCES_C += \
-				 $(DEPS_DIR)/flac/bitmath.c \
-				 $(DEPS_DIR)/flac/bitreader.c \
-				 $(DEPS_DIR)/flac/cpu.c \
-				 $(DEPS_DIR)/flac/crc.c \
-				 $(DEPS_DIR)/flac/fixed.c \
-				 $(DEPS_DIR)/flac/float.c \
-				 $(DEPS_DIR)/flac/format.c \
-				 $(DEPS_DIR)/flac/lpc.c \
-				 $(DEPS_DIR)/flac/md5.c \
-				 $(DEPS_DIR)/flac/memory.c \
-				 $(DEPS_DIR)/flac/stream_decoder.c
+				$(DEPS_DIR)/lzma/C/7zArcIn.c \
+				$(DEPS_DIR)/lzma/C/7zBuf.c \
+				$(DEPS_DIR)/lzma/C/7zCrc.c \
+				$(DEPS_DIR)/lzma/C/7zCrcOpt.c \
+				$(DEPS_DIR)/lzma/C/7zDec.c \
+				$(DEPS_DIR)/lzma/C/7zFile.c \
+				$(DEPS_DIR)/lzma/C/7zStream.c \
+				$(DEPS_DIR)/lzma/C/Alloc.c \
+				$(DEPS_DIR)/lzma/C/Bcj2.c \
+				$(DEPS_DIR)/lzma/C/Bra86.c \
+				$(DEPS_DIR)/lzma/C/Bra.c \
+				$(DEPS_DIR)/lzma/C/BraIA64.c \
+				$(DEPS_DIR)/lzma/C/CpuArch.c \
+				$(DEPS_DIR)/lzma/C/Delta.c \
+				$(DEPS_DIR)/lzma/C/LzFind.c \
+				$(DEPS_DIR)/lzma/C/Lzma2Dec.c \
+				$(DEPS_DIR)/lzma/C/Lzma86Dec.c \
+				$(DEPS_DIR)/lzma/C/Lzma86Enc.c \
+				$(DEPS_DIR)/lzma/C/LzmaDec.c \
+				$(DEPS_DIR)/lzma/C/LzmaEnc.c \
+				$(DEPS_DIR)/lzma/C/LzmaLib.c \
+				$(DEPS_DIR)/lzma/C/Sort.c
 
-SOURCES_C += $(DEPS_DIR)/lzma/C/7zArcIn.c \
-				 $(DEPS_DIR)/lzma/C/7zBuf.c \
-				 $(DEPS_DIR)/lzma/C/7zCrc.c \
-				 $(DEPS_DIR)/lzma/C/7zCrcOpt.c \
-				 $(DEPS_DIR)/lzma/C/7zDec.c \
-				 $(DEPS_DIR)/lzma/C/7zFile.c \
-				 $(DEPS_DIR)/lzma/C/7zStream.c \
-				 $(DEPS_DIR)/lzma/C/Alloc.c \
-				 $(DEPS_DIR)/lzma/C/Bcj2.c \
-				 $(DEPS_DIR)/lzma/C/Bra86.c \
-				 $(DEPS_DIR)/lzma/C/Bra.c \
-				 $(DEPS_DIR)/lzma/C/BraIA64.c \
-				 $(DEPS_DIR)/lzma/C/CpuArch.c \
-				 $(DEPS_DIR)/lzma/C/Delta.c \
-				 $(DEPS_DIR)/lzma/C/LzFind.c \
-				 $(DEPS_DIR)/lzma/C/Lzma2Dec.c \
-				 $(DEPS_DIR)/lzma/C/Lzma86Dec.c \
-				 $(DEPS_DIR)/lzma/C/Lzma86Enc.c \
-				 $(DEPS_DIR)/lzma/C/LzmaDec.c \
-				 $(DEPS_DIR)/lzma/C/LzmaEnc.c \
-				 $(DEPS_DIR)/lzma/C/LzmaLib.c \
-				 $(DEPS_DIR)/lzma/C/Sort.c
-
+ifeq ($(SYSTEM_ZLIB), 1)
+	CFLAGS += $(shell pkg-config --cflags zlib)
+	LIBS += $(shell pkg-config --libs zlib)
+else
+	SOURCES_C += $(ZLIB_SOURCES_C)
 endif
-
-SOURCES_C +=   $(DEPS_DIR)/zlib/deflate.c \
-					$(DEPS_DIR)/zlib/gzlib.c \
-					$(DEPS_DIR)/zlib/uncompr.c \
-					$(DEPS_DIR)/zlib/zutil.c \
-					$(DEPS_DIR)/zlib/inffast.c \
-					$(DEPS_DIR)/zlib/gzread.c \
-					$(DEPS_DIR)/zlib/crc32.c \
-					$(DEPS_DIR)/zlib/gzwrite.c \
-					$(DEPS_DIR)/zlib/inflate.c \
-					$(DEPS_DIR)/zlib/infback.c \
-					$(DEPS_DIR)/zlib/inftrees.c \
-					$(DEPS_DIR)/zlib/trees.c \
-					$(DEPS_DIR)/zlib/gzclose.c \
-					$(DEPS_DIR)/zlib/compress.c \
-					$(DEPS_DIR)/zlib/adler32.c

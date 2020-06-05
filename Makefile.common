@@ -298,8 +298,8 @@ else
 endif
 
 ifeq ($(SYSTEM_XXHASH), 1)
-	CFLAGS += $(shell pkg-config --cflags xxhash)
-	LIBS += $(shell pkg-config --libs xxhash)
+	CFLAGS += $(shell pkg-config --cflags libxxhash)
+	LIBS += $(shell pkg-config --libs libxxhash)
 else
 	SOURCES_C += $(XXHASH_SOURCES_C)
 endif

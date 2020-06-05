@@ -163,20 +163,33 @@ else ifneq (,$(findstring rpi,$(platform)))
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
 	SINGLE_PREC_FLAGS = 1
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm
+	HAVE_GENERIC_JIT = 0
 	
 	ifneq (,$(findstring rpi4,$(platform)))
-		# rpi4 flags are taken from rockpro64
-		CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-		# as of 2020-05-07, the following workaround doesn't seem required
-		# CORE_DEFINES += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG
-		CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
-		CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
-		ifeq ($(HAVE_CLANG),0)
-			CFLAGS += -mvectorize-with-neon-quad
-			CXXFLAGS += -mvectorize-with-neon-quad
-		endif
-		ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 		FORCE_GLES = 1
+		ifneq (,$(findstring rpi4_64,$(platform)))
+			# 64-bit userspace
+			ARM_FLOAT_ABI_HARD = 0
+			CPUFLAGS += -DHOST_CPU=0x20000006 -DTARGET_LINUX_ARMv8 -frename-registers
+			CFLAGS += -march=armv8-a+crc -mcpu=cortex-a72 -mtune=cortex-a72 $(CPUFLAGS)
+			CXXFLAGS += -march=armv8-a+crc -mcpu=cortex-a72 -mtune=cortex-a72 $(CPUFLAGS)
+			ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+			WITH_DYNAREC=arm64
+		else
+			# rpi4 flags are taken from rockpro64
+			CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+			# as of 2020-05-07, the following workaround doesn't seem required
+			# CORE_DEFINES += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG
+			CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
+			CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
+			ifeq ($(HAVE_CLANG),0)
+				CFLAGS += -mvectorize-with-neon-quad
+				CXXFLAGS += -mvectorize-with-neon-quad
+			endif
+			ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+		endif
 	else
 		ifeq (,$(findstring mesa,$(platform)))
 			GLES = 1
@@ -195,9 +208,6 @@ else ifneq (,$(findstring rpi,$(platform)))
 		endif
 		CORE_DEFINES += -DLOW_END
 	endif
-	PLATFORM_EXT := unix
-	WITH_DYNAREC=arm
-	HAVE_GENERIC_JIT = 0
 
 # Classic Platforms #####################
 # Platform affix = classic_<ISA>_<µARCH>

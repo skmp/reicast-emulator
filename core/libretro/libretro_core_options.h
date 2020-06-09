@@ -449,18 +449,14 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_div_matching",
-      "DIV Matching (performance, less accurate)",
-      "",
+      "DIV Matching",
+      "Optimize integer division",
       {
          { "disabled", NULL },
          { "auto",     "Auto" },
          { NULL, NULL },
       },
-#ifdef LOW_END
       "auto",
-#else
-      "disabled",
-#endif
    },
    {
       CORE_OPTION_NAME "_force_wince",

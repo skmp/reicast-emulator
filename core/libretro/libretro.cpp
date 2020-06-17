@@ -1832,7 +1832,7 @@ bool retro_load_game(const struct retro_game_info *game)
    snprintf(g_roms_dir, sizeof(g_roms_dir), "%s%c", game_dir, slash);
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && log_cb)
-        log_cb(RETRO_LOG_INFO, "Rumble interface supported!\n");
+        log_cb(RETRO_LOG_DEBUG, "Rumble interface supported!\n");
 
    if (!(environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir))
       dir = game_dir;
@@ -3212,15 +3212,20 @@ int msgboxf(const char* text, unsigned int type, ...)
    if (log_cb)
    {
       va_list args;
-
       char temp[2048];
 
-      va_start(args, type);
-      vsprintf(temp, text, args);
-      va_end(args);
-      strcat(temp, "\n");
-
-      log_cb(RETRO_LOG_INFO, temp);
+      switch (type)
+      {
+         case MBX_ICONERROR:
+            va_start(args, type);
+            vsprintf(temp, text, args);
+            va_end(args);
+            strcat(temp, "\n");
+            log_cb(RETRO_LOG_ERROR, temp);
+            break;
+         default:
+            break;
+      }
    }
    return 0;
 }

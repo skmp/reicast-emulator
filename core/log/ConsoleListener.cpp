@@ -40,6 +40,8 @@ void ConsoleListener::Log(LogTypes::LOG_LEVELS level, const char* text)
 	}
 	if (retro_printf != nullptr)
 		retro_printf(retro_level, "%s", text);
+#if 0
 	else
 		printf("%s\n", text);
+#endif
 }

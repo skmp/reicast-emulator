@@ -1781,8 +1781,20 @@ static bool set_opengl_hw_render(u32 preferred)
 	if (settings.pvr.rend == 3)
 	{
 		params.context_type          = (retro_hw_context_type)preferred;
-		params.major                 = 4;
-		params.minor                 = 3;
+		if (preferred == RETRO_HW_CONTEXT_OPENGL)
+		{
+			// There are some weirdness with RA's gl context's versioning :
+			// - any value above 3.0 won't provide a valid context, while the GLSM_CTL_STATE_CONTEXT_INIT call returns true...
+			// - the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
+			retro_hw_render_callback hw_render;
+			hw_render.version_major = 3;
+			hw_render.version_minor = 0;
+		}
+		else
+		{
+			params.major = 4;
+			params.minor = 3;
+		}
 	}
 	else
 	{

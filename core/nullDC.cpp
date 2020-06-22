@@ -455,8 +455,6 @@ int dc_init()
 	
 	mem_map_default();
 
-	mcfg_CreateDevices();
-
 	dc_reset();
 
 	switch (settings.System)
@@ -479,6 +477,8 @@ int dc_init()
 			break;
 	}
 	FixUpFlash();
+
+	mcfg_CreateDevices();
 
 	return rv;
 }

@@ -3454,7 +3454,10 @@ static bool read_m3u(const char *file)
          char disk_label[PATH_MAX];
          disk_label[0] = '\0';
 
-         snprintf(name, sizeof(name), "%s%s", g_roms_dir, line);
+         if (path_is_absolute(line))
+         	snprintf(name, sizeof(name), "%s", line);
+         else
+         	snprintf(name, sizeof(name), "%s%s", g_roms_dir, line);
          disk_paths.push_back(name);
 
          fill_short_pathname_representation(disk_label, name, sizeof(disk_label));

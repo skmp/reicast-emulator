@@ -110,6 +110,7 @@ static struct game_type_naomi lut_games_naomi[] =
    { "COSMIC SMASH IN JAPAN"             , -1, -1,  1, -1,  -1, JVS::Default, 1 },                /* Cosmic Smash */
 
    /* Alternate Jamma I/O Setup */
+   { "WAVE RUNNER GP"                    , -1, -1, -1, -1,  -1, JVS::WaveRunnerGP, 1 },           /* WaveRunner GP */
    { "POWER STONE 2 JAPAN"               , -1, -1, -1, -1,  -1, JVS::FourPlayers, 1 },            /* Power Stone 2 (4 players, also needs to be set in service menu) */
    { "GUILTY GEAR isuka"                 , -1, -1, -1, -1,  -1, JVS::FourPlayers, 1 },            /* Guilty Gear (AW) */
    { "SHOOTOUT POOL"                     , -1, -1, -1, -1,  -1, JVS::RotaryEncoders, 1 },         /* Shootout Pool: rotary encoders */

@@ -22,7 +22,7 @@
 #if HOST_CPU == CPU_ARM64 && FEAT_DSPREC != DYNAREC_NONE
 
 #include "dsp.h"
-#include "hw/aica/aica_if.h"
+#include "aica_if.h"
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
@@ -105,7 +105,6 @@ public:
 
 			if (op.XSEL || op.YRL || (op.ADRL && op.SHIFT != 3))
 			{
-				verify(op.IRA < 0x38);
 				if (op.IRA <= 0x1f)
 					//INPUTS = DSP->MEMS[op.IRA];
 					Ldr(INPUTS, dsp_operand(DSP->MEMS, op.IRA));

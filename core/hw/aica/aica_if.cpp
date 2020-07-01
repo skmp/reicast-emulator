@@ -7,19 +7,18 @@
 #include "aica_if.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"
-#include "types.h"
-#include "sgc_if.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
+#include "hw/sh4/dyna/blockmanager.h"
 
 #include <time.h>
-#include <math.h>
 
 VArray2 aica_ram;
-u32 VREG;//video reg =P
-u32 ARMRST;//arm reset reg
-u32 rtc_EN=0;
+u32 VREG;
+u32 ARMRST;
+u32 rtc_EN;
 int dma_sched_id;
+int rtc_schid = -1;
 
 u32 GetRTC_now(void)
 {
@@ -76,9 +75,8 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 		rtc_EN=data&1;
 		return;
 	}
-
-	return;
 }
+
 u32 ReadMem_aica_reg(u32 addr,u32 sz)
 {
 	addr&=0x7FFF;
@@ -110,7 +108,7 @@ u32 ReadMem_aica_reg(u32 addr,u32 sz)
 	}
 }
 
-void ArmSetRST(void)
+static void ArmSetRST()
 {
 	ARMRST&=1;
 	arm_SetEnabled(ARMRST==0);
@@ -124,12 +122,12 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		if (addr==0x2C01)
 		{
 			VREG=data;
-			INFO_LOG(AICA, "VREG = %02X", VREG);
+			INFO_LOG(AICA_ARM, "VREG = %02X", VREG);
 		}
 		else if (addr==0x2C00)
 		{
 			ARMRST=data;
-			INFO_LOG(AICA, "ARMRST = %02X", ARMRST);
+			INFO_LOG(AICA_ARM, "ARMRST = %02X", ARMRST);
 			ArmSetRST();
 		}
 		else
@@ -143,7 +141,7 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		{
 			VREG=(data>>8)&0xFF;
 			ARMRST=data&0xFF;
-			INFO_LOG(AICA, "VREG = %02X ARMRST %02X", VREG, ARMRST);
+			INFO_LOG(AICA_ARM, "VREG = %02X ARMRST %02X", VREG, ARMRST);
 			ArmSetRST();
 		}
 		else
@@ -152,41 +150,60 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
       }
 	}
 }
-//Init/res/term
-void aica_Init(void)
+
+static int DreamcastSecond(int tag, int c, int j)
 {
-	//mmnnn ? gotta fill it w/ something
+	settings.dreamcast.RTC++;
+
+#if FEAT_SHREC != DYNAREC_NONE
+	bm_Periodical_1s();
+#endif
+
+	return SH4_MAIN_CLOCK;
+}
+
+//Init/res/term
+void aica_Init()
+{
+	settings.dreamcast.RTC = GetRTC_now();
+	if (rtc_schid == -1)
+	{
+		rtc_schid = sh4_sched_register(0, &DreamcastSecond);
+		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
+	}
 }
 
 void aica_Reset(bool Manual)
 {
-	aica_Init();
 	if (!Manual)
-   {
-      aica_ram.Zero();
-   }
+      aica_Init();
 	VREG = 0;
 	ARMRST = 0;
 }
 
-void aica_Term(void)
+void aica_Term()
 {
 
 }
 
-int dma_end_sched(int tag, int cycl, int jitt)
+static int dma_end_sched(int tag, int cycl, int jitt)
 {
 	u32 len=SB_ADLEN & 0x7FFFFFFF;
  	if (SB_ADLEN & 0x80000000)
-		SB_ADEN=1;//
+		SB_ADEN = 0;
 	else
-		SB_ADEN=0;//
+		SB_ADEN = 1;
+
  	SB_ADSTAR+=len;
 	SB_ADSTAG+=len;
-	SB_ADST = 0x00000000;//dma done
-	SB_ADLEN = 0x00000000;
+	SB_ADST = 0;	// dma done
+	SB_ADLEN = 0;
+
+	// indicate that dma is not happening, or has been paused
  	SB_ADSUSP |= 0x10;
+
  	asic_RaiseInterrupt(holly_SPU_DMA);
+
  	return 0;
 }
 
@@ -217,6 +234,9 @@ void Write_SB_ADST(u32 addr, u32 data)
          }
 
          WriteMemBlock_nommu_dma(dst,src,len);
+
+         // indicate that dma is in progress
+         SB_ADST = 1;
          SB_ADSUSP &= ~0x10;
 
          // Schedule the end of DMA transfer interrupt
@@ -346,7 +366,7 @@ void Write_SB_DDST(u32 addr, u32 data)
 	}
 }
 
-void aica_sb_Init(void)
+void aica_sb_Init()
 {
 	//NRM
 	//6
@@ -366,6 +386,6 @@ void aica_sb_Reset(bool Manual)
 {
 }
 
-void aica_sb_Term(void)
+void aica_sb_Term()
 {
 }

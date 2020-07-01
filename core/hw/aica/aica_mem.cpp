@@ -1,7 +1,7 @@
 #include "aica.h"
+#include "aica_if.h"
 #include "dsp.h"
 #include "sgc_if.h"
-#include "aica_if.h"
 
 u8 aica_reg[0x8000];
 
@@ -93,8 +93,7 @@ void WriteReg(u32 addr,u32 data)
 	else
 		WriteAicaReg<2>(addr,data);
 }
-
-/* Aica reads (both sh4&arm) */
+//Aica reads (both sh4&arm)
 u32 libAICA_ReadReg(u32 addr,u32 size)
 {
    if (size==1)
@@ -115,7 +114,7 @@ void libAICA_WriteReg(u32 addr,u32 data,u32 size)
 }
 
 //Map using _vmem .. yay
-void init_mem(void)
+void init_mem()
 {
 	memset(aica_reg,0,sizeof(aica_reg));
 	aica_ram.data[ARAM_SIZE-1]=1;
@@ -123,7 +122,7 @@ void init_mem(void)
 }
 
 //kill mem map & free used mem ;)
-void term_mem(void)
+void term_mem()
 {
 
 }

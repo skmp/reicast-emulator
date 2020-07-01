@@ -24,10 +24,7 @@
 #define CPUUpdateTicksAccess32(a) 1
 #define CPUUpdateTicksAccess16(a) 1
 
-
-
-//bool arm_FiqPending; -- not used , i use the input directly :)
-//bool arm_IrqPending;
+#define ARM_CYCLES_PER_SAMPLE 256
 
 DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
@@ -57,6 +54,7 @@ void CPUUpdateCPSR();
 void CPUUpdateFlags();
 void CPUSoftwareInterrupt(int comment);
 void CPUUndefinedException();
+void libAICA_TimeStep();
 
 #if FEAT_AREC == DYNAREC_NONE
 
@@ -78,6 +76,15 @@ void arm_Run_(u32 CycleCount)
 
 		reg[15].I = armNextPC + 8;
 		#include "arm-new.h"
+	}
+}
+
+void arm_Run(u32 samples)
+{
+	for (u32 i = 0; i < samples; i++)
+	{
+		arm_Run_(ARM_CYCLES_PER_SAMPLE);
+		libAICA_TimeStep();
 	}
 }
 #endif
@@ -346,17 +353,8 @@ void update_armintc()
 	reg[INTR_PEND].I=e68k_out && armFiqEnable;
 }
 
-void libAICA_TimeStep();
+#if FEAT_AREC != DYNAREC_NONE
 
-#if FEAT_AREC == DYNAREC_NONE
-void arm_Run(u32 CycleCount) { 
-	for (int i=0;i<32;i++)
-	{
-		arm_Run_(CycleCount/32);
-		libAICA_TimeStep();
-	}
-}
-#else	// FEAT_AREC != DYNAREC_NONE
 extern "C" void CompileCode();
 
 //Emulate a single arm op, passed in opcode
@@ -429,7 +427,7 @@ struct ArmDPOP
 	u32 flags;
 };
 
-vector<ArmDPOP> ops;
+std::vector<ArmDPOP> ops;
 
 enum OpFlags
 {
@@ -643,7 +641,7 @@ extern "C" void arm_exit();
 extern "C" void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints);
 extern "C" void DYNACALL arm_compilecode();
 
-template <bool L, bool B>
+template <bool Load, bool Byte>
 u32 DYNACALL DoMemOp(u32 addr,u32 data)
 {
 	u32 rv=0;
@@ -653,16 +651,16 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 	data=virt_arm_reg(1);
 #endif
 
-	if (L)
+	if (Load)
 	{
-		if (B)
+		if (Byte)
 			rv=arm_ReadMem8(addr);
 		else
 			rv=arm_ReadMem32(addr);
 	}
 	else
 	{
-		if (B)
+		if (Byte)
 			arm_WriteMem8(addr,data);
 		else
 			arm_WriteMem32(addr,data);
@@ -676,7 +674,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 }
 
 //findfirstset -- used in LDM/STM handling
-#if HOST_CPU==CPU_X86 && BUILD_COMPILER != COMPILER_GCC
+#if HOST_CPU==CPU_X86 && !defined(__GNUC__)
 #include <intrin.h>
 
 u32 findfirstset(u32 v)
@@ -715,18 +713,18 @@ void DYNACALL DoLDM(u32 addr, u32 mask)
 }
 #endif
 
-void* GetMemOp(bool L, bool B)
+void* GetMemOp(bool Load, bool Byte)
 {
-	if (L)
+	if (Load)
 	{
-		if (B)
+		if (Byte)
 			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<true,true>;
 		else
 			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<true,false>;
 	}
 	else
 	{
-		if (B)
+		if (Byte)
 			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<false,true>;
 		else
 			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<false,false>;
@@ -1229,8 +1227,7 @@ void *armGetEmitPtr()
 	return NULL;
 }
 
-
-#if (HOST_CPU == CPU_X86) && FEAT_AREC != DYNAREC_NONE
+#if HOST_CPU == CPU_X86
 
 /* X86 backend
  * Uses a mix of
@@ -1536,41 +1533,17 @@ void armv_MOV32(eReg regn, u32 imm)
 #endif
 
 //Run a timeslice for ARMREC
-//CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
-void arm_Run(u32 CycleCount)
+void arm_Run(u32 samples)
 {
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < samples; i++)
 	{
 		if (Arm7Enabled)
-			arm_mainloop(CycleCount / 32, arm_Reg, EntryPoints);
+			arm_mainloop(ARM_CYCLES_PER_SAMPLE, arm_Reg, EntryPoints);
 		libAICA_TimeStep();
 	}
-
-	/*
-	s32 clktks=reg[CYCL_CNT].I+CycleCount;
-
-	//While we have time to spend
-	do
-	{
-		//Check for interrupts
-		if (reg[INTR_PEND].I)
-		{
-			CPUFiq();
-		}
-
-		//lookup code at armNextPC, run a block & remove its cycles from the timeslice
-		clktks-=EntryPoints[(armNextPC & ARAM_MASK)/4]();
-		
-		#if HOST_CPU==CPU_X86
-			verify(armNextPC<=ARAM_MASK);
-		#endif
-	} while(clktks>0);
-
-	reg[CYCL_CNT].I=clktks;
-	*/
 }
 
-
+		
 #undef r
 
 /*

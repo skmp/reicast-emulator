@@ -194,8 +194,8 @@ extern u64 sh4_sched_ffb;
 extern vector<sched_list> sch_list;
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
-extern int aica_sched;
-extern int rtc_sched;
+extern int aica_schid;
+extern int rtc_schid;
 
 //./core/hw/sh4/modules/serial.o
 extern SCIF_SCFSR2_type SCIF_SCFSR2;
@@ -475,13 +475,13 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_S(sh4_sched_ffb);
 
-	LIBRETRO_S(sch_list[aica_sched].tag) ;
-	LIBRETRO_S(sch_list[aica_sched].start) ;
-	LIBRETRO_S(sch_list[aica_sched].end) ;
+	LIBRETRO_S(sch_list[aica_schid].tag) ;
+	LIBRETRO_S(sch_list[aica_schid].start) ;
+	LIBRETRO_S(sch_list[aica_schid].end) ;
 
-	LIBRETRO_S(sch_list[rtc_sched].tag) ;
-	LIBRETRO_S(sch_list[rtc_sched].start) ;
-	LIBRETRO_S(sch_list[rtc_sched].end) ;
+	LIBRETRO_S(sch_list[rtc_schid].tag) ;
+	LIBRETRO_S(sch_list[rtc_schid].start) ;
+	LIBRETRO_S(sch_list[rtc_schid].end) ;
 
 	LIBRETRO_S(sch_list[gdrom_sched].tag) ;
 	LIBRETRO_S(sch_list[gdrom_sched].start) ;
@@ -871,13 +871,13 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 		   LIBRETRO_US(dummy_int);	// sh4_sched_next_id
 	}
 
-	LIBRETRO_US(sch_list[aica_sched].tag) ;
-	LIBRETRO_US(sch_list[aica_sched].start) ;
-	LIBRETRO_US(sch_list[aica_sched].end) ;
+	LIBRETRO_US(sch_list[aica_schid].tag) ;
+	LIBRETRO_US(sch_list[aica_schid].start) ;
+	LIBRETRO_US(sch_list[aica_schid].end) ;
 
-	LIBRETRO_US(sch_list[rtc_sched].tag) ;
-	LIBRETRO_US(sch_list[rtc_sched].start) ;
-	LIBRETRO_US(sch_list[rtc_sched].end) ;
+	LIBRETRO_US(sch_list[rtc_schid].tag) ;
+	LIBRETRO_US(sch_list[rtc_schid].start) ;
+	LIBRETRO_US(sch_list[rtc_schid].end) ;
 
 	LIBRETRO_US(sch_list[gdrom_sched].tag) ;
 	LIBRETRO_US(sch_list[gdrom_sched].start) ;

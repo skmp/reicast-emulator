@@ -11,7 +11,7 @@ Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
 u8* sh4_dyna_rcb;
 
-static INLINE void ChangeGPR(void)
+static INLINE void ChangeGPR()
 {
 	u32 temp;
 	for (int i=0;i<8;i++)
@@ -22,7 +22,7 @@ static INLINE void ChangeGPR(void)
 	}
 }
 
-static INLINE void ChangeFP(void)
+static INLINE void ChangeFP()
 {
 	u32 temp;
 	for (int i=0;i<16;i++)
@@ -33,8 +33,9 @@ static INLINE void ChangeFP(void)
 	}
 }
 
-//called when sr is changed and we must check for reg banks etc.. , returns true if interrupts got
-bool UpdateSR(void)
+//called when sr is changed and we must check for reg banks etc.
+//returns true if interrupt pending
+bool UpdateSR()
 {
 	if (sr.MD)
 	{
@@ -43,25 +44,21 @@ bool UpdateSR(void)
 	}
 	else
 	{
-		if (sr.RB)
-		{
-			WARN_LOG(SH4, "UpdateSR MD=0;RB=1 , this must not happen");
-			sr.RB =0;//error - must always be 0
-		}
       if (old_sr.RB)
          ChangeGPR();//switch
 	}
 
 	old_sr.status=sr.status;
+	old_sr.RB &= sr.MD;
 
 	return SRdecode();
 }
 
-//make x86 and sh4 float status registers match ;)
+//make host and sh4 float status registers match ;)
 u32 old_rm=0xFF;
 u32 old_dn=0xFF;
 
-void SetFloatStatusReg(void)
+static void SetFloatStatusReg()
 {
 	if ((old_rm!=fpscr.RM) || (old_dn!=fpscr.DN))
 	{
@@ -132,7 +129,7 @@ void SetFloatStatusReg(void)
                 : "r"(off_mask), "r"(on_mask)
             );
 #else
-        printf("SetFloatStatusReg: Unsupported platform\n");
+	#error "SetFloatStatusReg: Unsupported platform"
 #endif
 #endif
 
@@ -140,7 +137,7 @@ void SetFloatStatusReg(void)
 }
 
 //called when fpscr is changed and we must check for reg banks etc..
-void UpdateFPSCR(void)
+void UpdateFPSCR()
 {
 	if (fpscr.FR !=old_fpscr.FR)
 		ChangeFP(); // FPU bank change
@@ -150,7 +147,7 @@ void UpdateFPSCR(void)
 }
 
 
-u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
+static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 {
    if ((reg>=reg_r0) && (reg<=reg_r15))
 	{
@@ -251,18 +248,6 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 	}
 }
 
-u32 sh4context_offset_u32(u32 sh4_reg)
-{
-	void* addr=Sh4_int_GetRegisterPtr((Sh4RegType)sh4_reg);
-	u32 offs=(u8*)addr-(u8*)&Sh4cntx;
-	verify(offs<sizeof(Sh4cntx));
-
-	return offs;
-}
-u32 sh4context_offset_regtype(Sh4RegType sh4_reg)
-{
-	return sh4context_offset_u32(sh4_reg);
-}
 u32* GetRegPtr(u32 reg)
 {
 	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);

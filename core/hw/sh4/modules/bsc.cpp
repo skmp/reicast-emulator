@@ -10,7 +10,7 @@ BSC_PDTRA_type BSC_PDTRA;
 
 void write_BSC_PCTRA(u32 addr, u32 data)
 {
-	BSC_PCTRA.full=(u16)data;
+	BSC_PCTRA.full = data;
    if (settings.System == DC_PLATFORM_NAOMI)
       NaomiBoardIDWriteControl((u16)data);
 	//printf("C:BSC_PCTRA = %08X\n",data);

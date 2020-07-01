@@ -7,10 +7,8 @@
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
-#include "hw/aica/aica_if.h"
 #include "../sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
-#include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
 
 #define CPU_RATIO      (8)
@@ -23,6 +21,14 @@ static void ExecuteOpcode(u16 op)
 		RaiseFPUDisableException();
 	OpPtr[op](op);
 	l -= CPU_RATIO;
+}
+
+static u16 ReadNexOp()
+{
+	u32 addr = next_pc;
+	next_pc += 2;
+
+	return IReadMem16(addr);
 }
 
 void Sh4_int_Run()
@@ -38,9 +44,7 @@ void Sh4_int_Run()
 #endif
          do
          {
-            u32 addr = next_pc;
-            next_pc += 2;
-            u32 op = IReadMem16(addr);
+			u32 op = ReadNexOp();
 
             ExecuteOpcode(op);
          } while (l > 0);
@@ -79,8 +83,7 @@ void Sh4_int_Step()
 	}
 	else
 	{
-		u32 op=ReadMem16(next_pc);
-		next_pc+=2;
+		u32 op = ReadNexOp();
 		ExecuteOpcode(op);
 	}
 }
@@ -96,6 +99,8 @@ void Sh4_int_Reset(bool Manual)
    if (sh4_int_bCpuRun)
       return;
 
+   if (!Manual)
+      memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
    next_pc = 0xA0000000;
 
    memset(r,0,sizeof(r));
@@ -127,9 +132,7 @@ void ExecuteDelayslot()
 #if !defined(NO_MMU)
    try {
 #endif
-      u32 addr = next_pc;
-      next_pc += 2;
-      u32 op = IReadMem16(addr);
+      u32 op = ReadNexOp();
 
       if (op != 0)
             ExecuteOpcode(op);
@@ -157,38 +160,7 @@ void ExecuteDelayslot_RTE()
 #endif
 }
 
-//General update
-
-//3584 Cycles
-#define AICA_SAMPLE_GCM 441
-#define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
-
-int aica_sched = -1;
-int rtc_sched = -1;
-
-//14336 Cycles
-
-const int AICA_TICK=145124;
-
-static int AicaUpdate(int tag, int c, int j)
-{
-   UpdateArm(512*32);
-   UpdateAica(1*32);
-
-	return AICA_TICK;
-}
-
-static int DreamcastSecond(int tag, int c, int j)
-{
-	settings.dreamcast.RTC++;
-#if FEAT_SHREC != DYNAREC_NONE
-	bm_Periodical_1s();
-#endif
-
-	return SH4_MAIN_CLOCK;
-}
-
-// every SH4_TIMESLICE Cycles (fixed)
+// every SH4_TIMESLICE cycles
 int UpdateSystem()
 {
 	//this is an optimisation (mostly for ARM)
@@ -232,16 +204,8 @@ void Get_Sh4Interpreter(sh4_if* rv)
 
 void Sh4_int_Init()
 {
-	verify(sizeof(Sh4cntx)==448);
+	static_assert(sizeof(Sh4cntx) == 448, "Invalid Sh4Cntx size");
 
-	if (aica_sched == -1)
-	{
-		aica_sched=sh4_sched_register(0,&AicaUpdate);
-		sh4_sched_request(aica_sched,AICA_TICK);
-
-		rtc_sched=sh4_sched_register(0,&DreamcastSecond);
-		sh4_sched_request(rtc_sched,SH4_MAIN_CLOCK);
-	}
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }
 

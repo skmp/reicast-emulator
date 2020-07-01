@@ -723,14 +723,6 @@ static void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
 static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
 static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
-//ARM
-s32 libARM_Init(void);
-void libARM_Reset(bool M);
-void libARM_Term(void);
-
-void libARM_SetResetState(u32 State);
-void libARM_Update(u32 cycles);
-
 #define 	ReadMemArrRet(arr,addr,sz)				\
 			{if (sz==1)								\
 				return arr[addr];					\
@@ -746,15 +738,6 @@ void libARM_Update(u32 cycles);
 				{*(u16*)&arr[addr]=(u16)data;}		\
 			else if (sz==4)							\
 			{*(u32*)&arr[addr]=data;}}	
-
-#define WriteMemArrRet(arr,addr,data,sz)				\
-			{if(sz==1)								\
-				{arr[addr]=(u8)data;return;}				\
-			else if (sz==2)							\
-				{*(u16*)&arr[addr]=(u16)data;return;}		\
-			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;return;}}	
-
 
 struct OnLoad
 {

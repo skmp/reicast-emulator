@@ -19,11 +19,6 @@
 
 #include "hw/sh4/sh4_opcode.h"
 
-void dofoo(sh4_opcode op)
-{
-	r[op.n()]=gbr;
-}
-
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
 #define GetImm4(str) ((str>>0) & 0xf)
@@ -165,7 +160,6 @@ sh4op(i0000_nnnn_mmmm_1100)
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 	ReadMemBOS8(r[n],r[0],r[m]);
-	//r[n]= (u32)(s8)ReadMem8(r[0]+r[m]);
 }
 
 
@@ -175,7 +169,6 @@ sh4op(i0000_nnnn_mmmm_1101)
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 	ReadMemBOS16(r[n],r[0],r[m]);
-	//r[n] = (u32)(s16)ReadMem16(r[0] + r[m]);
 }
 
 
@@ -195,7 +188,6 @@ sh4op(i0000_nnnn_mmmm_0100)
 	u32 m = GetM(op);
 
 	WriteMemBOU8(r[0],r[n], r[m]);
-	//WriteMem8(r[0] + r[n], (u8)r[m]);
 }
 
 
@@ -641,7 +633,6 @@ sh4op(i0110_nnnn_mmmm_0001)
 {
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	//r[n] = (u32)(s32)(s16)ReadMem16(r[m]);
 	ReadMemS16(r[n] ,r[m]);
 }
 
@@ -670,7 +661,6 @@ sh4op(i0110_nnnn_mmmm_0100)
 {
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	//r[n] = (u32)(s32)(s8)ReadMem8(r[m]);
 	ReadMemS8(r[n],r[m]);
 	if (n != m)
 		r[m] += 1;
@@ -682,7 +672,6 @@ sh4op(i0110_nnnn_mmmm_0101)
 {
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	//r[n] = (u32)(s16)(u16)ReadMem16(r[m]);
 	ReadMemS16(r[n],r[m]);
 	if (n != m)
 		r[m] += 2;
@@ -726,7 +715,6 @@ sh4op(i1000_0100_mmmm_iiii)
 {
 	u32 disp = GetImm4(op);
 	u32 m = GetM(op);
-	//r[0] = (u32)(s8)ReadMem8(r[m] + disp);
 	ReadMemBOS8(r[0] ,r[m] , disp);
 }
 
@@ -736,7 +724,6 @@ sh4op(i1000_0101_mmmm_iiii)
 {
 	u32 disp = GetImm4(op);
 	u32 m = GetM(op);
-	//r[0] = (u32)(s16)ReadMem16(r[m] + (disp << 1));
 	ReadMemBOS16(r[0],r[m] , (disp << 1));
 }
 
@@ -748,7 +735,6 @@ sh4op(i1001_nnnn_iiii_iiii)
 {
 	u32 n = GetN(op);
 	u32 disp = (GetImm8(op));
-	//r[n]=(u32)(s32)(s16)ReadMem16((disp<<1) + pc + 4);
 	ReadMemS16(r[n],(disp<<1) + next_pc + 2);
 }
 
@@ -785,7 +771,6 @@ sh4op(i1100_0010_iiii_iiii)
 sh4op(i1100_0100_iiii_iiii)
 {
 	u32 disp = GetImm8(op);
-	//r[0] = (u32)(s8)ReadMem8(gbr+disp);
 	ReadMemBOS8(r[0],gbr,disp);
 }
 
@@ -794,7 +779,6 @@ sh4op(i1100_0100_iiii_iiii)
 sh4op(i1100_0101_iiii_iiii)
 {
 	u32 disp = GetImm8(op);
-	//r[0] = (u32)(s16)ReadMem16(gbr+(disp<<1) );
 	ReadMemBOS16(r[0],gbr,(disp<<1));
 }
 
@@ -811,7 +795,6 @@ sh4op(i1100_0110_iiii_iiii)
 // mova @(<disp>,PC),R0
 sh4op(i1100_0111_iiii_iiii)
 {
-	//u32 disp = (() << 2) + ((pc + 4) & 0xFFFFFFFC);
 	r[0] = ((next_pc+2)&0xFFFFFFFC)+(GetImm8(op)<<2);
 }
 

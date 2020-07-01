@@ -1,6 +1,5 @@
 #pragma once
 #include "types.h"
-#include "assert.h"
 
 #define SCIEB_addr 0x289C
 #define SCIPD_addr (0x289C+4)

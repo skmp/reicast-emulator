@@ -77,10 +77,6 @@ static INLINE void SetXD(u32 n, double val)
 	xf[(n<<1) | 1]=t.sgl[0];
 	xf[(n<<1) | 0]=t.sgl[1];
 }
-//needs to be removed
-u32* Sh4_int_GetRegisterPtr(Sh4RegType reg);
-//needs to be made portable
-void SetFloatStatusReg();
 
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
 

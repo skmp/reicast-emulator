@@ -1,12 +1,12 @@
 #include "aica.h"
 #include "aica_if.h"
-#include "sgc_if.h"
 #include "aica_mem.h"
-#include <math.h>
+#include "sgc_if.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
+#include "hw/sh4/sh4_sched.h"
 
-#define SH4_IRQ_BIT (1<<(holly_SPU_IRQ&255))
+#define SH4_IRQ_BIT (1 << (holly_SPU_IRQ & 31))
 
 CommonData_struct* CommonData;
 DSPData_struct* DSPData;
@@ -19,7 +19,7 @@ InterruptInfo* SCIRE;
 
 //Interrupts
 //arm side
-u32 GetL(u32 which)
+static u32 GetL(u32 which)
 {
    if (which > 7)
       which = 7; //higher bits share bit 7
@@ -38,7 +38,8 @@ u32 GetL(u32 which)
 
    return rv;
 }
-void update_arm_interrupts(void)
+
+static void update_arm_interrupts()
 {
    u32 p_ints=SCIEB->full & SCIPD->full;
 
@@ -63,18 +64,18 @@ void update_arm_interrupts(void)
 }
 
 //sh4 side
-void UpdateSh4Ints(void)
+static void UpdateSh4Ints()
 {
    u32 p_ints = MCIEB->full & MCIPD->full;
    if (p_ints)
    {
-      //if no interrupt is already pending then raise one :)
-      if ((SB_ISTEXT & SH4_IRQ_BIT )==0)
+      if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
+         //if no interrupt is already pending then raise one :)
          asic_RaiseInterrupt(holly_SPU_IRQ);
    }
    else
    {
-      if (SB_ISTEXT&SH4_IRQ_BIT)
+      if ((SB_ISTEXT & SH4_IRQ_BIT) != 0)
          asic_CancelInterrupt(holly_SPU_IRQ);
    }
 
@@ -82,19 +83,27 @@ void UpdateSh4Ints(void)
 
 
 AicaTimer timers[3];
+int aica_schid = -1;
+const int AICA_TICK = 145125;	// 44.1 KHz / 32
 
-//Mainloop
-void libAICA_Update(u32 Samples)
+static int AicaUpdate(int tag, int c, int j)
 {
-	AICA_Sample32();
+	arm_Run(32);
+	if (!settings.aica.NoBatch && !settings.aica.DSPEnabled)
+		AICA_Sample32();
+
+	return AICA_TICK;
 }
 
-void libAICA_TimeStep(void)
+//Mainloop
+
+void libAICA_TimeStep()
 {
    for (int i=0;i<3;i++)
 		timers[i].StepTimer(1);
 
-	SCIPD->SAMPLE_DONE=1;
+	SCIPD->SAMPLE_DONE = 1;
+	MCIPD->SAMPLE_DONE = 1;
 
 	if (settings.aica.NoBatch)
 		AICA_Sample();
@@ -102,6 +111,57 @@ void libAICA_TimeStep(void)
 	//Make sure sh4/arm interrupt system is up to date :)
 	update_arm_interrupts();
 	UpdateSh4Ints();	
+}
+
+static void AicaInternalDMA()
+{
+	if (!CommonData->DEXE)
+		return;
+
+	// Start dma
+	DEBUG_LOG(AICA, "AICA internal DMA: DGATE %d DDIR %d DLG %x", CommonData->DGATE, CommonData->DDIR, CommonData->DLG);
+	if (CommonData->DGATE)
+	{
+		// Clear memory/registers
+		if (CommonData->DDIR)
+		{
+			// to wave mem
+			u32 addr = ((CommonData->DMEA_hi << 16) | (CommonData->DMEA_lo << 2)) & ARAM_MASK;
+			u32 len = std::min(CommonData->DLG, ARAM_SIZE - addr);
+			memset(&aica_ram.data[addr], 0, len * 4);
+		}
+		else
+		{
+			// to regs
+			u32 addr = CommonData->DRGA << 2;
+			for (u32 i = 0; i < CommonData->DLG; i++, addr += 4)
+				WriteMem_aica_reg(addr, 0, 4);
+		}
+	}
+	else
+	{
+		// Data xfer
+		u32 waddr = ((CommonData->DMEA_hi << 16) | (CommonData->DMEA_lo << 2)) & ARAM_MASK;
+		u32 raddr = CommonData->DRGA << 2;
+		u32 len = std::min(CommonData->DLG, ARAM_SIZE - waddr);
+		if (CommonData->DDIR)
+		{
+			// reg to wave mem
+			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
+				*(u32*)&aica_ram[waddr] = ReadMem_aica_reg(raddr, 4);
+		}
+		else
+		{
+			// wave mem to regs
+			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
+				WriteMem_aica_reg(raddr, *(u32*)&aica_ram[waddr], 4);
+		}
+	}
+	CommonData->DEXE = 0;
+	MCIPD->DMA_END = 1;
+	UpdateSh4Ints();
+	SCIPD->DMA_END = 1;
+	update_arm_interrupts();
 }
 
 //Memory i/o
@@ -163,6 +223,12 @@ void WriteAicaReg(u32 reg,u32 data)
 		timers[2].RegisterWrite();
 		break;
 
+	// DEXE, DDIR, DLG
+	case 0x288C:
+		WriteMemArr(aica_reg, reg, data, sz);
+		AicaInternalDMA();
+		break;
+
 	default:
 		WriteMemArr(aica_reg,reg,data,sz);
 		break;
@@ -175,13 +241,13 @@ template void WriteAicaReg<1>(u32 reg,u32 data);
 template void WriteAicaReg<2>(u32 reg,u32 data);
 
 //misc :p
-s32 libAICA_Init(void)
+s32 libAICA_Init()
 {
 	init_mem();
 	aica_Init();
 
-	verify(sizeof(*CommonData)==0x508);
-	verify(sizeof(*DSPData)==0x15C8);
+	static_assert(sizeof(*CommonData) == 0x508, "Invalid CommonData size");
+	static_assert(sizeof(*DSPData) == 0x15C8, "Invalid DSPData size");
 
 	CommonData=(CommonData_struct*)&aica_reg[0x2800];
 	DSPData=(DSPData_struct*)&aica_reg[0x3000];
@@ -196,8 +262,11 @@ s32 libAICA_Init(void)
 	MCIRE=(InterruptInfo*)&aica_reg[0x28B4+8];
 
 	sgc_Init();
-   for (int i=0;i<3;i++)
-		timers[i].Init(aica_reg,i);
+	if (aica_schid == -1)
+	{
+		aica_schid = sh4_sched_register(0, &AicaUpdate);
+		sh4_sched_request(aica_schid, AICA_TICK);
+	}
 
 	return 0;
 }
@@ -205,12 +274,16 @@ s32 libAICA_Init(void)
 void libAICA_Reset(bool manual)
 {
 	if (!manual)
+	{
 		init_mem();
-	sgc_Init();
+		sgc_Init();
+	}	
+	for (u32 i = 0; i < 3; i++)
+		timers[i].Init(aica_reg, i);
 	aica_Reset(manual);
 }
 
-void libAICA_Term(void)
+void libAICA_Term()
 {
 	sgc_Term();
 	term_mem();

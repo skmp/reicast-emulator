@@ -21,10 +21,9 @@
 #include "sgc_if.h"
 #include "dsp.h"
 #include "aica_mem.h"
-#include "hw/aica/aica_if.h"
+#include "aica_if.h"
 #include <math.h>
 #include <algorithm>
-using namespace std;
 #undef FAR
 
 //#define CLIP_WARN
@@ -423,8 +422,8 @@ struct ChannelEx
 	{
 		ccd=(ChannelCommonData*)&ccd_raw[cn*0x80];
 		ChannelNumber = cn;
-		for (u32 i=0;i<0x80;i++)
-			RegWrite(i, 1);
+		for (u32 i = 0; i < 0x80; i += 2)
+			RegWrite(i, 2);
 		disable();
 	}
 	void disable()
@@ -484,15 +483,15 @@ struct ChannelEx
 			else
 			{
 				ofsatt = lfo.alfo + (AEG.GetValue() >> 2);
-				ofsatt = min(ofsatt, (u32)255); // make sure it never gets more 255 -- it can happen with some alfo/aeg combinations
+				ofsatt = std::min(ofsatt, (u32)255); // make sure it never gets more 255 -- it can happen with some alfo/aeg combinations
 			}
 			u32 const max_att = ((16 << 4) - 1) - ofsatt;
 			
 			s32* logtable = ofsatt + tl_lut;
 
-			u32 dl = min(VolMix.DLAtt, max_att);
-			u32 dr = min(VolMix.DRAtt, max_att);
-			u32 ds = min(VolMix.DSPAtt, max_att);
+			u32 dl = std::min(VolMix.DLAtt, max_att);
+			u32 dr = std::min(VolMix.DRAtt, max_att);
+			u32 ds = std::min(VolMix.DSPAtt, max_att);
 
 			oLeft = FPMul(sample, logtable[dl], 15);
 			oRight = FPMul(sample, logtable[dr], 15);
@@ -1412,7 +1411,8 @@ void AICA_Sample32()
 			VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
 		}
 
-		// no dsp for now -- needs special handling of oDSP for ch paraller version ...
+		/*
+		no dsp for now -- needs special handling of oDSP for ch paraller version ...
 		if (settings.aica.DSPEnabled)
 		{
 			dsp_step();
@@ -1422,6 +1422,7 @@ void AICA_Sample32()
 				VOLPAN( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
 			}
 		}
+		*/
 
 		//Mono !
 		if (CommonData->Mono)

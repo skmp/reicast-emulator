@@ -5,6 +5,7 @@
 // All rights reserved.
 //
 #include "dsp.h"
+#include "aica.h"
 #include "aica_if.h"
 #include "aica_mem.h"
 
@@ -112,7 +113,6 @@ void AICADSP_Step(struct dsp_t *DSP)
 #endif
 
 		// INPUTS RW
-		verify(IRA < 0x38);
 		if (IRA <= 0x1f)
 			INPUTS = DSP->MEMS[IRA];
 		else if (IRA <= 0x2F)

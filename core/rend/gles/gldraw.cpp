@@ -737,7 +737,7 @@ void UpdateVmuTexture(int vmu_screen_number)
 
 }
 
-void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
+void DrawVmuTexture(u8 vmu_screen_number)
 {
 	glActiveTexture(GL_TEXTURE0);
 
@@ -804,12 +804,6 @@ void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 	}
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
-
-	if ( draw_additional_primitives )
-	{
-		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
-	}
 }
 
 void UpdateLightGunTexture(int port)
@@ -859,7 +853,7 @@ void UpdateLightGunTexture(int port)
 	lightgun_params[port].dirty = false;
 }
 
-void DrawGunCrosshair(u8 port, bool draw_additional_primitives)
+void DrawGunCrosshair(u8 port)
 {
 	if ( lightgun_params[port].offscreen || (lightgun_params[port].colour==0) )
 		return;
@@ -906,10 +900,4 @@ void DrawGunCrosshair(u8 port, bool draw_additional_primitives)
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
 
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	if ( draw_additional_primitives )
-	{
-		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
-	}
 }

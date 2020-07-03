@@ -731,8 +731,8 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives);
-void DrawGunCrosshair(u8 port, bool draw_additional_primitives);
+void DrawVmuTexture(u8 vmu_screen_number);
+void DrawGunCrosshair(u8 port);
 
 void vertex_buffer_unmap(void)
 {
@@ -1067,11 +1067,11 @@ static bool RenderFrame(void)
    	{
 			for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 				if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
-					DrawVmuTexture(vmu_screen_number, true) ;
+					DrawVmuTexture(vmu_screen_number);
    	}
 
 		for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-				DrawGunCrosshair(lightgun_port, true) ;
+				DrawGunCrosshair(lightgun_port);
    }
 
 	KillTex = false;

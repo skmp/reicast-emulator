@@ -765,7 +765,7 @@ u32 static INLINE bitscanrev(u32 v)
 
 void os_DebugBreak(void);
 
-bool ra_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
+bool ra_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
 bool ra_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
 bool dc_serialize(void **data, unsigned int *total_size);
 bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_size);
@@ -894,5 +894,6 @@ enum serialize_version_enum {
 	V6,
 	V7,
 	V8,
-	V9
+	V9,
+	V10,
 };

@@ -259,7 +259,7 @@ extern int SerStep2;
 extern unsigned char BSerial[];
 extern unsigned char GSerial[];
 
-bool ra_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
+bool ra_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
 	if ( *dest != NULL )
 	{
@@ -318,7 +318,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V9;
+	serialize_version_enum version = V10;
 
 	*total_size = 0 ;
 
@@ -426,6 +426,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_S(ta_fsm[2048]);
 	LIBRETRO_S(ta_fsm_cl);
+
+	SerializeTAContext(data, total_size);
 
 	LIBRETRO_SA(vram.data, vram.size);
 
@@ -814,6 +816,9 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	}
 	KillTex = true;
 	pal_needs_update = true;
+	if (version >= V10)
+		UnserializeTAContext(data, total_size);
+
 	LIBRETRO_USA(vram.data, vram.size);
 
 	LIBRETRO_USA(OnChipRAM.data,OnChipRAM_SIZE);

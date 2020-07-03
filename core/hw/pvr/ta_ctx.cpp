@@ -274,3 +274,31 @@ TA_context* tactx_Pop(u32 addr)
    }
 	return 0;
 }
+
+const u32 NULL_CONTEXT = ~0u;
+
+void SerializeTAContext(void **data, unsigned int *total_size)
+{
+	if (ta_ctx == nullptr)
+	{
+		LIBRETRO_S(NULL_CONTEXT);
+		return;
+	}
+	LIBRETRO_S(ta_ctx->Address);
+	const u32 taSize = ta_ctx->tad.thd_data - ta_ctx->tad.thd_root;
+	LIBRETRO_S(taSize);
+	LIBRETRO_SA(ta_ctx->tad.thd_root, taSize);
+}
+
+void UnserializeTAContext(void **data, unsigned int *total_size)
+{
+	u32 address;
+	LIBRETRO_US(address);
+	if (address == NULL_CONTEXT)
+		return;
+	SetCurrentTARC(address);
+	u32 size;
+	LIBRETRO_US(size);
+	LIBRETRO_USA(ta_ctx->tad.thd_root, size);
+	ta_ctx->tad.thd_data = ta_ctx->tad.thd_root + size;
+}

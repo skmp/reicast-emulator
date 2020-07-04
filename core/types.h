@@ -896,4 +896,5 @@ enum serialize_version_enum {
 	V8,
 	V9,
 	V10,
+	V11,
 };

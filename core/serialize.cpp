@@ -199,6 +199,7 @@ extern int rtc_schid;
 
 //./core/hw/sh4/modules/serial.o
 extern SCIF_SCFSR2_type SCIF_SCFSR2;
+extern SCIF_SCSCR2_type SCIF_SCSCR2;
 
 //./core/hw/sh4/modules/bsc.o
 extern BSC_PDTRA_type BSC_PDTRA;
@@ -216,13 +217,7 @@ extern u64 tmu_ch_base64[3];
 extern u32 CCN_QACR_TR[2];
 
 //./core/hw/sh4/modules/mmu.o
-extern TLB_Entry UTLB[64];
-extern TLB_Entry ITLB[4];
-#if defined(NO_MMU)
-extern u32 sq_remap[64];
-#else
 extern u32 ITLB_LRU_USE[64];
-#endif
 
 //./core/imgread/common.o
 extern u32 NullDriveDiscType;
@@ -318,7 +313,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V10;
+	serialize_version_enum version = V11;
 
 	*total_size = 0 ;
 
@@ -523,6 +518,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 #endif
 
 	LIBRETRO_S(SCIF_SCFSR2);
+	LIBRETRO_S(SCIF_SCSCR2);
 	LIBRETRO_S(BSC_PDTRA);
 
 	LIBRETRO_SA(tmu_shift,3);
@@ -534,13 +530,10 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_SA(CCN_QACR_TR,2);
 
-	LIBRETRO_SA(UTLB,64);
-	LIBRETRO_SA(ITLB,4);
-#if defined(NO_MMU)
-	LIBRETRO_SA(sq_remap,64);
-#else
-	LIBRETRO_SA(ITLB_LRU_USE,64);
-#endif
+	LIBRETRO_S(UTLB);
+	LIBRETRO_S(ITLB);
+	LIBRETRO_S(sq_remap);
+	LIBRETRO_S(ITLB_LRU_USE);
 
 	LIBRETRO_S(NullDriveDiscType);
 	LIBRETRO_SA(q_subchannel,96);
@@ -943,6 +936,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 		LIBRETRO_SKIP(1); // SCIF_SCFRDR2
 		LIBRETRO_US(dummy_int); // SCIF_SCFDR2
 	}
+	else if (version >= V11)
+		LIBRETRO_US(SCIF_SCSCR2);
 	LIBRETRO_US(BSC_PDTRA);
 
 	LIBRETRO_USA(tmu_shift,3);
@@ -976,14 +971,12 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	}
 	else
 	{
-		LIBRETRO_USA(UTLB,64);
-		LIBRETRO_USA(ITLB,4);
+		LIBRETRO_US(UTLB);
+		LIBRETRO_US(ITLB);
 	}
-#if defined(NO_MMU)
-	LIBRETRO_USA(sq_remap,64);
-#else
-	LIBRETRO_USA(ITLB_LRU_USE,64);
-#endif
+	if (version >= V11)
+		LIBRETRO_US(sq_remap);
+	LIBRETRO_US(ITLB_LRU_USE);
 
 	LIBRETRO_US(NullDriveDiscType);
 	LIBRETRO_USA(q_subchannel,96);

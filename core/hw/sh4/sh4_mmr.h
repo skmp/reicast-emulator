@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include "types.h"
 #include "../sh4/sh4_if.h"
 
@@ -12,41 +13,32 @@ void map_p4();
 
 #define sq_both ((u8*)sh4rcb.sq_buffer)
 
-extern Array<RegisterStruct> CCN;  //CCN  : 14 registers
-extern Array<RegisterStruct> UBC;  //UBC  : 9 registers
-extern Array<RegisterStruct> BSC;  //BSC  : 18 registers
-extern Array<RegisterStruct> DMAC; //DMAC : 17 registers
-extern Array<RegisterStruct> CPG;  //CPG  : 5 registers
-extern Array<RegisterStruct> RTC;  //RTC  : 16 registers
-extern Array<RegisterStruct> INTC; //INTC : 4 registers
-extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
-extern Array<RegisterStruct> SCI;  //SCI  : 8 registers
-extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
-
-/*
-//Region P4
-u32 ReadMem_P4(u32 addr,u32 sz);
-void WriteMem_P4(u32 addr,u32 data,u32 sz);
-
-//Area7
-u32 ReadMem_area7(u32 addr,u32 sz);
-void WriteMem_area7(u32 addr,u32 data,u32 sz);
-void DYNACALL WriteMem_sq_32(u32 address,u32 data);*/
+extern std::array<RegisterStruct, 18> CCN;
+extern std::array<RegisterStruct, 9> UBC;
+extern std::array<RegisterStruct, 19> BSC;
+extern std::array<RegisterStruct, 17> DMAC;
+extern std::array<RegisterStruct, 5> CPG;
+extern std::array<RegisterStruct, 16> RTC;
+extern std::array<RegisterStruct, 5> INTC;
+extern std::array<RegisterStruct, 12> TMU;
+extern std::array<RegisterStruct, 8> SCI;
+extern std::array<RegisterStruct, 10> SCIF;
 
 //Init/Res/Term
 void sh4_mmr_init();
 void sh4_mmr_reset(bool Manual);
 void sh4_mmr_term();
 
-void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
+template<typename T>
+void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
 
-#define A7_REG_HASH(addr) ((addr>>16)&0x1FFF)
+#define A7_REG_HASH(addr) (((addr) >> 16) & 0x1FFF)
 
-#define SH4IO_REGN(mod,addr,size) (mod.data[(addr&255)/4].data##size)
+#define SH4IO_REGN(mod, addr, size) ((mod)[((addr) & 255) / 4].data##size)
 #define SH4IO_REG(mod,name,size) SH4IO_REGN(mod,mod##_##name##_addr,size)
 #define SH4IO_REG_T(mod,name,size) ((mod##_##name##_type&)SH4IO_REG(mod,name,size))
 
-#define SH4IO_REG_OFS(mod,name,o,s,size) SH4IO_REGN(mod,mod##_##name##0_addr+o*s,size)
+#define SH4IO_REG_OFS(mod, name, o, s, size) SH4IO_REGN(mod, mod##_##name##0_addr + (o) * (s), size)
 #define SH4IO_REG_T_OFS(mod,name,o,s,size) ((mod##_##name##_type&)SH4IO_REG_OFS(mod,name,o,s,size))
 
 //CCN module registers base
@@ -1124,9 +1116,8 @@ union CCN_QACR_type
 #define CCN_INTEVT SH4IO_REG(CCN,INTEVT,32)
 #define CCN_PTEA SH4IO_REG_T(CCN,PTEA,32)
 
-#define CCN_QACR0 SH4IO_REG_T(CCN,QACR0,32)
-#define CCN_QACR1 SH4IO_REG_T(CCN,QACR1,32)
-
+#define CCN_QACR0 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR0, 32))
+#define CCN_QACR1 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR1, 32))
 
 #define CPG_FRQCR SH4IO_REG(CPG,FRQCR,16)
 #define CPG_STBCR SH4IO_REG(CPG,STBCR,8)

@@ -16,7 +16,7 @@
 
 #include "hw/naomi/naomi.h"
 
-Array<RegisterStruct> sb_regs(0x540, false);
+std::array<RegisterStruct, 0x540> sb_regs;
 
 //(addr>= 0x005F6800) && (addr<=0x005F7CFF) -> 0x1500 bytes -> 0x540 possible registers , 125 actually exist only
 // System Control Reg.   //0x100 bytes
@@ -114,11 +114,14 @@ offset>>=2;
 
 }
 
-u32 sbio_read_noacc(u32 addr) { verify(false); return 0; }
-void sbio_write_noacc(u32 addr, u32 data) { verify(false); }
-void sbio_write_const(u32 addr, u32 data) { verify(false); }
+u32 sbio_read_noacc(u32 addr) { INFO_LOG(HOLLY, "ERROR: forbidden read on register; offset=%x", addr - SB_BASE); return 0; }
+void sbio_write_noacc(u32 addr, u32 data) { INFO_LOG(HOLLY, "ERROR: forbidden write on register; offset=%x, data=%x", addr - SB_BASE, data); }
+void sbio_write_const(u32 addr, u32 data) { INFO_LOG(HOLLY, "ERROR: forbidden write on const register; offset=%x, data=%x", addr - SB_BASE, data);  }
 
-void sb_write_zero(u32 addr, u32 data) { verify(data==0); }
+void sb_write_zero(u32 addr, u32 data) {
+	if (data != 0)
+		INFO_LOG(HOLLY, "ERROR: non-zero write on register; offset=%x, data=%x", addr - SB_BASE, data);
+}
 void sb_write_gdrom_unlock(u32 addr, u32 data) { verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677
 														|| data == 0x3ff); } /* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff  */
 
@@ -127,9 +130,9 @@ void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrF
 {
 	u32 idx=(reg_addr-SB_BASE)/4;
 
-	verify(idx<sb_regs.Size);
+	verify(idx < sb_regs.size());
 
-	sb_regs[idx].flags = flags | REG_ACCESS_32;
+	sb_regs[idx].flags = flags;
 
 	if (flags == RIO_NO_ACCESS)
 	{
@@ -178,15 +181,10 @@ void SB_SFRES_write32(u32 addr, u32 data)
 		dc_request_reset();
 	}
 }
-
-void sb_Init(void)
+void sb_Init()
 {
-	sb_regs.Zero();
-
-	for (u32 i=0;i<sb_regs.Size;i++)
-	{
+	for (u32 i = 0; i < sb_regs.size(); i++)
 		sb_rio_register(SB_BASE+i*4,RIO_NO_ACCESS);
-	}
 
 	//0x005F6800    SB_C2DSTAT  RW  ch2-DMA destination address
 	sb_rio_register(SB_C2DSTAT_addr,RIO_DATA);
@@ -717,12 +715,17 @@ void sb_Init(void)
 	//0x005f74e4
 	sb_rio_register(0x005f74e4,RIO_WO_FUNC,0,sb_write_gdrom_unlock);
 
-	//0x005f68a4, 0x005f68ac, 0x005f78a0,0x005f78a4, 0x005f78a8, 0x005f78b0, 0x005f78b4, 0x005f78b8
+	//0x005f68a4    SB_RBERRC (undocumented) mask 800F0000 default 0
 	sb_rio_register(0x005f68a4,RIO_WO_FUNC,0,sb_write_zero);
+	//0x005f68ac    SB_RFERRC (undocumented) mask 80000700 default 0
 	sb_rio_register(0x005f68ac,RIO_WO_FUNC,0,sb_write_zero);
+	//0x005f78a0    SB_G2IDIX (undocumented) mask 1FFF0000 default 0
 	sb_rio_register(0x005f78a0,RIO_WO_FUNC,0,sb_write_zero);
+	//0x005f78a4    SB_G2RS0IX (undocumented) mask 1FFF0000 default 0
 	sb_rio_register(0x005f78a4,RIO_WO_FUNC,0,sb_write_zero);
+	//0x005f78a8    SB_G2RS1IX (undocumented) mask 1FFF0000 default 0
 	sb_rio_register(0x005f78a8,RIO_WO_FUNC,0,sb_write_zero);
+	//0x005f78ac, 0x005f78b0, 0x005f78b4, 0x005f78b8
 	sb_rio_register(0x005f78ac,RIO_WO_FUNC,0,sb_write_zero);
 	sb_rio_register(0x005f78b0,RIO_WO_FUNC,0,sb_write_zero);
 	sb_rio_register(0x005f78b4,RIO_WO_FUNC,0,sb_write_zero);
@@ -755,8 +758,8 @@ void sb_Reset(bool Manual)
 {
 	if (!Manual)
 	{
-		for (u32 i = 0; i < sb_regs.Size; i++)
-			sb_regs[i].reset();
+		for (auto& reg : sb_regs)
+			reg.reset();
 	}
 	SB_ISTNRM = 0;
 	SB_FFST_rc = 0;

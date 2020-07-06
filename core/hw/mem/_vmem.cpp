@@ -696,16 +696,16 @@ void _vmem_protect_vram(u32 addr, u32 size)
 		{
 			mem_region_lock(virt_ram_base + 0x84000000 + addr, size);	// P1
 			//mem_region_lock(virt_ram_base + 0x86000000 + addr, size);	// P1 - mirror
-			// We should also lock P2 and P3, and the mirrors, but they don't seem to be used...
-			//mem_region_lock(virt_ram_base + 0xA4000000 + addr, size);	// P2
+			mem_region_lock(virt_ram_base + 0xA4000000 + addr, size);	// P2
 			//mem_region_lock(virt_ram_base + 0xA6000000 + addr, size);	// P2 - mirror
+			// We should also lock P3, and the mirrors, but they don't seem to be used...
 			//mem_region_lock(virt_ram_base + 0xC4000000 + addr, size);	// P3
 			//mem_region_lock(virt_ram_base + 0xC6000000 + addr, size);	// P3 - mirror
 			if (VRAM_SIZE == 0x800000)
 			{
 				mem_region_lock(virt_ram_base + 0x84000000 + addr + VRAM_SIZE, size);
 				//mem_region_lock(virt_ram_base + 0x86000000 + addr + VRAM_SIZE, size);
-				//mem_region_lock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);
+				mem_region_lock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);
 				//mem_region_lock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);
 			}
 			vmem32_protect_vram(addr, size);
@@ -737,16 +737,16 @@ void _vmem_unprotect_vram(u32 addr, u32 size)
 		{
 			mem_region_unlock(virt_ram_base + 0x84000000 + addr, size);		// P1
 			//mem_region_unlock(virt_ram_base + 0x86000000 + addr, size);	// P1 - mirror
-			// We should also lock P2 and P3, and the mirrors, but they don't seem to be used...
-			//mem_region_unlock(virt_ram_base + 0xA4000000 + addr, size);	// P2
+			mem_region_unlock(virt_ram_base + 0xA4000000 + addr, size);	// P2
 			//mem_region_unlock(virt_ram_base + 0xA6000000 + addr, size);	// P2 - mirror
+			// We should also lock P3, and the mirrors, but they don't seem to be used...
 			//mem_region_unlock(virt_ram_base + 0xC4000000 + addr, size);	// P3
 			//mem_region_unlock(virt_ram_base + 0xC6000000 + addr, size);	// P3 - mirror
 			if (VRAM_SIZE == 0x800000)
 			{
 				mem_region_unlock(virt_ram_base + 0x84000000 + addr + VRAM_SIZE, size);
 				//mem_region_unlock(virt_ram_base + 0x86000000 + addr + VRAM_SIZE, size);
-				//mem_region_unlock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);
+				mem_region_unlock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);
 				//mem_region_unlock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);
 			}
 		}
@@ -784,7 +784,9 @@ u32 _vmem_get_vram_offset(void *addr)
 		}
 		if ((offset >> 24) != 4)
 			return -1;
-		verify((((u8*)addr - virt_ram_base) >> 29) == 0 || (((u8*)addr - virt_ram_base) >> 29) == 4);	// others areas aren't mapped atm
+		verify((((u8*)addr - virt_ram_base) >> 29) == 0
+				|| (((u8*)addr - virt_ram_base) >> 29) == 4
+				|| (((u8*)addr - virt_ram_base) >> 29) == 5);	// others areas aren't mapped atm
 
 		return offset & VRAM_MASK;
 	}

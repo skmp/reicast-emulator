@@ -22,7 +22,7 @@ u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 
-// Rough approximation of LoD bias from D adjust param
+// Rough approximation of LoD bias from D adjust param, only used to increase LoD
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
 		0.f, -4.f, -2.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
 };
@@ -82,7 +82,7 @@ static void BuildTwiddleTables()
 
 static OnLoad btt(&BuildTwiddleTables);
 
-void palette_update(void)
+void palette_update()
 {
    if (!pal_needs_update)
       return;
@@ -128,9 +128,7 @@ void palette_update(void)
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
 
-using namespace std;
-
-vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
+static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 //vram 32-64b
 VArray2 vram;
 
@@ -143,13 +141,11 @@ void vramlock_list_remove(vram_block* block)
 
 	for (u32 i=base;i<=end;i++)
 	{
-		vector<vram_block*>& list = VramLocks[i];
-		for (size_t j = 0; j < list.size(); j++)
+		std::vector<vram_block*>& list = VramLocks[i];
+		for (auto& lock : list)
 		{
-         if (list[j] == block)
-         {
-            list[j] = nullptr;
-         }
+			if (lock == block)
+				lock = nullptr;
 		}
 	}
 }
@@ -162,7 +158,7 @@ void vramlock_list_add(vram_block* block)
 
 	for (u32 i=base;i<=end;i++)
 	{
-		vector<vram_block*>& list = VramLocks[i];
+		std::vector<vram_block*>& list = VramLocks[i];
 		// If the list is empty then we need to protect vram, otherwise it's already been done
 		if (list.empty() || std::all_of(list.begin(), list.end(), [](vram_block *block) { return block == nullptr; }))
 			_vmem_protect_vram(i * PAGE_SIZE, PAGE_SIZE);
@@ -216,23 +212,22 @@ bool VramLockedWriteOffset(size_t offset)
 		return false;
 
    size_t addr_hash = offset/PAGE_SIZE;
-   vector<vram_block *>& list = VramLocks[addr_hash];
+   std::vector<vram_block *>& list = VramLocks[addr_hash];
 
    {
       vramlist_lock.Lock();
 
-      for (size_t i = 0; i < list.size(); i++)
+      for (auto& lock : list)
       {
-         if (list[i] != nullptr)
+         if (lock != nullptr)
          {
-            libPvr_LockedBlockWrite(list[i], (u32)offset);
+            libPvr_LockedBlockWrite(lock, (u32)offset);
 
-			if (list[i] != nullptr)
+            if (lock != nullptr)
             {
             	ERROR_LOG(PVR, "Error : pvr is supposed to remove lock");
-				die("Invalid state");
+            	die("Invalid state");
             }
-
          }
       }
       list.clear();
@@ -249,7 +244,7 @@ bool VramLockedWriteOffset(size_t offset)
 bool VramLockedWrite(u8* address)
 {
 	u32 offset = _vmem_get_vram_offset(address);
-	if (offset == -1)
+	if (offset == (u32)-1)
 		return false;
 	return VramLockedWriteOffset(offset);
 }
@@ -343,7 +338,7 @@ static inline int getThreadCount()
    int tcount = omp_get_num_procs() - 1;
    if (tcount < 1)
 		tcount = 1;
-	return min(tcount, (int)settings.pvr.MaxThreads);
+	return std::min(tcount, (int)settings.pvr.MaxThreads);
 }
 
 template<typename Func>
@@ -489,8 +484,13 @@ bool BaseTextureCacheData::Delete()
 		return false;
 
 	if (lock_block)
-		libCore_vramlock_Unlock_block(lock_block);
-	lock_block = nullptr;
+	{
+		vramlist_lock.Lock();
+		if (lock_block)
+			libCore_vramlock_Unlock_block_wb(lock_block);
+		lock_block = nullptr;
+		vramlist_lock.Unlock();
+	}
 
 	delete[] custom_image_data;
 
@@ -529,9 +529,11 @@ void BaseTextureCacheData::Create()
 			WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-		int stride = w;
+		int stride = 0;
 		if (tcw.StrideSel)
 			stride = (TEXT_CONTROL & 31) * 32;
+		if (stride == 0)
+			stride = w;
 
 		//Call the format specific conversion code
 		texconv = tex->PL;
@@ -661,7 +663,7 @@ void BaseTextureCacheData::Update()
 		if (mipmapped)
 		{
 			pb32.init(w, h, true);
-			for (int i = 0; i <= tsp.TexU + 3; i++)
+			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
 			{
 				pb32.set_mipmap(i);
 				u32 vram_addr;
@@ -679,7 +681,11 @@ void BaseTextureCacheData::Update()
 				}
 				else
 					vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
-				texconv32(&pb32, (u8*)&vram[vram_addr], 1 << i, 1 << i);
+				if (tcw.PixelFmt == PixelYUV && i == 0)
+					// Special case for YUV at 1x1 LoD
+					format[Pixel565].TW32(&pb32, &vram[vram_addr], 1, 1);
+				else
+					texconv32(&pb32, &vram[vram_addr], 1 << i, 1 << i);
 			}
 			pb32.set_mipmap(0);
 		}
@@ -724,7 +730,7 @@ void BaseTextureCacheData::Update()
 		if (mipmapped)
 		{
 			pb16.init(w, h, true);
-			for (int i = 0; i <= tsp.TexU + 3; i++)
+			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
 			{
 				pb16.set_mipmap(i);
 				u32 vram_addr;
@@ -767,7 +773,8 @@ void BaseTextureCacheData::Update()
 	h = original_h;
 
 	//lock the texture to detect changes in it
-	lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
+	if (lock_block == nullptr)
+		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
 	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, mipmapped, mipmapped);
 	if (settings.rend.DumpTextures)

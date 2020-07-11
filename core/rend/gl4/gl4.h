@@ -10,28 +10,38 @@ struct gl4PipelineShader
 {
 	GLuint program;
 
-	GLuint scale;
-	GLuint extra_depth_scale;
-	GLuint pp_ClipTest,cp_AlphaTestValue;
-	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
-	GLuint shade_scale_factor;
-	GLuint pp_Number;
-	GLuint blend_mode;
-	GLuint use_alpha;
-	GLuint ignore_tex_alpha;
-	GLuint shading_instr;
-	GLuint fog_control;
-	GLuint trilinear_alpha;
-	GLuint fog_clamp_min, fog_clamp_max;
+	GLint scale;
+	GLint extra_depth_scale;
+	GLint pp_ClipTest;
+	GLint cp_AlphaTestValue;
+	GLint sp_FOG_COL_RAM;
+	GLint sp_FOG_COL_VERT;
+	GLint sp_FOG_DENSITY;
+	GLint shade_scale_factor;
+	GLint pp_Number;
+	GLint blend_mode;
+	GLint use_alpha;
+	GLint ignore_tex_alpha;
+	GLint shading_instr;
+	GLint fog_control;
+	GLint trilinear_alpha;
+	GLint fog_clamp_min, fog_clamp_max;
+	GLint palette_index;
 
-	u32 cp_AlphaTest;
+	bool cp_AlphaTest;
 	s32 pp_ClipTestMode;
-	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
+	bool pp_Texture;
+	bool pp_UseAlpha;
+	bool pp_IgnoreTexA;
+	u32 pp_ShadInstr;
+	bool pp_Offset;
+	u32 pp_FogCtrl;
 	Pass pass;
 	bool pp_TwoVolumes;
 	bool pp_Gouraud;
 	bool pp_BumpMap;
 	bool fog_clamping;
+	bool palette;
 };
 
 
@@ -41,8 +51,8 @@ struct gl4_ctx
 	{
 		GLuint program;
 
-		GLuint scale;
-		GLuint extra_depth_scale;
+		GLint scale;
+		GLint extra_depth_scale;
 	} modvol_shader;
 
 	std::unordered_map<u32, gl4PipelineShader> shaders;
@@ -85,8 +95,8 @@ void gl4DrawGunCrosshair(u8 port);
 \n\
 layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg; \n\
 struct Pixel { \n\
-	highp vec4 color; \n\
-	highp float depth; \n\
+	vec4 color; \n\
+	float depth; \n\
 	uint seq_num; \n\
 	uint next; \n\
 }; \n\
@@ -117,7 +127,7 @@ uint getNextPixelIndex() \n\
 \n\
 void setFragDepth(void) \n\
 { \n\
-	highp float w = 100000.0 * gl_FragCoord.w; \n\
+	float w = 100000.0 * gl_FragCoord.w; \n\
 	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 } \n\
 struct PolyParam { \n\
@@ -244,8 +254,9 @@ extern struct gl4ShaderUniforms_t
 	TCW tcw1;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
+	float palette_index;
 
-	void setUniformArray(GLuint location, int v0, int v1)
+	void setUniformArray(GLint location, int v0, int v1)
 	{
 		int array[] = { v0, v1 };
 		glUniform1iv(location, 2, array);
@@ -301,6 +312,9 @@ extern struct gl4ShaderUniforms_t
 			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
+
+		if (s->palette_index != -1)
+			glUniform1f(s->palette_index, palette_index);
 	}
 
 } gl4ShaderUniforms;

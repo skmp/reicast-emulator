@@ -119,6 +119,8 @@ R"(%s
 #define pp_BumpMap %d
 #define FogClamping %d
 #define pp_TriLinear %d
+#define pp_Palette %d
+
 #define PI 3.1415926
 
 #define GLES2 0
@@ -165,6 +167,9 @@ uniform sampler2D tex,fog_table;
 uniform lowp float trilinear_alpha;
 uniform lowp vec4 fog_clamp_min;
 uniform lowp vec4 fog_clamp_max;
+uniform sampler2D palette;
+uniform mediump float palette_index;
+
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
 INTERPOLATION in lowp vec4 vtx_offs;
@@ -196,6 +201,16 @@ highp vec4 fog_clamp(highp vec4 col)
 #endif
 }
 
+#if pp_Palette == 1
+
+lowp vec4 palettePixel(highp vec2 coords)
+{
+	highp vec4 c = vec4(texture(tex, coords).FOG_CHANNEL * 255.0 / 1023.0 + palette_index, 0.5, 0.0, 0.0);
+	return texture(palette, c.xy);
+}
+
+#endif
+
 void main()
 {
 	// Clip outside the box
@@ -220,7 +235,11 @@ void main()
 	#endif
 	#if pp_Texture==1
 	{
-		lowp vec4 texcol=texture(tex, vtx_uv);
+		#if pp_Palette == 0
+			lowp vec4 texcol = texture(tex, vtx_uv);
+		#else
+			lowp vec4 texcol = palettePixel(vtx_uv);
+		#endif
 		
 		#if pp_BumpMap == 1
 			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
@@ -331,6 +350,7 @@ void main()
 int screen_width  = 640;
 int screen_height = 480;
 GLuint fogTextureId;
+GLuint paletteTextureId;
 
 PipelineShader *GetProgram(
       u32 cp_AlphaTest,
@@ -344,7 +364,8 @@ PipelineShader *GetProgram(
       bool pp_Gouraud,
       bool pp_BumpMap,
       bool fog_clamping,
-      bool trilinear)
+      bool trilinear,
+      bool palette)
 {
 	u32 rv=0;
 
@@ -360,6 +381,7 @@ PipelineShader *GetProgram(
    rv<<=1; rv|=pp_BumpMap;
    rv<<=1; rv|=fog_clamping;
    rv<<=1; rv|=trilinear;
+   rv<<=1; rv|=palette;
 
    PipelineShader *shader = &gl.shaders[rv];
    if (shader->program == 0)
@@ -376,6 +398,7 @@ PipelineShader *GetProgram(
    	shader->pp_BumpMap = pp_BumpMap;
    	shader->fog_clamping = fog_clamping;
    	shader->trilinear = trilinear;
+   	shader->palette = palette;
    	CompilePipelineShader(shader);
    }
 #ifdef RPI4_SET_UNIFORM_ATTRIBUTES_BUG
@@ -426,7 +449,7 @@ void findGLVersion()
          gl.glsl_version_header = "";
          gl.index_type = GL_UNSIGNED_SHORT;
       }
-      gl.fog_image_format = GL_ALPHA;
+      gl.single_channel_format = GL_ALPHA;
 
       GLint stencilBits = 0;
       glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
@@ -440,13 +463,13 @@ void findGLVersion()
       {
          gl.gl_version = "GL3";
          gl.glsl_version_header = "#version 130";
-         gl.fog_image_format = GL_RED;
+         gl.single_channel_format = GL_RED;
       }
       else
       {
          gl.gl_version = "GL2";
          gl.glsl_version_header = "#version 120";
-         gl.fog_image_format = GL_ALPHA;
+         gl.single_channel_format = GL_ALPHA;
       }
    }
 	gl.max_anisotropy = 1.f;
@@ -564,13 +587,14 @@ bool CompilePipelineShader(PipelineShader *s)
 
    sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->trilinear);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
+                s->fog_clamping, s->trilinear, s->palette);
 
 	s->program            = gl_CompileAndLink(vshader, pshader);
 
 
 	//setup texture 0 as the input for the shader
-	GLuint gu=glGetUniformLocation(s->program, "tex");
+	GLint gu = glGetUniformLocation(s->program, "tex");
 	if (s->pp_Texture==1)
 		glUniform1i(gu,0);
 
@@ -603,6 +627,12 @@ bool CompilePipelineShader(PipelineShader *s)
    gu = glGetUniformLocation(s->program, "fog_table");
    if (gu != -1)
       glUniform1i(gu, 1);
+   // And texture 2 as palette
+   gu = glGetUniformLocation(s->program, "palette");
+   if (gu != -1)
+      glUniform1i(gu, 2);
+   s->palette_index = glGetUniformLocation(s->program, "palette_index");
+
    s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
    
    if (s->fog_clamping)
@@ -698,11 +728,11 @@ static bool gl_create_resources(void)
    char fshader[8192];
 	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
 
-   gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
-	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
-	gl.modvol_shader.depth_scale          = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+   gl.modvol_shader.program = gl_CompileAndLink(vshader, fshader);
+   gl.modvol_shader.scale = glGetUniformLocation(gl.modvol_shader.program, "scale");
+   gl.modvol_shader.depth_scale = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
    gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
-	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
+   gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 
 	return true;
 }
@@ -725,8 +755,30 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);
 
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexImage2D(GL_TEXTURE_2D, 0, fog_image_format, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
+
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void UpdatePaletteTexture(GLenum texture_slot)
+{
+	glActiveTexture(texture_slot);
+	if (paletteTextureId == 0)
+	{
+		paletteTextureId = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
+
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
+	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
 }
@@ -892,7 +944,12 @@ static bool RenderFrame(void)
 	if (fog_needs_update)
 	{
 		fog_needs_update=false;
-      UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.fog_image_format);
+      UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.single_channel_format);
+	}
+	if (palette_updated)
+	{
+		UpdatePaletteTexture(GL_TEXTURE2);
+		palette_updated = false;
 	}
 
 	glcache.UseProgram(gl.modvol_shader.program);
@@ -992,13 +1049,6 @@ static bool RenderFrame(void)
 
       //not all scaling affects pixel operations, scale to adjust for that
       scale_x *= scissoring_scale_x;
-
-#if 0
-      //handy to debug really stupid render-not-working issues ...
-      DEBUG_LOG(RENDERER, "SS: %dx%d", screen_width, screen_height);
-      DEBUG_LOG(RENDERER, "SCI: %d, %f", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-      DEBUG_LOG(RENDERER, "SCI: %f, %f, %f, %f", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
-#endif
 
       if (!wide_screen_on)
       {

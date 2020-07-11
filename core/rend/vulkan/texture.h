@@ -19,17 +19,23 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <memory>
-#include <unordered_set>
 #include "vulkan_context.h"
 #include "buffer.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/Renderer_if.h"
 
+#include <algorithm>
+#include <memory>
+#include <map>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
 
-struct Texture : BaseTextureCacheData
+class Texture : public BaseTextureCacheData
 {
+public:
 	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
@@ -47,7 +53,7 @@ private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
 	void SetImage(u32 size, void *data, bool isNew, bool genMipmaps);
 	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
-			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
+			vk::ImageAspectFlags aspectMask);
 	void GenerateMipmaps();
 
 	vk::Format format = vk::Format::eUndefined;
@@ -96,6 +102,10 @@ public:
 							false, vk::CompareOp::eNever,
 							0.0f, 256.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();
 	}
+	void Term()
+	{
+		samplers.clear();
+	}
 	static const u32 TSP_Mask = 0x7ef00;
 
 private:
@@ -106,7 +116,7 @@ class FramebufferAttachment
 {
 public:
 	FramebufferAttachment(vk::PhysicalDevice physicalDevice, vk::Device device)
-		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined)
+		: format(vk::Format::eUndefined), physicalDevice(physicalDevice), device(device)
 		{}
 	void Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags usage);
 	void Reset() { image.reset(); imageView.reset(); }
@@ -134,13 +144,6 @@ private:
 class TextureCache : public BaseTextureCache<Texture>
 {
 public:
-	Texture *getTextureCacheData(TSP tsp, TCW tcw)
-	{
-		Texture *texture = BaseTextureCache<Texture>::getTextureCacheData(tsp, tcw);
-		inFlightTextures[currentIndex].insert(texture);
-		return texture;
-	}
-
 	void SetCurrentIndex(int index) {
 		if (currentIndex < inFlightTextures.size())
 			std::for_each(inFlightTextures[currentIndex].begin(), inFlightTextures[currentIndex].end(),
@@ -155,8 +158,15 @@ public:
 
 	bool IsInFlight(Texture *texture)
 	{
-		return std::any_of(inFlightTextures.begin(), inFlightTextures.end(),
-				[texture](const std::unordered_set<Texture *>& set) { return set.find(texture) != set.end(); });
+		for (u32 i = 0; i < inFlightTextures.size(); i++)
+			if (i != currentIndex && inFlightTextures[i].find(texture) != inFlightTextures[i].end())
+				return true;
+		return false;
+	}
+
+	void SetInFlight(Texture *texture)
+	{
+		inFlightTextures[currentIndex].insert(texture);
 	}
 
 	void DestroyLater(Texture *texture)
@@ -183,5 +193,5 @@ private:
 	std::vector<std::vector<vk::UniqueImage>> trashedImages;
 	std::vector<std::vector<Allocation>> trashedMem;
 	std::vector<std::vector<std::unique_ptr<BufferData>>> trashedBuffers;
-	int currentIndex = 0;
+	u32 currentIndex = 0;
 };

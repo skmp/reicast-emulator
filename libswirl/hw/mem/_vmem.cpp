@@ -435,3 +435,10 @@ void _vmem_release(VLockedMemory* mram, VLockedMemory* vram, VLockedMemory* aica
 	}
 }
 
+void dump_sh4_registers() {
+	for (int i=0; i<15; i++)
+	{
+		printf("r%02d: %08X ", Sh4cntx.r[i]);
+	}
+	printf("\n");
+}

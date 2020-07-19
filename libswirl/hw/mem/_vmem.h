@@ -76,6 +76,8 @@ extern void* _vmem_CTX[HANDLER_COUNT];
 
 extern void* _vmem_MemInfo_ptr[0x100];
 
+void dump_sh4_registers();
+
 template<typename T, typename Trv>
 INLINE Trv DYNACALL _vmem_readt(u32 addr)
 {
@@ -91,6 +93,9 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		addr >>= iirf;
 
 		T data = (*((T*)&(((u8*)ptr)[addr])));
+
+		/* use this as needed */
+		dump_sh4_registers();
 		return data;
 	}
 	else

@@ -36,7 +36,11 @@ button_list[] =
 	{ EMU_BTN_ESCAPE, "emulator", "btn_escape" },
 	{ EMU_BTN_MENU, "emulator", "btn_menu" },
 	{ EMU_BTN_TRIGGER_LEFT, "compat", "btn_trigger_left" },
-	{ EMU_BTN_TRIGGER_RIGHT, "compat", "btn_trigger_right" }
+	{ EMU_BTN_TRIGGER_RIGHT, "compat", "btn_trigger_right" },
+	{ EMU_BTN_STICK_LEFT, "compat", "btn_stick_left" },
+	{ EMU_BTN_STICK_RIGHT, "compat", "btn_stick_right" },
+	{ EMU_BTN_STICK_UP, "compat", "btn_stick_up" },
+	{ EMU_BTN_STICK_DOWN, "compat", "btn_stick_down" }
 };
 
 static struct

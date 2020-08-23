@@ -20,6 +20,8 @@ ifeq (,$(platform))
             platform = rpi2
         else ifneq (,$(findstring BCM2835,$(HARDWARE)))
             platform = rpi4
+        else ifneq (,$(findstring BCM2711,$(HARDWARE)))
+            platform = rpi4
         else ifneq (,$(findstring AM33XX,$(HARDWARE)))
             platform = beagle
         else ifneq (,$(findstring Pandora,$(HARDWARE)))

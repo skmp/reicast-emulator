@@ -285,9 +285,9 @@ void SerializeTAContext(void **data, unsigned int *total_size)
 		return;
 	}
 	LIBRETRO_S(ta_ctx->Address);
-	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
+	const u32 taSize = ta_ctx->tad.thd_data - ta_ctx->tad.thd_root;
 	LIBRETRO_S(taSize);
-	LIBRETRO_SA(ta_tad.thd_root, taSize);
+	LIBRETRO_SA(ta_ctx->tad.thd_root, taSize);
 }
 
 void UnserializeTAContext(void **data, unsigned int *total_size)
@@ -299,6 +299,6 @@ void UnserializeTAContext(void **data, unsigned int *total_size)
 	SetCurrentTARC(address);
 	u32 size;
 	LIBRETRO_US(size);
-	LIBRETRO_USA(ta_tad.thd_root, size);
-	ta_tad.thd_data = ta_tad.thd_root + size;
+	LIBRETRO_USA(ta_ctx->tad.thd_root, size);
+	ta_ctx->tad.thd_data = ta_ctx->tad.thd_root + size;
 }

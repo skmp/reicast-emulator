@@ -5,7 +5,6 @@
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
 #include "hw/arm7/arm7.h"
-#include "hw/holly/sb.h"
 #include "hw/holly/sb_mem.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
@@ -76,6 +75,7 @@ extern s16 cdda_sector[CDDA_SIZE];
 extern u32 cdda_index;
 
 //./core/hw/holly/sb.o
+extern Array<RegisterStruct> sb_regs;
 extern u32 SB_ISTNRM;
 extern u32 SB_FFST_rc;
 extern u32 SB_FFST;
@@ -163,7 +163,17 @@ extern bool pal_needs_update;
 extern VArray2 vram;
 
 //./core/hw/sh4/sh4_mmr.o
-extern std::array<u8, OnChipRAM_SIZE> OnChipRAM;
+extern Array<u8> OnChipRAM;
+extern Array<RegisterStruct> CCN;  //CCN  : 14 registers
+extern Array<RegisterStruct> UBC;   //UBC  : 9 registers
+extern Array<RegisterStruct> BSC;  //BSC  : 18 registers
+extern Array<RegisterStruct> DMAC; //DMAC : 17 registers
+extern Array<RegisterStruct> CPG;   //CPG  : 5 registers
+extern Array<RegisterStruct> RTC;  //RTC  : 16 registers
+extern Array<RegisterStruct> INTC;  //INTC : 4 registers
+extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
+extern Array<RegisterStruct> SCI;   //SCI  : 8 registers
+extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
 //./core/hw/sh4/sh4_mem.o
 extern VArray2 mem_b;
@@ -268,33 +278,33 @@ bool ra_unserialize(void *src, unsigned int src_size, void **dest, unsigned int 
 	return true ;
 }
 
-template<typename T>
-bool register_serialize(const T& regs,void **data, unsigned int *total_size )
-{
-	for (const auto& reg : regs)
-	{
-		LIBRETRO_S(reg.flags);	// TODO unnecessary
-		LIBRETRO_S(reg.data32);
-	}
-
-	return true;
-}
-
-template<typename T>
-bool register_unserialize(T& regs,void **data, unsigned int *total_size, u32 force_size = 0)
+bool register_serialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size )
 {
 	int i = 0 ;
-	u32 dummy = 0;
+
+	for ( i = 0 ; i < regs.Size ; i++ )
+	{
+		LIBRETRO_S(regs.data[i].flags) ;
+		LIBRETRO_S(regs.data[i].data32) ;
+	}
+
+	return true ;
+}
+
+bool register_unserialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size, u32 force_size = 0)
+{
+	int i = 0 ;
+	u32 dummy = 0 ;
 
 	if (force_size == 0)
-	   force_size = regs.size();
-	for (int i = 0; i < force_size; i++)
+	   force_size = regs.Size;
+	for ( i = 0 ; i < force_size ; i++ )
 	{
-		LIBRETRO_US(dummy);	// regs[i].flags TODO unnecessary
-		if (!(regs[i].flags & REG_RF))
-			LIBRETRO_US(regs[i].data32);
+		LIBRETRO_US(regs.data[i].flags) ;
+		if ( ! (regs.data[i].flags & REG_RF) )
+			LIBRETRO_US(regs.data[i].data32) ;
 		else
-			LIBRETRO_US(dummy);
+			LIBRETRO_US(dummy) ;
 	}
 	return true ;
 }
@@ -416,7 +426,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_SA(vram.data, vram.size);
 
-	LIBRETRO_SA(OnChipRAM.data(), OnChipRAM_SIZE);
+	LIBRETRO_SA(OnChipRAM.data,OnChipRAM_SIZE);
 
 	register_serialize(CCN, data, total_size) ;
 	register_serialize(UBC, data, total_size) ;
@@ -804,7 +814,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	LIBRETRO_USA(vram.data, vram.size);
 
-	LIBRETRO_USA(OnChipRAM.data(), OnChipRAM_SIZE);
+	LIBRETRO_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
 	register_unserialize(CCN, data, total_size, version < V4 ? 16 : 0) ;
 	register_unserialize(UBC, data, total_size) ;

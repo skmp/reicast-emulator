@@ -19,14 +19,15 @@ GLuint depth_fbo;
 GLuint depthSaveTexId;
 
 static gl4PipelineShader *gl4GetProgram(
-      u32 cp_AlphaTest,
+      bool cp_AlphaTest,
       s32 pp_ClipTestMode,
-      u32 pp_Texture,
-      u32 pp_UseAlpha,
-      u32 pp_IgnoreTexA,
+      bool pp_Texture,
+      bool pp_UseAlpha,
+      bool pp_IgnoreTexA,
       u32 pp_ShadInstr,
-      u32 pp_Offset,
-      u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, Pass pass)
+      bool pp_Offset,
+      u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping,
+		bool palette, Pass pass)
 {
 	u32 rv=0;
 
@@ -38,10 +39,11 @@ static gl4PipelineShader *gl4GetProgram(
 	rv<<=2; rv|=pp_ShadInstr;
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
-   rv <<= 1; rv |= (int)pp_TwoVolumes;
-   rv <<= 1; rv |= (int)pp_Gouraud;
+	rv <<= 1; rv |= pp_TwoVolumes;
+	rv <<= 1; rv |= pp_Gouraud;
    rv <<= 1; rv |= pp_BumpMap;
    rv <<= 1; rv |= fog_clamping;
+   rv <<= 1; rv |= palette;
    rv <<= 2; rv |= (int)pass;
 
    gl4PipelineShader *shader = &gl4.shaders[rv];
@@ -59,6 +61,7 @@ static gl4PipelineShader *gl4GetProgram(
 		shader->pp_Gouraud = pp_Gouraud;
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
+		shader->palette = palette;
 		shader->pass = pass;
 		gl4CompilePipelineShader(shader);
 	}
@@ -88,6 +91,7 @@ static void SetGPState(const PolyParam* gp)
 	   gl4ShaderUniforms.trilinear_alpha = 1.0;
 
    s32 clipping = SetTileClip(gp->tileclip, -1);
+   bool palette = false;
 
    if (pass == Pass::Depth)
    {
@@ -103,13 +107,15 @@ static void SetGPState(const PolyParam* gp)
 				false,
 				false,
 				false,
+				false,
 				pass);
 	}
 	else
    {
       // Two volumes mode only supported for OP and PT
-		bool two_volumes_mode = (gp->tsp1.full != -1) && Type != ListType_Translucent;
+      bool two_volumes_mode = (gp->tsp1.full != -1) && Type != ListType_Translucent;
       bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+      palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 				clipping,
@@ -123,11 +129,19 @@ static void SetGPState(const PolyParam* gp)
 				gp->pcw.Gouraud,
 				gp->tcw.PixelFmt == PixelBumpMap,
 				color_clamp,
+				palette,
 				pass);
    }
-
    glcache.UseProgram(CurrentShader->program);
   
+	if (palette)
+	{
+		if (gp->tcw.PixelFmt == PixelPal4)
+			gl4ShaderUniforms.palette_index = float(gp->tcw.PalSelect << 4) / 1023.f;
+		else
+			gl4ShaderUniforms.palette_index = float((gp->tcw.PalSelect >> 4) << 8) / 1023.f;
+	}
+
 	gl4ShaderUniforms.tsp0 = gp->tsp;
 	gl4ShaderUniforms.tsp1 = gp->tsp1;
 	gl4ShaderUniforms.tcw0 = gp->tcw;
@@ -156,9 +170,9 @@ static void SetGPState(const PolyParam* gp)
 			glActiveTexture(GL_TEXTURE0 + i);
 			GLuint texid = (GLuint)(i == 0 ? gp->texid : gp->texid1);
 
-			glBindTexture(GL_TEXTURE_2D, texid == -1 ? 0 : texid);
+			glBindTexture(GL_TEXTURE_2D, texid == (GLuint)-1 ? 0 : texid);
 
-			if (texid != -1)
+			if (texid != (GLuint)-1)
 			{
 				TSP tsp = i == 0 ? gp->tsp : gp->tsp1;
 				TCW tcw = i == 0 ? gp->tcw : gp->tcw1;
@@ -294,7 +308,7 @@ void gl4SetupMainVBO()
 	glVertexAttribPointer(VERTEX_UV1_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u1)); glCheck();
 }
 
-void gl4SetupModvolVBO(void)
+void gl4SetupModvolVBO()
 {
 	glBindVertexArray(gl4.vbo.modvol_vao);
 
@@ -334,7 +348,7 @@ static void DrawModVols(int first, int count)
 
       int mod_base = -1;
 
-      for (u32 cmv = 0; cmv < count; cmv++)
+      for (int cmv = 0; cmv < count; cmv++)
       {
          ModifierVolumeParam& param = params[cmv];
 
@@ -450,17 +464,17 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
       // Check if we can skip this pass, in part or completely, in case nothing is drawn (Cosmic Smash)
 		bool skip_op_pt = true;
 		bool skip_tr = true;
-		for (int j = previous_pass.op_count; skip_op_pt && j < current_pass.op_count; j++)
+		for (u32 j = previous_pass.op_count; skip_op_pt && j < current_pass.op_count; j++)
 		{
 			if (pvrrc.global_param_op.head()[j].count > 2)
 				skip_op_pt = false;
 		}
-		for (int j = previous_pass.pt_count; skip_op_pt && j < current_pass.pt_count; j++)
+		for (u32 j = previous_pass.pt_count; skip_op_pt && j < current_pass.pt_count; j++)
 		{
 			if (pvrrc.global_param_pt.head()[j].count > 2)
 				skip_op_pt = false;
 		}
-		for (int j = previous_pass.tr_count; skip_tr && j < current_pass.tr_count; j++)
+		for (u32 j = previous_pass.tr_count; skip_tr && j < current_pass.tr_count; j++)
 		{
 			if (pvrrc.global_param_tr.head()[j].count > 2)
 				skip_tr = false;
@@ -664,14 +678,15 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
 
- 	CurrentShader = gl4GetProgram(0,
+ 	CurrentShader = gl4GetProgram(false,
 				0,
-				1,
+				true,
+				false,
+				true,
 				0,
-				1,
-				0,
-				0,
+				false,
 				2,
+				false,
 				false,
 				false,
 				false,
@@ -760,18 +775,19 @@ void gl4DrawVmuTexture(u8 vmu_screen_number)
    glBindVertexArray(gl4.vbo.main_vao);
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
-	CurrentShader = gl4GetProgram(0,
+	CurrentShader = gl4GetProgram(false,
 				0,
-				1,
-				1,
+				true,
+				true,
+				false,
 				0,
-				0,
-				0,
+				false,
 				2,
 				false,
 				false,
 				false,
-            false,
+				false,
+				false,
 				Pass::Color);
 	glcache.UseProgram(CurrentShader->program);
 	gl4ShaderUniforms.Set(CurrentShader);
@@ -871,18 +887,19 @@ void gl4DrawGunCrosshair(u8 port)
 	glBindVertexArray(gl4.vbo.main_vao);
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
-	CurrentShader = gl4GetProgram(0,
+	CurrentShader = gl4GetProgram(false,
 				0,
-				1,
-				1,
+				true,
+				true,
+				false,
 				0,
-				0,
-				0,
+				false,
 				2,
 				false,
 				false,
 				false,
-            false,
+				false,
+				false,
 				Pass::Color);
 	glcache.UseProgram(CurrentShader->program);
 	gl4ShaderUniforms.Set(CurrentShader);

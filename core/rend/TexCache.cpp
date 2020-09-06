@@ -21,6 +21,7 @@ u32 palette16_ram[1024];
 u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
+bool palette_updated;
 
 // Rough approximation of LoD bias from D adjust param, only used to increase LoD
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
@@ -86,8 +87,9 @@ void palette_update()
 {
    if (!pal_needs_update)
       return;
+	pal_needs_update = false;
+	palette_updated = true;
 
-   pal_needs_update=false;
    switch(PAL_RAM_CTRL&3)
    {
       case 0:
@@ -129,8 +131,7 @@ void palette_update()
 }
 
 static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
-//vram 32-64b
-VArray2 vram;
+VArray2 vram;  // vram 32-64b
 
 //List functions
 //
@@ -251,19 +252,19 @@ bool VramLockedWrite(u8* address)
 
 //unlocks mem
 //also frees the handle
-void libCore_vramlock_Unlock_block(vram_block* block)
-{
-   vramlist_lock.Lock();
-	libCore_vramlock_Unlock_block_wb(block);
-   vramlist_lock.Unlock();
-}
-
-void libCore_vramlock_Unlock_block_wb(vram_block* block)
+static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
 	if (mmu_enabled())
 		vmem32_unprotect_vram(block->start, block->len);
 	vramlock_list_remove(block);
 	free(block);
+}
+
+	void libCore_vramlock_Unlock_block(vram_block* block)
+{
+   vramlist_lock.Lock();
+	libCore_vramlock_Unlock_block_wb(block);
+   vramlist_lock.Unlock();
 }
 
 #ifdef HAVE_TEXUPSCALE
@@ -400,17 +401,19 @@ struct PvrTexInfo
 	TexConvFP32 *PL32;
 	TexConvFP32 *TW32;
 	TexConvFP32 *VQ32;
+	// Conversion to 8 bpp (palette)
+	TexConvFP8 *TW8;
 };
 
 static const PvrTexInfo format[8] =
-{	// name     bpp Final format			   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)
-	{"1555", 	16,	TextureType::_5551,        tex1555_PL,	tex1555_TW,  tex1555_VQ,	tex1555_PL32,  tex1555_TW32,  tex1555_VQ32 },	//1555
-	{"565", 	16, TextureType::_565,         tex565_PL,	tex565_TW,   tex565_VQ, 	tex565_PL32,   tex565_TW32,   tex565_VQ32 },	//565
-	{"4444", 	16, TextureType::_4444,        tex4444_PL,	tex4444_TW,  tex4444_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 },	//4444
-	{"yuv", 	16, TextureType::_8888,        NULL, 		NULL, 		 NULL,			texYUV422_PL,  texYUV422_TW,  texYUV422_VQ },	//yuv
-	{"bumpmap", 16, TextureType::_4444,        texBMP_PL,	texBMP_TW,	 texBMP_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 },   //bump map
-	{"pal4", 	4,	TextureType::_5551,		   0,			texPAL4_TW,  texPAL4_VQ, 	NULL, 		   texPAL4_TW32,  texPAL4_VQ32 },	//pal4
-	{"pal8", 	8,	TextureType::_5551,		   0,			texPAL8_TW,  texPAL8_VQ, 	NULL, 		   texPAL8_TW32,  texPAL8_VQ32 },	//pal8
+{	// name     bpp Final format			   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)      Palette (8b)
+	{"1555", 	16,	TextureType::_5551,        tex1555_PL,  tex1555_TW,  tex1555_VQ,    tex1555_PL32,  tex1555_TW32,  tex1555_VQ32, nullptr },	    //1555
+	{"565", 	16, TextureType::_565,         tex565_PL,   tex565_TW,   tex565_VQ,     tex565_PL32,   tex565_TW32,   tex565_VQ32,  nullptr },	    //565
+	{"4444", 	16, TextureType::_4444,        tex4444_PL,  tex4444_TW,  tex4444_VQ,    tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },	    //4444
+	{"yuv", 	16, TextureType::_8888,        nullptr,     nullptr,     nullptr,       texYUV422_PL,  texYUV422_TW,  texYUV422_VQ, nullptr },	    //yuv
+	{"bumpmap", 16, TextureType::_4444,        texBMP_PL,   texBMP_TW,	 texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },      //bump map
+	{"pal4", 	4,	TextureType::_5551,		   nullptr,     texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, texPAL4PT_TW },	//pal4
+	{"pal8", 	8,	TextureType::_5551,		   nullptr,     texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, texPAL8PT_TW },	//pal8
 	{"ns/1555", 0},																														// Not supported (1555)
 };
 
@@ -454,15 +457,15 @@ void BaseTextureCacheData::PrintTextureName()
 
 	if (tcw.VQ_Comp)
 		strcat(str, " VQ");
-
-	if (tcw.ScanOrder==0)
+	else if (tcw.ScanOrder == 0)
 		strcat(str, " TW");
-
-	if (tcw.MipMapped)
-		strcat(str, " MM");
-
-	if (tcw.StrideSel)
+	else if (tcw.StrideSel)
 		strcat(str, " Stride");
+
+	if (tcw.ScanOrder == 0 && tcw.MipMapped)
+		strcat(str, " MM");
+	if (tsp.FilterMode != 0)
+		strcat(str, " Bilinear");
 
 	sprintf(str + strlen(str), " %dx%d @ 0x%X", 8 << tsp.TexU, 8 << tsp.TexV, tcw.TexAddr << 3);
 	std::string id = GetId();
@@ -472,9 +475,15 @@ void BaseTextureCacheData::PrintTextureName()
 
 //true if : dirty or paletted texture and hashes don't match
 bool BaseTextureCacheData::NeedsUpdate() {
-	bool rc = dirty
-			|| (tcw.PixelFmt == PixelPal4 && palette_hash != pal_hash_16[tcw.PalSelect])
-			|| (tcw.PixelFmt == PixelPal8 && palette_hash != pal_hash_256[tcw.PalSelect >> 4]);
+	bool rc = dirty != 0;
+	if (tex_type != TextureType::_8)
+	{
+		if (tcw.PixelFmt == PixelPal4 && palette_hash != pal_hash_16[tcw.PalSelect])
+			rc = true;
+		else if (tcw.PixelFmt == PixelPal8 && palette_hash != pal_hash_256[tcw.PalSelect >> 4])
+			rc = true;
+	}
+
 	return rc;
 }
 
@@ -500,7 +509,6 @@ bool BaseTextureCacheData::Delete()
 void BaseTextureCacheData::Create()
 {
 	//Reset state info ..
-	Lookups = 0;
 	Updates = 0;
 	dirty = FrameCount;
 	lock_block = nullptr;
@@ -521,19 +529,27 @@ void BaseTextureCacheData::Create()
 	else if (tex->bpp == 8)
 		palette_index = (tcw.PalSelect >> 4) << 8;
 
+	texconv8 = nullptr;
+
 	if (tcw.ScanOrder && (tex->PL || tex->PL32))
 	{
 		//Texture is stored 'planar' in memory, no deswizzle is needed
 		//verify(tcw.VQ_Comp==0);
 		if (tcw.VQ_Comp != 0)
+		{
 			WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
+			tcw.VQ_Comp = 0;
+		}
+		if (tcw.MipMapped != 0)
+		{
+			WARN_LOG(RENDERER, "Warning: planar texture with mipmaps (invalid)");
+			tcw.MipMapped = 0;
+		}
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-		int stride = 0;
+		int stride = w;
 		if (tcw.StrideSel)
 			stride = (TEXT_CONTROL & 31) * 32;
-		if (stride == 0)
-			stride = w;
 
 		//Call the format specific conversion code
 		texconv = tex->PL;
@@ -543,6 +559,8 @@ void BaseTextureCacheData::Create()
 	}
 	else
 	{
+		tcw.ScanOrder = 0;
+		tcw.StrideSel = 0;
 		// Quake 3 Arena uses one
 		if (tcw.MipMapped)
 			// Mipmapped texture must be square and TexV is ignored
@@ -566,6 +584,7 @@ void BaseTextureCacheData::Create()
 			texconv = tex->TW;
 			texconv32 = tex->TW32;
 			size = w * h * tex->bpp / 8;
+			texconv8 = tex->TW8;
 		}
 	}
 }
@@ -590,9 +609,14 @@ void BaseTextureCacheData::Update()
 	bool has_alpha = false;
 	if (IsPaletted())
 	{
-		tex_type = PAL_TYPE[PAL_RAM_CTRL&3];
-		if (tex_type != TextureType::_565)
-			has_alpha = true;
+		if (IsGpuHandledPaletted(tsp, tcw))
+			tex_type = TextureType::_8;
+		else
+		{
+			tex_type = PAL_TYPE[PAL_RAM_CTRL&3];
+			if (tex_type != TextureType::_565)
+				has_alpha = true;
+		}
 
 		// Get the palette hash to check for future updates
 		if (tcw.PixelFmt == PixelPal4)
@@ -613,7 +637,7 @@ void BaseTextureCacheData::Update()
 	u32 original_h = h;
 	if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
 	{
-		if (sa + size > VRAM_SIZE)
+		if (sa < VRAM_SIZE && sa + size > VRAM_SIZE && tcw.ScanOrder && stride > 0)
 		{
 			// Shenmue Space Harrier mini-arcade loads a texture that goes beyond the end of VRAM
 			// but only uses the top portion of it
@@ -635,11 +659,12 @@ void BaseTextureCacheData::Update()
 
 	PixelBuffer<u16> pb16;
 	PixelBuffer<u32> pb32;
+	PixelBuffer<u8> pb8;
 
 	// Figure out if we really need to use a 32-bit pixel buffer
 	bool textureUpscaling = settings.rend.TextureUpscale > 1
 			// Don't process textures that are too big
-			&& w * h <= settings.rend.MaxFilteredTextureSize * settings.rend.MaxFilteredTextureSize
+			&& (int)(w * h) <= settings.rend.MaxFilteredTextureSize * settings.rend.MaxFilteredTextureSize
 			// Don't process YUV textures
 			&& tcw.PixelFmt != PixelYUV;
 	bool need_32bit_buffer = true;
@@ -724,6 +749,26 @@ void BaseTextureCacheData::Update()
 #endif
 		}
 		temp_tex_buffer = pb32.data();
+	}
+	else if (texconv8 != NULL && tex_type == TextureType::_8)
+	{
+		if (mipmapped)
+		{
+			pb8.init(w, h, true);
+			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
+			{
+				pb8.set_mipmap(i);
+				u32 vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
+				texconv8(&pb8, &vram[vram_addr], 1 << i, 1 << i);
+			}
+			pb8.set_mipmap(0);
+		}
+		else
+		{
+			pb8.init(w, h);
+			texconv8(&pb8, &vram[sa], stride, h);
+		}
+		temp_tex_buffer = pb8.data();
 	}
 	else if (texconv != NULL)
 	{

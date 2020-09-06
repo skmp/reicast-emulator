@@ -331,20 +331,24 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, vk::O
 
 void VulkanContext::Term()
 {
-	if (device && pipelineCache)
-   {
-		std::vector<u8> cacheData = device.getPipelineCacheData(*pipelineCache);
-		if (!cacheData.empty())
+	if (device)
+	{
+		device.waitIdle();
+		if (pipelineCache)
 		{
-			std::string cachePath = get_writable_data_path(PipelineCacheFileName);
-			FILE *f = fopen(cachePath.c_str(), "wb");
-			if (f != nullptr)
+			std::vector<u8> cacheData = device.getPipelineCacheData(*pipelineCache);
+			if (!cacheData.empty())
 			{
-				(void)fwrite(&cacheData[0], 1, cacheData.size(), f);
-				fclose(f);
+				std::string cachePath = get_writable_data_path(PipelineCacheFileName);
+				FILE *f = fopen(cachePath.c_str(), "wb");
+				if (f != nullptr)
+				{
+					(void)fwrite(&cacheData[0], 1, cacheData.size(), f);
+					fclose(f);
+				}
 			}
 		}
-   }
+	}
 	ShaderCompiler::Term();
 	descriptorPool.reset();
 	allocator.Term();

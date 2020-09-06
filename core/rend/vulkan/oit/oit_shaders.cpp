@@ -59,8 +59,7 @@ void main()
 	vtx_base1 = vec4(in_base1) / 255.0;								// New for OIT, only for OP/PT with 2-volume
 	vtx_offs1 = vec4(in_offs1) / 255.0;
 	vtx_uv1 = in_uv1;
-	vec4 vpos = in_pos;
-	vpos = uniformBuffer.normal_matrix * vpos;
+	vec4 vpos = uniformBuffer.normal_matrix * in_pos;
 	vpos.w = 1.0 / vpos.z;
 	vpos.z = vpos.w;
 	vpos.xy *= vpos.w; 
@@ -235,6 +234,7 @@ static const char OITFragmentShaderSource[] = R"(
 #define pp_Gouraud %d
 #define pp_BumpMap %d
 #define ColorClamping %d
+#define pp_Palette %d
 #define PASS %d
 #define PI 3.1415926
 
@@ -265,6 +265,7 @@ layout (push_constant) uniform pushBlock
 	ivec4 blend_mode0;
 	float trilinearAlpha;
 	int pp_Number;
+	float palette_index;
 
 	// two volume mode
 	ivec4 blend_mode1;
@@ -283,6 +284,9 @@ layout (set = 1, binding = 0) uniform sampler2D tex0;
 #if pp_TwoVolumes == 1
 layout (set = 1, binding = 1) uniform sampler2D tex1;
 #endif
+#endif
+#if pp_Palette == 1
+layout (set = 0, binding = 6) uniform sampler2D palette;
 #endif
 
 #if PASS == PASS_COLOR
@@ -323,6 +327,16 @@ vec4 colorClamp(vec4 col)
 	return col;
 #endif
 }
+
+#if pp_Palette == 1
+
+vec4 palettePixel(sampler2D tex, vec2 coords)
+{
+	vec4 c = vec4(texture(tex, coords).r * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
+	return texture(palette, c.xy);
+}
+
+#endif
 
 void main()
 {
@@ -382,10 +396,18 @@ void main()
 		highp vec4 texcol;
 		#if pp_TwoVolumes == 1
 			if (area1)
-				texcol = texture(tex1, uv);
+				#if pp_Palette == 0
+					texcol = texture(tex1, uv);
+				#else
+					texcol = palettePixel(tex1, uv);
+				#endif
 			else
 		#endif
-			texcol = texture(tex0, uv);
+		#if pp_Palette == 0
+				texcol = texture(tex0, uv);
+		#else
+				texcol = palettePixel(tex0, uv);
+		#endif
 		#if pp_BumpMap == 1
 			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
 			highp float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
@@ -776,7 +798,8 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 	strcpy(buf, OITShaderHeader);
 	sprintf(buf + strlen(buf), OITFragmentShaderSource, (int)params.alphaTest, (int)params.insideClipTest, (int)params.useAlpha,
 			(int)params.texture, (int)params.ignoreTexAlpha, params.shaderInstr, (int)params.offset, params.fog,
-			(int)params.twoVolume, (int)params.gouraud, (int)params.bumpmap, (int)params.clamping, (int)params.pass);
+			(int)params.twoVolume, (int)params.gouraud, (int)params.bumpmap, (int)params.clamping, (int)params.palette,
+			(int)params.pass);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
 }
 

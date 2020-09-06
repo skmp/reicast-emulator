@@ -37,7 +37,7 @@ public:
 		this->perPolyLayout = perPolyLayout;
 
 	}
-	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView)
+	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView, vk::ImageView paletteImageView)
 	{
 		if (!perFrameDescSet)
 		{
@@ -61,6 +61,17 @@ public:
 			static vk::DescriptorImageInfo imageInfo;
 			imageInfo = { fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
 			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+		}
+		if (paletteImageView)
+		{
+			TSP palTsp = {};
+			palTsp.FilterMode = 0;
+			palTsp.ClampU = 1;
+			palTsp.ClampV = 1;
+			vk::Sampler palSampler = samplerManager->GetSampler(palTsp);
+			static vk::DescriptorImageInfo imageInfo;
+			imageInfo = { palSampler, paletteImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
+			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 3, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
 		}
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
@@ -138,6 +149,7 @@ public:
 					{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// vertex uniforms
 					{ 1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// fragment uniforms
 					{ 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// fog texture
+					{ 3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// palette texture
 			};
 			vk::DescriptorSetLayoutBinding perPolyBindings[] = {
 					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
@@ -147,7 +159,7 @@ public:
 			perPolyLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
 			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout };
-			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 20);
+			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 24);
 			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
 		}
@@ -205,7 +217,7 @@ private:
 			| (pp->tsp.ColorClamp << 11) | (pp->tsp.FogCtrl << 12) | (pp->tsp.SrcInstr << 14)
 			| (pp->tsp.DstInstr << 17);
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
-		hash |= (u32)sortTriangles << 26;
+		hash |= ((u32)sortTriangles << 26) | ((u32)BaseTextureCacheData::IsGpuHandledPaletted(pp->tsp, pp->tcw) << 27);
 
 		return hash;
 	}

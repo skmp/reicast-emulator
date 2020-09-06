@@ -18,9 +18,10 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <math.h>
 #include "oit_drawer.h"
 #include "hw/pvr/pvr_mem.h"
+
+#include <algorithm>
 
 void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 		const PolyParam& poly, u32 first, u32 count)
@@ -41,7 +42,17 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			trilinearAlpha = 1.0 - trilinearAlpha;
 	}
 
-	bool twoVolumes = poly.tsp1.full != -1 || poly.tcw1.full != -1;
+	bool twoVolumes = poly.tsp1.full != (u32)-1 || poly.tcw1.full != (u32)-1;
+
+	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(poly.tsp, poly.tcw);
+	float palette_index = 0.f;
+	if (palette)
+	{
+		if (poly.tcw.PixelFmt == PixelPal4)
+			palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
+		else
+			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
+	}
 
 	OITDescriptorSets::PushConstants pushConstants = {
 			{
@@ -52,9 +63,8 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			},
 			{ poly.tsp.SrcInstr, poly.tsp.DstInstr, 0, 0 },
 			trilinearAlpha,
-			(int)(&poly - (listType == ListType_Opaque ? pvrrc.global_param_op.head()
-					: listType == ListType_Punch_Through ? pvrrc.global_param_pt.head()
-					: pvrrc.global_param_tr.head())),
+			listType == ListType_Translucent ? (int)(&poly - pvrrc.global_param_tr.head()) : 0,
+			palette_index,
 	};
 	if (twoVolumes)
 	{
@@ -85,12 +95,10 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
 		const List<PolyParam>& polys, u32 first, u32 last)
 {
-	for (u32 i = first; i < last; i++)
-	{
-		const PolyParam &pp = polys.head()[i];
-		if (pp.count > 2)
-			DrawPoly(cmdBuffer, listType, sortTriangles, pass, pp, pp.first, pp.count);
-	}
+	const PolyParam *pp_end = polys.head() + last;
+	for (const PolyParam *pp = polys.head() + first; pp != pp_end; pp++)
+		if (pp->count > 2)
+			DrawPoly(cmdBuffer, listType, sortTriangles, pass, *pp, pp->first, pp->count);
 }
 
 template<bool Translucent>
@@ -108,7 +116,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 	int mod_base = -1;
 	vk::Pipeline pipeline;
 
-	for (u32 cmv = 0; cmv < count; cmv++)
+	for (int cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
 
@@ -117,7 +125,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 
 		u32 mv_mode = param.isp.DepthMode;
 
-		verify(param.first >= 0 && param.first + param.count <= pvrrc.modtrig.used());
+		verify(param.first >= 0 && param.first + param.count <= (u32)pvrrc.modtrig.used());
 
 		if (mod_base == -1)
 			mod_base = param.first;
@@ -222,11 +230,12 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 		trPolyParams.push_back(0);	// makes the validation layers happy
 	else
 	{
-		for (int i = 0; i < pvrrc.global_param_tr.used(); i++)
+		const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
+		const PolyParam *pp = pvrrc.global_param_tr.head();
+		for (int i = 0; pp != pp_end; i += 2, pp++)
 		{
-			const PolyParam& pp = pvrrc.global_param_tr.head()[i];
-			trPolyParams[i * 2] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
-			trPolyParams[i * 2 + 1] = pp.tsp1.full;
+			trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
+			trPolyParams[i + 1] = pp->tsp1.full;
 		}
 	}
 	offsets.polyParamsSize = trPolyParams.size() * 4;
@@ -238,7 +247,7 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
 }
 
-bool OITDrawer::Draw(const Texture *fogTexture)
+bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	vk::CommandBuffer cmdBuffer = NewFrame();
 
@@ -271,7 +280,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	GetCurrentDescSet().UpdateUniforms(mainBuffer, offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), offsets.polyParamsOffset,
 			offsets.polyParamsSize, depthAttachment->GetStencilView(),
-			depthAttachment->GetImageView());
+			depthAttachment->GetImageView(), paletteTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	GetCurrentDescSet().UpdateColorInputDescSet(0, colorAttachments[0]->GetImageView());
 	GetCurrentDescSet().UpdateColorInputDescSet(1, colorAttachments[1]->GetImageView());
@@ -466,10 +475,10 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	u32 origHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 	u32 upscaledWidth = origWidth;
 	u32 upscaledHeight = origHeight;
-	int heightPow2 = 8;
+	u32 heightPow2 = 8;
 	while (heightPow2 < upscaledHeight)
 		heightPow2 *= 2;
-	int widthPow2 = 8;
+	u32 widthPow2 = 8;
 	while (widthPow2 < upscaledWidth)
 		widthPow2 *= 2;
 
@@ -510,9 +519,9 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			break;
 		}
 
-		TSP tsp = { 0 };
-		for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < origWidth; tsp.TexU++);
-		for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < origHeight; tsp.TexV++);
+		TSP tsp = {};
+		for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < origWidth; tsp.TexU++);
+		for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < origHeight; tsp.TexV++);
 
 		texture = textureCache->getTextureCacheData(tsp, tcw);
 		if (texture->IsNew())
@@ -526,12 +535,15 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			texture->readOnlyImageView = *texture->imageView;
 			textureCache->DestroyLater(texture);
 		}
+		textureCache->SetInFlight(texture);
+
 		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
+			texture->needsStaging = true;
 			texture->CreateImage(vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
-					vk::ImageLayout::eUndefined, vk::MemoryPropertyFlags(), vk::ImageAspectFlagBits::eColor);
+					vk::ImageLayout::eUndefined, vk::ImageAspectFlagBits::eColor);
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
 		else

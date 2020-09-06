@@ -52,8 +52,9 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 	{
 		//upload to OpenGL !
 		glcache.BindTexture(GL_TEXTURE_2D, texID);
-		GLuint comps = GL_RGBA;
+		GLuint comps = tex_type == TextureType::_8 ? gl.single_channel_format : GL_RGBA;
 		GLuint gltype;
+		u32 bytes_per_pixel = 2;
 		switch (tex_type)
 		{
 		case TextureType::_5551:
@@ -67,10 +68,16 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 			gltype = GL_UNSIGNED_SHORT_4_4_4_4;
 			break;
 		case TextureType::_8888:
+			bytes_per_pixel = 4;
+			gltype = GL_UNSIGNED_BYTE;
+			break;
+		case TextureType::_8:
+			bytes_per_pixel = 1;
 			gltype = GL_UNSIGNED_BYTE;
 			break;
 		default:
 			die("Unsupported texture type");
+			gltype = 0;
 			break;
 		}
 		if (mipmapsIncluded)
@@ -102,6 +109,13 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 				case TextureType::_8888:
 					internalFormat = GL_RGBA8;
 					break;
+				case TextureType::_8:
+					internalFormat = comps;
+					break;
+				default:
+					die("Unsupported texture format");
+					internalFormat = 0;
+					break;
 				}
 				if (Updates == 1)
 				{
@@ -111,7 +125,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 				for (int i = 0; i < mipmapLevels; i++)
 				{
 					glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
-					temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+					temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
 				}
 			}
 			else
@@ -122,7 +136,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 				for (int i = 0; i < mipmapLevels; i++)
 				{
 					glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
-					temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+					temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
 				}
 			}
 		}
@@ -199,10 +213,10 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	gl.rtt.TexAddr=addy>>3;
 
 	// Find the smallest power of two texture that fits the viewport
-   int fbh2 = 2;
+   u32 fbh2 = 2;
    while (fbh2 < fbh)
       fbh2 *= 2;
-   int fbw2 = 2;
+   u32 fbw2 = 2;
    while (fbw2 < fbw)
       fbw2 *= 2;
 
@@ -304,9 +318,6 @@ void ReadRTTBuffer() {
 			PixelBuffer<u32> tmp_buf;
 			tmp_buf.init(w, h);
 
-			const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
-			const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
-
 			u8 *p = (u8 *)tmp_buf.data();
 			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
@@ -340,8 +351,8 @@ void ReadRTTBuffer() {
     		break;
     	}
     	TSP tsp = { 0 };
-    	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
-    	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
+    	for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < w; tsp.TexU++);
+    	for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < h; tsp.TexV++);
 
     	TextureCacheData *texture_data = TexCache.getTextureCacheData(tsp, tcw);
     	if (texture_data->texID != 0)
@@ -370,7 +381,7 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 {
    TexCacheLookups++;
 
-	/* Lookup texture */
+	//lookup texture
    TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
 
    if (tf->texID == 0)
@@ -379,7 +390,7 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 		tf->texID = glcache.GenTexture();
 	}
 
-	/* Update if needed */
+	//update if needed
 	if (tf->NeedsUpdate())
 		tf->Update();
    else
@@ -393,10 +404,7 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
       TexCacheHits++;
    }
 
-	/* Update state for opts/stuff */
-	tf->Lookups++;
-
-	/* Return gl texture */
+	// Return gl texture
 	return tf->texID;
 }
 
@@ -413,9 +421,6 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	//update if needed
 	if (tf->NeedsUpdate())
 		tf->Update();
-
-	//update state for opts/stuff
-	tf->Lookups++;
 
 	//return gl texture
 	rv.height = tf->h;

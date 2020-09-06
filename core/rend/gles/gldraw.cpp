@@ -32,8 +32,8 @@ const u32 Zfunction[] =
 /*
 0   Zero                  (0, 0, 0, 0)
 1   One                   (1, 1, 1, 1)
-2   Dither Color          (OR, OG, OB, OA) 
-3   Inverse Dither Color  (1-OR, 1-OG, 1-OB, 1-OA)
+2   Other Color           (OR, OG, OB, OA)
+3   Inverse Other Color   (1-OR, 1-OG, 1-OB, 1-OA)
 4   SRC Alpha             (SA, SA, SA, SA)
 5   Inverse SRC Alpha     (1-SA, 1-SA, 1-SA, 1-SA)
 6   DST Alpha             (DA, DA, DA, DA)
@@ -159,6 +159,7 @@ __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
 		ShaderUniforms.trilinear_alpha = 1.f;
 
    bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 								  SetTileClip(gp->tileclip, -1) + 1,
@@ -171,11 +172,20 @@ __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
 								  gp->pcw.Gouraud,
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,
-								  ShaderUniforms.trilinear_alpha != 1.f);
+								  ShaderUniforms.trilinear_alpha != 1.f,
+								  palette);
 
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
+	if (palette)
+	{
+		if (gp->tcw.PixelFmt == PixelPal4)
+			ShaderUniforms.palette_index = float(gp->tcw.PalSelect << 4) / 1023.f;
+		else
+			ShaderUniforms.palette_index = float((gp->tcw.PalSelect >> 4) << 8) / 1023.f;
+		glUniform1f(CurrentShader->palette_index, ShaderUniforms.palette_index);
+	}
    SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
    // This bit controls which pixels are affected
@@ -183,12 +193,12 @@ __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
    const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
    glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
-   glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : (GLuint)gp->texid);
+   glcache.BindTexture(GL_TEXTURE_2D, gp->texid == (u64)-1 ? 0 : (GLuint)gp->texid);
    SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
    SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
    //set texture filter mode
-	if (gp->tsp.FilterMode == 0)
+	if (gp->tsp.FilterMode == 0 || palette)
 	{
 		//disable filtering, mipmaps
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -234,7 +244,7 @@ __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
    //gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
    SetCull(gp->isp.CullMode ^ cflip ^ gcflip);
 
-   /* Set Z mode, only if required */
+   //set Z mode, only if required
    if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
    {
       glcache.DepthFunc(GL_GEQUAL);
@@ -284,11 +294,11 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
    }
 }
 
-static vector<SortTrigDrawParam>	pidx_sort;
+static std::vector<SortTrigDrawParam> pidx_sort;
 
 static void SortTriangles(int first, int count)
 {
-	vector<u32> vidx_sort;
+	std::vector<u32> vidx_sort;
 	GenSorted(first, count, pidx_sort, vidx_sort);
 
 	//Upload to GPU if needed
@@ -303,7 +313,7 @@ static void SortTriangles(int first, int count)
     	 if (short_vidx.daty != NULL)
     		short_vidx.Free();
     	 short_vidx.Init(vidx_sort.size(), &overrun, NULL);
-    	 for (int i = 0; i < vidx_sort.size(); i++)
+    	 for (u32 i = 0; i < vidx_sort.size(); i++)
     		*(short_vidx.Append()) = vidx_sort[i];
     	 glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.bytes(), short_vidx.head(), GL_STREAM_DRAW);
       }
@@ -532,7 +542,7 @@ static void DrawModVols(int first, int count)
 
 	int mod_base = -1;
 
-	for (u32 cmv = 0; cmv < count; cmv++)
+	for (int cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
 
@@ -571,7 +581,7 @@ static void DrawModVols(int first, int count)
 	glcache.StencilFunc(GL_EQUAL, 0x81, 0x81); //only pixels that are Modvol enabled, and in area 1
 
 	//clear the stencil result bit
-	glcache.StencilMask(0x3); /* write to LSB */
+	glcache.StencilMask(0x3);    //write to lsb
 	glcache.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
 
 	//don't do depth testing
@@ -584,7 +594,7 @@ static void DrawModVols(int first, int count)
    glcache.Enable(GL_DEPTH_TEST);
 }
 
-void DrawStrips(void)
+void DrawStrips()
 {
    SetupMainVBO();
    //Draw the strips !
@@ -661,7 +671,7 @@ void DrawFramebuffer(float w, float h)
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
- 	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false);
+	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
  	glActiveTexture(GL_TEXTURE0);
@@ -787,7 +797,7 @@ void DrawVmuTexture(u8 vmu_screen_number)
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	SetupMainVBO();
-	PipelineShader *shader = GetProgram(0, 1, 1, 1, 0, 0, 0, 2, false, false, false, false);
+	PipelineShader *shader = GetProgram(0, 1, 1, 1, 0, 0, 0, 2, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
 	{
@@ -881,7 +891,7 @@ void DrawGunCrosshair(u8 port)
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	SetupMainVBO();
-	PipelineShader *shader = GetProgram(0, 1, 1, 1, 0, 0, 0, 2, false, false, false, false);
+	PipelineShader *shader = GetProgram(0, 1, 1, 1, 0, 0, 0, 2, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
 	{

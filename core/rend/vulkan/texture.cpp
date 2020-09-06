@@ -18,9 +18,11 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <math.h>
 #include "texture.h"
 #include "utils.h"
+
+#include <algorithm>
+#include <memory>
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
 {
@@ -145,7 +147,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 
 void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded)
 {
-	vk::Format format;
+	vk::Format format = vk::Format::eUndefined;
 	u32 dataSize = width * height * 2;
 	switch (tex_type)
 	{
@@ -173,13 +175,13 @@ void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool 
 		u32 size = dataSize / 4;
 		while (w)
 		{
-			dataSize += size;
+			dataSize += ((size + 3) >> 2) << 2;		// offset must be a multiple of 4
 			size /= 4;
 			w /= 2;
 		}
 	}
 	bool isNew = true;
-	if (width != extent.width || height != extent.height || format != this->format)
+	if (width != (int)extent.width || height != (int)extent.height || format != this->format)
 		Init(width, height, format, dataSize, mipmapped, mipmapsIncluded);
 	else
 		isNew = false;
@@ -200,37 +202,39 @@ void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool 
 			== vk::FormatFeatureFlagBits::eSampledImage
 			? vk::ImageTiling::eOptimal
 			: vk::ImageTiling::eLinear;
+	if (height <= 32
+			&& dataSize / height <= 64
+			&& !mipmapped
+			&& (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage) == vk::FormatFeatureFlagBits::eSampledImage)
+		imageTiling = vk::ImageTiling::eLinear;
 	needsStaging = imageTiling != vk::ImageTiling::eLinear;
 	vk::ImageLayout initialLayout;
-	vk::MemoryPropertyFlags requirements;
 	vk::ImageUsageFlags usageFlags = vk::ImageUsageFlagBits::eSampled;
 	if (needsStaging)
 	{
 		stagingBufferData = std::unique_ptr<BufferData>(new BufferData(dataSize, vk::BufferUsageFlagBits::eTransferSrc));
 		usageFlags |= vk::ImageUsageFlagBits::eTransferDst;
 		initialLayout = vk::ImageLayout::eUndefined;
-		requirements = vk::MemoryPropertyFlagBits::eDeviceLocal;
 	}
 	else
 	{
 		verify((formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage) == vk::FormatFeatureFlagBits::eSampledImage);
 		initialLayout = vk::ImageLayout::ePreinitialized;
-		requirements = vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible;
 	}
 	if (mipmapped && !mipmapsIncluded)
 		usageFlags |= vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst;
-	CreateImage(imageTiling, usageFlags, initialLayout, requirements, vk::ImageAspectFlagBits::eColor);
+	CreateImage(imageTiling, usageFlags, initialLayout, vk::ImageAspectFlagBits::eColor);
 }
 
 void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
-		vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask)
+		vk::ImageAspectFlags aspectMask)
 {
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), mipmapLevels, 1,
 										vk::SampleCountFlagBits::e1, tiling, usage,
 										vk::SharingMode::eExclusive, 0, nullptr, initialLayout);
 	image = device.createImageUnique(imageCreateInfo);
 
-	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY };
+	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), needsStaging ? VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY : VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU };
 	if (!needsStaging)
 		allocCreateInfo.flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_MAPPED_BIT;
 	allocation = VulkanContext::Instance()->GetAllocator().AllocateForImage(*image, allocCreateInfo);
@@ -245,8 +249,8 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 	verify((bool)commandBuffer);
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-//	if (!isNew && !needsStaging)
-//		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eUndefined);
+	if (!isNew && !needsStaging)
+		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
 
 	void* data;
 	if (needsStaging)
@@ -255,6 +259,39 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 		data = allocation.MapMemory();
 	verify(data != nullptr);
 
+	if (mipmapLevels > 1 && !genMipmaps && tex_type != TextureType::_8888)
+	{
+		// Each mipmap level must start at a 4-byte boundary
+		u8 *src = (u8 *)srcData;
+		u8 *dst = (u8 *)data;
+		for (u32 i = 0; i < mipmapLevels; i++)
+		{
+			const u32 size = (1 << (2 * i)) * 2;
+			memcpy(dst, src, size);
+			dst += ((size + 3) >> 2) << 2;
+			src += size;
+		}
+	}
+	else if (!needsStaging)
+	{
+		vk::SubresourceLayout layout = device.getImageSubresourceLayout(*image, vk::ImageSubresource(vk::ImageAspectFlagBits::eColor, 0, 0));
+		if (layout.size != srcSize)
+		{
+			u8 *src = (u8 *)srcData;
+			u8 *dst = (u8 *)data;
+			u32 srcSz = extent.width * 2;
+			if (tex_type == TextureType::_8888)
+				srcSz *= 2;
+			else if (tex_type == TextureType::_8)
+				srcSz /= 2;
+			u8 * const srcEnd = src + srcSz * extent.height;
+			for (; src < srcEnd; src += srcSz, dst += layout.rowPitch)
+				memcpy(dst, src, srcSz);
+		}
+		else
+			memcpy(data, srcData, srcSize);
+	}
+	else
 	memcpy(data, srcData, srcSize);
 
 	if (needsStaging)
@@ -267,12 +304,13 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 		if (mipmapLevels > 1 && !genMipmaps)
 		{
 			vk::DeviceSize bufferOffset = 0;
-			for (int i = 0; i < mipmapLevels; i++)
+			for (u32 i = 0; i < mipmapLevels; i++)
 			{
 				vk::BufferImageCopy copyRegion(bufferOffset, 1 << i, 1 << i, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, mipmapLevels - i - 1, 0, 1),
 						vk::Offset3D(0, 0, 0), vk::Extent3D(1 << i, 1 << i, 1));
 				commandBuffer.copyBufferToImage(stagingBufferData->buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, copyRegion);
-				bufferOffset += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+				const u32 size = (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+				bufferOffset += ((size + 3) >> 2) << 2;
 			}
 		}
 		else
@@ -292,7 +330,8 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 			GenerateMipmaps();
 		else
 			// If we can use the linear tiled image as a texture, just do it
-			setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
+			setImageLayout(commandBuffer, image.get(), format, mipmapLevels, isNew ? vk::ImageLayout::ePreinitialized : vk::ImageLayout::eGeneral,
+					vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 	commandBuffer.end();
 }
@@ -305,7 +344,7 @@ void Texture::GenerateMipmaps()
 			vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
 			*image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
-	for (int i = 1; i < mipmapLevels; i++)
+	for (u32 i = 1; i < mipmapLevels; i++)
 	{
 		// Transition previous mipmap level from dst optimal/preinit to src optimal
 		barrier.subresourceRange.baseMipLevel = i - 1;

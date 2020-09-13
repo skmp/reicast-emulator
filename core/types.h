@@ -229,7 +229,6 @@ extern unsigned ARAM_MASK;
 //******************************************************
  
 void libCore_vramlock_Unlock_block  (vram_block* block);
-void libCore_vramlock_Unlock_block_wb  (vram_block* block);
 vram_block* libCore_vramlock_Lock(u32 start_offset,u32 end_offset,void* userdata);
 
 

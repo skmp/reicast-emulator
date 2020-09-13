@@ -43,6 +43,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __APPLE__
+#include <unistd.h>
+#endif
+
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif

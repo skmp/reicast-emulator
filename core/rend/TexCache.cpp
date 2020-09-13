@@ -252,7 +252,7 @@ bool VramLockedWrite(u8* address)
 
 //unlocks mem
 //also frees the handle
-static void libCore_vramlock_Unlock_block_wb(vram_block* block)
+void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
 	if (mmu_enabled())
 		vmem32_unprotect_vram(block->start, block->len);
@@ -260,7 +260,7 @@ static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 	free(block);
 }
 
-	void libCore_vramlock_Unlock_block(vram_block* block)
+void libCore_vramlock_Unlock_block(vram_block* block)
 {
    vramlist_lock.Lock();
 	libCore_vramlock_Unlock_block_wb(block);

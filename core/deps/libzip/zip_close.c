@@ -42,6 +42,10 @@
 
 #include "zipint.h"
 
+#ifdef __APPLE__
+#include <unistd.h>
+#endif
+
 static int add_data(struct zip *, struct zip_source *, struct zip_dirent *,
 		    FILE *);
 static int add_data_comp(zip_source_callback, void *, struct zip_stat *,

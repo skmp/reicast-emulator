@@ -891,7 +891,9 @@ ifeq ($(DEBUG),1)
 else
 	ifneq (,$(findstring msvc,$(platform)))
 		OPTFLAGS       := -O2
-	else ifneq ($(platform), classic_armv7_a7)
+	else ifneq (,$(findstring classic_arm,$(platform)))
+		OPTFLAGS       := -O2
+	else ifeq (,$(findstring classic_arm,$(platform)))
 		OPTFLAGS       := -O3
 	endif
 

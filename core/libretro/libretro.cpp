@@ -697,7 +697,7 @@ static void update_variables(bool first_startup)
          else if (!strcmp(var.value, "1GB"))
             pixel_buffer_size = 0x40000000u;
          else if (!strcmp(var.value, "2GB"))
-            pixel_buffer_size = 0x80000000u;
+            pixel_buffer_size = 0x7ff00000u;
          else if (!strcmp(var.value, "4GB"))
             pixel_buffer_size = 0xFFFFFFFFu;
          else

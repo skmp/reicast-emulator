@@ -2641,9 +2641,15 @@ static void UpdateInputStateNaomi(u32 port)
 
 		 if (force_offscreen || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
 		 {
-			mo_x_abs[port] = -1;
-			mo_y_abs[port] = -1;
+			mo_x_abs[port] = 0;
+			mo_y_abs[port] = 0;
 			lightgun_params[port].offscreen = true;
+
+			if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER) || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
+			{
+			 if (settings.System == DC_PLATFORM_NAOMI)
+			   kcode[port] &= ~NAOMI_BTN1_KEY;
+			}
 		 }
 		 else
 		 {
@@ -3080,9 +3086,12 @@ void UpdateInputState(u32 port)
 
 		 if (force_offscreen || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
 		 {
-			mo_x_abs[port] = -1;
-			mo_y_abs[port] = -1;
+			mo_x_abs[port] = -1000;
+			mo_y_abs[port] = -1000;
 			lightgun_params[port].offscreen = true;
+			  
+			lightgun_params[port].x = mo_x_abs[port];
+			lightgun_params[port].y = mo_y_abs[port];
 		 }
 		 else
 		 {

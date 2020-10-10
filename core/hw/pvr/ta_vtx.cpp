@@ -455,7 +455,6 @@ public:
 						ta_list_start(data->pcw.ListType);	//start a list ;)
 
 					VertexDataFP=ta_sprite_data;
-					//printf("Sprite \n");
 					AppendSpriteParam((TA_SpriteParam*)data);
 					data+=SZ32;
 				}
@@ -1206,6 +1205,8 @@ public:
 		PolyParam* d_pp=CurrentPP;
 		if (CurrentPP == NULL || CurrentPP->count != 0)
 		{
+         if (CurrentPPlist == nullptr)	// wldkickspw
+				return;
 			d_pp=CurrentPPlist->Append(); 
 			CurrentPP=d_pp;
 		}

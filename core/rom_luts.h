@@ -137,6 +137,7 @@ static struct game_type_naomi lut_games_naomi[] =
    { "WORLD KICKS PCB"                   , -1, -1, -1, -1,  -1, JVS::WorldKicksPCB, 1 },          /* World Kicks 2 kit a.k.a. World Kicks PCB */
    { "THE MAZE OF THE KINGS"             , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },
    { " CONFIDENTIAL MISSION ---------"   , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },
+   { "LUPIN THE THIRD  -THE SHOOTING-"   , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },
    { "hotd2"                             , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },		  /* The House of The Dead 2 */
    { "hotd2o"                            , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },		  /* The House of The Dead 2 */
    { "hotd2e"                            , -1, -1, -1, -1,  -1, JVS::LightGunAsAnalog, 1 },		  /* The House of The Dead 2 (export) */

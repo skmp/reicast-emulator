@@ -1074,9 +1074,9 @@ bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging
 	if (!op->rs1.is_imm())
 		return false;
 
-	mem_op_type optp=memop_type(op);
-	bool isram=false;
-	void* ptr = _vmem_read_const(op->rs1._imm, isram, max(4u, memop_bytes(optp)));
+	mem_op_type optp = memop_type(op);
+	bool isram = false;
+	void* ptr = _vmem_read_const(op->rs1._imm, isram, std::min(4u, memop_bytes(optp)));
 	eReg rd = (optp != SZ_32F && optp != SZ_64F) ? reg.mapg(op->rd) : r0;
 				
 	if (isram)
@@ -1108,34 +1108,57 @@ bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging
 	}
 	else
 	{
+<<<<<<< HEAD
 		MOV32(r0,op->rs1._imm);
 		CALL((u32)ptr);
 
 		switch(optp)
+=======
+		// Not RAM
+		if (optp == SZ_64F)
+>>>>>>> 063c7f7d... arm32: support for 64b immediate memory reads
 		{
-		case SZ_8:
-			SXTB(r0, r0);
-			break;
+			verify(!reg.IsAllocAny(op->rd));
+			// Need to call the handler twice
+			MOV32(r0, op->rs1._imm);
+			CALL((u32)ptr);
+			STR(r0, r8, op->rd.reg_nofs());
 
-		case SZ_16:
-			SXTH(r0, r0);
-			break;
-
-		case SZ_32I:
-		case SZ_32F:
-			break;
-
-		case SZ_64F:
-			die("SZ_64F not supported");
-			break;
+			MOV32(r0, op->rs1._imm + 4);
+			CALL((u32)ptr);
+			STR(r0, r8, op->rd.reg_nofs() + 4);
 		}
-
-		if (reg.IsAllocg(op->rd))
-			MOV(rd, r0);
-		else if (reg.IsAllocf(op->rd))
-			VMOV(reg.mapfs(op->rd), r0);
 		else
-			die("Unsupported");
+		{
+			MOV32(r0, op->rs1._imm);
+			CALL((u32)ptr);
+
+			switch(optp)
+			{
+			case SZ_8:
+				SXTB(r0, r0);
+				break;
+
+			case SZ_16:
+				SXTH(r0, r0);
+				break;
+
+			case SZ_32I:
+			case SZ_32F:
+				break;
+
+			default:
+				die("Invalid size");
+				break;
+			}
+
+			if (reg.IsAllocg(op->rd))
+				MOV(rd, r0);
+			else if (reg.IsAllocf(op->rd))
+				VMOV(reg.mapfs(op->rd), r0);
+			else
+				die("Unsupported");
+		}
 	}
 
 	return true;

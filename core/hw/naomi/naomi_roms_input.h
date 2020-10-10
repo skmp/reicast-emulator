@@ -181,9 +181,9 @@ InputDescriptors gunsur2_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "ROLL", Full, 0 },
 			{ "PITCH", Full, 1 },
-			{ "YAW", Full, 2 },
+			{ "ROLL", Full, 2, true },
+			{ "YAW", Full, 0 },
 			{ NULL },
 	  },
 };
@@ -249,9 +249,9 @@ InputDescriptors sfz3ugd_inputs = {
 InputDescriptors ninjaslt_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "ENTER" },
-			{ NAOMI_BTN1_KEY, "TRIGGER 1P" },	// swapped with btn4
 			{ NAOMI_BTN2_KEY, "START 1P" },
 			{ NAOMI_BTN3_KEY, "START 2P" },
+			{ NAOMI_BTN4_KEY, "TRIGGER 1P" },
 			{ NAOMI_BTN5_KEY, "TRIGGER 2P" },
 			{ NAOMI_UP_KEY, "SELECT UP" },
 			{ NAOMI_DOWN_KEY, "SELECT DOWN" },
@@ -357,13 +357,13 @@ InputDescriptors tokyobus_inputs = {
 	  },
 	  {
 			{ "HANDLE", Full, 0 },
-			{ "ACCEL", Half, 4 },
-			{ "BRAKE", Half, 5 },
+			{ "ACCEL", Half, 1 },
+			{ "BRAKE", Half, 2 },
 			{ NULL },
 	  },
 };
 
-static InputDescriptors wrungp_inputs = {
+InputDescriptors wrungp_inputs = {
 	  {
 			{ NAOMI_UP_KEY, "VIEW" },
 			NAO_START_DESC
@@ -372,14 +372,14 @@ static InputDescriptors wrungp_inputs = {
 	  },
 	  {
 			{ "HANDLE BAR", Full, 0 },
-			{ "THROTTLE LEVER", Half, 4, true },
+			{ "THROTTLE LEVER", Half, 1, true },
 			{ "ROLL", Full, 2 },
 			{ "PITCH", Full, 3 },
 			{ NULL },
 	  },
 };
 
-static InputDescriptors marine_fishing_std_inputs = {
+InputDescriptors marine_fishing_inputs = {
 	  {
 			{ NAOMI_START_KEY, "CAST" },
 			{ NAOMI_UP_KEY, "LURE" },
@@ -391,30 +391,56 @@ static InputDescriptors marine_fishing_std_inputs = {
 			{ "ROD X", Full, 0 },
 			{ "STICK X", Full, 2 },
 			{ "STICK Y", Full, 3 },
-			{ "REEL SPEED", Half, 4 },
-			{ "TENSION", Half, 5 },
+			{ "REEL SPEED", Half, 0 },
 			{ NULL },
 	  },
 };
 
-static InputDescriptors marine_fishing_dlx_inputs = {
+InputDescriptors f355_inputs = {
 	  {
-			{ NAOMI_RIGHT_KEY, "ROD LEFT" },
-			{ NAOMI_LEFT_KEY, "ROD RIGHT" },
-			{ NAOMI_BTN0_KEY, "ROD UP" },
-			{ NAOMI_BTN1_KEY, "ROD DOWN" },
-			{ NAOMI_BTN4_KEY, "LURE" },
-			{ NAOMI_BTN5_KEY, "CAST" },
+			{ NAOMI_BTN0_KEY, "ASSIST SC" },
+			{ NAOMI_BTN1_KEY, "ASSIST TC" },
+			{ NAOMI_BTN2_KEY, "ASSIST ABS" },
+			{ NAOMI_BTN3_KEY, "ASSIST IBS", NAOMI_BTN1_KEY },
+			{ NAOMI_BTN4_KEY, "WING SHIFT L", NAOMI_DOWN_KEY },
+			{ NAOMI_BTN5_KEY, "WING SHIFT R", NAOMI_UP_KEY },
+
+			// Manual gearshift (Deluxe only)
+			//    L   R
+			//  U 1 3 5
+			//
+			//  D 2 4 6
+			{ NAOMI_UP_KEY, "SPEED SHIFT UP" },
+			{ NAOMI_DOWN_KEY, "SPEED SHIFT DOWN" },
+			{ NAOMI_LEFT_KEY, "SPEED SHIFT LEFT" },
+			{ NAOMI_RIGHT_KEY, "SPEED SHIFT RIGHT" },
+
+			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 			{ 0 },
 	  },
 	  {
-			{ "PULL POSITION", Full, 1 },
-			{ "SWING POSITION", Full, 0 },
-			{ "STICK X", Full, 2 },
-			{ "STICK Y", Full, 3 },
-			{ "REEL SPEED", Half, 4 },
-			{ "TENSION", Half, 5 },
+			{ "ACCEL", Half, 0 },
+			{ "BRAKE", Half, 1 },
+			{ "CLUTCH", Full, 2 },	// Deluxe only
+			{ "unused", Full, 4 },
+			{ "HANDLE", Full, 0 },
+			{ NULL },
+	  },
+};
+
+InputDescriptors zombie_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "BTN0" },
+			{ NAOMI_BTN1_KEY, "BTN1" },
+			{ NAOMI_BTN2_KEY, "BTN2" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "UP - DOWN", Full, 1, true },
+			{ "LEFT - RIGHT", Full, 0, true },
 			{ NULL },
 	  },
 };
@@ -439,8 +465,8 @@ InputDescriptors ftspeed_inputs = {
 	  },
 	  {
 			{ "STEERING WHEEL", Full, 0 },
-			{ "GAS PEDAL", Half, 4 },
-			{ "BRAKE PEDAL", Half, 5 },
+			{ "GAS PEDAL", Half, 1 },
+			{ "BRAKE PEDAL", Half, 2 },
 			{ NULL },
 	  },
 };
@@ -489,8 +515,8 @@ InputDescriptors maxspeed_inputs = {
 	  },
 	  {
 			{ "STEERING", Full, 0 },
-			{ "ACCELERATOR", Half, 4 },
-			{ "BRAKE", Half, 5 },
+			{ "ACCELERATOR", Half, 1 },
+			{ "BRAKE", Half, 2 },
 			{ NULL },
 	  },
 };
@@ -531,20 +557,13 @@ InputDescriptors samsptk_inputs = {
 
 InputDescriptors blockpong_inputs = {
 	  {
-			{ AWAVE_BTN0_KEY, "SHOT1" },
-			{ AWAVE_BTN1_KEY, "SHOT2" },
-			{ AWAVE_BTN2_KEY, "SHOT3" },
-			{ AWAVE_BTN3_KEY, "SHOT4" },
-			{ AWAVE_BTN4_KEY, "SHOT5" },
 			AW_START_DESC
 			AW_BASE_BTN_DESC
 			{ 0 },
 	  },
 	  {
 			{ "ANALOG X", Full, 0, true },
-			{ "ANALOG Y", Full, 1, false },	// not used?
 			{ NULL },
 	  },
 };
-
 #endif /* CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_ */

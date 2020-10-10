@@ -41,12 +41,13 @@ static void maple_handle_reconnect();
 //misses delay , and stop/start implementation
 //ddt/etc are just hacked for wince to work
 //now with proper maple delayed DMA maybe its time to look into it ?
-bool maple_ddt_pending_reset=false;
+bool maple_ddt_pending_reset;
+
 void maple_vblank()
 {
-	if (SB_MDEN &1)
+	if (SB_MDEN & 1)
 	{
-		if (SB_MDTSEL&1)
+		if (SB_MDTSEL & 1)
 		{
 			if (maple_ddt_pending_reset)
 			{
@@ -57,16 +58,14 @@ void maple_vblank()
 				DEBUG_LOG(MAPLE, "DDT vblank");
 				SB_MDST = 1;
 				maple_DoDma();
-				SB_MDST = 0;
-				if ((SB_MSYS>>12)&1)
-				{
-					maple_ddt_pending_reset=true;
-				}
+            // if trigger reset is manual, mark it as pending
+            if ((SB_MSYS >> 12) & 1) 
+               maple_ddt_pending_reset = true;
 			}
 		}
 		else
 		{
-			maple_ddt_pending_reset=false;
+			maple_ddt_pending_reset = false;
 		}
 	}
 	maple_handle_reconnect();
@@ -210,7 +209,7 @@ static void maple_DoDma(void)
 	sh4_sched_request(maple_sched, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (2 * 1024 * 1024 / 8)), (u64)SH4_MAIN_CLOCK));
 }
 
-int maple_schd(int tag, int c, int j)
+static int maple_schd(int tag, int c, int j)
 {
 	if (SB_MDEN&1)
 	{

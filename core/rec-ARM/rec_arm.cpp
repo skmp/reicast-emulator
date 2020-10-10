@@ -1108,15 +1108,8 @@ bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging
 	}
 	else
 	{
-<<<<<<< HEAD
-		MOV32(r0,op->rs1._imm);
-		CALL((u32)ptr);
-
-		switch(optp)
-=======
 		// Not RAM
 		if (optp == SZ_64F)
->>>>>>> 063c7f7d... arm32: support for 64b immediate memory reads
 		{
 			verify(!reg.IsAllocAny(op->rd));
 			// Need to call the handler twice

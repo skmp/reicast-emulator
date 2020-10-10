@@ -414,7 +414,7 @@ else ifeq ($(platform), libnx)
    include $(DEVKITPRO)/libnx/switch_rules
    CC_AS = aarch64-none-elf-as
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
-   DEFINES := -DSWITCH=1 -D__SWITCH__=1 -DHAVE_LIBNX=1 -DTARGET_LIBNX -DTARGET_NO_OPENMP -DFEAT_NO_RWX_PAGES
+   DEFINES := -DSWITCH=1 -D__SWITCH__=1 -fcommon -DHAVE_LIBNX=1 -DTARGET_LIBNX -DTARGET_NO_OPENMP -DFEAT_NO_RWX_PAGES
    CFLAGS := $(DEFINES) -fPIE -I$(LIBNX)/include/ -I$(PORTLIBS)/include/ -isystem$(CORE_DIR)/core/deps/switch/ -ffunction-sections -fdata-sections -ftls-model=local-exec
    CPUFLAGS += -march=armv8-a -mtune=cortex-a57 -mtp=soft -mcpu=cortex-a57+crc+fp+simd -ffast-math -frename-registers -funroll-loops -ftree-vectorize
    CFLAGS += $(CPUFLAGS) -DTARGET_LIBNX -DHOST_CPU=0x20000006 -DTARGET_NO_AREC

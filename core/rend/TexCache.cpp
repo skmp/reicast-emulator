@@ -252,7 +252,7 @@ bool VramLockedWrite(u8* address)
 
 //unlocks mem
 //also frees the handle
-void libCore_vramlock_Unlock_block_wb(vram_block* block)
+static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
 	if (mmu_enabled())
 		vmem32_unprotect_vram(block->start, block->len);
@@ -547,9 +547,11 @@ void BaseTextureCacheData::Create()
 		}
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-		int stride = w;
+		int stride = 0;
 		if (tcw.StrideSel)
 			stride = (TEXT_CONTROL & 31) * 32;
+      if (stride == 0)
+			stride = w;
 
 		//Call the format specific conversion code
 		texconv = tex->PL;

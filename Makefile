@@ -854,6 +854,10 @@ ifeq ($(WITH_DYNAREC), arm)
 	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
 endif
 
+ifeq ($(WITH_DYNAREC), aarch64)
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM64)
+endif
+
 ifeq ($(WITH_DYNAREC), mips)
 	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_MIPS)
 endif

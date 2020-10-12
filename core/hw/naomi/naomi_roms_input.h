@@ -181,9 +181,9 @@ InputDescriptors gunsur2_inputs = {
 			{ 0 },
 	  },
 	  {
+			{ "ROLL", Full, 0 },
 			{ "PITCH", Full, 1 },
-			{ "ROLL", Full, 2, true },
-			{ "YAW", Full, 0 },
+			{ "YAW", Full, 2 },
 			{ NULL },
 	  },
 };
@@ -249,9 +249,9 @@ InputDescriptors sfz3ugd_inputs = {
 InputDescriptors ninjaslt_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "ENTER" },
+			{ NAOMI_BTN1_KEY, "TRIGGER 1P" },	// swapped with btn4
 			{ NAOMI_BTN2_KEY, "START 1P" },
 			{ NAOMI_BTN3_KEY, "START 2P" },
-			{ NAOMI_BTN4_KEY, "TRIGGER 1P" },
 			{ NAOMI_BTN5_KEY, "TRIGGER 2P" },
 			{ NAOMI_UP_KEY, "SELECT UP" },
 			{ NAOMI_DOWN_KEY, "SELECT DOWN" },
@@ -357,8 +357,8 @@ InputDescriptors tokyobus_inputs = {
 	  },
 	  {
 			{ "HANDLE", Full, 0 },
-			{ "ACCEL", Half, 1 },
-			{ "BRAKE", Half, 2 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -372,7 +372,7 @@ InputDescriptors wrungp_inputs = {
 	  },
 	  {
 			{ "HANDLE BAR", Full, 0 },
-			{ "THROTTLE LEVER", Half, 1, true },
+			{ "THROTTLE LEVER", Half, 4, true },
 			{ "ROLL", Full, 2 },
 			{ "PITCH", Full, 3 },
 			{ NULL },
@@ -391,7 +391,8 @@ InputDescriptors marine_fishing_inputs = {
 			{ "ROD X", Full, 0 },
 			{ "STICK X", Full, 2 },
 			{ "STICK Y", Full, 3 },
-			{ "REEL SPEED", Half, 0 },
+			{ "REEL SPEED", Half, 4 },
+			{ "TENSION", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -465,8 +466,8 @@ InputDescriptors ftspeed_inputs = {
 	  },
 	  {
 			{ "STEERING WHEEL", Full, 0 },
-			{ "GAS PEDAL", Half, 1 },
-			{ "BRAKE PEDAL", Half, 2 },
+			{ "GAS PEDAL", Half, 4 },
+			{ "BRAKE PEDAL", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -515,8 +516,8 @@ InputDescriptors maxspeed_inputs = {
 	  },
 	  {
 			{ "STEERING", Full, 0 },
-			{ "ACCELERATOR", Half, 1 },
-			{ "BRAKE", Half, 2 },
+			{ "ACCELERATOR", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -557,13 +558,20 @@ InputDescriptors samsptk_inputs = {
 
 InputDescriptors blockpong_inputs = {
 	  {
+			{ AWAVE_BTN0_KEY, "SHOT1" },
+			{ AWAVE_BTN1_KEY, "SHOT2" },
+			{ AWAVE_BTN2_KEY, "SHOT3" },
+			{ AWAVE_BTN3_KEY, "SHOT4" },
+			{ AWAVE_BTN4_KEY, "SHOT5" },
 			AW_START_DESC
 			AW_BASE_BTN_DESC
 			{ 0 },
 	  },
 	  {
 			{ "ANALOG X", Full, 0, true },
+			{ "ANALOG Y", Full, 1, false },	// not used?
 			{ NULL },
 	  },
 };
+
 #endif /* CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_ */

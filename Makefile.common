@@ -406,7 +406,7 @@ ifeq ($(WITH_DYNAREC), arm)
 endif
 
 # Recompiler (ARM64)
-ifeq ($(WITH_DYNAREC), arm64)
+ifneq ($(filter $(WITH_DYNAREC), arm64 aarch64),)
 	DYNAREC_USED = 1
 	SOURCES_ASM += $(CORE_DIR)/core/rec-ARM64/ngen_arm64.S
 	SOURCES_CXX += $(CORE_DIR)/core/rec-ARM64/rec_arm64.cpp \

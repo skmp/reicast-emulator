@@ -1581,7 +1581,6 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 	int i = 0 ;
 	int addr = 0 ;
 	u32 dum;
-   bool old_format = ver < V8 && ver != VCUR_LIBRETRO;
 
 	for ( i = 0 ; i < 64 ; i++)
 	{
@@ -1589,21 +1588,21 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		Chans[i].SA = addr + (&(aica_ram.data[0])) ;
 
 		LIBRETRO_US(Chans[i].CA) ;
-		LIBRETRO_US(Chans[i].step);
-      if (old_format)
+		LIBRETRO_US(Chans[i].step) ;
+		if (ver < V8)
 			LIBRETRO_US(dum); // Chans[i].update_rate
 		Chans[i].UpdatePitch();
-		LIBRETRO_US(Chans[i].s0);
-		LIBRETRO_US(Chans[i].s1);
+		LIBRETRO_US(Chans[i].s0) ;
+		LIBRETRO_US(Chans[i].s1) ;
 		LIBRETRO_US(Chans[i].loop.looped);
-      if (old_format)
+		if (ver < V8)
 		{
 			LIBRETRO_US(dum); // Chans[i].loop.LSA
 			LIBRETRO_US(dum); // Chans[i].loop.LEA
 		}
 		Chans[i].UpdateLoop();
 		LIBRETRO_US(Chans[i].adpcm.last_quant) ;
-      if (!old_format)
+		if (ver >= V8)
 		{
 			LIBRETRO_US(Chans[i].adpcm.loopstart_quant);
 			LIBRETRO_US(Chans[i].adpcm.loopstart_prev_sample);
@@ -1616,7 +1615,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 			Chans[i].adpcm.loopstart_prev_sample = 0;
 		}
 		LIBRETRO_US(Chans[i].noise_state) ;
-      if (old_format)
+		if (ver < V8)
 		{
 			LIBRETRO_US(dum); // Chans[i].VolMix.DLAtt
 			LIBRETRO_US(dum); // Chans[i].VolMix.DRAtt
@@ -1624,14 +1623,14 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		}
 		Chans[i].UpdateAtts();
 
-      if (old_format)
+		if (ver < V8)
 			LIBRETRO_US(dum); // Chans[i].VolMix.DSPOut
 		Chans[i].UpdateDSPMIX();
 
-		LIBRETRO_US(Chans[i].AEG.val);
-		LIBRETRO_US(Chans[i].AEG.state);
+		LIBRETRO_US(Chans[i].AEG.val) ;
+		LIBRETRO_US(Chans[i].AEG.state) ;
 		Chans[i].SetAegState(Chans[i].AEG.state);
-      if (old_format)
+		if (ver < V8)
 		{
 			LIBRETRO_US(dum); // Chans[i].AEG.AttackRate
 			LIBRETRO_US(dum); // Chans[i].AEG.Decay1Rate
@@ -1642,7 +1641,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		Chans[i].UpdateAEG();
 		LIBRETRO_US(Chans[i].FEG.value);
 		LIBRETRO_US(Chans[i].FEG.state);
-      if (!old_format)
+		if (ver >= V8)
 		{
 			LIBRETRO_US(Chans[i].FEG.prev1);
 			LIBRETRO_US(Chans[i].FEG.prev2);
@@ -1654,7 +1653,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		}
 		Chans[i].SetFegState(Chans[i].FEG.state);
 		Chans[i].UpdateFEG();
-      if (old_format)
+		if (ver < V8)
 		{
 			u8 dumu8;
 			LIBRETRO_US(dumu8); // Chans[i].step_stream_lut1
@@ -1663,11 +1662,11 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		}
 		Chans[i].UpdateStreamStep();
 
-		LIBRETRO_US(Chans[i].lfo.counter);
-      if (old_format)
+		LIBRETRO_US(Chans[i].lfo.counter) ;
+		if (ver < V8)
 			LIBRETRO_US(dum); // Chans[i].lfo.start_value
-		LIBRETRO_US(Chans[i].lfo.state);
-		if (old_format)
+		LIBRETRO_US(Chans[i].lfo.state) ;
+		if (ver < V8)
 		{
 			u8 dumu8;
 			LIBRETRO_US(dumu8); // Chans[i].lfo.alfo
@@ -1678,8 +1677,8 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 			LIBRETRO_US(dumu8); // Chans[i].lfo.plfo_calc_lut
 		}
 		Chans[i].UpdateLFO();
-		LIBRETRO_US(Chans[i].enabled);
-		if (old_format)
+		LIBRETRO_US(Chans[i].enabled) ;
+		if (ver < V8)
 			LIBRETRO_US(dum); // Chans[i].ChannelNumber
 
 	}

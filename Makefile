@@ -211,7 +211,6 @@ else ifneq (,$(findstring rpi,$(platform)))
 
 # Classic Platforms #####################
 # Platform affix = classic_<ISA>_<µARCH>
-# Help at https://modmyclassic.com/comp
 #########################################
 # (armv7 a7, hard point, neon based) ####
 # NESC, SNESC, C64 mini 

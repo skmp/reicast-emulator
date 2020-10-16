@@ -29,7 +29,7 @@ struct gl4PipelineShader
 	GLint palette_index;
 
 	bool cp_AlphaTest;
-	s32 pp_ClipTestMode;
+	bool pp_InsideClipping;
 	bool pp_Texture;
 	bool pp_UseAlpha;
 	bool pp_IgnoreTexA;
@@ -255,6 +255,14 @@ extern struct gl4ShaderUniforms_t
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
 	float palette_index;
+
+	struct {
+		bool enabled;
+		int x;
+		int y;
+		int width;
+		int height;
+	} base_clipping;
 
 	void setUniformArray(GLint location, int v0, int v1)
 	{

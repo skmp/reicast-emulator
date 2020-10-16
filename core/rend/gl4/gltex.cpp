@@ -6,21 +6,21 @@
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	if (gl.rtt.fbo)
-      glDeleteFramebuffers(1,&gl.rtt.fbo);
+		glDeleteFramebuffers(1,&gl.rtt.fbo);
 	if (gl.rtt.tex)
-      glcache.DeleteTextures(1,&gl.rtt.tex);
+		glcache.DeleteTextures(1,&gl.rtt.tex);
 
 	gl.rtt.TexAddr=addy>>3;
 
-   // Find the smallest power of two texture that fits the viewport
-   u32 fbh2 = 8;
-   while (fbh2 < fbh)
-      fbh2 *= 2;
-   u32 fbw2 = 8;
-   while (fbw2 < fbw)
-      fbw2 *= 2;
+	// Find the smallest power of two texture that fits the viewport
+	u32 fbh2 = 8;
+	while (fbh2 < fbh)
+		fbh2 *= 2;
+	u32 fbw2 = 8;
+	while (fbw2 < fbw)
+		fbw2 *= 2;
 
-   if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
 	{
 		fbw *= settings.rend.RenderToTextureUpscale;
 		fbh *= settings.rend.RenderToTextureUpscale;
@@ -46,7 +46,7 @@ GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	verify(uStatus == RARCH_GL_FRAMEBUFFER_COMPLETE);
 
-   glViewport(0, 0, fbw, fbh);		// TODO CLIP_X/Y min?
+	glViewport(0, 0, fbw, fbh);		// TODO CLIP_X/Y min?
 
-   return gl.rtt.fbo;
+	return gl.rtt.fbo;
 }

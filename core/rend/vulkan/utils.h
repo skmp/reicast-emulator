@@ -23,12 +23,6 @@
 
 enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
 
-enum class TileClipping {
-	Inside,		// render stuff outside the region
-	Off,
-	Outside		// render stuff inside the region
-};
-
 static const vk::CompareOp depthOps[] =
 {
 	vk::CompareOp::eNever,          //0 Never

@@ -21,6 +21,7 @@
 #pragma once
 #include <memory>
 #include "rend/sorter.h"
+#include "rend/tileclip.h"
 #include "rend/transform_matrix.h"
 #include "vulkan.h"
 #include "buffer.h"

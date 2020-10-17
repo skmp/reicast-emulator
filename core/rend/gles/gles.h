@@ -36,7 +36,6 @@
 
 //vertex types
 extern u32 gcflip;
-extern float scale_x, scale_y;
 extern glm::mat4 ViewportMatrix;
 
 void DrawStrips(void);
@@ -44,7 +43,7 @@ void DrawStrips(void);
 struct PipelineShader
 {
 	GLuint program;
-	GLint scale,depth_scale;
+	GLint depth_scale;
 	GLint extra_depth_scale;
 	GLint pp_ClipTest;
 	GLint cp_AlphaTestValue;
@@ -53,6 +52,7 @@ struct PipelineShader
 	GLint sp_FOG_DENSITY;
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
+	GLint normal_matrix;
 	GLint palette_index;
 
 	//
@@ -79,9 +79,10 @@ struct gl_ctx
 	{
 		GLuint program;
 
-		GLint scale,depth_scale;
+		GLint depth_scale;
 		GLint extra_depth_scale;
 		GLint sp_ShaderColor;
+		GLint normal_matrix;
 
 	} modvol_shader;
 
@@ -129,6 +130,11 @@ enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
+void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y);
+void GetFramebufferSize(float& dc_width, float& dc_height);
+void SetupMatrices(float dc_width, float dc_height,
+				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
+				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
 void UpdatePaletteTexture(GLenum texture_slot);
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void DoCleanup();
@@ -162,7 +168,6 @@ void UpdateVmuTexture(int vmu_screen_number);
 extern struct ShaderUniforms_t
 {
 	float PT_ALPHA;
-	float scale_coefs[4];
 	float depth_coefs[4];
 	float extra_depth_scale;
 	float fog_den_float;
@@ -171,6 +176,7 @@ extern struct ShaderUniforms_t
 	float trilinear_alpha;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
+	glm::mat4 normal_mat;
 	struct {
 		bool enabled;
 		int x;
@@ -184,9 +190,6 @@ extern struct ShaderUniforms_t
 	{
 		if (s->cp_AlphaTestValue!=-1)
 			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
-
-		if (s->scale!=-1)
-			glUniform4fv( s->scale, 1, scale_coefs);
 
 		if (s->depth_scale!=-1)
 			glUniform4fv( s->depth_scale, 1, depth_coefs);
@@ -207,6 +210,9 @@ extern struct ShaderUniforms_t
 			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
+
+		if (s->normal_matrix != -1)
+			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
 
 		if (s->palette_index != -1)
 			glUniform1f(s->palette_index, palette_index);

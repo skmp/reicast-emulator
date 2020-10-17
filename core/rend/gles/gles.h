@@ -80,7 +80,6 @@ struct gl_ctx
 		GLuint program;
 
 		GLint depth_scale;
-		GLint extra_depth_scale;
 		GLint sp_ShaderColor;
 		GLint normal_matrix;
 

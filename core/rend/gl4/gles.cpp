@@ -522,7 +522,6 @@ static bool gl_create_resources(void)
 
 	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
 	gl4.modvol_shader.normal_matrix  = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
-	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
 
 	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);
@@ -580,29 +579,17 @@ static bool RenderFrame()
 
 	DoCleanup();
 
-	bool is_rtt = pvrrc.isRTT;
+	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<true> matrices(pvrrc);
+	gl4ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
+	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
-
-	//these should be adjusted based on the current PVR scaling etc params
-	float dc_width;
-	float dc_height;
-	GetFramebufferSize(dc_width, dc_height);
 
 	if (!is_rtt)
 		gcflip=0;
 	else
 		gcflip=1;
-
-	float scale_x;
-	float scale_y;
-	float scissoring_scale_x;
-	float scissoring_scale_y;
-	GetFramebufferScaling(scale_x, scale_y, scissoring_scale_x, scissoring_scale_y);
-
-	dc_width  *= scale_x;
-	dc_height *= scale_y;
 
 	/*
 		Handle Dc to screen scaling
@@ -613,8 +600,8 @@ static bool RenderFrame()
 	if (is_rtt)
 	{
 		int scaling = settings.rend.RenderToTextureBuffer ? 1 : settings.rend.RenderToTextureUpscale;
-		rendering_width = dc_width * scaling;
-		rendering_height = dc_height * scaling;
+		rendering_width = matrices.GetDreamcastViewport().x * scaling;
+		rendering_height = matrices.GetDreamcastViewport().y * scaling;
 	}
 	else
 	{
@@ -622,11 +609,6 @@ static bool RenderFrame()
 		rendering_height = screen_height;
 	}
 	resize(rendering_width, rendering_height);
-
-	float ds2s_offs_x;
-
-	glm::mat4 scissor_mat;
-	SetupMatrices(dc_width, dc_height, scale_x, scale_y, scissoring_scale_x, scissoring_scale_y, ds2s_offs_x, gl4ShaderUniforms.normal_mat, scissor_mat);
 
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
@@ -671,7 +653,6 @@ static bool RenderFrame()
 	glcache.UseProgram(gl4.modvol_shader.program);
 
 	glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
-	glUniform1f(gl4.modvol_shader.extra_depth_scale, gl4ShaderUniforms.extra_depth_scale);
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
@@ -714,7 +695,8 @@ static bool RenderFrame()
 		}
 		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
  				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
-		output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
+		output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, (u32)lroundf(matrices.GetDreamcastViewport().x),
+				(u32)lroundf(matrices.GetDreamcastViewport().y), channels, format);
 	}
 	else
 	{
@@ -749,16 +731,7 @@ static bool RenderFrame()
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
 		glCheck();
 
-		//not all scaling affects pixel operations, scale to adjust for that
-		scale_x *= scissoring_scale_x;
-
-		bool wide_screen_on = !is_rtt && settings.rend.WideScreen
-			&& pvrrc.fb_X_CLIP.min == 0
-			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scale_x) == 640L
-			&& pvrrc.fb_Y_CLIP.min == 0
-			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
-
-		if (!wide_screen_on)
+		if (is_rtt || !settings.rend.WideScreen || matrices.IsClipped())
 		{
 			float width;
 			float height;
@@ -786,9 +759,9 @@ static bool RenderFrame()
 					min_y += height;
 					height = -height;
 				}
-				if (ds2s_offs_x > 0)
+				if (matrices.GetSidebarWidth() > 0)
 				{
-					float rounded_offs_x = ds2s_offs_x + 0.5f;
+					float rounded_offs_x = matrices.GetSidebarWidth() + 0.5f;
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
@@ -827,8 +800,6 @@ static bool RenderFrame()
 			gl4ShaderUniforms.base_clipping.enabled = false;
 		}
 
-		//restore scale_x
-		scale_x /= scissoring_scale_x;
 		if (settings.rend.PowerVR2Filter && !is_rtt)
 		{
 			gl4DrawStrips(postProcessor.GetFramebuffer(), rendering_width, rendering_height);
@@ -843,7 +814,7 @@ static bool RenderFrame()
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		gl4DrawFramebuffer(dc_width, dc_height);
+		gl4DrawFramebuffer(640.f, 480.f);
 	}
 
 

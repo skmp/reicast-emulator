@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <atomic>
+#include <iterator>
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"

@@ -1,12 +1,15 @@
 #pragma once
 #include <unordered_map>
-#include <glm/glm.hpp>
 #include <atomic>
 #include <libretro.h>
+#include <glsm/glsm.h>
+#include <glsym/glsym.h>
 #include "rend/rend.h"
 #include "rend/TexCache.h"
-#include <glsm/glsm.h>
-#include <glsm/glsmsym.h>
+#include "rend/transform_matrix.h"
+#include "rend/sorter.h"
+#include "rend/tileclip.h"
+#include "postprocess.h"
 #include "glcache.h"
 
 #ifndef TEXTURE_MAX_ANISOTROPY_EXT
@@ -44,7 +47,6 @@ struct PipelineShader
 {
 	GLuint program;
 	GLint depth_scale;
-	GLint extra_depth_scale;
 	GLint pp_ClipTest;
 	GLint cp_AlphaTestValue;
 	GLint sp_FOG_COL_RAM;
@@ -107,6 +109,7 @@ struct gl_ctx
 	bool is_gles;
 	GLuint single_channel_format;
 	GLenum index_type;
+	bool highp_float_supported;
 	bool stencil_present;
 	f32 max_anisotropy;
 
@@ -168,7 +171,6 @@ extern struct ShaderUniforms_t
 {
 	float PT_ALPHA;
 	float depth_coefs[4];
-	float extra_depth_scale;
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
@@ -192,9 +194,6 @@ extern struct ShaderUniforms_t
 
 		if (s->depth_scale!=-1)
 			glUniform4fv( s->depth_scale, 1, depth_coefs);
-
-		if (s->extra_depth_scale != -1)
-			glUniform1f(s->extra_depth_scale, extra_depth_scale);
 
 		if (s->sp_FOG_DENSITY!=-1)
 			glUniform1f(s->sp_FOG_DENSITY, fog_den_float);

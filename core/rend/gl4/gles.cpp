@@ -1,11 +1,6 @@
 #include <math.h>
 
 #include "gl4.h"
-#include "rend/gles/glcache.h"
-#include "rend/transform_matrix.h"
-#include "rend/rend.h"
-#include "rend/TexCache.h"
-#include "rend/gles/postprocess.h"
 
 gl4_ctx gl4;
 
@@ -417,8 +412,6 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 		glUniform1i(gu, 1);
 
 	//get the uniform locations
-	s->extra_depth_scale= glGetUniformLocation(s->program, "extra_depth_scale");
-
 	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
 
 	s->sp_FOG_DENSITY   = glGetUniformLocation(s->program, "sp_FOG_DENSITY");
@@ -609,8 +602,6 @@ static bool RenderFrame()
 		rendering_height = screen_height;
 	}
 	resize(rendering_width, rendering_height);
-
-	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;

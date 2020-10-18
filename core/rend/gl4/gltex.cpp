@@ -1,7 +1,6 @@
 #include <libretro.h>
 
 #include "gl4.h"
-#include "../gles/glcache.h"
 
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {

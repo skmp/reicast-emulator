@@ -74,7 +74,7 @@ protected:
 		u8* fog_density = (u8*)&FOG_DENSITY;
 		float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 		s32 fog_den_exp = (s8)fog_density[0];
-		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp) * settings.rend.ExtraDepthScale;
+		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp);
 
 		fragUniforms.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 		fragUniforms.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;

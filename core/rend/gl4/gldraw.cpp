@@ -1,7 +1,4 @@
 #include "gl4.h"
-#include "../rend.h"
-#include "rend/gles/gles.h"
-#include "rend/tileclip.h"
 
 /*
 

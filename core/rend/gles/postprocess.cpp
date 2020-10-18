@@ -8,10 +8,7 @@
     any later version.
 */
 #include <array>
-#include "postprocess.h"
 #include "gles.h"
-#include "glcache.h"
-#include "hw/pvr/Renderer_if.h"
 
 extern int screen_width;
 extern int screen_height;

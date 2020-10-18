@@ -11,10 +11,10 @@
 
 #if FEAT_DSPREC != DYNAREC_JIT
 
-//#ifdef RELEASE
+#ifdef RELEASE
 #undef verify
-//#define verify(...)
-//#endif
+#define verify(...)
+#endif
 
 void AICADSP_Init(struct dsp_t *DSP)
 {

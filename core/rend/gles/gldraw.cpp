@@ -1,7 +1,4 @@
 #include "gles.h"
-#include "rend/rend.h"
-#include "rend/sorter.h"
-#include "rend/tileclip.h"
 
 /*
 

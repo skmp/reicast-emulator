@@ -4,13 +4,6 @@
 #include <libretro.h>
 
 #include "gles.h"
-#include "rend/transform_matrix.h"
-#include "rend/rend.h"
-#include "rend/TexCache.h"
-
-#include "hw/pvr/Renderer_if.h"
-#include "hw/mem/_vmem.h"
-#include "postprocess.h"
 
 #ifndef GL_RED
 #define GL_RED                            0x1903
@@ -64,7 +57,6 @@ static const char* VertexShaderSource = R"(%s
 #endif
 
 /* Vertex constants*/ 
-uniform highp vec4      scale;
 uniform highp vec4      depth_scale;
 uniform highp mat4 normal_matrix;
 uniform highp float sp_FOG_DENSITY;
@@ -407,61 +399,65 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 
 void findGLVersion()
 {
-   gl.stencil_present = true;
-   gl.index_type = GL_UNSIGNED_INT;
+	gl.stencil_present = true;
+	gl.index_type = GL_UNSIGNED_INT;
 
-   while (true)
-      if (glGetError() == GL_NO_ERROR)
-         break;
-   glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
-   if (glGetError() == GL_INVALID_ENUM)
-      gl.gl_major = 2;
-   else
-   	glGetIntegerv(GL_MINOR_VERSION, &gl.gl_minor);
+	while (true)
+		if (glGetError() == GL_NO_ERROR)
+			break;
+	glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
+	if (glGetError() == GL_INVALID_ENUM)
+		gl.gl_major = 2;
+	else
+		glGetIntegerv(GL_MINOR_VERSION, &gl.gl_minor);
 
-   const char *version = (const char *)glGetString(GL_VERSION);
-   NOTICE_LOG(RENDERER, "OpenGL version: %s", version);
-   if (!strncmp(version, "OpenGL ES", 9))
-   {
-      gl.is_gles = true;
-      if (gl.gl_major >= 3)
-      {
-         gl.gl_version = "GLES3";
-         gl.glsl_version_header = "#version 300 es";
-      }
-      else
-      {
-         gl.gl_version = "GLES2";
-         gl.glsl_version_header = "";
-         gl.index_type = GL_UNSIGNED_SHORT;
-      }
-      gl.single_channel_format = GL_ALPHA;
+	const char *version = (const char *)glGetString(GL_VERSION);
+	NOTICE_LOG(RENDERER, "OpenGL version: %s", version);
+	if (!strncmp(version, "OpenGL ES", 9))
+	{
+		gl.is_gles = true;
+		if (gl.gl_major >= 3)
+		{
+			gl.gl_version = "GLES3";
+			gl.glsl_version_header = "#version 300 es";
+		}
+		else
+		{
+			gl.gl_version = "GLES2";
+			gl.glsl_version_header = "";
+			gl.index_type = GL_UNSIGNED_SHORT;
+		}
+		gl.single_channel_format = GL_ALPHA;
 
-      GLint stencilBits = 0;
-      glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
-      if (stencilBits == 0)
-    	 gl.stencil_present = false;
-   }
-   else
-   {
-      gl.is_gles = false;
-      if (gl.gl_major >= 3)
-      {
-         gl.gl_version = "GL3";
-         gl.glsl_version_header = "#version 130";
-         gl.single_channel_format = GL_RED;
-      }
-      else
-      {
-         gl.gl_version = "GL2";
-         gl.glsl_version_header = "#version 120";
-         gl.single_channel_format = GL_ALPHA;
-      }
-   }
+		GLint stencilBits = 0;
+		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
+		if (stencilBits == 0)
+			gl.stencil_present = false;
+	}
+	else
+	{
+		gl.is_gles = false;
+		if (gl.gl_major >= 3)
+		{
+			gl.gl_version = "GL3";
+			gl.glsl_version_header = "#version 130";
+			gl.single_channel_format = GL_RED;
+		}
+		else
+		{
+			gl.gl_version = "GL2";
+			gl.glsl_version_header = "#version 120";
+			gl.single_channel_format = GL_ALPHA;
+		}
+	}
+	GLint ranges[2];
+	GLint precision;
+	glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
+	gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
 	gl.max_anisotropy = 1.f;
 #ifndef HAVE_OPENGLES2
-   if (gl.gl_major >= 3)
-   {
+	if (gl.gl_major >= 3)
+	{
 		for (u32 i = 0; ; i++)
 		{
 			const char* extension = (const char *)glGetStringi(GL_EXTENSIONS, i);
@@ -473,7 +469,7 @@ void findGLVersion()
 				break;
 			}
 		}
-   }
+	}
 #endif
 }
 
@@ -562,21 +558,22 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	return program;
 }
 
-
-bool CompilePipelineShader(PipelineShader *s)
+bool CompilePipelineShader(	PipelineShader* s)
 {
 	char vshader[8192];
 
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
+	int rc = sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
+	verify(rc + 1 <= (int)sizeof(vshader));
 
 	char pshader[8192];
 
-	sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
-				s->cp_AlphaTest,s->pp_InsideClipping,s->pp_UseAlpha,
-				s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
+	rc = sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
+                s->cp_AlphaTest,s->pp_InsideClipping,s->pp_UseAlpha,
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
 				s->fog_clamping, s->trilinear, s->palette);
+	verify(rc + 1 <= (int)sizeof(pshader));
 
-	s->program            = gl_CompileAndLink(vshader, pshader);
+	s->program=gl_CompileAndLink(vshader, pshader);
 
 
 	//setup texture 0 as the input for the shader
@@ -587,8 +584,6 @@ bool CompilePipelineShader(PipelineShader *s)
 	//get the uniform locations
 	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
 
-	s->extra_depth_scale= glGetUniformLocation(s->program, "extra_depth_scale");
-
 	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
 
 	s->sp_FOG_DENSITY   = glGetUniformLocation(s->program, "sp_FOG_DENSITY");
@@ -597,9 +592,9 @@ bool CompilePipelineShader(PipelineShader *s)
 
 	//FOG_COL_RAM,FOG_COL_VERT,FOG_DENSITY;
 	if (s->pp_FogCtrl==1 && s->pp_Texture==1)
-		s->sp_FOG_COL_VERT = glGetUniformLocation(s->program, "sp_FOG_COL_VERT");
+		s->sp_FOG_COL_VERT=glGetUniformLocation(s->program, "sp_FOG_COL_VERT");
 	else
-		s->sp_FOG_COL_VERT = -1;
+		s->sp_FOG_COL_VERT=-1;
 	if (s->pp_FogCtrl==0 || s->pp_FogCtrl==3)
 	{
 		s->sp_FOG_COL_RAM=glGetUniformLocation(s->program, "sp_FOG_COL_RAM");
@@ -619,7 +614,7 @@ bool CompilePipelineShader(PipelineShader *s)
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
 
 	s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
-
+	
 	if (s->fog_clamping)
 	{
 		s->fog_clamp_min = glGetUniformLocation(s->program, "fog_clamp_min");
@@ -633,6 +628,7 @@ bool CompilePipelineShader(PipelineShader *s)
 	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
 
 	ShaderUniforms.Set(s);
+
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
@@ -740,8 +736,9 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);
 
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexImage2D(GL_TEXTURE_2D, 0, fog_image_format, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
+	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
 }
@@ -833,8 +830,6 @@ static bool RenderFrame(void)
 	ShaderUniforms.depth_coefs[2] = 0;
 	ShaderUniforms.depth_coefs[3] = 0;
 
-	ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
-
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
 	u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
@@ -850,7 +845,7 @@ static bool RenderFrame(void)
 	u8* fog_density = (u8*)&FOG_DENSITY;
 	float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 	s32 fog_den_exp = (s8)fog_density[0];
-	ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f, fog_den_exp) * settings.rend.ExtraDepthScale;
+	ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f, fog_den_exp);
 
 	ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 	ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;

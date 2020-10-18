@@ -1,18 +1,9 @@
 #include <math.h>
 #include <algorithm>
 
-#include <glsm/glsm.h>
-#include <glsm/glsmsym.h>
-
 #include <libretro.h>
 
 #include "gles.h"
-#include "rend/rend.h"
-#include "rend/TexCache.h"
-#include "glcache.h"
-
-#include "hw/pvr/pvr_mem.h"
-#include "hw/mem/_vmem.h"
 
 #ifndef GL_IMPLEMENTATION_COLOR_READ_TYPE
 #define GL_IMPLEMENTATION_COLOR_READ_TYPE 0x8B9A

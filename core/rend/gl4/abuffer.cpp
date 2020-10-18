@@ -5,7 +5,6 @@
  *      Author: raph
  */
 #include "gl4.h"
-#include "rend/gles/glcache.h"
 
 GLuint pixels_buffer;
 GLuint pixels_pointers;

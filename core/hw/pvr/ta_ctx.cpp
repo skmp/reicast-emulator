@@ -131,7 +131,7 @@ bool QueueRender(TA_context* ctx)
 	double time_span = os_GetSeconds() - last_frame;
 	last_frame = os_GetSeconds();
 
-	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
+	bool too_fast = (cycle_span / time_span) > SH4_MAIN_CLOCK;
 
 	if (rqueue && too_fast && settings.pvr.SynchronousRendering) {
 		//wait for a frame if

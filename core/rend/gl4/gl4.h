@@ -10,7 +10,6 @@ struct gl4PipelineShader
 {
 	GLuint program;
 
-	GLint scale;
 	GLint extra_depth_scale;
 	GLint pp_ClipTest;
 	GLint cp_AlphaTestValue;
@@ -26,10 +25,11 @@ struct gl4PipelineShader
 	GLint fog_control;
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
+	GLint normal_matrix;
 	GLint palette_index;
 
 	bool cp_AlphaTest;
-	s32 pp_ClipTestMode;
+	bool pp_InsideClipping;
 	bool pp_Texture;
 	bool pp_UseAlpha;
 	bool pp_IgnoreTexA;
@@ -51,8 +51,7 @@ struct gl4_ctx
 	{
 		GLuint program;
 
-		GLint scale;
-		GLint extra_depth_scale;
+		GLint normal_matrix;
 	} modvol_shader;
 
 	std::unordered_map<u32, gl4PipelineShader> shaders;
@@ -241,7 +240,6 @@ void gl4SetupModvolVBO();
 extern struct gl4ShaderUniforms_t
 {
 	float PT_ALPHA;
-	float scale_coefs[4];
 	float extra_depth_scale;
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
@@ -254,7 +252,16 @@ extern struct gl4ShaderUniforms_t
 	TCW tcw1;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
+	glm::mat4 normal_mat;
 	float palette_index;
+
+	struct {
+		bool enabled;
+		int x;
+		int y;
+		int width;
+		int height;
+	} base_clipping;
 
 	void setUniformArray(GLint location, int v0, int v1)
 	{
@@ -266,9 +273,6 @@ extern struct gl4ShaderUniforms_t
 	{
 		if (s->cp_AlphaTestValue!=-1)
 			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
-
-		if (s->scale!=-1)
-			glUniform4fv( s->scale, 1, scale_coefs);
 
 		if (s->extra_depth_scale != -1)
 			glUniform1f(s->extra_depth_scale, extra_depth_scale);
@@ -312,6 +316,9 @@ extern struct gl4ShaderUniforms_t
 			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
+
+		if (s->normal_matrix != -1)
+			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
 
 		if (s->palette_index != -1)
 			glUniform1f(s->palette_index, palette_index);

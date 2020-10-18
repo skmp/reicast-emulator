@@ -2,6 +2,7 @@
 
 #include "gl4.h"
 #include "rend/gles/glcache.h"
+#include "rend/transform_matrix.h"
 #include "rend/rend.h"
 #include "rend/TexCache.h"
 #include "rend/gles/postprocess.h"
@@ -26,7 +27,7 @@ static const char* VertexShaderSource = R"(#version 130
 
 /* Vertex constants*/ 
 uniform vec4      scale;
-uniform float     extra_depth_scale;
+uniform highp mat4 normal_matrix;
 /* Vertex input */
 in vec4 in_pos;
 in vec4 in_base;
@@ -44,18 +45,18 @@ INTERPOLATION out vec4 vtx_offs1;
 			  out vec2 vtx_uv1;
 void main()
 {
-	vtx_base=in_base;
-	vtx_offs=in_offs;
-	vtx_uv=in_uv;
-   vtx_base1 = in_base1;
+	vtx_base = in_base;
+	vtx_offs = in_offs;
+	vtx_uv = in_uv;
+	vtx_base1 = in_base1;
 	vtx_offs1 = in_offs1;
 	vtx_uv1 = in_uv1;
-	vec4 vpos=in_pos;
+	vec4 vpos = in_pos;
 	
-	vpos.w = extra_depth_scale / vpos.z;
+	vpos = normal_matrix * vpos;
+	vpos.w = 1.0 / vpos.z;
 	vpos.z = vpos.w;
-	vpos.xy=vpos.xy*scale.xy-scale.zw; 
-	vpos.xy*=vpos.w; 
+	vpos.xy *= vpos.w;
 	gl_Position = vpos;
 }
 )";
@@ -63,7 +64,7 @@ void main()
 const char* gl4PixelPipelineShader = SHADER_HEADER
 R"(
 #define cp_AlphaTest %d
-#define pp_ClipTestMode %d
+#define pp_ClipInside %d
 #define pp_UseAlpha %d
 #define pp_Texture %d
 #define pp_IgnoreTexA %d
@@ -171,14 +172,8 @@ void main()
          discard;
    #endif
   
-	// Clip outside the box
-	#if pp_ClipTestMode==1
-		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z
-				|| gl_FragCoord.y < pp_ClipTest.y || gl_FragCoord.y > pp_ClipTest.w)
-			discard;
-	#endif
 	// Clip inside the box
-	#if pp_ClipTestMode==-1
+	#if pp_ClipInside == 1
 		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z
 				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w)
 			discard;
@@ -396,42 +391,39 @@ int max_image_width;
 int max_image_height;
 extern GLuint fogTextureId;
 
-bool gl4CompilePipelineShader(gl4PipelineShader *s, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
+bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
 {
-   char vshader[16384];
+	char vshader[16384];
 
 	sprintf(vshader, vertex_source == NULL ? VertexShaderSource : vertex_source, s->pp_Gouraud);
+
 	char pshader[16384];
 
 	sprintf(pshader, pixel_source,
-                s->cp_AlphaTest, s->pp_ClipTestMode, s->pp_UseAlpha,
+                s->cp_AlphaTest, s->pp_InsideClipping, s->pp_UseAlpha,
                 s->pp_Texture, s->pp_IgnoreTexA, s->pp_ShadInstr, s->pp_Offset, s->pp_FogCtrl,
 				s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->palette,
-                (int)s->pass);
+				(int)s->pass);
 
-
-   s->program = gl_CompileAndLink(vshader, pshader);
-
+	s->program = gl_CompileAndLink(vshader, pshader);
 
 	//setup texture 0 as the input for the shader
-   GLint gu = glGetUniformLocation(s->program, "tex0");
-   if (s->pp_Texture == 1 && gu != -1)
-		glUniform1i(gu,0);
-   // Setup texture 1 as the input for area 1 in two volume mode
-   gu = glGetUniformLocation(s->program, "tex1");
-   if (s->pp_Texture == 1 && gu != -1)
-      glUniform1i(gu, 1);
+	GLint gu = glGetUniformLocation(s->program, "tex0");
+	if (s->pp_Texture == 1 && gu != -1)
+		glUniform1i(gu, 0);
+	// Setup texture 1 as the input for area 1 in two volume mode
+	gu = glGetUniformLocation(s->program, "tex1");
+	if (s->pp_Texture == 1 && gu != -1)
+		glUniform1i(gu, 1);
 
 	//get the uniform locations
-	s->scale	             = glGetUniformLocation(s->program, "scale");
+	s->extra_depth_scale= glGetUniformLocation(s->program, "extra_depth_scale");
 
-	s->extra_depth_scale = glGetUniformLocation(s->program, "extra_depth_scale");
+	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
 
-	s->pp_ClipTest        = glGetUniformLocation(s->program, "pp_ClipTest");
+	s->sp_FOG_DENSITY   = glGetUniformLocation(s->program, "sp_FOG_DENSITY");
 
-	s->sp_FOG_DENSITY     = glGetUniformLocation(s->program, "sp_FOG_DENSITY");
-
-	s->cp_AlphaTestValue  = glGetUniformLocation(s->program, "cp_AlphaTestValue");
+	s->cp_AlphaTestValue= glGetUniformLocation(s->program, "cp_AlphaTestValue");
 
 	//FOG_COL_RAM,FOG_COL_VERT,FOG_DENSITY;
 	if (s->pp_FogCtrl==1 && s->pp_Texture==1)
@@ -448,37 +440,37 @@ bool gl4CompilePipelineShader(gl4PipelineShader *s, const char *pixel_source /* 
 	}
 	s->shade_scale_factor = glGetUniformLocation(s->program, "shade_scale_factor");
 
-   // Use texture 1 for depth texture
+	// Use texture 1 for depth texture
 	gu = glGetUniformLocation(s->program, "DepthTex");
 	if (gu != -1)
-		glUniform1i(gu, 2);     // GL_TEXTURE2
+		glUniform1i(gu, 2);		// GL_TEXTURE2
 
-   s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
+	s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
+	
+	if (s->fog_clamping)
+	{
+		s->fog_clamp_min = glGetUniformLocation(s->program, "fog_clamp_min");
+		s->fog_clamp_max = glGetUniformLocation(s->program, "fog_clamp_max");
+	}
+	else
+	{
+		s->fog_clamp_min = -1;
+		s->fog_clamp_max = -1;
+	}
+	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
 
-   if (s->fog_clamping)
-   {
-      s->fog_clamp_min = glGetUniformLocation(s->program, "fog_clamp_min");
-      s->fog_clamp_max = glGetUniformLocation(s->program, "fog_clamp_max");
-   }
-   else
-   {
-      s->fog_clamp_min = -1;
-      s->fog_clamp_max = -1;
-   }
+	// Shadow stencil for OP/PT rendering pass
+	gu = glGetUniformLocation(s->program, "shadow_stencil");
+	if (gu != -1)
+		glUniform1i(gu, 3);		// GL_TEXTURE3
 
+	s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
 
-   // Shadow stencil for OP/PT rendering pass
-   gu = glGetUniformLocation(s->program, "shadow_stencil");
-   if (gu != -1)
-   	glUniform1i(gu, 3);		// GL_TEXTURE3
-
-   s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
-
-   s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
-   s->use_alpha = glGetUniformLocation(s->program, "use_alpha");
-   s->ignore_tex_alpha = glGetUniformLocation(s->program, "ignore_tex_alpha");
-   s->shading_instr = glGetUniformLocation(s->program, "shading_instr");
-   s->fog_control = glGetUniformLocation(s->program, "fog_control");
+	s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
+	s->use_alpha = glGetUniformLocation(s->program, "use_alpha");
+	s->ignore_tex_alpha = glGetUniformLocation(s->program, "ignore_tex_alpha");
+	s->shading_instr = glGetUniformLocation(s->program, "shading_instr");
+	s->fog_control = glGetUniformLocation(s->program, "fog_control");
 
 	gu = glGetUniformLocation(s->program, "palette");
 	if (gu != -1)
@@ -490,24 +482,24 @@ bool gl4CompilePipelineShader(gl4PipelineShader *s, const char *pixel_source /* 
 
 static void gl_term(void)
 {
-   glDeleteProgram(gl4.modvol_shader.program);
-   glDeleteVertexArrays(1, &gl4.vbo.main_vao);
-   glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
-   glDeleteBuffers(1, &gl4.vbo.geometry);
-   glDeleteBuffers(1, &gl4.vbo.modvols);
-   glDeleteBuffers(1, &gl4.vbo.idxs);
-   glDeleteBuffers(1, &gl4.vbo.idxs2);
-   glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
-   for (auto it = gl4.shaders.begin(); it != gl4.shaders.end(); it++)
-   {
-   	if (it->second.program != 0)
-   		glDeleteProgram(it->second.program);
-   }
-   gl4.shaders.clear();
-   glDeleteTextures(1, &fbTextureId);
-   fbTextureId = 0;
-   glDeleteTextures(1, &fogTextureId);
-   fogTextureId = 0;
+	glDeleteProgram(gl4.modvol_shader.program);
+	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
+	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
+	glDeleteBuffers(1, &gl4.vbo.geometry);
+	glDeleteBuffers(1, &gl4.vbo.modvols);
+	glDeleteBuffers(1, &gl4.vbo.idxs);
+	glDeleteBuffers(1, &gl4.vbo.idxs2);
+	glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
+	for (auto it = gl4.shaders.begin(); it != gl4.shaders.end(); it++)
+	{
+		if (it->second.program != 0)
+			glDeleteProgram(it->second.program);
+	}
+	gl4.shaders.clear();
+	glDeleteTextures(1, &fbTextureId);
+	fbTextureId = 0;
+	glDeleteTextures(1, &fogTextureId);
+	fogTextureId = 0;
 }
 
 static bool gl_create_resources(void)
@@ -525,14 +517,13 @@ static bool gl_create_resources(void)
 	gl4SetupMainVBO();
 	gl4SetupModvolVBO();
 
-   char vshader[16384];
+	char vshader[16384];
 	sprintf(vshader, VertexShaderSource, 1);
 
-   gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
-	gl4.modvol_shader.scale          = glGetUniformLocation(gl4.modvol_shader.program, "scale");
-   gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
+	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
+	gl4.modvol_shader.normal_matrix  = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
 
-   // Create the buffer for Translucent poly params
+	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);
 	// Bind it
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
@@ -583,88 +574,34 @@ static void resize(int w, int h)
 
 static bool RenderFrame()
 {
-   int vmu_screen_number = 0 ;
-   int lightgun_port = 0 ;
+	int vmu_screen_number = 0 ;
+	int lightgun_port = 0 ;
 
-   DoCleanup();
+	DoCleanup();
 
-	bool is_rtt=pvrrc.isRTT;
+	const bool is_rtt = pvrrc.isRTT;
 
-	//if (FrameCount&7) return;
-
-	//these should be adjusted based on the current PVR scaling etc params
-	float dc_width=640;
-	float dc_height=480;
+	TransformMatrix<true> matrices(pvrrc);
+	gl4ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
+	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
+	ViewportMatrix = matrices.GetViewportMatrix();
 
 	if (!is_rtt)
-	{
 		gcflip=0;
-	}
 	else
-	{
 		gcflip=1;
-
-		//For some reason this produces wrong results
-		//so for now its hacked based like on the d3d code
-		/*
-		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
-		*/
-
-      dc_width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-		dc_height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-	}
-
-	scale_x = 1;
-   scale_y = 1;
-
-	float scissoring_scale_x = 1;
-
-	if (!is_rtt && !pvrrc.isRenderFramebuffer)
-   {
-      scale_x=fb_scale_x;
-      scale_y=fb_scale_y;
-		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor > 0x400)
-			scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
-
-      //work out scaling parameters !
-      //Pixel doubling is on VO, so it does not affect any pixel operations
-      //A second scaling is used here for scissoring
-      if (VO_CONTROL.pixel_double)
-      {
-         scissoring_scale_x  = 0.5f;
-         scale_x            *= 0.5f;
-      }
-
-      if (SCALER_CTL.hscale)
-      {
-         scissoring_scale_x /= 2;
-         scale_x*=2;
-      }
-   }
-
-	dc_width  *= scale_x;
-	dc_height *= scale_y;
 
 	/*
 		Handle Dc to screen scaling
 	*/
-	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height/480.0);
-	float ds2s_offs_x  = is_rtt ? 0 : ((screen_width-dc2s_scale_h*640)/2);
-
-	//-1 -> too much to left
-	gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x);
-	gl4ShaderUniforms.scale_coefs[1] = (is_rtt ? 2 : -2) / dc_height;
-	gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
-	gl4ShaderUniforms.scale_coefs[3] = is_rtt ? 1 : -1;
 
 	int rendering_width;
 	int rendering_height;
 	if (is_rtt)
 	{
 		int scaling = settings.rend.RenderToTextureBuffer ? 1 : settings.rend.RenderToTextureUpscale;
-		resize(dc_width * scaling, dc_height * scaling);
-		rendering_width = dc_width * scaling;
-		rendering_height = dc_height * scaling;
+		rendering_width = matrices.GetDreamcastViewport().x * scaling;
+		rendering_height = matrices.GetDreamcastViewport().y * scaling;
 	}
 	else
 	{
@@ -672,11 +609,8 @@ static bool RenderFrame()
 		rendering_height = screen_height;
 	}
 	resize(rendering_width, rendering_height);
-	
+
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
-
-	DEBUG_LOG(RENDERER, "scale: %f, %f, %f, %f", ShaderUniforms.scale_coefs[0], ShaderUniforms.scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
-
 
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
@@ -689,38 +623,36 @@ static bool RenderFrame()
 	gl4ShaderUniforms.ps_FOG_COL_RAM[1]=fog_colram_bgra [1]/255.0f;
 	gl4ShaderUniforms.ps_FOG_COL_RAM[2]=fog_colram_bgra [0]/255.0f;
 
-
 	//Fog density constant
 	u8* fog_density=(u8*)&FOG_DENSITY;
 	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 	s32 fog_den_exp=(s8)fog_density[0];
-   gl4ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp) * settings.rend.ExtraDepthScale;
+	gl4ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp) * settings.rend.ExtraDepthScale;
 
-   gl4ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-   gl4ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-   gl4ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-   gl4ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
-	
-   gl4ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-   gl4ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-   gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-   gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
+	gl4ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
+	gl4ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
+	gl4ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
+	gl4ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
 
-   if (fog_needs_update)
-   {
-	  fog_needs_update=false;
-      UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
-   }
-   if (palette_updated)
-   {
-      UpdatePaletteTexture(GL_TEXTURE6);
-      palette_updated = false;
-   }
+	gl4ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
+	gl4ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
+	gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
+	gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
+
+	if (fog_needs_update)
+	{
+		fog_needs_update=false;
+		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
+	}
+	if (palette_updated)
+	{
+		UpdatePaletteTexture(GL_TEXTURE6);
+		palette_updated = false;
+	}
 
 	glcache.UseProgram(gl4.modvol_shader.program);
 
-	glUniform4fv(gl4.modvol_shader.scale, 1, gl4ShaderUniforms.scale_coefs);
-	glUniform1f(gl4.modvol_shader.extra_depth_scale, gl4ShaderUniforms.extra_depth_scale);
+	glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
@@ -756,141 +688,155 @@ static bool RenderFrame()
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 		case 6: //0x6   8888 ARGB 32 bit
 			WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
-         return false;
+			return false;
 		case 7: //7     invalid
 			die("7 is not valid");
-			break;
+			return false;
 		}
 		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
  				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
-      output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
+		output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, (u32)lroundf(matrices.GetDreamcastViewport().x),
+				(u32)lroundf(matrices.GetDreamcastViewport().y), channels, format);
 	}
-   else
-   {
-      glViewport(0, 0, screen_width, screen_height);
-      output_fbo = hw_render.get_current_framebuffer();
-   }
+	else
+	{
+		glViewport(0, 0, screen_width, screen_height);
+		output_fbo = hw_render.get_current_framebuffer();
+	}
 
-   glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_SCISSOR_TEST);
 
 	//move vertex to gpu
-   if (!pvrrc.isRenderFramebuffer)
-   {
-      //Main VBO
-	   glBindVertexArray(gl4.vbo.main_vao);
-	   glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
-	   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
+	if (!pvrrc.isRenderFramebuffer)
+	{
+		//Main VBO
+		glBindVertexArray(gl4.vbo.main_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
 
-      glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
+		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
 
-      glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW); glCheck();
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW); glCheck();
 
-      //Modvol VBO
-      if (pvrrc.modtrig.used())
-	   {
-         glBindVertexArray(gl4.vbo.modvol_vao);
-         glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
-         glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
-      }
+		//Modvol VBO
+		if (pvrrc.modtrig.used())
+		{
+			glBindVertexArray(gl4.vbo.modvol_vao);
+			glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
+			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
+		}
 
-      // TR PolyParam data
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
-      glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
-      glCheck();
+		// TR PolyParam data
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
+		glCheck();
 
-      //not all scaling affects pixel operations, scale to adjust for that
-      scale_x *= scissoring_scale_x;
-
-      bool wide_screen_on = !is_rtt && settings.rend.WideScreen
-   			&& pvrrc.fb_X_CLIP.min == 0
-   			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scale_x) == 640L
-   			&& pvrrc.fb_Y_CLIP.min == 0
-   			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
-
-      if (!wide_screen_on)
-      {
-         float width  = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
-         float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-         float min_x  = pvrrc.fb_X_CLIP.min / scale_x;
-         float min_y  = pvrrc.fb_Y_CLIP.min / scale_y;
-         if (!is_rtt)
-         {
-				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor > 0x400)
-				{
-					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= (float)SCALER_CTL.vscalefactor / 0x400;
-					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
-				}
-            // Add x offset for aspect ratio > 4/3
-            min_x = min_x * dc2s_scale_h + ds2s_offs_x;
-            // Invert y coordinates when rendering to screen
-            min_y = screen_height - (min_y + height) * dc2s_scale_h;
-            width *= dc2s_scale_h;
-            height *= dc2s_scale_h;
-
-			if (ds2s_offs_x > 0)
+		if (is_rtt || !settings.rend.WideScreen || matrices.IsClipped())
+		{
+			float width;
+			float height;
+			float min_x;
+			float min_y;
+			if (!is_rtt)
 			{
-			   float rounded_offs_x = ds2s_offs_x + 0.5f;
+				glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
+				glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
+								   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+				clip_min = scissor_mat * clip_min;
+				clip_dim = scissor_mat * clip_dim;
 
-			   glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-			   glcache.Enable(GL_SCISSOR_TEST);
-			   glScissor(0, 0, rounded_offs_x, screen_height);
-			   glClear(GL_COLOR_BUFFER_BIT);
-			   glScissor(screen_width - rounded_offs_x, 0, rounded_offs_x, screen_height);
-			   glClear(GL_COLOR_BUFFER_BIT);
+				min_x = clip_min[0];
+				min_y = clip_min[1];
+				width = clip_dim[0];
+				height = clip_dim[1];
+				if (width < 0)
+				{
+					min_x += width;
+					width = -width;
+				}
+				if (height < 0)
+				{
+					min_y += height;
+					height = -height;
+				}
+				if (matrices.GetSidebarWidth() > 0)
+				{
+					float rounded_offs_x = matrices.GetSidebarWidth() + 0.5f;
+
+					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+					glcache.Enable(GL_SCISSOR_TEST);
+					glcache.Scissor(0, 0, rounded_offs_x, screen_height);
+					glClear(GL_COLOR_BUFFER_BIT);
+					glcache.Scissor(screen_width - rounded_offs_x, 0, rounded_offs_x, screen_height);
+					glClear(GL_COLOR_BUFFER_BIT);
+				}
 			}
-         }
-         else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
-         {
-            min_x *= settings.rend.RenderToTextureUpscale;
-            min_y *= settings.rend.RenderToTextureUpscale;
-            width *= settings.rend.RenderToTextureUpscale;
-            height *= settings.rend.RenderToTextureUpscale;
-         }
+			else
+			{
+				width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+				height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+				min_x = pvrrc.fb_X_CLIP.min;
+				min_y = pvrrc.fb_Y_CLIP.min;
+				if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+				{
+					min_x *= settings.rend.RenderToTextureUpscale;
+					min_y *= settings.rend.RenderToTextureUpscale;
+					width *= settings.rend.RenderToTextureUpscale;
+					height *= settings.rend.RenderToTextureUpscale;
+				}
+			}
 
-         glScissor((GLint)lroundf(min_x), (GLint)lroundf(min_y), (GLsizei)lroundf(width), (GLsizei)lroundf(height));
-         glcache.Enable(GL_SCISSOR_TEST);
-      }
+			gl4ShaderUniforms.base_clipping.enabled = true;
+			gl4ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
+			gl4ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
+			gl4ShaderUniforms.base_clipping.width = (int)lroundf(width);
+			gl4ShaderUniforms.base_clipping.height = (int)lroundf(height);
+			glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y,
+					gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
+			glcache.Enable(GL_SCISSOR_TEST);
+		}
+		else
+		{
+			gl4ShaderUniforms.base_clipping.enabled = false;
+		}
 
-      //restore scale_x
-      scale_x /= scissoring_scale_x;
-   	if (settings.rend.PowerVR2Filter && !is_rtt)
-   	{
-   		gl4DrawStrips(postProcessor.GetFramebuffer(), rendering_width, rendering_height);
-   		postProcessor.Render(output_fbo);
-   	}
-   	else
-   		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
-   }
-   else
-   {
-   	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
-   	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-      glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-      glClear(GL_COLOR_BUFFER_BIT);
-      gl4DrawFramebuffer(dc_width, dc_height);
-   }
+		if (settings.rend.PowerVR2Filter && !is_rtt)
+		{
+			gl4DrawStrips(postProcessor.GetFramebuffer(), rendering_width, rendering_height);
+			postProcessor.Render(output_fbo);
+		}
+		else
+			gl4DrawStrips(output_fbo, rendering_width, rendering_height);
+	}
+	else
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		gl4DrawFramebuffer(640.f, 480.f);
+	}
 
 
-   if (!is_rtt)
-   {
-   	if (settings.System == DC_PLATFORM_DREAMCAST)
-   	{
+	if (!is_rtt)
+	{
+		if (settings.System == DC_PLATFORM_DREAMCAST)
+		{
 			for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 				if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
 					gl4DrawVmuTexture(vmu_screen_number);
-   	}
+		}
 
 		for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-				gl4DrawGunCrosshair(lightgun_port);
-   }
+			gl4DrawGunCrosshair(lightgun_port);
+	}
 
 	KillTex = false;
-   
-   if (is_rtt)
-      ReadRTTBuffer();
 
-   glBindVertexArray(0);
+	if (is_rtt)
+		ReadRTTBuffer();
+
+	glBindVertexArray(0);
 
 	return !is_rtt;
 }
@@ -952,45 +898,45 @@ void reshapeABuffer(int w, int h);
 
 struct gl4rend : Renderer
 {
-   bool Init() override
-   {
-      findGLVersion();
-      if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
-      {
-         WARN_LOG(RENDERER, "Warning: OpenGL %d.%d doesn't support per-pixel sorting. 4.3 required", gl.gl_major, gl.gl_minor);
-         return false;
-      }
+	bool Init() override
+	{
+		findGLVersion();
+		if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
+		{
+			WARN_LOG(RENDERER, "Warning: OpenGL %d.%d doesn't support per-pixel sorting. 4.3 required", gl.gl_major, gl.gl_minor);
+			return false;
+		}
 
-	  if (!gl_create_resources())
-         return false;
+		if (!gl_create_resources())
+			return false;
 
-      glcache.DisableCache();
+		glcache.DisableCache();
 
-//    glEnable(GL_DEBUG_OUTPUT);
-//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-//    glDebugMessageCallback(gl_DebugOutput, NULL);
-//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		//    glEnable(GL_DEBUG_OUTPUT);
+		//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		//    glDebugMessageCallback(gl_DebugOutput, NULL);
+		//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
-      initABuffer();
+		initABuffer();
 
 #ifdef HAVE_TEXUPSCALE
-      if (settings.rend.TextureUpscale > 1)
-      {
-         // Trick to preload the tables used by xBRZ
-         u32 src[] { 0x11111111, 0x22222222, 0x33333333, 0x44444444 };
-         u32 dst[16];
-         UpscalexBRZ(2, src, dst, 2, 2, false);
-      }
+		if (settings.rend.TextureUpscale > 1)
+		{
+			// Trick to preload the tables used by xBRZ
+			u32 src[] { 0x11111111, 0x22222222, 0x33333333, 0x44444444 };
+			u32 dst[16];
+			UpscalexBRZ(2, src, dst, 2, 2, false);
+		}
 #endif
-      fog_needs_update = true;
-      TexCache.Clear();
+		fog_needs_update = true;
+		TexCache.Clear();
 
-      if (settings.rend.PowerVR2Filter)
-      	postProcessor.Init();
+		if (settings.rend.PowerVR2Filter)
+			postProcessor.Init();
 
-      return true;
-   }
-   void Resize(int w, int h) override
+		return true;
+	}
+	void Resize(int w, int h) override
 	{
 		screen_width=w;
 		screen_height=h;
@@ -1005,68 +951,68 @@ struct gl4rend : Renderer
 		memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
 
 		termABuffer();
-	   if (stencilTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &stencilTexId);
-		  stencilTexId = 0;
-	   }
-	   if (depthTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthTexId);
-		  depthTexId = 0;
-	   }
-	   if (opaqueTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &opaqueTexId);
-		  opaqueTexId = 0;
-	   }
-	   if (depthSaveTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthSaveTexId);
-		  depthSaveTexId = 0;
-	   }
-	   if (geom_fbo != 0)
-	   {
-	   	glDeleteFramebuffers(1, &geom_fbo);
-	   	geom_fbo = 0;
-	   }
+		if (stencilTexId != 0)
+		{
+			glcache.DeleteTextures(1, &stencilTexId);
+			stencilTexId = 0;
+		}
+		if (depthTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthTexId);
+			depthTexId = 0;
+		}
+		if (opaqueTexId != 0)
+		{
+			glcache.DeleteTextures(1, &opaqueTexId);
+			opaqueTexId = 0;
+		}
+		if (depthSaveTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthSaveTexId);
+			depthSaveTexId = 0;
+		}
+		if (geom_fbo != 0)
+		{
+			glDeleteFramebuffers(1, &geom_fbo);
+			geom_fbo = 0;
+		}
 		if (texSamplers[0] != 0)
 		{
 			glDeleteSamplers(2, texSamplers);
 			texSamplers[0] = texSamplers[1] = 0;
 		}
-	   if (depth_fbo != 0)
-	   {
-	   	glDeleteFramebuffers(1, &depth_fbo);
-	   	depth_fbo = 0;
-	   }
+		if (depth_fbo != 0)
+		{
+			glDeleteFramebuffers(1, &depth_fbo);
+			depth_fbo = 0;
+		}
 		TexCache.Clear();
 
-	   gl_term();
-   }
+		gl_term();
+	}
 
 	bool Process(TA_context* ctx) override
-   {
+	{
 #if !defined(TARGET_NO_THREADS)
-      if (!settings.rend.ThreadedRendering)
+		if (!settings.rend.ThreadedRendering)
 #endif
-         glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
-      return ProcessFrame(ctx);
-   }
+			glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
+		return ProcessFrame(ctx);
+	}
 	bool Render() override
-   {
-      bool ret = RenderFrame();
+	{
+		bool ret = RenderFrame();
 #if !defined(TARGET_NO_THREADS)
-      if (!settings.rend.ThreadedRendering)
+		if (!settings.rend.ThreadedRendering)
 #endif
-    	  glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
-      return ret;
-   }
+			glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+		return ret;
+	}
 
 	void Present() override
-   {
-      co_dc_yield();
-   }
+	{
+		co_dc_yield();
+	}
 
 	virtual u64 GetTexture(TSP tsp, TCW tcw) override
 	{

@@ -1,4 +1,6 @@
 DEBUG         := 0
+DEBUG_ASAN    := 0
+DEBUG_UBSAN   := 0
 NO_REND       := 0
 HAVE_GL       := 1
 HAVE_GL2      := 0
@@ -885,6 +887,19 @@ include Makefile.common
 
 ifeq ($(WITH_DYNAREC), x86)
 	HAVE_LTCG = 0
+endif
+
+ifeq ($(DEBUG_ASAN),1)
+	DEBUG           = 1
+	DEBUG_UBSAN     = 0
+	LDFLAGS        += -lasan -fsanitize=address
+	CFLAGS         += -fsanitize=address
+endif
+
+ifeq ($(DEBUG_UBSAN),1)
+	DEBUG           = 1
+	CFLAGS         += -fsanitize=undefined
+	LDFLAGS        += -lubsan -fsanitize=undefined
 endif
 
 ifeq ($(DEBUG),1)

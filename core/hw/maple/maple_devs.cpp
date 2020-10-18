@@ -602,38 +602,36 @@ struct maple_sega_vmu: maple_base
 	}
 	virtual u32 dma(u32 cmd)
 	{
-		//printf("maple_sega_vmu::dma Called for port 0x%X, Command %d\n",device_instance->port,Command);
+		//printf("maple_sega_vmu::dma Called for port %d:%d, Command %d\n", bus_id, bus_port, cmd);
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
-			{
-				//caps
-				//4
-				w32(MFID_1_Storage | MFID_2_LCD | MFID_3_Clock);
+			//caps
+			//4
+			w32(MFID_1_Storage | MFID_2_LCD | MFID_3_Clock);
 
-				//struct data
-				//3*4
-				w32( 0x403f7e7e); // for clock
-				w32( 0x00100500); // for LCD
-				w32( 0x00410f00); // for storage
-				//1  area code
-				w8(0xFF);
-				//1  direction
-				w8(0);
-				//30
-				wstr(maple_sega_vmu_name,30);
+			//struct data
+			//3*4
+			w32( 0x403f7e7e); // for clock
+			w32( 0x00100500); // for LCD
+			w32( 0x00410f00); // for storage
+			//1  area code
+			w8(0xFF);
+			//1  direction
+			w8(0);
+			//30
+			wstr(maple_sega_vmu_name,30);
 
-				//60
-				wstr(maple_sega_brand,60);
+			//60
+			wstr(maple_sega_brand,60);
 
-				//2
-				w16(0x007c);
+			//2
+			w16(0x007c);	// 12.4 mA
 
-				//2
-				w16(0x0082);
+			//2
+			w16(0x0082);	// 13 mA
 
-				return MDRS_DeviceStatus;
-			}
+			return MDRS_DeviceStatus;
 
 			//in[0] is function used
 			//out[0] is function used
@@ -643,46 +641,43 @@ struct maple_sega_vmu: maple_base
 				switch(function)
 				{
 				case MFID_1_Storage:
-					{
-						w32(MFID_1_Storage);
-						
-						if (*(u16*)&flash_data[0xFF * 512 + 0x40] != 0xFF)
-						{
-							// Unformatted state: return predetermined media information
-							//total_size;
-							w16(0xff);
-							//partition_number;
-							w16(0);
-							//system_area_block;
-							w16(0xFF);
-							//fat_area_block;
-							w16(0xfe);
-							//number_fat_areas_block;
-							w16(1);
-							//file_info_block;
-							w16(0xfd);
-							//number_info_blocks;
-							w16(0xd);
-							//volume_icon;
-							w8(0);
-							//reserved1;
-							w8(0);
-							//save_area_block;
-							w16(0xc8);
-							//number_of_save_blocks;
-							w16(0x1f);
-							//reserverd0 (something for execution files?)
-							w32(0);
-						}
-						else
-						{
-							// Get data from the vmu system area (block 0xFF)
-							wptr(flash_data + 0xFF * 512 + 0x40, 24);
-						}
+					DEBUG_LOG(MAPLE, "VMU %s GetMediaInfo storage", logical_port);
+					w32(MFID_1_Storage);
 
-						return MDRS_DataTransfer;//data transfer
+					if (*(u16*)&flash_data[0xFF * 512 + 0x40] != 0xFF)
+					{
+						// Unformatted state: return predetermined media information
+						//total_size;
+						w16(0xff);
+						//partition_number;
+						w16(0);
+						//system_area_block;
+						w16(0xFF);
+						//fat_area_block;
+						w16(0xfe);
+						//number_fat_areas_block;
+						w16(1);
+						//file_info_block;
+						w16(0xfd);
+						//number_info_blocks;
+						w16(0xd);
+						//volume_icon;
+						w8(0);
+						//reserved1;
+						w8(0);
+						//save_area_block;
+						w16(0xc8);
+						//number_of_save_blocks;
+						w16(0x1f);
+						//reserverd0 (something for execution files?)
+						w32(0);
 					}
-					break;
+					else
+					{
+						// Get data from the vmu system area (block 0xFF)
+						wptr(flash_data + 0xFF * 512 + 0x40, 24);
+					}
+					return MDRS_DataTransfer;//data transfer
 
 				case MFID_2_LCD:
 					{
@@ -704,7 +699,6 @@ struct maple_sega_vmu: maple_base
 							return MDRS_DataTransfer;
 						}
 					}
-					break;
 
 				default:
 					INFO_LOG(MAPLE, "VMU: MDCF_GetMediaInfo -> Bad function used |%08X|, returning -2", function);
@@ -731,62 +725,57 @@ struct maple_sega_vmu: maple_base
 							DEBUG_LOG(MAPLE, "BLOCK READ ERROR");
 							Block&=255;
 						}
+						else
+							DEBUG_LOG(MAPLE, "VMU %s block read: Block %d addr %x len %d", logical_port, Block, Block*512, 512);
 						wptr(flash_data+Block*512,512);
-
-						return MDRS_DataTransfer;//data transfer
 					}
-					break;
+					return MDRS_DataTransfer;//data transfer
 
 				case MFID_2_LCD:
-					{
-						w32(MFID_2_LCD);
-						w32(r32()); // mnn ?
-						wptr(flash_data,192);
-						
-						return MDRS_DataTransfer;//data transfer
-					}
-					break;
+					DEBUG_LOG(MAPLE, "VMU %s read LCD", logical_port);
+					w32(MFID_2_LCD);
+					w32(r32()); // mnn ?
+					wptr(flash_data,192);
+
+					return MDRS_DataTransfer;//data transfer
 
 				case MFID_3_Clock:
+					if (r32()!=0)
 					{
-						if (r32()!=0)
-						{
-							INFO_LOG(MAPLE, "VMU: Block read: MFID_3_Clock : invalid params");
-							return MDRE_TransmitAgain; //invalid params
-						}
-						else
-						{
-							w32(MFID_3_Clock);
-
-							time_t now;
-							time(&now);
-							tm* timenow=localtime(&now);
-							
-							u8* timebuf=dma_buffer_out;
-
-							w8((timenow->tm_year+1900)%256);
-							w8((timenow->tm_year+1900)/256);
-
-							w8(timenow->tm_mon+1);
-							w8(timenow->tm_mday);
-
-							w8(timenow->tm_hour);
-							w8(timenow->tm_min);
-							w8(timenow->tm_sec);
-							w8(0);
-
-							DEBUG_LOG(MAPLE, "VMU: CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!",
-									timebuf[0] + timebuf[1] * 256,
-									timebuf[2],
-									timebuf[3],
-									timebuf[4],
-									timebuf[5],
-									timebuf[6]);
-
-							return MDRS_DataTransfer;//transfer reply ...
-						}
+						INFO_LOG(MAPLE, "VMU: Block read: MFID_3_Clock : invalid params");
+						return MDRE_TransmitAgain; //invalid params
 					}
-					break;
+					else
+					{
+						w32(MFID_3_Clock);
+
+						time_t now;
+						time(&now);
+						tm* timenow=localtime(&now);
+
+						u8* timebuf=dma_buffer_out;
+
+						w8((timenow->tm_year+1900)%256);
+						w8((timenow->tm_year+1900)/256);
+
+						w8(timenow->tm_mon+1);
+						w8(timenow->tm_mday);
+
+						w8(timenow->tm_hour);
+						w8(timenow->tm_min);
+						w8(timenow->tm_sec);
+						w8(0);
+
+						DEBUG_LOG(MAPLE, "VMU: CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!",
+								timebuf[0] + timebuf[1] * 256,
+								timebuf[2],
+								timebuf[3],
+								timebuf[4],
+								timebuf[5],
+								timebuf[6]);
+
+						return MDRS_DataTransfer;//transfer reply ...
+					}
 
 				default:
 					INFO_LOG(MAPLE, "VMU: cmd MDCF_BlockRead -> Bad function |%08X| used, returning -2", function);
@@ -803,11 +792,15 @@ struct maple_sega_vmu: maple_base
 					{
 						u32 bph=r32();
 						u32 Block = (SWAP32(bph))&0xffff;
-						u32 Phase = ((SWAP32(bph))>>16)&0xff; 
+						u32 Phase = ((SWAP32(bph))>>16)&0xff;
 						u32 write_adr=Block*512+Phase*(512/4);
 						u32 write_len=r_count();
+						DEBUG_LOG(MAPLE, "VMU %s block write: Block %d Phase %d addr %x len %d", logical_port, Block, Phase, write_adr, write_len);
 						if (write_adr + write_len > sizeof(flash_data))
+						{
+							INFO_LOG(MAPLE, "Failed to write VMU %s: overflow", logical_port);
 							return MDRE_TransmitAgain; //invalid params
+						}
 						rptr(&flash_data[write_adr],write_len);
 
 						if (file)
@@ -822,14 +815,13 @@ struct maple_sega_vmu: maple_base
 						}
 						return MDRS_DeviceReply;//just ko
 					}
-					break;
-					
 
 					case MFID_2_LCD:
 					{
-						u32 wat=r32();
+						DEBUG_LOG(MAPLE, "VMU %s LCD write", logical_port);
+						r32();
 						rptr(lcd_data,192);
-						
+
 						u8 white=0xff,black=0x00;
 
 						for(int y=0;y<32;++y)
@@ -850,12 +842,13 @@ struct maple_sega_vmu: maple_base
 						push_vmu_screen(lcd_data_decoded);
 						return  MDRS_DeviceReply;//just ko
 					}
-					break;
 
 					case MFID_3_Clock:
-					{
 						if (r32()!=0 || r_count()!=8)
+						{
+							INFO_LOG(MAPLE, "VMU %s clock write invalid params: rcount %d", logical_port, r_count());
 							return MDRE_TransmitAgain;	//invalid params ...
+						}
 						else
 						{
 							u8 timebuf[8];
@@ -864,14 +857,10 @@ struct maple_sega_vmu: maple_base
 									timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
 							return  MDRS_DeviceReply;//ok !
 						}
-					}
-					break;
 
 					default:
-					{
 						INFO_LOG(MAPLE, "VMU: command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction");
 						return  MDRE_UnknownFunction;//bad function
-					}
 				}
 			}
 			break;

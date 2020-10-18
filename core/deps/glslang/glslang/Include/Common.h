@@ -37,20 +37,9 @@
 #ifndef _COMMON_INCLUDED_
 #define _COMMON_INCLUDED_
 
-#include <set>
-#include <unordered_set>
-#include <vector>
-#include <map>
-#include <unordered_map>
-#include <list>
-#include <algorithm>
-#include <string>
-#include <cstdio>
-#include <cstdlib>
-#include <cassert>
+#include <sstream>
 
 #if defined(__ANDROID__) || (defined(_MSC_VER) && _MSC_VER < 1700)
-#include <sstream>
 namespace std {
 template<typename T>
 std::string to_string(const T& val) {
@@ -103,6 +92,18 @@ std::string to_string(const T& val) {
     #pragma warning(disable : 4514) // unused inline method
     #pragma warning(disable : 4201) // nameless union
 #endif
+
+#include <set>
+#include <unordered_set>
+#include <vector>
+#include <map>
+#include <unordered_map>
+#include <list>
+#include <algorithm>
+#include <string>
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
 
 #include "PoolAlloc.h"
 

@@ -2,7 +2,8 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
-// Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) 2015-2019 Google, Inc.
+// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
 //
@@ -38,7 +39,7 @@
 
 //
 // Do not edit the .y file, only edit the .m4 file.
-// The .y bison file is not a source file, it is a derivitive of the .m4 file.
+// The .y bison file is not a source file, it is a derivative of the .m4 file.
 // The m4 file needs to be processed by m4 to generate the .y bison file.
 //
 // Code sandwiched between a pair:
@@ -49,7 +50,7 @@
 //      ...
 //    GLSLANG_WEB_EXCLUDE_OFF
 //
-// Will be exluded from the grammar when m4 is executed as:
+// Will be excluded from the grammar when m4 is executed as:
 //
 //    m4 -P -DGLSLANG_WEB
 //
@@ -166,8 +167,12 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> SAMPLER2DARRAYSHADOW ISAMPLER2D ISAMPLER3D ISAMPLERCUBE
 %token <lex> ISAMPLER2DARRAY USAMPLER2D USAMPLER3D
 %token <lex> USAMPLERCUBE USAMPLER2DARRAY
-%token <lex> SAMPLERCUBEARRAY SAMPLERCUBEARRAYSHADOW
-%token <lex> ISAMPLERCUBEARRAY USAMPLERCUBEARRAY
+
+// separate image/sampler
+%token <lex> SAMPLER SAMPLERSHADOW
+%token <lex>  TEXTURE2D  TEXTURE3D  TEXTURECUBE  TEXTURE2DARRAY
+%token <lex> ITEXTURE2D ITEXTURE3D ITEXTURECUBE ITEXTURE2DARRAY
+%token <lex> UTEXTURE2D UTEXTURE3D UTEXTURECUBE UTEXTURE2DARRAY
 
 
 
@@ -200,9 +205,13 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> F64MAT4X2 F64MAT4X3 F64MAT4X4
 %token <lex> ATOMIC_UINT
 %token <lex> ACCSTRUCTNV
+%token <lex> ACCSTRUCTEXT
+%token <lex> RAYQUERYEXT
 %token <lex> FCOOPMATNV ICOOPMATNV UCOOPMATNV
 
 // combined image/sampler
+%token <lex> SAMPLERCUBEARRAY SAMPLERCUBEARRAYSHADOW
+%token <lex> ISAMPLERCUBEARRAY USAMPLERCUBEARRAY
 %token <lex> SAMPLER1D SAMPLER1DARRAY SAMPLER1DARRAYSHADOW ISAMPLER1D SAMPLER1DSHADOW
 %token <lex> SAMPLER2DRECT SAMPLER2DRECTSHADOW ISAMPLER2DRECT USAMPLER2DRECT
 %token <lex> SAMPLERBUFFER ISAMPLERBUFFER USAMPLERBUFFER
@@ -233,18 +242,12 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> F16IMAGECUBE F16IMAGE1DARRAY F16IMAGE2DARRAY F16IMAGECUBEARRAY
 %token <lex> F16IMAGEBUFFER F16IMAGE2DMS F16IMAGE2DMSARRAY
 
-// pure sampler
-%token <lex> SAMPLER SAMPLERSHADOW
-
 // texture without sampler
-%token <lex> TEXTURE1D TEXTURE2D TEXTURE3D TEXTURECUBE
-%token <lex> TEXTURE1DARRAY TEXTURE2DARRAY
-%token <lex> ITEXTURE1D ITEXTURE2D ITEXTURE3D ITEXTURECUBE
-%token <lex> ITEXTURE1DARRAY ITEXTURE2DARRAY UTEXTURE1D UTEXTURE2D UTEXTURE3D
-%token <lex> UTEXTURECUBE UTEXTURE1DARRAY UTEXTURE2DARRAY
+%token <lex> TEXTURECUBEARRAY ITEXTURECUBEARRAY UTEXTURECUBEARRAY
+%token <lex> TEXTURE1D ITEXTURE1D UTEXTURE1D
+%token <lex> TEXTURE1DARRAY ITEXTURE1DARRAY UTEXTURE1DARRAY
 %token <lex> TEXTURE2DRECT ITEXTURE2DRECT UTEXTURE2DRECT
 %token <lex> TEXTUREBUFFER ITEXTUREBUFFER UTEXTUREBUFFER
-%token <lex> TEXTURECUBEARRAY ITEXTURECUBEARRAY UTEXTURECUBEARRAY
 %token <lex> TEXTURE2DMS ITEXTURE2DMS UTEXTURE2DMS
 %token <lex> TEXTURE2DMSARRAY ITEXTURE2DMSARRAY UTEXTURE2DMSARRAY
 
@@ -263,6 +266,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> AND_OP OR_OP XOR_OP MUL_ASSIGN DIV_ASSIGN ADD_ASSIGN
 %token <lex> MOD_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 %token <lex> SUB_ASSIGN
+%token <lex> STRING_LITERAL
 
 %token <lex> LEFT_PAREN RIGHT_PAREN LEFT_BRACKET RIGHT_BRACKET LEFT_BRACE RIGHT_BRACE DOT
 %token <lex> COMMA COLON EQUAL SEMICOLON BANG DASH TILDE PLUS STAR SLASH PERCENT
@@ -277,7 +281,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> CENTROID IN OUT INOUT
 %token <lex> STRUCT VOID WHILE
 %token <lex> BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
-%token <lex> UNIFORM SHARED
+%token <lex> UNIFORM SHARED BUFFER
 %token <lex> FLAT SMOOTH LAYOUT
 
 
@@ -285,9 +289,10 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> INT64CONSTANT UINT64CONSTANT
 %token <lex> SUBROUTINE DEMOTE
 %token <lex> PAYLOADNV PAYLOADINNV HITATTRNV CALLDATANV CALLDATAINNV
-%token <lex> PATCH SAMPLE BUFFER NONUNIFORM
+%token <lex> PAYLOADEXT PAYLOADINEXT HITATTREXT CALLDATAEXT CALLDATAINEXT
+%token <lex> PATCH SAMPLE NONUNIFORM
 %token <lex> COHERENT VOLATILE RESTRICT READONLY WRITEONLY DEVICECOHERENT QUEUEFAMILYCOHERENT WORKGROUPCOHERENT
-%token <lex> SUBGROUPCOHERENT NONPRIVATE
+%token <lex> SUBGROUPCOHERENT NONPRIVATE SHADERCALLCOHERENT
 %token <lex> NOPERSPECTIVE EXPLICITINTERPAMD PERVERTEXNV PERPRIMITIVENV PERVIEWNV PERTASKNV
 %token <lex> PRECISE
 
@@ -377,6 +382,9 @@ primary_expression
         $$ = parseContext.intermediate.addConstantUnion($1.b, $1.loc, true);
     }
 
+    | STRING_LITERAL {
+        $$ = parseContext.intermediate.addConstantUnion($1.string, $1.loc, true);
+    }
     | INT32CONSTANT {
         parseContext.explicitInt32Check($1.loc, "32-bit signed literal");
         $$ = parseContext.intermediate.addConstantUnion($1.i, $1.loc, true);
@@ -402,7 +410,9 @@ primary_expression
         $$ = parseContext.intermediate.addConstantUnion((unsigned short)$1.u, $1.loc, true);
     }
     | DOUBLECONSTANT {
-        parseContext.doubleCheck($1.loc, "double literal");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double literal");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double literal");
         $$ = parseContext.intermediate.addConstantUnion($1.d, EbtDouble, $1.loc, true);
     }
     | FLOAT16CONSTANT {
@@ -1360,7 +1370,6 @@ storage_qualifier
         $$.init($1.loc);
         $$.qualifier.storage = EvqUniform;
     }
-
     | SHARED {
         parseContext.globalCheck($1.loc, "shared");
         parseContext.profileRequires($1.loc, ECoreProfile | ECompatibilityProfile, 430, E_GL_ARB_compute_shader, "shared");
@@ -1374,6 +1383,7 @@ storage_qualifier
         $$.init($1.loc);
         $$.qualifier.storage = EvqBuffer;
     }
+
     | ATTRIBUTE {
         parseContext.requireStage($1.loc, EShLangVertex, "attribute");
         parseContext.checkDeprecated($1.loc, ECoreProfile, 130, "attribute");
@@ -1413,42 +1423,81 @@ storage_qualifier
     }
     | HITATTRNV {
         parseContext.globalCheck($1.loc, "hitAttributeNV");
-        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangIntersectNVMask | EShLangClosestHitNVMask
-            | EShLangAnyHitNVMask), "hitAttributeNV");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangIntersectMask | EShLangClosestHitMask
+            | EShLangAnyHitMask), "hitAttributeNV");
         parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_NV_ray_tracing, "hitAttributeNV");
         $$.init($1.loc);
-        $$.qualifier.storage = EvqHitAttrNV;
+        $$.qualifier.storage = EvqHitAttr;
+    }
+    | HITATTREXT {
+        parseContext.globalCheck($1.loc, "hitAttributeEXT");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangIntersectMask | EShLangClosestHitMask
+            | EShLangAnyHitMask), "hitAttributeEXT");
+        parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_EXT_ray_tracing, "hitAttributeNV");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqHitAttr;
     }
     | PAYLOADNV {
         parseContext.globalCheck($1.loc, "rayPayloadNV");
-        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangRayGenNVMask | EShLangClosestHitNVMask |
-            EShLangAnyHitNVMask | EShLangMissNVMask), "rayPayloadNV");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangRayGenMask | EShLangClosestHitMask |
+            EShLangAnyHitMask | EShLangMissMask), "rayPayloadNV");
         parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_NV_ray_tracing, "rayPayloadNV");
         $$.init($1.loc);
-        $$.qualifier.storage = EvqPayloadNV;
+        $$.qualifier.storage = EvqPayload;
+    }
+    | PAYLOADEXT {
+        parseContext.globalCheck($1.loc, "rayPayloadEXT");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangRayGenMask | EShLangClosestHitMask |
+            EShLangAnyHitMask | EShLangMissMask), "rayPayloadEXT");
+        parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_EXT_ray_tracing, "rayPayloadEXT");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqPayload;
     }
     | PAYLOADINNV {
         parseContext.globalCheck($1.loc, "rayPayloadInNV");
-        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangClosestHitNVMask |
-            EShLangAnyHitNVMask | EShLangMissNVMask), "rayPayloadInNV");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangClosestHitMask |
+            EShLangAnyHitMask | EShLangMissMask), "rayPayloadInNV");
         parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_NV_ray_tracing, "rayPayloadInNV");
         $$.init($1.loc);
-        $$.qualifier.storage = EvqPayloadInNV;
+        $$.qualifier.storage = EvqPayloadIn;
+    }
+    | PAYLOADINEXT {
+        parseContext.globalCheck($1.loc, "rayPayloadInEXT");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangClosestHitMask |
+            EShLangAnyHitMask | EShLangMissMask), "rayPayloadInEXT");
+        parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_EXT_ray_tracing, "rayPayloadInEXT");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqPayloadIn;
     }
     | CALLDATANV {
         parseContext.globalCheck($1.loc, "callableDataNV");
-        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangRayGenNVMask |
-            EShLangClosestHitNVMask | EShLangMissNVMask | EShLangCallableNVMask), "callableDataNV");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangRayGenMask |
+            EShLangClosestHitMask | EShLangMissMask | EShLangCallableMask), "callableDataNV");
         parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_NV_ray_tracing, "callableDataNV");
         $$.init($1.loc);
-        $$.qualifier.storage = EvqCallableDataNV;
+        $$.qualifier.storage = EvqCallableData;
+    }
+    | CALLDATAEXT {
+        parseContext.globalCheck($1.loc, "callableDataEXT");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangRayGenMask |
+            EShLangClosestHitMask | EShLangMissMask | EShLangCallableMask), "callableDataEXT");
+        parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_EXT_ray_tracing, "callableDataEXT");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqCallableData;
     }
     | CALLDATAINNV {
         parseContext.globalCheck($1.loc, "callableDataInNV");
-        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangCallableNVMask), "callableDataInNV");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangCallableMask), "callableDataInNV");
         parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_NV_ray_tracing, "callableDataInNV");
         $$.init($1.loc);
-        $$.qualifier.storage = EvqCallableDataInNV;
+        $$.qualifier.storage = EvqCallableDataIn;
+    }
+    | CALLDATAINEXT {
+        parseContext.globalCheck($1.loc, "callableDataInEXT");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangCallableMask), "callableDataInEXT");
+        parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_EXT_ray_tracing, "callableDataInEXT");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqCallableDataIn;
     }
     | COHERENT {
         $$.init($1.loc);
@@ -1478,6 +1527,11 @@ storage_qualifier
         $$.init($1.loc);
         parseContext.requireExtensions($1.loc, 1, &E_GL_KHR_memory_scope_semantics, "nonprivate");
         $$.qualifier.nonprivate = true;
+    }
+    | SHADERCALLCOHERENT {
+        $$.init($1.loc);
+        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_ray_tracing, "shadercallcoherent");
+        $$.qualifier.shadercallcoherent = true;
     }
     | VOLATILE {
         $$.init($1.loc);
@@ -1751,7 +1805,9 @@ type_specifier_nonarray
     }
 
     | DOUBLE {
-        parseContext.doubleCheck($1.loc, "double");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
     }
@@ -1811,19 +1867,25 @@ type_specifier_nonarray
         $$.basicType = EbtUint64;
     }
     | DVEC2 {
-        parseContext.doubleCheck($1.loc, "double vector");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double vector");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double vector");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setVector(2);
     }
     | DVEC3 {
-        parseContext.doubleCheck($1.loc, "double vector");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double vector");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double vector");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setVector(3);
     }
     | DVEC4 {
-        parseContext.doubleCheck($1.loc, "double vector");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double vector");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double vector");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setVector(4);
@@ -2027,73 +2089,97 @@ type_specifier_nonarray
         $$.setVector(4);
     }
     | DMAT2 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(2, 2);
     }
     | DMAT3 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(3, 3);
     }
     | DMAT4 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 4);
     }
     | DMAT2X2 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(2, 2);
     }
     | DMAT2X3 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(2, 3);
     }
     | DMAT2X4 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(2, 4);
     }
     | DMAT3X2 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(3, 2);
     }
     | DMAT3X3 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(3, 3);
     }
     | DMAT3X4 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(3, 4);
     }
     | DMAT4X2 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 2);
     }
     | DMAT4X3 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 3);
     }
     | DMAT4X4 {
-        parseContext.doubleCheck($1.loc, "double matrix");
+        parseContext.requireProfile($1.loc, ECoreProfile | ECompatibilityProfile, "double matrix");
+        if (! parseContext.symbolTable.atBuiltInLevel())
+            parseContext.doubleCheck($1.loc, "double matrix");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 4);
@@ -2316,7 +2402,15 @@ type_specifier_nonarray
     }
     | ACCSTRUCTNV {
        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-       $$.basicType = EbtAccStructNV;
+       $$.basicType = EbtAccStruct;
+    }
+    | ACCSTRUCTEXT {
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtAccStruct;
+    }
+    | RAYQUERYEXT {
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtRayQuery;
     }
     | ATOMIC_UINT {
         parseContext.vulkanRemoved($1.loc, "atomic counter types");
@@ -2354,6 +2448,16 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtFloat, EsdCube, false, true);
     }
+    | SAMPLER2DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.set(EbtFloat, Esd2D, true);
+    }
+    | SAMPLER2DARRAYSHADOW {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.set(EbtFloat, Esd2D, true, true);
+    }
 
     | SAMPLER1DSHADOW {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
@@ -2370,17 +2474,6 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtFloat, Esd1D, true, true);
     }
-
-    | SAMPLER2DARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.set(EbtFloat, Esd2D, true);
-    }
-    | SAMPLER2DARRAYSHADOW {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.set(EbtFloat, Esd2D, true, true);
-    }
     | SAMPLERCUBEARRAY {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
@@ -2391,7 +2484,6 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtFloat, EsdCube, true, true);
     }
-
     | F16SAMPLER1D {
         parseContext.float16OpaqueCheck($1.loc, "half float sampler", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
@@ -2491,30 +2583,11 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtInt, EsdCube);
     }
-
-    | ISAMPLER1DARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.set(EbtInt, Esd1D, true);
-    }
-
     | ISAMPLER2DARRAY {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtInt, Esd2D, true);
     }
-    | ISAMPLERCUBEARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.set(EbtInt, EsdCube, true);
-    }
-
-    | USAMPLER1D {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.set(EbtUint, Esd1D);
-    }
-
     | USAMPLER2D {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
@@ -2531,10 +2604,45 @@ type_specifier_nonarray
         $$.sampler.set(EbtUint, EsdCube);
     }
 
+    | ISAMPLER1DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.set(EbtInt, Esd1D, true);
+    }
+    | ISAMPLERCUBEARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.set(EbtInt, EsdCube, true);
+    }
+    | USAMPLER1D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.set(EbtUint, Esd1D);
+    }
     | USAMPLER1DARRAY {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtUint, Esd1D, true);
+    }
+    | USAMPLERCUBEARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.set(EbtUint, EsdCube, true);
+    }
+    | TEXTURECUBEARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtFloat, EsdCube, true);
+    }
+    | ITEXTURECUBEARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtInt, EsdCube, true);
+    }
+    | UTEXTURECUBEARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtUint, EsdCube, true);
     }
 
     | USAMPLER2DARRAY {
@@ -2542,10 +2650,75 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtUint, Esd2D, true);
     }
-    | USAMPLERCUBEARRAY {
+    | TEXTURE2D {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
-        $$.sampler.set(EbtUint, EsdCube, true);
+        $$.sampler.setTexture(EbtFloat, Esd2D);
+    }
+    | TEXTURE3D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtFloat, Esd3D);
+    }
+    | TEXTURE2DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtFloat, Esd2D, true);
+    }
+    | TEXTURECUBE {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtFloat, EsdCube);
+    }
+    | ITEXTURE2D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtInt, Esd2D);
+    }
+    | ITEXTURE3D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtInt, Esd3D);
+    }
+    | ITEXTURECUBE {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtInt, EsdCube);
+    }
+    | ITEXTURE2DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtInt, Esd2D, true);
+    }
+    | UTEXTURE2D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtUint, Esd2D);
+    }
+    | UTEXTURE3D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtUint, Esd3D);
+    }
+    | UTEXTURECUBE {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtUint, EsdCube);
+    }
+    | UTEXTURE2DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setTexture(EbtUint, Esd2D, true);
+    }
+    | SAMPLER {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setPureSampler(false);
+    }
+    | SAMPLERSHADOW {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setPureSampler(true);
     }
 
     | SAMPLER2DRECT {
@@ -2643,16 +2816,6 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtUint, Esd2D, true, false, true);
     }
-    | SAMPLER {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setPureSampler(false);
-    }
-    | SAMPLERSHADOW {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setPureSampler(true);
-    }
     | TEXTURE1D {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
@@ -2664,32 +2827,17 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtFloat16, Esd1D);
     }
-    | TEXTURE2D {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtFloat, Esd2D);
-    }
     | F16TEXTURE2D {
         parseContext.float16OpaqueCheck($1.loc, "half float texture", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtFloat16, Esd2D);
     }
-    | TEXTURE3D {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtFloat, Esd3D);
-    }
     | F16TEXTURE3D {
         parseContext.float16OpaqueCheck($1.loc, "half float texture", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtFloat16, Esd3D);
-    }
-    | TEXTURECUBE {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtFloat, EsdCube);
     }
     | F16TEXTURECUBE {
         parseContext.float16OpaqueCheck($1.loc, "half float texture", parseContext.symbolTable.atBuiltInLevel());
@@ -2708,21 +2856,11 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtFloat16, Esd1D, true);
     }
-    | TEXTURE2DARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtFloat, Esd2D, true);
-    }
     | F16TEXTURE2DARRAY {
         parseContext.float16OpaqueCheck($1.loc, "half float texture", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtFloat16, Esd2D, true);
-    }
-    | TEXTURECUBEARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtFloat, EsdCube, true);
     }
     | F16TEXTURECUBEARRAY {
         parseContext.float16OpaqueCheck($1.loc, "half float texture", parseContext.symbolTable.atBuiltInLevel());
@@ -2735,70 +2873,20 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtInt, Esd1D);
     }
-    | ITEXTURE2D {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtInt, Esd2D);
-    }
-    | ITEXTURE3D {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtInt, Esd3D);
-    }
-    | ITEXTURECUBE {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtInt, EsdCube);
-    }
     | ITEXTURE1DARRAY {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtInt, Esd1D, true);
-    }
-    | ITEXTURE2DARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtInt, Esd2D, true);
-    }
-    | ITEXTURECUBEARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtInt, EsdCube, true);
     }
     | UTEXTURE1D {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtUint, Esd1D);
     }
-    | UTEXTURE2D {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtUint, Esd2D);
-    }
-    | UTEXTURE3D {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtUint, Esd3D);
-    }
-    | UTEXTURECUBE {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtUint, EsdCube);
-    }
     | UTEXTURE1DARRAY {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.setTexture(EbtUint, Esd1D, true);
-    }
-    | UTEXTURE2DARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtUint, Esd2D, true);
-    }
-    | UTEXTURECUBEARRAY {
-        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtSampler;
-        $$.sampler.setTexture(EbtUint, EsdCube, true);
     }
     | TEXTURE2DRECT {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
@@ -3797,3 +3885,4 @@ single_attribute
 
 
 %%
+

@@ -110,7 +110,7 @@ GLSLANG_INCFLAGS = \
 					-I$(DEPS_DIR)/glslang
 
 GLSLANG_SOURCES_CXX = \
-					$(DEPS_DIR)/glslang/glslang/glslang.js.cpp \
+					$(DEPS_DIR)/glslang/glslang/OSDependent/Web/glslang.js.cpp \
 					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ParseContextBase.cpp \
 					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Versions.cpp \
 					$(DEPS_DIR)/glslang/glslang/MachineIndependent/RemoveTree.cpp \

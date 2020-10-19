@@ -450,10 +450,6 @@ void findGLVersion()
 			gl.single_channel_format = GL_ALPHA;
 		}
 	}
-	GLint ranges[2];
-	GLint precision;
-	glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
-	gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
 	gl.max_anisotropy = 1.f;
 #ifndef HAVE_OPENGLES2
 	if (gl.gl_major >= 3)

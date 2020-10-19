@@ -3,7 +3,7 @@
 #include <atomic>
 #include <libretro.h>
 #include <glsm/glsm.h>
-#include <glsym/glsym.h>
+#include <glsm/glsmsym.h>
 #include "rend/rend.h"
 #include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
@@ -109,7 +109,6 @@ struct gl_ctx
 	bool is_gles;
 	GLuint single_channel_format;
 	GLenum index_type;
-	bool highp_float_supported;
 	bool stencil_present;
 	f32 max_anisotropy;
 

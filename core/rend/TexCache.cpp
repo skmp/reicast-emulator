@@ -1,18 +1,20 @@
-#include <algorithm>
-#if defined(HAVE_TEXUPSCALE) && !defined(TARGET_NO_OPENMP)
-#include <omp.h>
-#endif
 #include "TexCache.h"
-#include "hw/pvr/pvr_regs.h"
+#include "CustomTexture.h"
+#ifdef HAVE_TEXUPSCALE
+#include "deps/xbrz/xbrz.h"
+#endif
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
 #include "hw/mem/vmem32.h"
 #include "hw/sh4/modules/mmu.h"
-#ifdef HAVE_TEXUPSCALE
-#include "deps/xbrz/xbrz.h"
+
+#include <algorithm>
+#include <mutex>
+#include <deps/xxhash/xxhash.h>
+
+#if defined(HAVE_TEXUPSCALE) && !defined(TARGET_NO_OPENMP)
+#include <omp.h>
 #endif
-#include "deps/xxhash/xxhash.h"
-#include "CustomTexture.h"
 
 u8* vq_codebook;
 u32 palette_index;
@@ -85,48 +87,48 @@ static OnLoad btt(&BuildTwiddleTables);
 
 void palette_update()
 {
-   if (!pal_needs_update)
-      return;
+	if (!pal_needs_update)
+		return;
 	pal_needs_update = false;
 	palette_updated = true;
 
-   switch(PAL_RAM_CTRL&3)
-   {
-      case 0:
-         for (int i=0;i<1024;i++)
-         {
-            palette16_ram[i] = ARGB1555(PALETTE_RAM[i]);
-            palette32_ram[i] = ARGB1555_32(PALETTE_RAM[i]);
-         }
-         break;
+	switch(PAL_RAM_CTRL&3)
+	{
+	case 0:
+		for (int i=0;i<1024;i++)
+		{
+			palette16_ram[i] = ARGB1555(PALETTE_RAM[i]);
+			palette32_ram[i] = ARGB1555_32(PALETTE_RAM[i]);
+		}
+		break;
 
-      case 1:
-         for (int i=0;i<1024;i++)
-         {
-            palette16_ram[i] = ARGB565(PALETTE_RAM[i]);
-            palette32_ram[i] = ARGB565_32(PALETTE_RAM[i]);
-         }
-         break;
+	case 1:
+		for (int i=0;i<1024;i++)
+		{
+			palette16_ram[i] = ARGB565(PALETTE_RAM[i]);
+			palette32_ram[i] = ARGB565_32(PALETTE_RAM[i]);
+		}
+		break;
 
-      case 2:
-         for (int i=0;i<1024;i++)
-         {
-            palette16_ram[i] = ARGB4444(PALETTE_RAM[i]);
-            palette32_ram[i] = ARGB4444_32(PALETTE_RAM[i]);
-         }
-         break;
+	case 2:
+		for (int i=0;i<1024;i++)
+		{
+			palette16_ram[i] = ARGB4444(PALETTE_RAM[i]);
+			palette32_ram[i] = ARGB4444_32(PALETTE_RAM[i]);
+		}
+		break;
 
-      case 3:
-         for (int i=0;i<1024;i++)
-         {
-            palette16_ram[i] = ARGB8888(PALETTE_RAM[i]);
-            palette32_ram[i] = ARGB8888_32(PALETTE_RAM[i]);
-         }
-         break;
-   }
-   for (int i = 0; i < 64; i++)
+	case 3:
+		for (int i=0;i<1024;i++)
+		{
+			palette16_ram[i] = ARGB8888(PALETTE_RAM[i]);
+			palette32_ram[i] = ARGB8888_32(PALETTE_RAM[i]);
+		}
+		break;
+	}
+	for (int i = 0; i < 64; i++)
 		pal_hash_16[i] = XXH32(&PALETTE_RAM[i << 4], 16 * 4, 7);
-   for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
 
@@ -137,10 +139,10 @@ VArray2 vram;  // vram 32-64b
 //
 void vramlock_list_remove(vram_block* block)
 {
-	u32 base = block->start/PAGE_SIZE;
-	u32 end  = block->end/PAGE_SIZE;
+	u32 base = block->start / PAGE_SIZE;
+	u32 end = block->end / PAGE_SIZE;
 
-	for (u32 i=base;i<=end;i++)
+	for (u32 i = base; i <= end; i++)
 	{
 		std::vector<vram_block*>& list = VramLocks[i];
 		for (auto& lock : list)
@@ -153,11 +155,10 @@ void vramlock_list_remove(vram_block* block)
  
 void vramlock_list_add(vram_block* block)
 {
-	u32 base = block->start/PAGE_SIZE;
-	u32 end = block->end/PAGE_SIZE;
+	u32 base = block->start / PAGE_SIZE;
+	u32 end = block->end / PAGE_SIZE;
 
-
-	for (u32 i=base;i<=end;i++)
+	for (u32 i = base; i <= end; i++)
 	{
 		std::vector<vram_block*>& list = VramLocks[i];
 		// If the list is empty then we need to protect vram, otherwise it's already been done
@@ -176,7 +177,7 @@ cMutex vramlist_lock;
 vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
 {
 	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
-
+ 
 	if (end_offset64>(VRAM_SIZE-1))
 	{
 		WARN_LOG(PVR, "vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin");
@@ -189,20 +190,20 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 		start_offset64=0;
 	}
 
+	
+
 	block->end=end_offset64;
 	block->start=start_offset64;
 	block->len=end_offset64-start_offset64+1;
 	block->userdata=userdata;
 	block->type=64;
 
-   {
-      vramlist_lock.Lock();
+	{
+		std::lock_guard<cMutex> lock(vramlist_lock);
 
-      // This also protects vram if needed
-      vramlock_list_add(block);
-
-      vramlist_lock.Unlock();
-   }
+		// This also protects vram if needed
+		vramlock_list_add(block);
+	}
 
 	return block;
 }
@@ -212,34 +213,31 @@ bool VramLockedWriteOffset(size_t offset)
 	if (offset >= VRAM_SIZE)
 		return false;
 
-   size_t addr_hash = offset/PAGE_SIZE;
-   std::vector<vram_block *>& list = VramLocks[addr_hash];
+	size_t addr_hash = offset / PAGE_SIZE;
+	std::vector<vram_block *>& list = VramLocks[addr_hash];
 
-   {
-      vramlist_lock.Lock();
+	{
+		std::lock_guard<cMutex> lock(vramlist_lock);
 
-      for (auto& lock : list)
-      {
-         if (lock != nullptr)
-         {
-            libPvr_LockedBlockWrite(lock, (u32)offset);
+		for (auto& lock : list)
+		{
+			if (lock != nullptr)
+			{
+				libPvr_LockedBlockWrite(lock, (u32)offset);
 
-            if (lock != nullptr)
-            {
-            	ERROR_LOG(PVR, "Error : pvr is supposed to remove lock");
-            	die("Invalid state");
-            }
-         }
-      }
-      list.clear();
+				if (lock != nullptr)
+				{
+					ERROR_LOG(PVR, "Error : pvr is supposed to remove lock");
+					die("Invalid state");
+				}
+			}
+		}
+		list.clear();
 
-      _vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
+		_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
+	}
 
-
-      vramlist_lock.Unlock();
-   }
-
-   return true;
+	return true;
 }
 
 bool VramLockedWrite(u8* address)
@@ -262,9 +260,8 @@ static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 
 void libCore_vramlock_Unlock_block(vram_block* block)
 {
-   vramlist_lock.Lock();
+	std::lock_guard<cMutex> lock(vramlist_lock);
 	libCore_vramlock_Unlock_block_wb(block);
-   vramlist_lock.Unlock();
 }
 
 #ifdef HAVE_TEXUPSCALE
@@ -336,8 +333,8 @@ static void deposterizeV(u32* data, u32* out, int w, int h, int l, int u) {
 #ifndef TARGET_NO_OPENMP
 static inline int getThreadCount()
 {
-   int tcount = omp_get_num_procs() - 1;
-   if (tcount < 1)
+	int tcount = omp_get_num_procs() - 1;
+	if (tcount < 1)
 		tcount = 1;
 	return std::min(tcount, (int)settings.pvr.MaxThreads);
 }
@@ -348,9 +345,9 @@ void parallelize(Func func, int start, int end)
 	int tcount = getThreadCount();
 #pragma omp parallel num_threads(tcount)
 	{
-      int num_threads = omp_get_num_threads();
+		int num_threads = omp_get_num_threads();
 		int thread = omp_get_thread_num();
-      int chunk = (end - start) / num_threads;
+		int chunk = (end - start) / num_threads;
 		func(start + chunk * thread,
 				num_threads == thread + 1 ? end
 						: (start + chunk * (thread + 1)));
@@ -379,7 +376,7 @@ void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool
 				xbrz_cfg, start, end);
 	}, 0, height);
 #else
-   xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
+	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
 #endif
 }
 
@@ -414,7 +411,7 @@ static const PvrTexInfo format[8] =
 	{"bumpmap", 16, TextureType::_4444,        texBMP_PL,   texBMP_TW,	 texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },      //bump map
 	{"pal4", 	4,	TextureType::_5551,		   nullptr,     texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, texPAL4PT_TW },	//pal4
 	{"pal8", 	8,	TextureType::_5551,		   nullptr,     texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, texPAL8PT_TW },	//pal8
-	{"ns/1555", 0},																														// Not supported (1555)
+	{"ns/1555", 0},	                                                                                                                                // Not supported (1555)
 };
 
 static const u32 VQMipPoint[11] =
@@ -453,7 +450,7 @@ static const TextureType PAL_TYPE[4] = {
 void BaseTextureCacheData::PrintTextureName()
 {
 	char str[512];
-	sprintf(str, "Texture: %s ", GetPixelFormatName());
+	sprintf(str, "Texture: %s", GetPixelFormatName());
 
 	if (tcw.VQ_Comp)
 		strcat(str, " VQ");
@@ -494,11 +491,10 @@ bool BaseTextureCacheData::Delete()
 
 	if (lock_block)
 	{
-		vramlist_lock.Lock();
+		std::lock_guard<cMutex> lock(vramlist_lock);
 		if (lock_block)
 			libCore_vramlock_Unlock_block_wb(lock_block);
 		lock_block = nullptr;
-		vramlist_lock.Unlock();
 	}
 
 	delete[] custom_image_data;
@@ -547,11 +543,9 @@ void BaseTextureCacheData::Create()
 		}
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-		int stride = 0;
+		int stride = w;
 		if (tcw.StrideSel)
 			stride = (TEXT_CONTROL & 31) * 32;
-      if (stride == 0)
-			stride = w;
 
 		//Call the format specific conversion code
 		texconv = tex->PL;
@@ -735,7 +729,7 @@ void BaseTextureCacheData::Update()
 
 #ifdef HAVE_TEXUPSCALE
 			// xBRZ scaling
-				if (textureUpscaling)
+			if (textureUpscaling)
 			{
 				PixelBuffer<u32> tmp_buf;
 				tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
@@ -802,7 +796,6 @@ void BaseTextureCacheData::Update()
 		else
 		{
 			pb16.init(w, h);
-
 			texconv(&pb16,(u8*)&vram[sa],stride,h);
 		}
 		temp_tex_buffer = pb16.data();
@@ -828,6 +821,7 @@ void BaseTextureCacheData::Update()
 	{
 		ComputeHash();
 		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);
+		NOTICE_LOG(RENDERER, "Dumped texture %x.png. Old hash %x", texture_hash, old_texture_hash);
 	}
 	PrintTextureName();
 }

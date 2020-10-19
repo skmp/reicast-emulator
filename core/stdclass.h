@@ -198,42 +198,45 @@ class cMutex
 {
 private:
 #ifndef TARGET_NO_THREADS
-   slock_t *mutx;
+	slock_t *mutx;
 #endif
 
 public :
 	cMutex()
 	{
 #ifndef TARGET_NO_THREADS
-      mutx = slock_new();
+		mutx = slock_new();
 #endif
 	}
 	~cMutex()
 	{
 #ifndef TARGET_NO_THREADS
-      slock_free(mutx);
+		slock_free(mutx);
 #endif
 	}
 	void Lock()
 	{
 #ifndef TARGET_NO_THREADS
-      slock_lock(mutx);
+		slock_lock(mutx);
 #endif
 	}
 	bool TryLock()
 	{
 #ifndef TARGET_NO_THREADS
-      return slock_try_lock(mutx);
+		return slock_try_lock(mutx);
 #else
-      return false ;
+		return false;
 #endif
 	}
 	void Unlock()
 	{
 #ifndef TARGET_NO_THREADS
-      slock_unlock(mutx);
+		slock_unlock(mutx);
 #endif
 	}
+	// std::BasicLockable so we can use std::lock_guard
+	void lock() { Lock(); }
+	void unlock() { Unlock(); }
 };
 
 //Set the path !

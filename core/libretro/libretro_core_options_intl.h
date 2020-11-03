@@ -76,39 +76,39 @@ extern "C" {
 /* RETRO_LANGUAGE_TURKISH */
 
 #define COLORS_STRING_TR \
-      { "BLACK 02",          "Black" }, \
-      { "BLUE 03",           "Blue" }, \
-      { "LIGHT_BLUE 04",     "Light Blue" }, \
-      { "GREEN 05",          "Green" }, \
-      { "CYAN 06",           "Cyan" }, \
-      { "CYAN_BLUE 07",      "Cyan Blue" }, \
-      { "LIGHT_GREEN 08",    "Light Green" }, \
-      { "CYAN_GREEN 09",     "Cyan Green" }, \
-      { "LIGHT_CYAN 10",     "Light Cyan" }, \
-      { "RED 11",            "Red" }, \
-      { "PURPLE 12",         "Purple" }, \
-      { "LIGHT_PURPLE 13",   "Light Purple" }, \
-      { "YELLOW 14",         "Yellow" }, \
-      { "GRAY 15",           "Gray" }, \
-      { "LIGHT_PURPLE_2 16", "Light Purple (2)" }, \
-      { "LIGHT_GREEN_2 17",  "Light Green (2)" }, \
-      { "LIGHT_GREEN_3 18",  "Light Green (3)" }, \
-      { "LIGHT_CYAN_2 19",   "Light Cyan (2)" }, \
-      { "LIGHT_RED_2 20",    "Light Red (2)" }, \
-      { "MAGENTA 21",        "Magenta" }, \
-      { "LIGHT_PURPLE_2 22", "Light Purple (2)" }, \
-      { "LIGHT_ORANGE 23",   "Light Orange" }, \
-      { "ORANGE 24",         "Orange" }, \
-      { "LIGHT_PURPLE_3 25", "Light Purple (3)" }, \
-      { "LIGHT_YELLOW 26",   "Light Yellow" }, \
-      { "LIGHT_YELLOW_2 27", "Light Yellow (2)" }, \
-      { "WHITE 28",          "White" }, \
+      { "BLACK 02",          "Siyah" }, \
+      { "BLUE 03",           "Mavi" }, \
+      { "LIGHT_BLUE 04",     "Açık Mavi" }, \
+      { "GREEN 05",          "Yeşil" }, \
+      { "CYAN 06",           "Camgöbeği" }, \
+      { "CYAN_BLUE 07",      "Camgöbeği Mavi" }, \
+      { "LIGHT_GREEN 08",    "Açık Yeşil" }, \
+      { "CYAN_GREEN 09",     "Camgöbeği Yeşil" }, \
+      { "LIGHT_CYAN 10",     "Açık Camgöbeği" }, \
+      { "RED 11",            "Kırmızı" }, \
+      { "PURPLE 12",         "Mor" }, \
+      { "LIGHT_PURPLE 13",   "Açık Mor" }, \
+      { "YELLOW 14",         "Sarı" }, \
+      { "GRAY 15",           "Gri" }, \
+      { "LIGHT_PURPLE_2 16", "Açık Mor (2)" }, \
+      { "LIGHT_GREEN_2 17",  "Açık Yeşil (2)" }, \
+      { "LIGHT_GREEN_3 18",  "Açık Yeşil (3)" }, \
+      { "LIGHT_CYAN_2 19",   "Açık Cyan (2)" }, \
+      { "LIGHT_RED_2 20",    "Açık Kırmızı (2)" }, \
+      { "MAGENTA 21",        "Eflatun" }, \
+      { "LIGHT_PURPLE_2 22", "Açık Mor (2)" }, \
+      { "LIGHT_ORANGE 23",   "Açık Turuncu" }, \
+      { "ORANGE 24",         "Turuncu" }, \
+      { "LIGHT_PURPLE_3 25", "Açık Mor (3)" }, \
+      { "LIGHT_YELLOW 26",   "Açık Sarı" }, \
+      { "LIGHT_YELLOW_2 27", "Açık Sarı (2)" }, \
+      { "WHITE 28",          "Beyaz" }, \
       { NULL, NULL },
 
 #define VMU_SCREEN_PARAMS_TR(num) \
 { \
    CORE_OPTION_NAME "_vmu" #num "_screen_display", \
-   "VMU Screen " #num " Display", \
+   "VMU Screen " #num " Görsel", \
    "", \
    { \
       { NULL, NULL }, \
@@ -117,20 +117,20 @@ extern "C" {
 }, \
 { \
    CORE_OPTION_NAME "_vmu" #num "_screen_position", \
-   "VMU Screen " #num " Position", \
+   "VMU Screen " #num " Pozisyon", \
    "", \
    { \
-      { "Upper Left",  NULL }, \
-      { "Upper Right", NULL }, \
-      { "Lower Left",  NULL }, \
-      { "Lower Right", NULL }, \
+      { "Upper Left",  "Sol Üst" }, \
+      { "Upper Right", "Sağ Üst" }, \
+      { "Lower Left",  "Sol Alt" }, \
+      { "Lower Right", "Sağ Alt" }, \
       { NULL, NULL }, \
    }, \
    NULL, \
 }, \
 { \
    CORE_OPTION_NAME "_vmu" #num "_screen_size_mult", \
-   "VMU Screen " #num " Size", \
+   "VMU Screen " #num " Boyut", \
    "", \
    { \
       { NULL, NULL }, \
@@ -139,29 +139,29 @@ extern "C" {
 }, \
 { \
    CORE_OPTION_NAME "_vmu" #num "_pixel_on_color", \
-   "VMU Screen " #num " Pixel On Color", \
+   "VMU Screen " #num " Piksel Varken Renk", \
    "", \
    { \
-      { "DEFAULT_ON 00",  "Default ON" }, \
-      { "DEFAULT_OFF 01", "Default OFF" }, \
+      { "DEFAULT_ON 00",  "Varsayılan AÇIK" }, \
+      { "DEFAULT_OFF 01", "Varsayılan KAPALI" }, \
       COLORS_STRING_TR \
    }, \
    NULL, \
 }, \
 { \
    CORE_OPTION_NAME "_vmu" #num "_pixel_off_color", \
-   "VMU Screen " #num " Pixel Off Color", \
+   "VMU Screen " #num " Piksel Yokken Renk", \
    "", \
    { \
-      { "DEFAULT_OFF 01", "Default OFF" }, \
-      { "DEFAULT_ON 00",  "Default ON" }, \
+      { "DEFAULT_OFF 01", "Varsayılan KAPALI" }, \
+      { "DEFAULT_ON 00",  "Varsayılan AÇIK" }, \
       COLORS_STRING_TR \
    }, \
    NULL, \
 }, \
 { \
    CORE_OPTION_NAME "_vmu" #num "_screen_opacity", \
-   "VMU Screen " #num " Opacity", \
+   "VMU Screen " #num " Opaklık", \
    "", \
    { \
       { NULL,   NULL }, \
@@ -172,7 +172,7 @@ extern "C" {
 #define LIGHTGUN_PARAMS_TR(num) \
 { \
    CORE_OPTION_NAME "_lightgun" #num "_crosshair", \
-   "Gun Crosshair " #num " Display", \
+   "Gun Crosshair " #num " Görsel", \
    "", \
    { \
       { "disabled", NULL }, \
@@ -193,10 +193,10 @@ struct retro_core_option_definition option_defs_tr[] = {
       "",
       {
 #if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)
-         { "dynamic_recompiler", "Dynamic Recompiler" },
+         { "dynamic_recompiler", "Dinamik Yeniden Derleyici" },
 #endif
 #ifdef TARGET_NO_JIT
-         { "generic_recompiler", "Generic Recompiler" },
+         { "generic_recompiler", "Jenerik Yeniden Derleyici" },
 #endif
          { NULL, NULL },
       },
@@ -228,7 +228,7 @@ struct retro_core_option_definition option_defs_tr[] = {
    {
       CORE_OPTION_NAME "_hle_bios",
       "HLE BIOS",
-      "Üst düzey öykünmüş BIOS kullanımını zorla.",
+      "Üst düzey öykünmüş BIOS(HLE) kullanımını zorla.",
       {
          { NULL, NULL},
       },

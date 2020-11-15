@@ -3,6 +3,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 #include "cheats.h"
+#include "spg.h"
 
 /*
 
@@ -87,8 +88,8 @@ u32 fb_watch_addr_start;
 u32 fb_watch_addr_end;
 bool fb_dirty;
 
-TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
+TA_context* _pvrrc;
 
 void rend_create_renderer()
 {

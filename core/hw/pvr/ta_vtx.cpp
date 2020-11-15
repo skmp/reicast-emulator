@@ -1569,6 +1569,8 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 	}
 }
 
+static bool UsingAutoSort(int pass_number);
+
 bool ta_parse_vdrc(TA_context* ctx)
 {
 	bool rv=false;
@@ -1859,7 +1861,7 @@ static RegionArrayTile getRegionTile(int pass_number)
 	return tile;
 }
 
-bool UsingAutoSort(int pass_number)
+static bool UsingAutoSort(int pass_number)
 {
    if (((FPU_PARAM_CFG >> 21) & 1) == 0)
 		// Type 1 region header type

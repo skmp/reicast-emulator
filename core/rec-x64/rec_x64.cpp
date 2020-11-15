@@ -1024,7 +1024,7 @@ public:
                mov(qword[rdx], rcx);
 #endif
                break;
-
+#if 0
             case shop_fipr:
 					{
 						// Using doubles for better precision
@@ -1057,7 +1057,7 @@ public:
 						cvtsd2ss(rd, xmm0);
 					}
 					break;
-
+#endif
             case shop_ftrv:
             	mov(rax, (uintptr_t)op.rs1.reg_ptr());
 #if 0	// vfmadd231ps and vmulps cause rounding problems

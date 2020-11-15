@@ -1033,9 +1033,10 @@ static bool RenderFrame(void)
       glClear(GL_COLOR_BUFFER_BIT);
       glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
-      DrawFramebuffer(640.f, 480.f);
+      DrawFramebuffer();
    }
 
+   /* VMU/Crosshair code - libretro-specific */
    if (!is_rtt)
    {
    	if (settings.System == DC_PLATFORM_DREAMCAST)

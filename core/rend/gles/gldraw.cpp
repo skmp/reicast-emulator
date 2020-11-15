@@ -622,35 +622,40 @@ void DrawStrips()
 		vertex_buffer_unmap();
 }
 
-void DrawFramebuffer(float w, float h)
+static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0, float v0, float u1, float v1)
 {
-	struct Vertex vertices[] = {
-		{ 0, h, 0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-		{ 0, 0, 0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-		{ w, h, 0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		{ w, 0, 0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-	};
-	GLushort indices[] = { 0, 1, 2, 1, 3 };
+   struct Vertex vertices[] = {
+      { x,     y + h, 0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v1 },
+      { x,     y,     0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v0 },
+      { x + w, y + h, 0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v1 },
+      { x + w, y,     0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v0 },
+   };
+   GLushort indices[] = { 0, 1, 2, 1, 3 };
 
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_STENCIL_TEST);
-	glcache.Disable(GL_CULL_FACE);
-	glcache.Disable(GL_BLEND);
+   glcache.Disable(GL_SCISSOR_TEST);
+   glcache.Disable(GL_DEPTH_TEST);
+   glcache.Disable(GL_STENCIL_TEST);
+   glcache.Disable(GL_CULL_FACE);
+   glcache.Disable(GL_BLEND);
 
-	ShaderUniforms.trilinear_alpha = 1.0;
+   ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = GetProgram(0, false, 1, 0, 1, 0, 0, 2, false, false, false, false, false);
-	glcache.UseProgram(shader->program);
+   PipelineShader *shader = GetProgram(0, false, 1, 0, 1, 0, 0, 2, false, false, false, false, false);
+   glcache.UseProgram(shader->program);
 
-	glActiveTexture(GL_TEXTURE0);
-	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+   glActiveTexture(GL_TEXTURE0);
+   glcache.BindTexture(GL_TEXTURE_2D, texId);
 
-	SetupMainVBO();
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+   SetupMainVBO();
+   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
 
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+   glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+}
+
+void DrawFramebuffer()
+{
+   DrawQuad(fbTextureId, 0, 0, 640.f, 480.f, 0, 0, 1, 1);
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
 }

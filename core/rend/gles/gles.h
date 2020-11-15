@@ -147,7 +147,7 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 void RenderFramebuffer();
-void DrawFramebuffer(float w, float h);
+void DrawFramebuffer();
 
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,

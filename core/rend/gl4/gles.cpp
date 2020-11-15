@@ -802,13 +802,15 @@ static bool RenderFrame()
 	else
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
 		gl4DrawFramebuffer(640.f, 480.f);
 	}
 
-
+   /* VMU/Crosshair code - libretro-specific */
 	if (!is_rtt)
 	{
 		if (settings.System == DC_PLATFORM_DREAMCAST)

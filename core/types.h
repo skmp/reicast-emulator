@@ -535,6 +535,7 @@ struct settings_t
       bool TranslucentPolygonDepthMask;
       bool ModifierVolumes;
 		bool Clipping;
+      bool Fog;
       int TextureUpscale;
 		int MaxFilteredTextureSize;
       bool AutoExtraDepthScale;

@@ -332,7 +332,7 @@ private:
 		else
 		{
 			hash |= (pp->tsp.ShadInstr << 7) | (pp->tsp.IgnoreTexA << 9) | (pp->tsp.UseAlpha << 10)
-				| (pp->tsp.ColorClamp << 11) | (pp->tsp.FogCtrl << 12)
+            | (pp->tsp.ColorClamp << 11) | ((settings.rend.Fog ? pp->tsp.FogCtrl : 2) << 12)
 				| (pp->tsp.SrcInstr << 14) | (pp->tsp.DstInstr << 17);
 		}
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | ((autosort ? 6 : pp->isp.DepthMode) << 23);

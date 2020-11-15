@@ -118,6 +118,7 @@ __forceinline
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
 	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
+   int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 								  clipmode == TileClipping::Inside,
@@ -126,7 +127,7 @@ __forceinline
 								  gp->tsp.IgnoreTexA,
 								  gp->tsp.ShadInstr,
 								  gp->pcw.Offset,
-								  gp->tsp.FogCtrl,
+								  fog_ctrl,
 								  gp->pcw.Gouraud,
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,

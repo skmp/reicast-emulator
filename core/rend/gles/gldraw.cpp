@@ -114,11 +114,11 @@ __forceinline
 		ShaderUniforms.trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+   int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
 	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
-   int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 								  clipmode == TileClipping::Inside,
@@ -159,9 +159,11 @@ __forceinline
 	// This bit controls which pixels are affected
 	// by modvols
 	const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
+
 	glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
 	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == (u64)-1 ? 0 : (GLuint)gp->texid);
+
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
@@ -183,6 +185,7 @@ __forceinline
 		if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
 #endif
+
 		if (gl.max_anisotropy > 1.f)
 		{
 			if (settings.rend.AnisotropicFiltering > 1)
@@ -223,16 +226,16 @@ __forceinline
 	}
 
 	if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
-	glcache.DepthMask(GL_FALSE);
+      glcache.DepthMask(GL_FALSE);
 	else
-	{
-		// Z Write Disable seems to be ignored for punch-through polys
-		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
-	if (Type == ListType_Punch_Through)
-		glcache.DepthMask(GL_TRUE);
-	else
-		glcache.DepthMask(!gp->isp.ZWriteDis);
-	}
+   {
+      // Z Write Disable seems to be ignored for punch-through polys
+      // Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+      if (Type == ListType_Punch_Through)
+         glcache.DepthMask(GL_TRUE);
+      else
+         glcache.DepthMask(!gp->isp.ZWriteDis);
+   }
 }
 
 template <u32 Type, bool SortingEnabled>

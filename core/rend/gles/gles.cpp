@@ -929,8 +929,9 @@ static bool RenderFrame(void)
 	// Color is cleared by the background plane
 
 	glcache.Disable(GL_SCISSOR_TEST);
-	glClearDepth(0.0);
+
 	glcache.DepthMask(GL_TRUE);
+	glClearDepth(0.0);
 	glStencilMask(0xFF);
 	glClearStencil(0);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1049,7 +1050,6 @@ static bool RenderFrame(void)
 		for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
 				DrawGunCrosshair(lightgun_port);
    }
-
 	KillTex = false;
    
    if (is_rtt)

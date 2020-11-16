@@ -29,7 +29,7 @@ struct MemChip
       this->mask=size-1;//must be power of 2
    }
 
-	u8 Read8(u32 addr)
+	virtual u8 Read8(u32 addr)
 	{
 		return data[addr&mask];
 	}
@@ -265,7 +265,8 @@ struct DCFlashChip : MemChip
 		FS_ByteProgram,
 		FS_EraseAMD1,
 		FS_EraseAMD2,
-		FS_EraseAMD3
+		FS_EraseAMD3,
+      FS_SelectMode,
 	};
 
 	FlashState state;
@@ -287,131 +288,180 @@ struct DCFlashChip : MemChip
 		addr &= mask;
 		
 		switch(state)
+      {
+         case FS_Normal:
+            switch (val & 0xff)
+            {
+               case 0xf0:
+               case 0xff:  // reset chip mode
+                  state = FS_Normal;
+                  break;
+               case 0xaa:  // AMD ID select part 1
+                  if ((addr & 0xfff) == 0x555 || (addr & 0xfff) == 0xaaa)
+                     state = FS_ReadAMDID1;
+                  break;
+               default:
+                  INFO_LOG(FLASHROM, "Unknown FlashWrite mode: %x", val);
+                  break;
+            }
+            break;
+
+         case FS_ReadAMDID1:
+            if ((addr & 0xffff) == 0x02aa && (val & 0xff) == 0x55)
+               state = FS_ReadAMDID2;
+            else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
+               state = FS_ReadAMDID2;
+            else if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0x55)
+               state = FS_ReadAMDID2;
+            else
+            {
+               if (val != 0xf0)
+                  WARN_LOG(FLASHROM, "FlashRom: ReadAMDID1 unexpected write @ %x: %x", addr, val);
+               state = FS_Normal;
+            }
+            break;
+
+         case FS_ReadAMDID2:
+            if ((addr & 0xffff) == 0x0555 && (val & 0xff) == 0x80)
+               state = FS_EraseAMD1;
+            else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x80)
+               state = FS_EraseAMD1;
+            else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x80)
+               state = FS_EraseAMD1;
+            else if ((addr & 0xffff) == 0x0555 && (val & 0xff) == 0xa0)
+               state = FS_ByteProgram;
+            else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0xa0)
+               state = FS_ByteProgram;
+            else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xa0)
+               state = FS_ByteProgram;
+            else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x90)
+               state = FS_SelectMode;
+            else
+            {
+               if (val != 0xf0)
+                  WARN_LOG(FLASHROM, "FlashRom: ReadAMDID2 unexpected write @ %x: %x", addr, val);
+               state = FS_Normal;
+            }
+            break;
+         case FS_ByteProgram:
+            if ((addr & 0x1e000) != 0x1a000 && addr >= write_protect_size)
+               data[addr] &= val;
+            state = FS_Normal;
+            break;
+
+         case FS_EraseAMD1:
+            if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0xaa)
+               state = FS_EraseAMD2;
+            else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xaa)
+               state = FS_EraseAMD2;
+            else
+            {
+               if (val != 0xf0)
+                  WARN_LOG(FLASHROM, "FlashRom: EraseAMD1 unexpected write @ %x: %x", addr, val);
+
+               state = FS_Normal;
+            }
+            break;
+
+         case FS_EraseAMD2:
+            if ((addr & 0xffff) == 0x02aa && (val & 0xff) == 0x55)
+               state = FS_EraseAMD3;
+            else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
+               state = FS_EraseAMD3;
+            else if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0x55)
+               state = FS_EraseAMD3;
+            else
+            {
+               if (val != 0xf0)
+                  WARN_LOG(FLASHROM, "FlashRom: EraseAMD2 unexpected write @ %x: %x", addr, val);
+
+               state = FS_Normal;
+            }
+            break;
+
+         case FS_EraseAMD3:
+            if (((addr & 0xfff) == 0x555 && (val & 0xff) == 0x10)
+                  || ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x10))
+            {
+               // chip erase
+               INFO_LOG(FLASHROM, "Erasing Chip!");
+               u8 save[0x2000];
+               // this area is write-protected
+               memcpy(save, data + 0x1a000, 0x2000);
+               memset(data + write_protect_size, 0xff, size - write_protect_size);
+               memcpy(data + 0x1a000, save, 0x2000);
+            }
+            else if ((val & 0xff) == 0x30)
+            {
+               // sector erase
+               if (addr >= write_protect_size)
+               {
+                  void *start;
+                  u32 len;
+                  switch (addr & ~0x1FFF)
+                  {
+                     case 0x00000:	// SA0
+                        start = &data[0];
+                        len = 0x10000;
+                        break;
+                     case 0x10000:	// SA1
+                        start = &data[0x10000];
+                        len = 0x8000;
+                        break;
+                     case 0x18000:	// SA2
+                        start = &data[0x18000];
+                        len = 0x2000;
+                        break;
+                     case 0x1a000:	// SA3
+                        start = nullptr;
+                        len = 0;
+                        break;
+                     case 0x1c000:	// SA4
+                        start = &data[0x1c000];
+                        len = 0x4000;
+                        break;
+                     default:
+                        start = nullptr;
+                        len = 0;
+                        break;
+                  }
+                  INFO_LOG(FLASHROM, "Erase Sector %08X!", addr);
+                  if (start != nullptr)
+                     memset(start, 0xFF, len);
+               }
+            }
+            else if (val != 0xf0)
+               WARN_LOG(FLASHROM, "FlashRom: EraseAMD3 unexpected write @ %x: %x", addr, val);
+            state = FS_Normal;
+            break;
+         default:
+            WARN_LOG(FLASHROM, "FlashRom: invalid state. write @ %x: %x", addr, val);
+            state = FS_Normal;
+            break;
+      }
+	}
+
+   u8 Read8(u32 addr) override
+	{
+		if (state == FS_SelectMode)
 		{
-		case FS_Normal:
-			switch (val & 0xff)
-			{
-			case 0xf0:
-			case 0xff:  // reset chip mode
-				state = FS_Normal;
-				break;
-			case 0xaa:  // AMD ID select part 1
-				if ((addr & 0xfff) == 0x555 || (addr & 0xfff) == 0xaaa)
-					state = FS_ReadAMDID1;
-				break;
-			default:
-				INFO_LOG(FLASHROM, "Unknown FlashWrite mode: %x", val);
-				break;
-			}
-			break;
-
-		case FS_ReadAMDID1:
-			if ((addr & 0xffff) == 0x02aa && (val & 0xff) == 0x55)
-				state = FS_ReadAMDID2;
-			else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
-				state = FS_ReadAMDID2;
-			else if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0x55)
-				state = FS_ReadAMDID2;
-			else
-			{
-				WARN_LOG(FLASHROM, "FlashRom: ReadAMDID1 unexpected write @ %x: %x", addr, val);
-				state = FS_Normal;
-			}
-			break;
-
-		case FS_ReadAMDID2:
-			if ((addr & 0xffff) == 0x0555 && (val & 0xff) == 0x80)
-				state = FS_EraseAMD1;
-			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x80)
-				state = FS_EraseAMD1;
-			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x80)
-				state = FS_EraseAMD1;
-			else if ((addr & 0xffff) == 0x0555 && (val & 0xff) == 0xa0)
-				state = FS_ByteProgram;
-			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0xa0)
-				state = FS_ByteProgram;
-			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xa0)
-				state = FS_ByteProgram;
-			else
-			{
-				WARN_LOG(FLASHROM, "FlashRom: ReadAMDID2 unexpected write @ %x: %x", addr, val);
-				state = FS_Normal;
-			}
-			break;
-		case FS_ByteProgram:
-			if (addr >= write_protect_size)
-				data[addr] &= val;
 			state = FS_Normal;
-			break;
-
-		case FS_EraseAMD1:
-			if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0xaa)
-				state = FS_EraseAMD2;
-			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xaa)
-				state = FS_EraseAMD2;
-			else
+			switch (addr & 0x43)
 			{
-				WARN_LOG(FLASHROM, "FlashRom: EraseAMD1 unexpected write @ %x: %x", addr, val);
+			case 0:	// manufacturer's code
+				return 4;		// or 0x20 or 1
+			case 1:	// device code
+				return 0xb0;	// or 0x40 or 0x3e
+			case 2:	// sector protection verification
+				// sector protection
+				DEBUG_LOG(FLASHROM, "Sector protection address %x", addr);
+				return (addr & 0x1e000) == 0x1a000;
+			default:
+				WARN_LOG(FLASHROM, "SelectMode unknown address %x", addr);
+				return 0;
 			}
-			break;
-
-		case FS_EraseAMD2:
-			if ((addr & 0xffff) == 0x02aa && (val & 0xff) == 0x55)
-				state = FS_EraseAMD3;
-			else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
-				state = FS_EraseAMD3;
-			else if ((addr & 0xfff) == 0x555 && (val & 0xff) == 0x55)
-				state = FS_EraseAMD3;
-			else
-			{
-				WARN_LOG(FLASHROM, "FlashRom: EraseAMD2 unexpected write @ %x: %x", addr, val);
-			}
-			break;
-
-		case FS_EraseAMD3:
-			if (((addr & 0xfff) == 0x555 && (val & 0xff) == 0x10)
-				|| ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x10))
-			{
-			   // chip erase
-				INFO_LOG(FLASHROM, "Erasing Chip!");
-			   u8 save[0x2000];
-			   if (settings.System == DC_PLATFORM_ATOMISWAVE)
-			   {
-				  // this area is write-protected on AW
-				  memcpy(save, data + 0x1a000, 0x2000);
-			   }
-			   memset(data + write_protect_size, 0xff, size - write_protect_size);
-			   if (settings.System == DC_PLATFORM_ATOMISWAVE)
-				  memcpy(data + 0x1a000, save, 0x2000);
-
-			   state = FS_Normal;
-			}
-			else if ((val & 0xff) == 0x30)
-			{
-				// sector erase
-				if (addr >= write_protect_size)
-				{
-					u8 save[0x2000];
-					if (settings.System == DC_PLATFORM_ATOMISWAVE)
-					{
-						// this area is write-protected on AW
-						memcpy(save, data + 0x1a000, 0x2000);
-					}
-					INFO_LOG(FLASHROM, "Erase Sector %08X! (%08X)", addr, addr & ~0x3FFF);
-					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-					if (settings.System == DC_PLATFORM_ATOMISWAVE)
-					{
-						memcpy(data + 0x1a000, save, 0x2000);
-					}
-				}
-				state = FS_Normal;
-			}
-			else
-			{
-				WARN_LOG(FLASHROM, "FlashRom: EraseAMD3 unexpected write @ %x: %x", addr, val);
-			}
-			break;
 		}
+		return MemChip::Read8(addr);
 	}
 
 	int WriteBlock(u32 part_id, u32 block_id, const void *data)

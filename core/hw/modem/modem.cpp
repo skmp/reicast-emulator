@@ -168,7 +168,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 		switch (connect_state)
 		{
 		case DIALING:
-         if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= (u64)(SH4_MAIN_CLOCK + jitter))
+			if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= SH4_MAIN_CLOCK + jitter)
 			{
 				LOG("Switching to RINGING state");
 				connect_state = RINGING;
@@ -425,7 +425,7 @@ static void ControllerTestStart()
 
 static void modem_reset(u32 v)
 {
-   if (v == 0)
+	if (v==0)
 	{
 		memset(&modem_regs,0,sizeof(modem_regs));
 		state=MS_RESET;
@@ -433,15 +433,12 @@ static void modem_reset(u32 v)
 	}
 	else
 	{
-      if (state == MS_RESET)
-      {
-         stop_pppd();
-         memset(&modem_regs,0,sizeof(modem_regs));
-         state = MS_RESETING;
-         ControllerTestStart();
-         INFO_LOG(MODEM, "MODEM Reset");
-      }
-      modem_regs.ptr[0x20] = v;
+		stop_pppd();
+		memset(&modem_regs,0,sizeof(modem_regs));
+		state=MS_RESETING;
+		modem_regs.ptr[0x20]=1;
+		ControllerTestStart();
+		INFO_LOG(MODEM, "MODEM Reset");
 	}
 }
 
@@ -646,97 +643,122 @@ static void ModemNormalWrite(u32 reg, u32 data)
 
 u32 ModemReadMem_A0_006(u32 addr, u32 size)
 {
-   u32 reg = (addr & 0x7FF) >> 2;
+	u32 reg=addr&0x7FF;
+	verify((reg&3)==0);
+	reg>>=2;
 
-   if (reg < 0x100)
-      return MODEM_ID[reg & 1];
-
-   reg -= 0x100;
-   if (reg < 0x21)
+	if (reg<0x100)
 	{
-      switch (state)
-      {
-         case MS_NORMAL:
-            {
-               // Dial tone is detected if TONEA, TONEB and TONEC are set
-               //if (reg==0xF)
-               {
-                  SET_STATUS_BIT(0x0f, modem_regs.reg0f.CTS, modem_regs.reg08.RTS && connect_state == CONNECTED);
-                  SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEA, connect_state == DISCONNECTED);
-                  SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEB, connect_state == DISCONNECTED);
-                  SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEC, connect_state == DISCONNECTED);
-                  // FIXME This should be reset if transmit buffer is full
-                  if (modem_regs.reg04.FIFOEN || module_download)
-                     SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, 1);
-               }
-               u8 data = modem_regs.ptr[reg];
-               if (reg == 0x00)	// RBUFFER
-               {
-                  //LOG("Read RBUFFER = %X", data);
-                  modem_regs.reg1e.RDBF = 0;
-                  SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 0);
-                  SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 0);
-#ifndef RELEASE
-                  if (connect_state == CONNECTED && recv_fp)
-                     fputc(data, recv_fp);
-#endif
-                  update_interrupt();
-               }
-               else if (reg == 0x16 || reg == 0x17)
-               {
-                  //LOG("SECTXB / SECTXB being read %02x", reg)
-               }
-               //else
-               //	LOG("Read Reg %03x = %x", reg, data);
-
-               return data;
-            }
-         case MS_ST_CONTROLER:
-         case MS_ST_DSP:
-            if (reg==0x10)
-            {
-               modem_regs.reg1e.TDBE=0;
-               return 0;
-            }
-            else
-            {
-               return modem_regs.ptr[reg];
-            }
-         case MS_RESETING:
-            return 0; //still reset
-         default:
-            //LOG("Read (reset) reg %03x == %x", reg, modem_regs.ptr[reg]);
-            return 0;
-      }
+		verify(reg<=1);
+		return MODEM_ID[reg];
 	}
+	else
+	{
+		reg-=0x100;
+		if (reg<0x21)
+		{
+			if (state==MS_NORMAL)
+			{
+				// Dial tone is detected if TONEA, TONEB and TONEC are set
+				//if (reg==0xF)
+				{
+					SET_STATUS_BIT(0x0f, modem_regs.reg0f.CTS, modem_regs.reg08.RTS && connect_state == CONNECTED);
+					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEA, connect_state == DISCONNECTED);
+					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEB, connect_state == DISCONNECTED);
+					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEC, connect_state == DISCONNECTED);
+					// FIXME This should be reset if transmit buffer is full
+					if (modem_regs.reg04.FIFOEN || module_download)
+						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, 1);
+				}
+				u8 data = modem_regs.ptr[reg];
+				if (reg == 0x00)	// RBUFFER
+				{
+					//LOG("Read RBUFFER = %X", data);
+					modem_regs.reg1e.RDBF = 0;
+					SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 0);
+					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 0);
+#ifndef RELEASE
+					if (connect_state == CONNECTED && recv_fp)
+						fputc(data, recv_fp);
+#endif
+					update_interrupt();
+				}
+				else if (reg == 0x16 || reg == 0x17)
+				{
+					//LOG("SECTXB / SECTXB being read %02x", reg)
+				}
+				//else
+				//	LOG("Read Reg %03x = %x", reg, data);
 
-   LOG("modem reg %03X read -- wtf is it ?",reg);
-   return 0;
+				return data;
+			}
+			else if (state==MS_ST_CONTROLER || state==MS_ST_DSP)
+			{
+				if (reg==0x10)
+				{
+					modem_regs.reg1e.TDBE=0;
+					return 0;
+				}
+				else
+				{
+					return modem_regs.ptr[reg];
+				}
+			}
+			else if (state==MS_RESETING)
+			{
+				return 0; //still reset
+			}
+			else
+			{
+				//LOG("Read (reset) reg %03x == %x", reg, modem_regs.ptr[reg]);
+				return 0;
+			}
+		}
+		else
+		{
+			LOG("modem reg %03X read -- wtf is it ?",reg);
+			return 0;
+		}
+	}
 }
 
 void ModemWriteMem_A0_006(u32 addr, u32 data, u32 size)
 {
-   u32 reg = (addr & 0x7FF) >> 2;
-   if (reg < 0x100)
-   {
-      LOG("modem reg %03X write -- MODEM ID?!",reg);
-      return;
-   }
-   reg-=0x100;
-   if (reg<0x20)
-   {
-      if (state==MS_NORMAL)
-         ModemNormalWrite(reg,data);
-      else
-         LOG("modem reg %03X write %X -- undef state?",reg,data);
-      return;
-   }
-   if (reg==0x20)
-   {
-      //Hard reset
-      modem_reset(data);
-      return;
-   }
+	u32 reg=addr&0x7FF;
+	verify((reg&3)==0);
+	reg>>=2;
 
-   LOG("modem reg %03X write %X -- wtf is it?",reg,data);
+
+
+	if (reg<0x100)
+	{
+		verify(reg<=1);
+		LOG("modem reg %03X write -- MODEM ID?!",reg);
+	}
+	else
+	{
+		reg-=0x100;
+		if (reg<0x20)
+		{
+			if (state==MS_NORMAL)
+			{
+				ModemNormalWrite(reg,data);
+			}
+			else
+			{
+				LOG("modem reg %03X write %X -- undef state?",reg,data);
+			}
+			return;
+		}
+		else if (reg==0x20)
+		{
+			//Hard reset
+			modem_reset(data);
+		}
+		else
+		{
+			LOG("modem reg %03X write %X -- wtf is it?",reg,data);
+			return;
+		}
+	}
 }

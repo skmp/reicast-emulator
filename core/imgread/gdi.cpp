@@ -97,8 +97,6 @@ Disc* load_gdi(const char* file)
 			strcpy(pathptr, track_filename.c_str());
 			t.file = new RawTrackFile(core_fopen(path),OFFSET,t.StartFAD,SSIZE);	
 		}
-      if (!disc->tracks.empty())
-			disc->tracks.back().EndFAD = t.StartFAD - 1;
 		disc->tracks.push_back(t);
 	}
 

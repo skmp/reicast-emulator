@@ -167,7 +167,7 @@ static void GDCC_HLE_GETSCD() {
 		sns_ascq = 0;
 		return;
 	}
-   if (cdda.status == cdda_t::Playing)
+	if (cdda.playing)
 		gd_hle_state.cur_sector = cdda.CurrAddr.FAD;
 	u8 scd[100];
 	gd_get_subcode(format, gd_hle_state.cur_sector, scd);
@@ -283,17 +283,17 @@ static void GD_HLE_Command(u32 cc)
 		debugf("GDROM: CMD INIT");
 		gd_hle_state.multi_callback = 0;
 		gd_hle_state.multi_read_count = 0;
-      cdda.status = cdda_t::NoInfo;
+		cdda.playing = false;
 		break;
 
 	case GDCC_PIOREAD:
 		GDROM_HLE_ReadPIO();
 		SecNumber.Status = GD_STANDBY;
-      cdda.status = cdda_t::NoInfo;
+		cdda.playing = false;
 		break;
 
 	case GDCC_DMAREAD:
-      cdda.status = cdda_t::NoInfo;
+		cdda.playing = false;
 		if (gd_hle_state.xfer_end_time == 0)
 			GDROM_HLE_ReadDMA();
 		if (gd_hle_state.xfer_end_time > 0)
@@ -313,7 +313,7 @@ static void GD_HLE_Command(u32 cc)
 			u32 start_fad = gd_hle_state.params[0];
 			u32 end_fad = gd_hle_state.params[1];
 			DEBUG_LOG(REIOS, "GDROM: CMD PLAYSEC from %d to %d repeats %d", start_fad, end_fad, gd_hle_state.params[2]);
-         cdda.status = cdda_t::Playing;
+			cdda.playing = true;
 			cdda.StartAddr.FAD = start_fad;
 			cdda.EndAddr.FAD = end_fad;
 			cdda.repeats = gd_hle_state.params[2];
@@ -324,20 +324,19 @@ static void GD_HLE_Command(u32 cc)
 
 	case GDCC_RELEASE:
 		debugf("GDROM: CMD RELEASE");
-      if (cdda.status == cdda_t::Paused)
-			cdda.status = cdda_t::Playing;
+		cdda.playing = true;
 		SecNumber.Status = GD_PLAY;
 		break;
 
 	case GDCC_STOP:
 		debugf("GDROM: CMD STOP");
-      cdda.status = cdda_t::NoInfo;
+		cdda.playing = false;
 		SecNumber.Status = GD_STANDBY;
 		break;
 
 	case GDCC_SEEK:
 		debugf("GDROM: CMD SEEK");
-      cdda.status = cdda_t::Paused;
+		cdda.playing = false;
 		SecNumber.Status = GD_PAUSE;
 		break;
 
@@ -351,7 +350,7 @@ static void GD_HLE_Command(u32 cc)
 			libGDR_GetTrack(last_track, dummy, end_fad);
 			debugf("GDROM: CMD PLAY first_track %x last_track %x repeats %x start_fad %x end_fad %x param4 %x", first_track, last_track, repeats,
 					start_fad, end_fad, gd_hle_state.params[3]);
-         cdda.status = cdda_t::Playing;
+			cdda.playing = true;
 			cdda.StartAddr.FAD = start_fad;
 			cdda.EndAddr.FAD = end_fad;
 			cdda.repeats = repeats;
@@ -363,8 +362,7 @@ static void GD_HLE_Command(u32 cc)
 
 	case GDCC_PAUSE:
 		debugf("GDROM: CMD PAUSE");
-      if (cdda.status == cdda_t::Playing)
-			cdda.status = cdda_t::Paused;
+		cdda.playing = false;
 		SecNumber.Status = GD_PAUSE;
 		break;
 
@@ -478,8 +476,8 @@ static void GD_HLE_Command(u32 cc)
 			// 0-2  | fad (little-endian)
 			// ------------------------------------------------------
 			// 3    | address                | control
-         u32 out = (((SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1) << 24)
-            | (gd_hle_state.cur_sector & 0x00ffffff);
+			// FIXME address/control
+			u32 out = ((0x4) << 28) | ((0x1) << 24) | (gd_hle_state.cur_sector & 0x00ffffff);
 			WriteMem32(dst2, out);
 
 			// bit   |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0
@@ -573,7 +571,7 @@ void gdrom_hle_op()
 					}
 				}
 				memset(gd_hle_state.result, 0, sizeof(gd_hle_state.result));
-				if (gd_hle_state.next_request_id == ~0u || gd_hle_state.next_request_id == 0)
+				if (gd_hle_state.next_request_id == -1 || gd_hle_state.next_request_id == 0)
 					gd_hle_state.next_request_id = 1;
 				gd_hle_state.last_request_id = r[0] = gd_hle_state.next_request_id++;
 				gd_hle_state.status = BIOS_ACTIVE;

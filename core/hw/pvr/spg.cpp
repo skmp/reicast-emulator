@@ -1,3 +1,8 @@
+//SPG emulation; Scanline/Raster beam registers & interrupts
+//Time to emulate that stuff correctly ;)
+//
+//
+
 #include "spg.h"
 #include "Renderer_if.h"
 #include "pvr_regs.h"
@@ -7,33 +12,29 @@
 u32 in_vblank;
 u32 clc_pvr_scanline;
 static u32 pvr_numscanlines = 512;
-static u32 pvr_cur_scanline = -1;
+static u32 prv_cur_scanline = -1;
 static u32 vblk_cnt;
 
-//54 mhz pixel clock :)
 #define PIXEL_CLOCK (54*1000*1000/2)
 
 static u32 Line_Cycles;
+static u32 Frame_Cycles;
 int render_end_sched;
 int vblank_sched;
 
 void CalculateSync(void)
 {
-	const u32 pixel_clock = PIXEL_CLOCK / (FB_R_CTRL.vclk_div ? 1 : 2);
-
-   //We need to calculate the pixel clock
+	u32 pixel_clock = PIXEL_CLOCK / (FB_R_CTRL.vclk_div ? 1 : 2);
 	pvr_numscanlines = SPG_LOAD.vcount + 1;
-
 	Line_Cycles = (u32)((u64)SH4_MAIN_CLOCK * (u64)(SPG_LOAD.hcount + 1) / (u64)pixel_clock);
 	
-	float scale_x = 1.f, scale_y = 1.f;
-
+	float scale_x = 1;
+	float scale_y = 1;
 	if (SPG_CONTROL.interlace)
 	{
 		//this is a temp hack
 		Line_Cycles         /= 2;
-
-		//u32 interl_mode      = VO_CONTROL.field_mode;
+		u32 interl_mode      = VO_CONTROL.field_mode;
 		
 		//if (interl_mode==2)//3 will be funny =P
 		//  scale_y=0.5f;//single interlace
@@ -48,9 +49,10 @@ void CalculateSync(void)
 			scale_y           = 0.5f;//non interlaced modes have half resolution
 	}
 
-	rend_set_fb_scale(scale_x, scale_y);
+	rend_set_fb_scale(scale_x,scale_y);
 	
-	pvr_cur_scanline        = 0;
+	Frame_Cycles            = pvr_numscanlines*Line_Cycles;
+	prv_cur_scanline        = 0;
 
 	sh4_sched_request(vblank_sched, Line_Cycles);
 }
@@ -69,43 +71,43 @@ int spg_line_sched(int tag, int cycl, int jit)
 	{
 		//ok .. here , after much effort , we did one line
 		//now , we must check for raster beam interrupts and vblank
-		pvr_cur_scanline     = (pvr_cur_scanline + 1) % pvr_numscanlines;
+		prv_cur_scanline     = (prv_cur_scanline+1) % pvr_numscanlines;
 		clc_pvr_scanline    -= Line_Cycles;
 		//Check for scanline interrupts -- really need to test the scanline values
 		
       /* Vblank in */
-		if (SPG_VBLANK_INT.vblank_in_interrupt_line_number == pvr_cur_scanline)
+		if (SPG_VBLANK_INT.vblank_in_interrupt_line_number == prv_cur_scanline)
 			asic_RaiseInterrupt(holly_SCANINT1);
 
       /* Vblank Out */
-		if (SPG_VBLANK_INT.vblank_out_interrupt_line_number == pvr_cur_scanline)
+		if (SPG_VBLANK_INT.vblank_out_interrupt_line_number == prv_cur_scanline)
 			asic_RaiseInterrupt(holly_SCANINT2);
 
-		if (SPG_VBLANK.vstart == pvr_cur_scanline)
+		if (SPG_VBLANK.vstart == prv_cur_scanline)
 			in_vblank = 1;
 
-		if (SPG_VBLANK.vbend == pvr_cur_scanline)
+		if (SPG_VBLANK.vbend == prv_cur_scanline)
 			in_vblank = 0;
 
 		SPG_STATUS.vsync    = in_vblank;
-		SPG_STATUS.scanline = pvr_cur_scanline;
+		SPG_STATUS.scanline = prv_cur_scanline;
 		
 		switch (SPG_HBLANK_INT.hblank_int_mode)
-      {
-         case 0x0:
-            if (pvr_cur_scanline == SPG_HBLANK_INT.line_comp_val)
-               asic_RaiseInterrupt(holly_HBLank);
-            break;
-         case 0x2:
-            asic_RaiseInterrupt(holly_HBLank);
-            break;
-         default:
-            die("Unimplemented HBLANK INT mode");
-            break;
-      }
+		{
+		case 0x0:
+			if (prv_cur_scanline == SPG_HBLANK_INT.line_comp_val)
+				asic_RaiseInterrupt(holly_HBLank);
+			break;
+		case 0x2:
+			asic_RaiseInterrupt(holly_HBLank);
+			break;
+		default:
+			die("Unimplemented HBLANK INT mode");
+			break;
+		}
 
 		//Vblank start -- really need to test the scanline values
-		if (pvr_cur_scanline==0)
+		if (prv_cur_scanline==0)
 		{
 			if (SPG_CONTROL.interlace)
 				SPG_STATUS.fieldnum = ~SPG_STATUS.fieldnum;
@@ -114,10 +116,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 			/* Vblank counter */
 			vblk_cnt++;
-
-         rend_vblank();
+         rend_vblank(); // notify for vblank
 		}
-		if (lightgun_line != 0xffff && lightgun_line == pvr_cur_scanline)
+		if (lightgun_line != 0xffff && lightgun_line == prv_cur_scanline)
 		{
 			SPG_TRIGGER_POS = ((lightgun_line & 0x3FF) << 16) | (lightgun_hpos & 0x3FF);
 			asic_RaiseInterrupt(holly_MAPLE_DMA);
@@ -132,30 +133,30 @@ int spg_line_sched(int tag, int cycl, int jit)
 	//vstart
 	//vbend
 	//pvr_numscanlines
-	u32 min_scanline = pvr_cur_scanline + 1;
-	u32 min_active   = pvr_numscanlines;
+	u32 min_scanline=prv_cur_scanline+1;
+	u32 min_active=pvr_numscanlines;
 
 	if (min_scanline < SPG_VBLANK_INT.vblank_in_interrupt_line_number)
-		min_active = min(min_active, SPG_VBLANK_INT.vblank_in_interrupt_line_number);
+		min_active=min(min_active,SPG_VBLANK_INT.vblank_in_interrupt_line_number);
 
 	if (min_scanline < SPG_VBLANK_INT.vblank_out_interrupt_line_number)
-		min_active = min(min_active, SPG_VBLANK_INT.vblank_out_interrupt_line_number);
+		min_active=min(min_active,SPG_VBLANK_INT.vblank_out_interrupt_line_number);
 
 	if (min_scanline < SPG_VBLANK.vstart)
-		min_active = min(min_active, SPG_VBLANK.vstart);
+		min_active=min(min_active,SPG_VBLANK.vstart);
 
 	if (min_scanline < SPG_VBLANK.vbend)
-		min_active = min(min_active, SPG_VBLANK.vbend);
+		min_active=min(min_active,SPG_VBLANK.vbend);
 
 	if (min_scanline < pvr_numscanlines)
-		min_active = min(min_active, pvr_numscanlines);
+		min_active=min(min_active,pvr_numscanlines);
 
 	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
 		min_active = min(min_active, lightgun_line);
 
-	min_active = max(min_active,min_scanline);
+	min_active=max(min_active,min_scanline);
 
-	return (min_active - pvr_cur_scanline)*Line_Cycles;
+	return (min_active-prv_cur_scanline)*Line_Cycles;
 }
 
 void read_lightgun_position(int x, int y)
@@ -204,8 +205,13 @@ void spg_Reset(bool Manual)
 
 void SetREP(TA_context* cntx)
 {
-	if (cntx)
-      sh4_sched_request(render_end_sched, 500000 * 3);
-   else
-      sh4_sched_request(render_end_sched, 4096);
+   unsigned pending_cycles = 4096;
+	if (cntx && !cntx->rend.Overrun)
+	{
+		pending_cycles  = cntx->rend.verts.used()*60;
+		pending_cycles += 500000*3;
+		VertexCount    += cntx->rend.verts.used();
+	}
+
+   sh4_sched_request(render_end_sched, pending_cycles);
 }

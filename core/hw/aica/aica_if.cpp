@@ -110,8 +110,8 @@ u32 ReadMem_aica_reg(u32 addr,u32 sz)
 
 static void ArmSetRST()
 {
-	ARMRST &= 1;
-	arm_SetEnabled(ARMRST == 0);
+	ARMRST&=1;
+	arm_SetEnabled(ARMRST==0);
 }
 void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 {
@@ -311,7 +311,7 @@ void Write_DmaStart(u32 addr, u32 data)
 	asic_RaiseInterrupt(interrupt);
 }
 
-static void Write_SB_ADST(u32 addr, u32 data)
+void Write_SB_ADST(u32 addr, u32 data)
 {
    //0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
    //0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 

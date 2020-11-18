@@ -121,5 +121,3 @@ void limit_joystick_magnitude(s8& joyx, s8& joyy)
 		joyy = (u32)lroundf(yaxis / mag) + 128;
 	}
 }
-
-#define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))

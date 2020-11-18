@@ -4,8 +4,10 @@
 
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
-	if (gl.rtt.fbo) glDeleteFramebuffers(1,&gl.rtt.fbo);
-	if (gl.rtt.tex) glcache.DeleteTextures(1,&gl.rtt.tex);
+	if (gl.rtt.fbo)
+		glDeleteFramebuffers(1,&gl.rtt.fbo);
+	if (gl.rtt.tex)
+		glcache.DeleteTextures(1,&gl.rtt.tex);
 
 	gl.rtt.TexAddr=addy>>3;
 

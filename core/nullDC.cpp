@@ -547,9 +547,6 @@ void LoadSettings(void)
    settings.rend.MaxFilteredTextureSize = 256;
    settings.pvr.SynchronousRendering	 = 0;
 #endif
-   /* TODO/FIXME - hook this up as a core option if 
-    * you want to be able to turn fogging off */
-   settings.rend.Fog                    = true;
    settings.rend.AutoExtraDepthScale    = true;
    settings.rend.ExtraDepthScale        = 1.f;
 

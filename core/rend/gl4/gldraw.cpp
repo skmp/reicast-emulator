@@ -122,7 +122,6 @@ static void SetGPState(const PolyParam* gp)
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
 		palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
-      int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 				clipmode == TileClipping::Inside,
@@ -131,7 +130,7 @@ static void SetGPState(const PolyParam* gp)
 				gp->tsp.IgnoreTexA,
 				gp->tsp.ShadInstr,
 				gp->pcw.Offset,
-				fog_ctrl,
+				gp->tsp.FogCtrl,
 				two_volumes_mode,
 				gp->pcw.Gouraud,
 				gp->tcw.PixelFmt == PixelBumpMap,

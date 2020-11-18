@@ -823,9 +823,7 @@ void BaseTextureCacheData::Update()
 		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);
 		NOTICE_LOG(RENDERER, "Dumped texture %x.png. Old hash %x", texture_hash, old_texture_hash);
 	}
-#ifndef NDEBUG
 	PrintTextureName();
-#endif
 }
 
 void BaseTextureCacheData::CheckCustomTexture()

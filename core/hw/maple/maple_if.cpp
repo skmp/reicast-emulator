@@ -51,15 +51,11 @@ void maple_vblank()
 		{
 			if (maple_ddt_pending_reset)
 			{
-#if 0
 				DEBUG_LOG(MAPLE, "DDT vblank ; reset pending");
-#endif
 			}
 			else
 			{
-#if 0
 				DEBUG_LOG(MAPLE, "DDT vblank");
-#endif
 				SB_MDST = 1;
 				maple_DoDma();
             // if trigger reset is manual, mark it as pending
@@ -100,14 +96,8 @@ static void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 static bool check_mdapro(u32 addr)
 {
-   u32 bottom = 0x0C000000;
-   u32 top = 0x0FFFFFE0;
-   if ((SB_MDAPRO >> 16) == 0x6155)
-	{
-		bottom = std::max(bottom, ((((SB_MDAPRO >> 8) & 0x7f) << 20) | 0x08000000));
-		top = std::min(top, (((SB_MDAPRO & 0x7f) << 20) | 0x080fffff));
-	}
-
+	u32 bottom = std::max(0x0C000000u, ((((SB_MDAPRO >> 8) & 0x7f) << 20) | 0x08000000));
+	u32 top = std::min(0x0FFFFFE0u, (((SB_MDAPRO & 0x7f) << 20) | 0x080fffff));
 	if (((addr >> 29) & 7) == 7
 			|| (addr & 0x0fffffff) < bottom
 			|| (addr & 0x0fffffff) > top)

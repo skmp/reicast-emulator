@@ -121,6 +121,8 @@ static void SetGPState(const PolyParam* gp)
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
+		int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
+
 		palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
@@ -130,7 +132,7 @@ static void SetGPState(const PolyParam* gp)
 				gp->tsp.IgnoreTexA,
 				gp->tsp.ShadInstr,
 				gp->pcw.Offset,
-				gp->tsp.FogCtrl,
+				fog_ctrl,
 				two_volumes_mode,
 				gp->pcw.Gouraud,
 				gp->tcw.PixelFmt == PixelBumpMap,
@@ -172,10 +174,10 @@ static void SetGPState(const PolyParam* gp)
 	else
 		SetBaseClipping();
 
-   // This bit controls which pixels are affected by modvols
-   const u32 stencil = gp->pcw.Shadow != 0 ? 0x80 : 0x0;
+	// This bit controls which pixels are affected by modvols
+	const u32 stencil = gp->pcw.Shadow != 0 ? 0x80 : 0x0;
 
-   glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
+	glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
 	if (CurrentShader->pp_Texture)
 	{

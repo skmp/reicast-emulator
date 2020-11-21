@@ -523,38 +523,39 @@ void dc_request_reset()
 
 void LoadSettings(void)
 {
-   settings.dynarec.Enable			= 1;
+	settings.dynarec.Enable			= 1;
 	settings.dynarec.idleskip		= 1;
 	settings.dynarec.unstable_opt	= 0; 
-   //settings.dynarec.DisableDivMatching       = 0;
+	//settings.dynarec.DisableDivMatching       = 0;
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dynarec.disable_vmem32 = false;
-   settings.UpdateModeForced     = 0;
+	settings.UpdateModeForced     = 0;
 	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dreamcast.FullMMU		= false;
 	settings.aica.LimitFPS			= 0;
-   settings.aica.NoSound			= 0;
+	settings.aica.NoSound			= 0;
 	settings.pvr.subdivide_transp	= 0;
-   //settings.pvr.Emulation.AlphaSortMode= 0;
-   settings.pvr.Emulation.zMin         = 0.f;
-   settings.pvr.Emulation.zMax         = 1.0f;
+	//settings.pvr.Emulation.AlphaSortMode= 0;
+	settings.pvr.Emulation.zMin         = 0.f;
+	settings.pvr.Emulation.zMax         = 1.0f;
 
 	settings.pvr.MaxThreads			       = 3;
 #ifndef __LIBRETRO__
-   settings.pvr.Emulation.ModVol       = true;
-   settings.rend.RenderToTextureBuffer  = false;
-   settings.rend.RenderToTextureUpscale = 1;
-   settings.rend.MaxFilteredTextureSize = 256;
-   settings.pvr.SynchronousRendering	 = 0;
+	settings.pvr.Emulation.ModVol       = true;
+	settings.rend.RenderToTextureBuffer  = false;
+	settings.rend.RenderToTextureUpscale = 1;
+	settings.rend.MaxFilteredTextureSize = 256;
+	settings.pvr.SynchronousRendering	 = 0;
 #endif
-   settings.rend.AutoExtraDepthScale    = true;
-   settings.rend.ExtraDepthScale        = 1.f;
+	settings.rend.Fog				= true;
+	settings.rend.AutoExtraDepthScale    = true;
+	settings.rend.ExtraDepthScale        = 1.f;
 
-   settings.rend.Clipping               = true;
+	settings.rend.Clipping               = true;
 
 
-   settings.rend.ModifierVolumes        = true;
-   settings.rend.TranslucentPolygonDepthMask = false;
+	settings.rend.ModifierVolumes        = true;
+	settings.rend.TranslucentPolygonDepthMask = false;
 
 	settings.debug.SerialConsole         = 0;
 

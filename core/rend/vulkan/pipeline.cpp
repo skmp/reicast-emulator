@@ -294,7 +294,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
 	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
-	params.fog = pp.tsp.FogCtrl;
+	params.fog = settings.rend.Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
 	params.ignoreTexAlpha = pp.tsp.IgnoreTexA;
 	params.offset = pp.pcw.Offset;

@@ -662,6 +662,18 @@ static void update_variables(bool first_startup)
    else
       settings.rend.UseMipmaps      = 1;
 
+   var.key = CORE_OPTION_NAME "_fog";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         settings.rend.Fog      = true;
+      else if (!strcmp(var.value, "disabled"))
+         settings.rend.Fog      = false;
+   }
+   else
+      settings.rend.Fog      = true;
+
    if (first_startup)
    {
       var.key = CORE_OPTION_NAME "_system";

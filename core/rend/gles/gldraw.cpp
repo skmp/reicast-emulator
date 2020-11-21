@@ -114,6 +114,7 @@ __forceinline
 		ShaderUniforms.trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
@@ -126,7 +127,7 @@ __forceinline
 								  gp->tsp.IgnoreTexA,
 								  gp->tsp.ShadInstr,
 								  gp->pcw.Offset,
-								  gp->tsp.FogCtrl,
+								  fog_ctrl,
 								  gp->pcw.Gouraud,
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,

@@ -345,6 +345,17 @@ struct retro_core_option_definition option_defs_us[] = {
       "enabled",
    },
    {
+      CORE_OPTION_NAME "_fog",
+      "Fog Effects",
+      "",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
       CORE_OPTION_NAME "_volume_modifier_enable",
       "Volume Modifier",
       "A Dreamcast GPU feature that is typically used by games to draw object shadows. This should normally be enabled - the performance impact is usually minimal to negligible.",

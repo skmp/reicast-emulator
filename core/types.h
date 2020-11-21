@@ -530,15 +530,16 @@ struct settings_t
 	{
 		bool UseMipmaps;
 		bool WideScreen;
-      bool RenderToTextureBuffer;
-      int RenderToTextureUpscale;
-      bool TranslucentPolygonDepthMask;
-      bool ModifierVolumes;
+		bool RenderToTextureBuffer;
+		int RenderToTextureUpscale;
+		bool TranslucentPolygonDepthMask;
+		bool ModifierVolumes;
 		bool Clipping;
-      int TextureUpscale;
+		bool Fog;
+		int TextureUpscale;
 		int MaxFilteredTextureSize;
-      bool AutoExtraDepthScale;
-      f32 ExtraDepthScale;
+		bool AutoExtraDepthScale;
+		f32 ExtraDepthScale;
 		bool ThreadedRendering;
 		bool CustomTextures;
 		bool DumpTextures;

@@ -1027,32 +1027,33 @@ static bool RenderFrame(void)
 		if (settings.rend.PowerVR2Filter && !is_rtt)
 			postProcessor.Render(hw_render.get_current_framebuffer());
 	}
-   else
-   {
-      glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-      glClear(GL_COLOR_BUFFER_BIT);
-      glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
-      DrawFramebuffer(640.f, 480.f);
-   }
+	else
+	{
+		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
+		DrawFramebuffer();
+	}
 
-   if (!is_rtt)
-   {
-   	if (settings.System == DC_PLATFORM_DREAMCAST)
-   	{
+	/* VMU/Crosshair code - libretro-specific */
+	if (!is_rtt)
+	{
+		if (settings.System == DC_PLATFORM_DREAMCAST)
+		{
 			for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 				if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
 					DrawVmuTexture(vmu_screen_number);
-   	}
+		}
 
 		for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-				DrawGunCrosshair(lightgun_port);
-   }
+			DrawGunCrosshair(lightgun_port);
+	}
 
 	KillTex = false;
-   
-   if (is_rtt)
-      ReadRTTBuffer();
+
+	if (is_rtt)
+		ReadRTTBuffer();
 
 	return !is_rtt;
 }

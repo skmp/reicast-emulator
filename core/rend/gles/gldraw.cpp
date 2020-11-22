@@ -156,12 +156,14 @@ __forceinline
 	else
 		SetBaseClipping();
 
-	// This bit controls which pixels are affected
-	// by modvols
-	const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
-	glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
+	//This bit control which pixels are affected
+	//by modvols
+	const u32 stencil=(gp->pcw.Shadow!=0)?0x80:0x0;
+
+	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
 
 	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == (u64)-1 ? 0 : (GLuint)gp->texid);
+
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
@@ -223,15 +225,15 @@ __forceinline
 	}
 
 	if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
-	glcache.DepthMask(GL_FALSE);
+		glcache.DepthMask(GL_FALSE);
 	else
 	{
-		// Z Write Disable seems to be ignored for punch-through polys
+		// Z Write Disable seems to be ignored for punch-through.
 		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
-	if (Type == ListType_Punch_Through)
-		glcache.DepthMask(GL_TRUE);
-	else
-		glcache.DepthMask(!gp->isp.ZWriteDis);
+		if (Type == ListType_Punch_Through)
+			glcache.DepthMask(GL_TRUE);
+		else
+			glcache.DepthMask(!gp->isp.ZWriteDis);
 	}
 }
 

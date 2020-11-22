@@ -926,14 +926,15 @@ static bool RenderFrame(void)
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen && !matrices.IsClipped();
 
-	// Color is cleared by the background plane
+	//Color is cleared by the background plane
 
 	glcache.Disable(GL_SCISSOR_TEST);
-	glClearDepth(0.0);
+
 	glcache.DepthMask(GL_TRUE);
-	glStencilMask(0xFF);
+	glClearDepth(0.0);
+	glStencilMask(0xFF); glCheck();
 	glClearStencil(0);
-	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu
 

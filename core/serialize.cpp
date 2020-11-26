@@ -695,6 +695,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(set_mode_offset);
 	LIBRETRO_US(ata_cmd);
 	LIBRETRO_US(cdda);
+	cdda.status = (bool)cdda.status ? cdda_t::Playing : cdda_t::NoInfo;
 	LIBRETRO_US(gd_state);
 	LIBRETRO_US(gd_disk_type);
 	LIBRETRO_US(data_write_mode);

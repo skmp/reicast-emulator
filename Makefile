@@ -449,7 +449,7 @@ else ifeq ($(platform), odroid-n2)
 	HAVE_GENERIC_JIT = 0
 	HAVE_LTCG = 0
 	
-	# Lebre Computer La Frite
+	# Libre Computer La Frite
 else ifeq ($(platform), mali-drm-gles2)
 	EXT ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)

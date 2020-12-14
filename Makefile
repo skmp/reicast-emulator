@@ -448,6 +448,26 @@ else ifeq ($(platform), odroid-n2)
 	WITH_DYNAREC=arm64
 	HAVE_GENERIC_JIT = 0
 	HAVE_LTCG = 0
+	
+	# Lebre Computer La Frite
+else ifeq ($(platform), mali-drm-gles2)
+	EXT ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED += -shared -Wl,--version-script=link.T
+	LDFLAGS +=  -Wl,--no-undefined
+	fpic = -fPIC
+	LIBS += -lrt
+	ARM_FLOAT_ABI_HARD = 0
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+	CPUFLAGS += -DTARGET_LINUX_ARMv8 -frename-registers
+	CFLAGS += -mcpu=cortex-a73 -mtune=cortex-a53 $(CPUFLAGS)
+	CXXFLAGS += -mcpu=cortex-a53 -mtune=cortex-a53 $(CPUFLAGS)
+	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm64
+	HAVE_GENERIC_JIT = 0
+	HAVE_LTCG = 0
 
 # Amlogic S905/S905X/S912 (AMLGXBB/AMLGXL/AMLGXM) e.g. Khadas VIM1/2 / S905X2 (AMLG12A) & S922X/A311D (AMLG12B) e.g. Khadas VIM3 - 32-bit userspace
 else ifneq (,$(findstring AMLG,$(platform)))

@@ -461,8 +461,8 @@ else ifeq ($(platform), mali-drm-gles2)
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 	CPUFLAGS += -DTARGET_LINUX_ARMv8 -frename-registers
-	CFLAGS += -mcpu=cortex-a53 -mtune=cortex-a53 $(CPUFLAGS)
-	CXXFLAGS += -mcpu=cortex-a53 -mtune=cortex-a53 $(CPUFLAGS)
+	CFLAGS += -mtune=cortex-a53 $(CPUFLAGS)
+	CXXFLAGS += -mtune=cortex-a53 $(CPUFLAGS)
 	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm64

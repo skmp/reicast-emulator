@@ -460,10 +460,10 @@ else ifeq ($(platform), mali-drm-gles2)
 	ARM_FLOAT_ABI_HARD = 0
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
-	CPUFLAGS += -DTARGET_LINUX_ARMv8 -frename-registers
+	CPUFLAGS += -march=armv8-a
 	CFLAGS += -mtune=cortex-a53 $(CPUFLAGS)
 	CXXFLAGS += -mtune=cortex-a53 $(CPUFLAGS)
-	ASFLAGS += $(CFLAGS) -ffast-math 
+	ASFLAGS += $(CFLAGS)
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm64
 	HAVE_GENERIC_JIT = 0

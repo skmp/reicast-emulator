@@ -23,31 +23,21 @@ extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
 extern Array<RegisterStruct> SCI;  //SCI  : 8 registers
 extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
-/*
-//Region P4
-u32 ReadMem_P4(u32 addr,u32 sz);
-void WriteMem_P4(u32 addr,u32 data,u32 sz);
 
-//Area7
-u32 ReadMem_area7(u32 addr,u32 sz);
-void WriteMem_area7(u32 addr,u32 data,u32 sz);
-void DYNACALL WriteMem_sq_32(u32 address,u32 data);*/
-
-//Init/Res/Term
 void sh4_mmr_init();
-void sh4_mmr_reset(bool Manual);
+void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
 void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
 
-#define A7_REG_HASH(addr) ((addr>>16)&0x1FFF)
+#define A7_REG_HASH(addr) (((addr) >> 16) & 0x1FFF)
 
-#define SH4IO_REGN(mod,addr,size) (mod.data[(addr&255)/4].data##size)
-#define SH4IO_REG(mod,name,size) SH4IO_REGN(mod,mod##_##name##_addr,size)
-#define SH4IO_REG_T(mod,name,size) ((mod##_##name##_type&)SH4IO_REG(mod,name,size))
+#define SH4IO_REGN(mod, addr, size) ((mod)[((addr) & 255) / 4].data##size)
+#define SH4IO_REG(mod, name, size) SH4IO_REGN(mod, mod##_##name##_addr, size)
+#define SH4IO_REG_T(mod, name, size) ((mod##_##name##_type&)SH4IO_REG(mod, name, size))
 
-#define SH4IO_REG_OFS(mod,name,o,s,size) SH4IO_REGN(mod,mod##_##name##0_addr+o*s,size)
-#define SH4IO_REG_T_OFS(mod,name,o,s,size) ((mod##_##name##_type&)SH4IO_REG_OFS(mod,name,o,s,size))
+#define SH4IO_REG_OFS(mod, name, o, s, size) SH4IO_REGN(mod, mod##_##name##0_addr + (o) * (s), size)
+#define SH4IO_REG_T_OFS(mod, name, o, s, size) ((mod##_##name##_type&)SH4IO_REG_OFS(mod, name, o, s, size))
 
 //CCN module registers base
 #define CCN_BASE_addr 0x1F000000

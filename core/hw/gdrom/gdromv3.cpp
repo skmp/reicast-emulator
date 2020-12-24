@@ -1200,7 +1200,7 @@ void gdrom_reg_Term(void)
 	
 }
 
-void gdrom_reg_Reset(bool Manual)
+void gdrom_reg_Reset(bool hard)
 {
 	SB_GDST = 0;
 	SB_GDEN = 0;

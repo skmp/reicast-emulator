@@ -111,11 +111,11 @@ void plugins_Term(void)
    libPvr_Term();
 }
 
-void plugins_Reset(bool Manual)
+void plugins_Reset(bool hard)
 {
-	libPvr_Reset(Manual);
-	libGDR_Reset(Manual);
-	libAICA_Reset(Manual);
+	libPvr_Reset(hard);
+	libGDR_Reset(hard);
+	libAICA_Reset(hard);
 
 	arm_Reset();
 	arm_SetEnabled(false);
@@ -387,12 +387,12 @@ void dc_prepare_system()
    VRAM_MASK        = (VRAM_SIZE-1);
 }
 
-void dc_reset()
+void dc_reset(bool hard)
 {
-	plugins_Reset(true);
-	mem_Reset(true);
+	plugins_Reset(hard);
+	mem_Reset(hard);
 
-	sh4_cpu.Reset(true);
+	sh4_cpu.Reset(hard);
 }
 
 int dc_init()
@@ -455,7 +455,7 @@ int dc_init()
 	
 	mem_map_default();
 
-	dc_reset();
+	dc_reset(true);
 
 	switch (settings.System)
 	{

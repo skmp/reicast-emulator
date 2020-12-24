@@ -751,9 +751,9 @@ void sb_Init(void)
 #endif
 }
 
-void sb_Reset(bool Manual)
+void sb_Reset(bool hard)
 {
-	if (!Manual)
+	if (hard)
 	{
 		for (u32 i = 0; i < sb_regs.Size; i++)
 			sb_regs[i].reset();
@@ -763,16 +763,16 @@ void sb_Reset(bool Manual)
 	SB_FFST = 0;
 	if (settings.System == DC_PLATFORM_DREAMCAST)
 #ifdef HAVE_MODEM
-   	ModemTerm();
+	ModemTerm();
 #endif
-	asic_reg_Reset(Manual);
-   if (settings.System != DC_PLATFORM_DREAMCAST)
-      naomi_reg_Reset(Manual);
-   else
-      gdrom_reg_Reset(Manual);
-	pvr_sb_Reset(Manual);
-	maple_Reset(Manual);
-	aica_sb_Reset(Manual);
+	asic_reg_Reset(hard);
+	if (settings.System == DC_PLATFORM_DREAMCAST)
+		gdrom_reg_Reset(hard);
+	else
+		naomi_reg_Reset(hard);
+	pvr_sb_Reset(hard);
+	maple_Reset(hard);
+	aica_sb_Reset(hard);
 }
 
 void sb_Term(void)

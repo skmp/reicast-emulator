@@ -21,7 +21,7 @@
 #pragma once
 
 int dc_init();
-void dc_reset();
+void dc_reset(bool hard);
 void dc_start();
 void dc_run();
 void dc_term();

@@ -230,7 +230,7 @@ static void *emu_thread_func(void *)
     		break ;
     	if (reset_requested)
     	{
-    		dc_reset();
+    		dc_reset(false);
     		reset_requested = false;
     	}
     }
@@ -1260,7 +1260,7 @@ void retro_reset (void)
    settings.dreamcast.cable = 3;
    settings.dreamcast.RTC = GetRTC_now();
    update_variables(false);
-   dc_reset();
+   dc_reset(true);
 
 #if !defined(TARGET_NO_THREADS)
    if (settings.rend.ThreadedRendering)

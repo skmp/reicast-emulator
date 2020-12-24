@@ -296,8 +296,17 @@ void tmu_init()
 }
 
 
-void tmu_reset()
+void tmu_reset(bool hard)
 {
+	if (hard)
+	{
+		memset(tmu_shift, 0, sizeof(tmu_shift));
+		memset(tmu_mask, 0, sizeof(tmu_mask));
+		memset(tmu_mask64, 0, sizeof(tmu_mask64));
+		memset(old_mode, 0xFF, sizeof(old_mode));
+		memset(tmu_ch_base, 0, sizeof(tmu_ch_base));
+		memset(tmu_ch_base64, 0, sizeof(tmu_ch_base64));
+	}
 	TMU_TOCR=TMU_TSTR=0;
 	TMU_TCOR(0) = TMU_TCOR(1) = TMU_TCOR(2) = 0xffffffff;
 //	TMU_TCNT(0) = TMU_TCNT(1) = TMU_TCNT(2) = 0xffffffff;

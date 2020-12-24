@@ -820,9 +820,9 @@ void sh4_mmr_init(void)
 	ubc_init();
 }
 
-void sh4_mmr_reset(bool Manual)
+void sh4_mmr_reset(bool hard)
 {
-	if (!Manual)
+	if (hard)
 	{
 		for (int i = 0; i < ARRAY_SIZE(AllRegisters); i++)
 			for (int j = 0; j < AllRegisters[i]->Size; j++)
@@ -830,14 +830,14 @@ void sh4_mmr_reset(bool Manual)
 	}
 	OnChipRAM.Zero();
 	//Reset register values
-	bsc_reset();
-	ccn_reset();
+	bsc_reset(hard);
+	ccn_reset(hard);
 	cpg_reset();
 	dmac_reset();
 	intc_reset();
 	rtc_reset();
 	serial_reset();
-	tmu_reset();
+	tmu_reset(hard);
 	ubc_reset();
 }
 

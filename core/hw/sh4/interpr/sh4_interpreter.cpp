@@ -10,8 +10,12 @@
 #include "../sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "../sh4_sched.h"
+#include "hw/holly/sb.h"
+#include "../sh4_cache.h"
 
 #define CPU_RATIO      (8)
+
+sh4_icache icache;
 
 static s32 l;
 
@@ -94,12 +98,12 @@ void Sh4_int_Skip()
 		next_pc+=2;
 }
 
-void Sh4_int_Reset(bool Manual)
+void Sh4_int_Reset(bool hard)
 {
    if (sh4_int_bCpuRun)
       return;
 
-   if (!Manual)
+   if (hard)
       memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
    next_pc = 0xA0000000;
 
@@ -116,6 +120,7 @@ void Sh4_int_Reset(bool Manual)
    fpscr.full = 0x0004001;
    old_fpscr=fpscr;
    UpdateFPSCR();
+   icache.Reset(hard);
 
    //Any more registers have default value ?
    INFO_LOG(INTERPRETER, "Sh4 Reset");

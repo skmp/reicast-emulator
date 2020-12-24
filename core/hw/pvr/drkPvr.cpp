@@ -23,10 +23,10 @@ void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 }
 
 
-void libPvr_Reset(bool Manual)
+void libPvr_Reset(bool hard)
 {
-   Regs_Reset(Manual);
-   spg_Reset(Manual);
+   Regs_Reset(hard);
+   spg_Reset(hard);
 }
 
 

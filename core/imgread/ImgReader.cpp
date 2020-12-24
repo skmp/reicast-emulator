@@ -71,7 +71,7 @@ void libGDR_GetSessionInfo(u8* out,u8 ses)
 }
 
 //It's supposed to reset everything (if not a manual reset)
-void libGDR_Reset(bool Manual)
+void libGDR_Reset(bool hard)
 {
 	libCore_gdrom_disc_change();
 }

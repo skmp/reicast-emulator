@@ -560,9 +560,9 @@ void sh4_area0_Init(void)
 	sb_Init();
 }
 
-void sh4_area0_Reset(bool Manual)
+void sh4_area0_Reset(bool hard)
 {
-	sb_Reset(Manual);
+	sb_Reset(hard);
 	sys_rom.Reset();
 	sys_nvmem_sram.Reset();
 	sys_nvmem_flash.Reset();

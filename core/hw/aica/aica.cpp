@@ -271,16 +271,16 @@ s32 libAICA_Init()
 	return 0;
 }
 
-void libAICA_Reset(bool manual)
+void libAICA_Reset(bool hard)
 {
-	if (!manual)
+	if (hard)
 	{
 		init_mem();
 		sgc_Init();
-	}	
+	}
 	for (u32 i = 0; i < 3; i++)
 		timers[i].Init(aica_reg, i);
-	aica_Reset(manual);
+	aica_Reset(hard);
 }
 
 void libAICA_Term()

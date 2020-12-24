@@ -43,7 +43,7 @@ void Sh4_int_Stop(void);
 void Sh4_int_Start(void);
 void Sh4_int_Step(void);
 void Sh4_int_Skip(void);
-void Sh4_int_Reset(bool Manual);
+void Sh4_int_Reset(bool hard);
 void Sh4_int_Init(void);
 void Sh4_int_Term(void);
 bool Sh4_int_IsCpuRunning(void);

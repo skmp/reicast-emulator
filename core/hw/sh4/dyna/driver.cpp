@@ -405,9 +405,9 @@ static void recSh4_Skip(void)
 	Sh4_int_Skip();
 }
 
-static void recSh4_Reset(bool Manual)
+static void recSh4_Reset(bool hard)
 {
-	Sh4_int_Reset(Manual);
+	Sh4_int_Reset(hard);
 	recSh4_ClearCache();
 	bm_Reset();
 }

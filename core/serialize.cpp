@@ -27,6 +27,7 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/naomi.h"
+#include "hw/sh4/sh4_cache.h"
 
 #define LIBRETRO_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
 
@@ -438,6 +439,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	register_serialize(TMU, data, total_size) ;
 	register_serialize(SCI, data, total_size) ;
 	register_serialize(SCIF, data, total_size) ;
+	icache.Serialize(data, total_size);
 
 	LIBRETRO_SA(mem_b.data, mem_b.size);
 
@@ -827,6 +829,10 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	register_unserialize(TMU, data, total_size) ;
 	register_unserialize(SCI, data, total_size) ;
 	register_unserialize(SCIF, data, total_size) ;
+	if (version >= V9)
+		icache.Unserialize(data, total_size);
+	else
+		icache.Reset(true);
 
 	LIBRETRO_USA(mem_b.data, mem_b.size);
 

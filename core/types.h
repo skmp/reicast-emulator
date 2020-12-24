@@ -693,7 +693,7 @@ void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not
 
 //GDR
 s32 libGDR_Init(void);
-void libGDR_Reset(bool M);
+void libGDR_Reset(bool hard);
 void libGDR_Term(void);
 
 void libCore_gdrom_disc_change(void);

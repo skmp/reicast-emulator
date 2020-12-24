@@ -537,7 +537,7 @@ void naomi_reg_Term()
 	}
 	#endif
 }
-void naomi_reg_Reset(bool Manual)
+void naomi_reg_Reset(bool hard)
 {
 	SB_GDST = 0;
 	SB_GDEN = 0;

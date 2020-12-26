@@ -56,6 +56,8 @@ libretro-build-windows-x64:
   extends:
     - .libretro-windows-x64-mingw-make-default
     - .core-defs-oit
+  variables:
+    platform: win
     
 # Linux 64-bit
 libretro-build-linux-x64:

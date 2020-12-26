@@ -1,93 +1,97 @@
-variables:
-  STATIC_RETROARCH_BRANCH: master
+# DESCRIPTION: GitLab CI/CD for libRetro (NOT FOR GitLab-proper)
 
+##############################################################################
+################################# BOILERPLATE ################################
+##############################################################################
+
+# Core definitions
+.core-defs:
+  variables:
+    JNI_PATH: .
+    CORENAME: flycast
+    
+.core-defs-oit:
+  extends: .core-defs
+  variables:
+    CORENAME: flycast
+    HAVE_OIT: 1
+
+# Inclusion templates, required for the build to work
 include:
-  template: Jobs/Code-Quality.gitlab-ci.yml
+  ################################## DESKTOPS ################################
+  # Windows 64-bit
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/windows-x64-mingw.yml'
   
-code_quality:
-  artifacts:
-    paths: [gl-code-quality-report.json]
+  # Linux 64-bit
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/linux-x64.yml'
+    
+  # MacOS 64-bit
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/osx-x64.yml'
 
+  ################################## CELLULAR ################################
+  # Android
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/android-jni.yml'
+    
+  ################################## CONSOLES ################################  
+  # Nintendo Switch
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/libnx-static.yml'
+
+# Stages for building
 stages:
   - build-prepare
   - build-shared
-  - fetch-dependencies
   - build-static
-  - test
 
-libretro-rebase-upstream-auto:
-  image: $CI_SERVER_HOST:4567/libretro/infrastructure/libretro-build-amd64-ubuntu:latest
-  stage: build-prepare
-  before_script:
-    - url_host=`git remote get-url origin | sed -e "s/https:\/\/gitlab-ci-token:.*@//g"`
-  script:
-    - git config user.name $GIT_ACCESS_USER
-    - git config user.email $GIT_ACCESS_EMAIL
-    - git fetch origin
-    - git reset --hard
-    - git clean -fd
-    - git checkout $CI_COMMIT_REF_NAME
-    - git reset --hard origin/$CI_COMMIT_REF_NAME
-    - git remote set-url origin "https://$GIT_ACCESS_USER:$GIT_ACCESS_TOKEN@${url_host}"
-    - git remote add upstream "https://github.com/libretro/flycast.git"
-    - git fetch upstream
-    - git rebase upstream/master
-    - git push origin ${CI_BUILD_REF_NAME} --force || true
-  only: [chat]
-
-libretro-build-linux-x64:
-  image: $CI_SERVER_HOST:4567/libretro/infrastructure/libretro-build-amd64-ubuntu:latest
-  stage: build-shared
-  allow_failure: true
-  script:
-    - make -j10 HAVE_OIT=1
-  artifacts:
-    paths:
-    - flycast_libretro.so
-    expire_in: 1 month
-  dependencies: []
-
+##############################################################################
+#################################### STAGES ##################################
+##############################################################################
+#
+################################### DESKTOPS #################################
+# Windows 64-bit
 libretro-build-windows-x64:
-  image: $CI_SERVER_HOST:4567/libretro/infrastructure/libretro-build-amd64-ubuntu:latest
-  stage: build-shared
-  allow_failure: true
-  script:
-    - make -j10 platform=win64 HAVE_OIT=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++
-  artifacts:
-    paths:
-    - flycast_libretro.dll
-    expire_in: 1 month
-  dependencies: []
+  extends:
+    - .libretro-windows-x64-mingw-make-default
+    - .core-defs-oit
+    
+# Linux 64-bit
+libretro-build-linux-x64:
+  extends:
+    - .libretro-linux-x64-make-default
+    - .core-defs-oit
 
-libretro-fetch-static-libnx-dependencies-aarch64:
-  image: $CI_SERVER_HOST:4567/libretro/infrastructure/libretro-build-libnx-devkitpro:latest
-  stage: fetch-dependencies
-  allow_failure: true
-  script:
-    - wget -O retroarch-precompiled.zip "https://$CI_SERVER_HOST/libretro/RetroArch/-/jobs/artifacts/$STATIC_RETROARCH_BRANCH/download?job=build-static-retroarch-libnx-aarch64"
-    - unzip retroarch-precompiled.zip
-    - rm -f retroarch-precompiled.zip
-  artifacts:
-    paths:
-      - retroarch-precompiled/
-    expire_in: 20 min
+# MacOS 64-bit
+libretro-build-osx-x64:
+  extends:
+    - .libretro-osx-x64-make-default
+    - .core-defs
 
-libretro-build-static-libnx-aarch64:
-  image: $CI_SERVER_HOST:4567/libretro/infrastructure/libretro-build-libnx-devkitpro:latest
-  stage: build-static
-  allow_failure: true
-  script:
-    - make -j10 platform=libnx
-    - mv flycast_libretro_libnx.a retroarch-precompiled/libretro_libnx.a
-    - cd retroarch-precompiled/
-    - make -f Makefile.libnx -j10
-    - mv retroarch_switch.nro ../flycast_libretro_libnx.nro
-    - mv retroarch_switch.elf ../flycast_libretro_libnx.elf
-    - cd ../
-  dependencies:
-    - :libretro-fetch-static-libnx-dependencies-aarch64
-  artifacts:
-    paths:
-    - flycast_libretro_libnx.nro
-    - flycast_libretro_libnx.elf
-    expire_in: 1 month
+################################### CELLULAR #################################
+# Android ARMv7a
+android-armeabi-v7a:
+  extends:
+    - .libretro-android-jni-armeabi-v7a
+    - .core-defs
+    
+# Android ARMv8a
+android-arm64-v8a:
+  extends:
+    - .libretro-android-jni-arm64-v8a
+    - .core-defs
+
+# Android 64-bit x86
+android-x86_64:
+  extends:
+    - .libretro-android-jni-x86_64
+    - .core-defs
+    
+################################### CONSOLES #################################
+# Nintendo Switch
+libretro-build-libnx-aarch64:
+  extends:
+    - .libretro-libnx-static-retroarch-master
+    - .core-defs

@@ -13,7 +13,6 @@
 .core-defs-oit:
   extends: .core-defs
   variables:
-    CORENAME: flycast
     HAVE_OIT: 1
 
 # Inclusion templates, required for the build to work

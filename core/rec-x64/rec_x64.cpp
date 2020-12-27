@@ -1025,6 +1025,7 @@ public:
 #endif
                break;
 
+/*
             case shop_fipr:
 					{
 						// Using doubles for better precision
@@ -1101,7 +1102,7 @@ public:
             		movaps(xword[rax], xmm0);
             	}
                break;
-
+*/
             case shop_frswap:
                mov(rax, (uintptr_t)op.rs1.reg_ptr());
                mov(rcx, (uintptr_t)op.rd.reg_ptr());

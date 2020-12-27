@@ -16,6 +16,7 @@
 #include "../modules/ccn.h"
 #include "../sh4_interrupts.h"
 #include "hw/gdrom/gdrom_if.h"
+#include "../sh4_cache.h"
 
 #include "hw/sh4/sh4_opcode.h"
 
@@ -31,6 +32,14 @@
 #define iWarn cpu_iWarn
 
 //Read Mem macros
+#ifdef STRICT_MODE
+#define ReadMem8(addr) (ocache.ReadMem<u8>(addr))
+#define ReadMem16(addr) (ocache.ReadMem<u16>(addr))
+#define ReadMem32(addr) (ocache.ReadMem<u32>(addr))
+#define WriteMem8(addr, data) (ocache.WriteMem<u8>(addr, data))
+#define WriteMem16(addr, data) (ocache.WriteMem<u16>(addr, data))
+#define WriteMem32(addr, data) (ocache.WriteMem<u32>(addr, data))
+#endif
 
 #define ReadMemU32(to,addr) to=ReadMem32(addr)
 #define ReadMemS32(to,addr) to=(s32)ReadMem32(addr)
@@ -1168,19 +1177,22 @@ sh4op(i0000_0000_0011_1000)
 //ocbi @<REG_N>
 sh4op(i0000_nnnn_1001_0011)
 {
-	//printf("ocbi @0x%08X \n",r[n]);
+	//printf("OCBI @R%d (0x%08x)\n", GetN(op), r[GetN(op)]);
+	ocache.WriteBack(r[GetN(op)], false, true);
 }
 
 //ocbp @<REG_N>
 sh4op(i0000_nnnn_1010_0011)
 {
-	//printf("ocbp @0x%08X \n",r[n]);
+	//printf("OCBP @R%d (%08x)\n", GetN(op), r[GetN(op)]);
+	ocache.WriteBack(r[GetN(op)], true, true);
 }
 
 //ocbwb @<REG_N>
 sh4op(i0000_nnnn_1011_0011)
 {
-	//printf("ocbwb @0x%08X \n",r[n]);
+	//printf("OCBWB @R%d (0x%08x)\n", GetN(op) ,r[GetN(op)]);
+	ocache.WriteBack(r[GetN(op)], true, false);
 }
 
 //pref @<REG_N>
@@ -1257,6 +1269,11 @@ sh4op(i0000_nnnn_1000_0011)
 			do_sqw<true>(Dest);
 		else
 			do_sqw<false>(Dest);
+	}
+	else
+	{
+		//printf("PREF @R%d (0x%08x)\n", n, Dest);
+		ocache.Prefetch(Dest);
 	}
 }
 

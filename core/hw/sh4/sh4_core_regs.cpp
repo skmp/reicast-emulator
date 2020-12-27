@@ -39,13 +39,13 @@ bool UpdateSR()
 {
 	if (sr.MD)
 	{
-		if (old_sr.RB !=sr.RB)
+		if (old_sr.RB != sr.RB)
 			ChangeGPR();//bank change
 	}
 	else
 	{
-      if (old_sr.RB)
-         ChangeGPR();//switch
+		if (old_sr.RB)
+			ChangeGPR();//switch
 	}
 
 	old_sr.status=sr.status;

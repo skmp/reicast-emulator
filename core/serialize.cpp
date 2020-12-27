@@ -150,8 +150,8 @@ extern u8 pvr_regs[pvr_RegSize];
 //./core/hw/pvr/spg.o
 extern u32 in_vblank;
 extern u32 clc_pvr_scanline;
-extern int render_end_sched;
-extern int vblank_sched;
+extern int render_end_schid;
+extern int vblank_schid;
 
 //./core/hw/pvr/ta.o
 extern u8 ta_fsm[2049];	//[2048] stores the current state
@@ -502,13 +502,13 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	   LIBRETRO_S(sch_list[tmu_sched[i]].end) ;
 	}
 
-	LIBRETRO_S(sch_list[render_end_sched].tag) ;
-	LIBRETRO_S(sch_list[render_end_sched].start) ;
-	LIBRETRO_S(sch_list[render_end_sched].end) ;
+	LIBRETRO_S(sch_list[render_end_schid].tag) ;
+	LIBRETRO_S(sch_list[render_end_schid].start) ;
+	LIBRETRO_S(sch_list[render_end_schid].end) ;
 
-	LIBRETRO_S(sch_list[vblank_sched].tag) ;
-	LIBRETRO_S(sch_list[vblank_sched].start) ;
-	LIBRETRO_S(sch_list[vblank_sched].end) ;
+	LIBRETRO_S(sch_list[vblank_schid].tag) ;
+	LIBRETRO_S(sch_list[vblank_schid].start) ;
+	LIBRETRO_S(sch_list[vblank_schid].end) ;
 
 #ifdef HAVE_MODEM
    LIBRETRO_S(sch_list[modem_sched].tag) ;
@@ -775,8 +775,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 		LIBRETRO_US(i); 			// Frame_Cycles
 		if (version < V3)
 		{
-			LIBRETRO_US(dummy_int);	//render_end_sched
-			LIBRETRO_US(dummy_int);	//vblank_sched
+			LIBRETRO_US(dummy_int);	//render_end_schid
+			LIBRETRO_US(dummy_int);	//vblank_schid
 			LIBRETRO_US(dummy_int);	//time_sync
 		}
 		LIBRETRO_SKIP(8); 		// speed_load_mspdf
@@ -908,13 +908,13 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	   LIBRETRO_US(sch_list[tmu_sched[i]].end) ;
 	}
 
-	LIBRETRO_US(sch_list[render_end_sched].tag) ;
-	LIBRETRO_US(sch_list[render_end_sched].start) ;
-	LIBRETRO_US(sch_list[render_end_sched].end) ;
+	LIBRETRO_US(sch_list[render_end_schid].tag) ;
+	LIBRETRO_US(sch_list[render_end_schid].start) ;
+	LIBRETRO_US(sch_list[render_end_schid].end) ;
 
-	LIBRETRO_US(sch_list[vblank_sched].tag) ;
-	LIBRETRO_US(sch_list[vblank_sched].start) ;
-	LIBRETRO_US(sch_list[vblank_sched].end) ;
+	LIBRETRO_US(sch_list[vblank_schid].tag) ;
+	LIBRETRO_US(sch_list[vblank_schid].start) ;
+	LIBRETRO_US(sch_list[vblank_schid].end) ;
 
 	if (version < V9)
 	{

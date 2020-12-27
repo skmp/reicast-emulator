@@ -160,7 +160,6 @@ struct rend_context
 struct TA_context
 {
 	u32 Address;
-	u32 LastUsed;
 
 	cMutex thd_inuse;
 	cMutex rend_inuse;
@@ -274,6 +273,5 @@ void VDecEnd();
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
-bool UsingAutoSort(int pass_number);
 void SerializeTAContext(void **data, unsigned int *total_size);
 void UnserializeTAContext(void **data, unsigned int *total_size);

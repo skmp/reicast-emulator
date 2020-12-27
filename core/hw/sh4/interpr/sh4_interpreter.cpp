@@ -101,30 +101,31 @@ void Sh4_int_Skip()
 
 void Sh4_int_Reset(bool hard)
 {
-   if (sh4_int_bCpuRun)
-      return;
+	if (sh4_int_bCpuRun)
+		return;
 
-   if (hard)
-      memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
-   next_pc = 0xA0000000;
+	if (hard)
+		memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
+	next_pc = 0xA0000000;
 
-   memset(r,0,sizeof(r));
-   memset(r_bank,0,sizeof(r_bank));
+	memset(r,0,sizeof(r));
+	memset(r_bank,0,sizeof(r_bank));
 
-   gbr=ssr=spc=sgr=dbr=vbr=0;
-   mac.full=pr=fpul=0;
+	gbr=ssr=spc=sgr=dbr=vbr=0;
+	mac.full=pr=fpul=0;
 
-   sh4_sr_SetFull(0x700000F0);
-   old_sr.status=sr.status;
-   UpdateSR();
+	sh4_sr_SetFull(0x700000F0);
+	old_sr.status=sr.status;
+	UpdateSR();
 
-   fpscr.full = 0x0004001;
-   old_fpscr=fpscr;
-   UpdateFPSCR();
-   icache.Reset(hard);
+	fpscr.full = 0x0004001;
+	old_fpscr=fpscr;
+	UpdateFPSCR();
+	icache.Reset(hard);
+	ocache.Reset(hard);
 
-   //Any more registers have default value ?
-   INFO_LOG(INTERPRETER, "Sh4 Reset");
+	//Any more registers have default value ?
+	INFO_LOG(INTERPRETER, "Sh4 Reset");
 }
 
 bool Sh4_int_IsCpuRunning()

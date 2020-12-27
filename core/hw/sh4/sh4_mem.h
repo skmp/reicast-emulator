@@ -18,6 +18,10 @@ extern VArray2 mem_b;
 #define WriteMem16 _vmem_WriteMem16
 #define WriteMem32 _vmem_WriteMem32
 #define WriteMem64 _vmem_WriteMem64
+#ifdef STRICT_MODE
+#error Strict mode requires the MMU
+#endif
+
 #else
 typedef u8 DYNACALL (*ReadMem8Func)(u32 addr);
 typedef u16 DYNACALL (*ReadMem16Func)(u32 addr);
@@ -71,3 +75,4 @@ bool LoadRomFiles(const string& root);
 void SaveRomFiles(const string& root);
 bool LoadHle(const string& root);
 void FixUpFlash();
+void SetMemoryHandlers();

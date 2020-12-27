@@ -440,6 +440,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	register_serialize(SCI, data, total_size) ;
 	register_serialize(SCIF, data, total_size) ;
 	icache.Serialize(data, total_size);
+	ocache.Serialize(data, total_size);
 
 	LIBRETRO_SA(mem_b.data, mem_b.size);
 
@@ -833,6 +834,10 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 		icache.Unserialize(data, total_size);
 	else
 		icache.Reset(true);
+	if (version >= V10)
+		ocache.Unserialize(data, total_size);
+	else
+		ocache.Reset(true);
 
 	LIBRETRO_USA(mem_b.data, mem_b.size);
 

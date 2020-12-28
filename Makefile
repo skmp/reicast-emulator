@@ -38,9 +38,6 @@ ifeq ($(HAVE_LTCG),1)
 	SHARED   += -flto
 endif
 
-ifneq ($(AS),)
-	CC_AS := ${AS}
-endif
 CC_AS    ?= ${CC_PREFIX}as
 
 MFLAGS   := 
@@ -1022,7 +1019,7 @@ else
 	CXXFLAGS += -DTARGET_NO_OPENMP
 endif
 ifeq ($(platform), win)
-	LDFLAGS_END += -Wl,-Bstatic -lgomp -lwsock32
+	LDFLAGS_END += -Wl,-Bstatic -lgmp -Wl,-Bstatic -lgomp -lwsock32
 endif
 	NEED_CXX11=1
 	NEED_PTHREAD=1

@@ -38,6 +38,9 @@ ifeq ($(HAVE_LTCG),1)
 	SHARED   += -flto
 endif
 
+ifneq (${AS},)
+	CC_AS := ${AS}
+endif
 CC_AS    ?= ${CC_PREFIX}as
 
 MFLAGS   := 

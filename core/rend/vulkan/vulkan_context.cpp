@@ -29,7 +29,7 @@ static const char *PipelineCacheFileName = "vulkan_pipeline.cache";
 const VkApplicationInfo* VkGetApplicationInfo()
 {
 	// FIXME How to figure out which vulkan version is supported in this early call ? Are we supposed to only set the min compatible version here ?
-	static vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, VK_API_VERSION_1_0);
+	static vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, VK_API_VERSION_1_1);
 	return &(VkApplicationInfo&)applicationInfo;
 }
 

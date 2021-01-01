@@ -70,6 +70,7 @@ libretro-build-windows-i686:
     - .core-defs-oit
   variables:
     platform: win
+    ARCH: i686
     
 # Linux 64-bit
 libretro-build-linux-x64:

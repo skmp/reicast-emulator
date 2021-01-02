@@ -21,10 +21,6 @@ include:
   # Windows 64-bit
   - project: 'libretro-infrastructure/ci-templates'
     file: '/windows-x64-mingw.yml'
-    
-  # Windows 32-bit
-  - project: 'libretro-infrastructure/ci-templates'
-    file: '/windows-i686-mingw.yml'
   
   # Linux 64-bit
   - project: 'libretro-infrastructure/ci-templates'
@@ -62,16 +58,6 @@ libretro-build-windows-x64:
     - .core-defs-oit
   variables:
     platform: win
-    
-# Windows 32-bit
-libretro-build-windows-i686:
-  extends:
-    - .libretro-windows-i686-mingw-make-default
-    - .core-defs-oit
-  variables:
-    platform: win
-    ARCH: i686
-    CC_AS:    ${CC}
     
 # Linux 64-bit
 libretro-build-linux-x64:

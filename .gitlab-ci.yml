@@ -71,7 +71,7 @@ libretro-build-windows-i686:
   variables:
     platform: win
     ARCH: i686
-    CC_AS:    ${AS}
+    CC_AS:    ${CC}
     
 # Linux 64-bit
 libretro-build-linux-x64:

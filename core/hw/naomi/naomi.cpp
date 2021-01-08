@@ -10,8 +10,11 @@
 #include "naomi.h"
 #include "naomi_cart.h"
 #include "naomi_regs.h"
+#include "naomi_m3comm.h"
 
 //#define NAOMI_COMM
+
+static NaomiM3Comm m3comm;
 
 static const u32 BoardID=0x980055AA;
 u32 GSerialBuffer=0,BSerialBuffer=0;
@@ -392,25 +395,31 @@ void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
 	}
 }
 
-u32 ReadMem_naomi(u32 Addr, u32 sz)
+u32 ReadMem_naomi(u32 address, u32 size)
 {
-	verify(sz!=1);
+	verify(size!=1);
 	if (unlikely(CurrentCartridge == NULL))
 	{
 		INFO_LOG(NAOMI, "called without cartridge");
 		return 0xFFFF;
 	}
-	return CurrentCartridge->ReadMem(Addr, sz);
+	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr)
+		return m3comm.ReadMem(address, size);
+	else
+		return CurrentCartridge->ReadMem(address, size);
 }
 
-void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
+void WriteMem_naomi(u32 address, u32 data, u32 size)
 {
 	if (unlikely(CurrentCartridge == NULL))
 	{
 		INFO_LOG(NAOMI, "called without cartridge");
 		return;
 	}
-	CurrentCartridge->WriteMem(Addr, data, sz);
+	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr && settings.System == DC_PLATFORM_NAOMI)
+		m3comm.WriteMem(address, data, size);
+	else
+		CurrentCartridge->WriteMem(address, data, size);
 }
 
 //Dma Start
@@ -426,15 +435,10 @@ void Naomi_DmaStart(u32 addr, u32 data)
 
 	if (SB_GDST==1)
 	{
-		verify(1 == SB_GDDIR );
-		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
-	
-		SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
-		
-		SB_GDLEND = SB_GDLEN;
-		SB_GDST = 0;
-		if (CurrentCartridge != NULL)
+		if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
 		{
+			DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
+			verify(1 == SB_GDDIR);
 			u32 len = (SB_GDLEN + 30) & ~30;
 			u32 offset = 0;
 			while (len > 0)
@@ -456,6 +460,9 @@ void Naomi_DmaStart(u32 addr, u32 data)
 			}
 		}
 
+		SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
+		SB_GDLEND = SB_GDLEN;
+		SB_GDST = 0;
 		asic_RaiseInterrupt(holly_GDROM_DMA);
 	}
 }
@@ -526,7 +533,7 @@ void naomi_reg_Init()
 
 void naomi_reg_Term()
 {
-	#ifdef NAOMI_COMM
+#ifdef NAOMI_COMM
 	if (CommSharedMem)
 	{
 		UnmapViewOfFile(CommSharedMem);
@@ -535,8 +542,10 @@ void naomi_reg_Term()
 	{
 		CloseHandle(CommMapFile);
 	}
-	#endif
+#endif
+	m3comm.closeNetwork();
 }
+
 void naomi_reg_Reset(bool hard)
 {
 	SB_GDST = 0;
@@ -564,6 +573,7 @@ void naomi_reg_Reset(bool hard)
 	reg_dimm_parameterl = 0;
 	reg_dimm_parameterh = 0;
 	reg_dimm_status = 0x11;
+	m3comm.closeNetwork();
 }
 
 static u8 aw_maple_devs;

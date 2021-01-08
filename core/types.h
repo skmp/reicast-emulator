@@ -516,7 +516,7 @@ enum class JVS {
 
 struct settings_t
 {
-   unsigned System;
+	unsigned System;
 
 	struct {
 		bool UseReios;
@@ -552,13 +552,13 @@ struct settings_t
 	struct
 	{
 		bool Enable;
-      unsigned Type;
+		unsigned Type;
 		bool idleskip;
 		bool unstable_opt;
 		bool disable_nvmem;
 		bool disable_vmem32;
-      bool DisableDivMatching;
-      bool ForceDisableDivMatching;
+		bool DisableDivMatching;
+		bool ForceDisableDivMatching;
 	} dynarec;
 	
 	struct
@@ -568,23 +568,23 @@ struct settings_t
 
 	struct
 	{
-	   u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
-	   u32 RTC;
-	   u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
-	   u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
-	   u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
-	   bool FullMMU;
-	   bool ForceWinCE;
+		u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
+		u32 RTC;
+		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
+		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
+		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
+		bool FullMMU;
+		bool ForceWinCE;
 	} dreamcast;
 
 	struct
-   {
-      u32 LimitFPS;		//0 -> no , (1) -> limit
-      u32 CDDAMute;
-      u32 DSPEnabled;		//0 -> no, 1 -> yes
-      u32 NoBatch;
-      u32 NoSound;        //0 ->sound, 1 -> no sound
-   } aica;
+	{
+		u32 LimitFPS;		//0 -> no , (1) -> limit
+		u32 CDDAMute;
+		u32 DSPEnabled;		//0 -> no, 1 -> yes
+		u32 NoBatch;
+		u32 NoSound;        //0 ->sound, 1 -> no sound
+	} aica;
 
 	struct
 	{
@@ -614,8 +614,8 @@ struct settings_t
 			u32 AlphaSortMode;
 			u32 ZBufferMode;
 			u32 TexCacheMode;
-         f32 zMin;
-         f32 zMax;
+			f32 zMin;
+			f32 zMax;
 		} Emulation;
 
 		struct
@@ -632,8 +632,8 @@ struct settings_t
 		u32 SynchronousRendering;
 	} pvr;
 
-   unsigned UpdateMode;
-   unsigned UpdateModeForced;
+	unsigned UpdateMode;
+	unsigned UpdateModeForced;
 
 	struct {
 		bool SerialConsole;
@@ -646,6 +646,12 @@ struct settings_t
 	struct {
 		JVS JammaSetup;
 	} mapping;
+
+	struct {
+		bool ActAsServer;
+		std::string dns;
+		std::string server;
+	} network;
 };
 
 extern settings_t settings;

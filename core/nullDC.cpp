@@ -562,6 +562,10 @@ void LoadSettings(void)
 	settings.reios.ElfFile               = "";
 
 	settings.validate.OpenGlChecks      = 0;
+
+	settings.network.ActAsServer = false;
+	settings.network.dns = "46.101.91.123";		// Dreamcast Live DNS
+	settings.network.server = "";
 }
 
 void SaveSettings(void)

@@ -1022,7 +1022,7 @@ else
 	CXXFLAGS += -DTARGET_NO_OPENMP
 endif
 ifeq ($(platform), win)
-	LDFLAGS_END += -Wl,-Bstatic -lgomp -lwsock32
+	LDFLAGS_END += -Wl,-Bstatic -lgomp -lwsock32 -lws2_32
 endif
 	NEED_CXX11=1
 	NEED_PTHREAD=1

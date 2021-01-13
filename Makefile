@@ -208,8 +208,8 @@ else ifneq (,$(findstring rpi,$(platform)))
 			CFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 			CXXFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 		else ifneq (,$(findstring rpi3,$(platform)))
-			CFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
-			CXXFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+			CFLAGS += -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+			CXXFLAGS += -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
 		endif
 		CORE_DEFINES += -DLOW_END
 	endif
@@ -229,7 +229,7 @@ else ifeq ($(platform), classic_armv7_a7)
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 	HAVE_LTCG = 0
-	HAVE_OPENMP = 0
+	HAVE_OPENMP = 1
 	CFLAGS += -Ofast \
 	-flto=4 -fwhole-program -fuse-linker-plugin \
 	-fdata-sections -ffunction-sections -Wl,--gc-sections \
@@ -1074,7 +1074,7 @@ LIBS     += -lm
 PREFIX        ?= /usr/local
 
 ifneq (,$(findstring arm, $(ARCH)))
-	CC_AS    = ${CC_PREFIX}gcc #The ngen_arm.S must be compiled with gcc, not as
+	CC_AS    = ${CC_PREFIX}${CC} #The ngen_arm.S must be compiled with gcc, not as
 	ASFLAGS  += $(CFLAGS)
 endif
 

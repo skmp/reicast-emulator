@@ -180,7 +180,23 @@ public:
 		texture->format = vk::Format::eUndefined;
 	}
 
+	void Cleanup();
+
+	void Clear()
+	{
+		BaseTextureCache::Clear();
+		for (auto& set : inFlightTextures)
+			set.clear();
+	}
+
 private:
+	bool clearTexture(Texture *tex)
+	{
+		for (auto& set : inFlightTextures)
+			set.erase(tex);
+
+		return tex->Delete();
+	}
 	template<typename T>
 	void EmptyTrash(T& v)
 	{

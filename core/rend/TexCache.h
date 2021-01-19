@@ -810,7 +810,7 @@ public:
 		INFO_LOG(RENDERER, "Texture cache cleared");
 	}
 
-private:
+protected:
 	std::unordered_map<u64, Texture> cache;
 	// Only use TexU and TexV from TSP in the cache key
 	//     TexV : 7, TexU : 7

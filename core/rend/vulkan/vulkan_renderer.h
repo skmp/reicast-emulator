@@ -90,7 +90,7 @@ public:
 
 		bool result = ta_parse_vdrc(ctx);
 
-		textureCache.CollectCleanup();
+		textureCache.Cleanup();
 
 		if (result)
 		{

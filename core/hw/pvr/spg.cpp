@@ -158,6 +158,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 void read_lightgun_position(int x, int y)
 {
+   static u8 flip;
 	if (y < 0 || y >= 480 || x < 0 || x >= 640)
 		// Off screen
 		lightgun_line = 0xffff;
@@ -166,6 +167,10 @@ void read_lightgun_position(int x, int y)
 		lightgun_line = y / (SPG_CONTROL.interlace ? 2 : 1) + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
 		lightgun_hpos = x * (SPG_HBLANK.hstart - SPG_HBLANK.hbend) / 640 + SPG_HBLANK.hbend * 2;	// Ok but why *2 ????
 		lightgun_hpos = min((u32)0x3FF, lightgun_hpos);
+
+      // For some reason returning the same position twice makes it register off screen
+      lightgun_hpos ^= flip;
+      flip ^= 1;
 	}
 }
 

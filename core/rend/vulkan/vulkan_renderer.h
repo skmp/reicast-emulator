@@ -80,6 +80,9 @@ public:
 		texCommandPool.BeginFrame();
 		textureCache.SetCurrentIndex(texCommandPool.GetIndex());
 
+      if (!ctx->rend.isRTT)
+         vmus->PrepareOSD(&texCommandPool);
+
 		if (ctx->rend.isRenderFramebuffer)
 			return RenderFramebuffer();
 

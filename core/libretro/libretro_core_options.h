@@ -307,7 +307,7 @@ struct retro_core_option_definition option_defs_us[] = {
       {
          { "per-strip (fast, least accurate)", "Per-Strip (fast, least accurate)" },
          { "per-triangle (normal)",            "Per-Triangle (normal)" },
-#if defined(HAVE_OIT)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
          { "per-pixel (accurate)",             "Per-Pixel (accurate, but slowest)" },
 #endif
          { NULL, NULL },

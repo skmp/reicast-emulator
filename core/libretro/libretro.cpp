@@ -428,12 +428,10 @@ static void set_variable_visibility(void)
    option_display.key = CORE_OPTION_NAME "_delay_frame_swapping";
    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
-#ifdef HAVE_OIT
    // Only for per-pixel renderers
    option_display.visible = settings.pvr.rend == 3 || settings.pvr.rend == 5;
    option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-#endif
 
    // Only if texture upscaling is enabled
    option_display.visible = settings.rend.TextureUpscale > 1;
@@ -632,7 +630,6 @@ static void update_variables(bool first_startup)
       		settings.pvr.rend = 0;
          settings.pvr.Emulation.AlphaSortMode = 0;
       }
-#ifdef HAVE_OIT
       else if (!strcmp(var.value, "per-pixel (accurate)"))
       {
       	if (settings.pvr.rend == 4)
@@ -641,7 +638,6 @@ static void update_variables(bool first_startup)
       		settings.pvr.rend = 3;
          settings.pvr.Emulation.AlphaSortMode = 0;	// Not used
       }
-#endif
    }
    else
    {
@@ -703,7 +699,7 @@ static void update_variables(bool first_startup)
       else
       	settings.bios.UseReios = false;
 
-#if defined(HAVE_OIT)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
       var.key = CORE_OPTION_NAME "_oit_abuffer_size";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

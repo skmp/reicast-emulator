@@ -23,7 +23,7 @@
 
 //#include <sstream>
 #include "arm7.h"
-#include "rec-ARM/arm_coding.h"
+#include "arm_emitter/arm_coding.h"
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 //#include "deps/vixl/aarch32/disasm-aarch32.h"

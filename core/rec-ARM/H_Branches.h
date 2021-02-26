@@ -13,27 +13,26 @@ namespace ARM
 
 
 
-	inline static ptrdiff_t Literal(unat FnAddr)
+	inline static ptrdiff_t Literal(size_t FnAddr)
 	{
 		u8* pc_addr = (u8*)EMIT_GET_PTR();
 		return (ptrdiff_t)((ptrdiff_t)FnAddr - ((ptrdiff_t)pc_addr+8));
-		//return -(ptrdiff_t)((pc_addr+8)-(ptrdiff_t)FnAddr);
 	}
 
-	EAPI CALL(unat FnAddr, ConditionCode CC=AL)
+	EAPI CALL(size_t FnAddr, ConditionCode CC=AL)
 	{
         bool isThumb = FnAddr & 1;
         FnAddr &= ~1;
-        ptrdiff_t lit = Literal(FnAddr);
+		ptrdiff_t lit = Literal(FnAddr);
 
 		if(0==lit) {
-			printf("Error, Compiler caught NULL literal, CALL(%08zX)\n", FnAddr);
+			printf("Error, Compiler caught NULL literal, CALL(%08X)\n", FnAddr);
 			verify(false);
 			return;
 		}
 		if( (lit<-33554432) || (lit>33554428) )     // ..28 for BL ..30 for BLX
 		{
-			printf("Warning, CALL(%08zX) is out of range for literal(%08zX)\n", FnAddr, lit);
+			printf("Warning, CALL(%08X) is out of range for literal(%08X)\n", FnAddr, lit);
 			// verify(false);
 
 			MOV32(IP, FnAddr, CC);
@@ -51,13 +50,13 @@ namespace ARM
 
 
 
-	EAPI JUMP(unat FnAddr, ConditionCode CC=AL)
+	EAPI JUMP(size_t FnAddr, ConditionCode CC=AL)
 	{
         bool isThumb = FnAddr & 1;
         FnAddr &= ~1;
         
         verify(!isThumb);
-        ptrdiff_t lit = Literal(FnAddr);
+		ptrdiff_t lit = Literal(FnAddr);
 
 		/*if(0==lit) {
 			printf("Error, Compiler caught NULL literal, JUMP(%08X)\n", FnAddr);
@@ -66,7 +65,7 @@ namespace ARM
 		}*/
 		if( (lit<-33554432) || (lit>33554428) )     // ..28 for BL ..30 for BLX
 		{
-			printf("Warning, %zX is out of range for imm jump! \n", FnAddr);
+			printf("Warning, %X is out of range for imm jump! \n", FnAddr);
 			//verify(false);
 
 			MOV32(IP, FnAddr, CC);

@@ -602,7 +602,7 @@ u8 ARM7_TCB[ICacheSize+4096] __attribute__((section("__TEXT, .text")));
 #error ARM7_TCB ALLOC
 #endif
 
-#include "arm_emitter/arm_emitter.h"
+#include "rec-ARM/arm_emitter.h"
 #undef I
 
 

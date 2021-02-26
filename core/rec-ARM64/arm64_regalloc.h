@@ -42,7 +42,11 @@ static eFReg alloc_fregs[] = { S8, S9, S10, S11, S12, S13, S14, S15, (eFReg)-1 }
 
 class Arm64Assembler;
 
-struct Arm64RegAlloc : RegAlloc<eReg, eFReg>
+struct Arm64RegAlloc : RegAlloc<eReg, eFReg
+#ifndef EXPLODE_SPANS
+											, false
+#endif
+													>
 {
 	Arm64RegAlloc(Arm64Assembler *assembler) : assembler(assembler) {}
 
@@ -69,6 +73,9 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg>
 #ifdef OLD_REGALLOC
 		eFReg ereg = mapfv(param, index);
 #else
+#ifdef EXPLODE_SPANS
+#error EXPLODE_SPANS not supported with ssa regalloc
+#endif
 		verify(index == 0);
 		eFReg ereg = mapf(param);
 #endif

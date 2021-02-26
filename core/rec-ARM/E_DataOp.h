@@ -160,14 +160,13 @@ ADD.SP.REG	0x008D0000
 					return ((i/2)<<8) | immv;
 				}
 			}
-
+			
 			return -1;
 		}
 
 		static u32 ARMImmid8r4(u32 imm8r4)
 		{
 			u32 rv = ARMImmid8r4_enc(imm8r4);
-
 			verify(rv!=-1);
 			return rv;
 		}

@@ -80,7 +80,8 @@ static void recSh4_ClearCache(void)
 
 static void recSh4_Run(void)
 {
-	sh4_int_bCpuRun=true;
+   sh4_int_bCpuRun = true;
+	RestoreHostRoundingMode();
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
 	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);

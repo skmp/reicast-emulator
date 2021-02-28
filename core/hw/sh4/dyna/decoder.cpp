@@ -872,7 +872,7 @@ static bool dec_generic(u32 op)
 					
 					//skip the aggregated opcodes
 					state.cpu.rpc += 128;
-					blk->guest_cycles += 64;
+					blk->guest_cycles += CPU_RATIO*64;
 				}
 				else
 				{
@@ -904,7 +904,7 @@ static bool dec_generic(u32 op)
 					
 					//skip the aggregated opcodes
 					state.cpu.rpc += 128;
-					blk->guest_cycles += 64;
+					blk->guest_cycles += CPU_RATIO * 64;
 				}
 				else
 				{
@@ -1005,7 +1005,9 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 						if (!mmu_enabled())
 						{
 							if (op>=0xF000)
-								blk->guest_cycles++;
+								blk->guest_cycles+=0;
+							else
+								blk->guest_cycles+=CPU_RATIO;
 						}
 						else
 						{

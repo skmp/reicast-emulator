@@ -7,6 +7,7 @@
 
 .equ SH4_TIMESLICE, 448
 .equ BM_BLOCKLIST_MASK, 65532 @FFFC
+.equ CPU_RATIO, 5
 
 #ifdef __MACH__
 #define CSYM(n) _##n

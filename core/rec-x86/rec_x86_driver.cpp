@@ -18,11 +18,6 @@ struct DynaRBI: RuntimeBlockInfo
 	}
 };
 
-void ngen_ResetBlocks()
-{
-	mem_code_end = 0;
-}
-
 RuntimeBlockInfo* ngen_AllocateBlock(void)
 {
    return new DynaRBI();
@@ -693,6 +688,11 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 size_t mem_code_base=0;
 size_t mem_code_end=0;
 void* mem_code[3][2][5];
+
+void ngen_ResetBlocks()
+{
+	mem_code_end = 0;
+}
 
 void ngen_init(void)
 {

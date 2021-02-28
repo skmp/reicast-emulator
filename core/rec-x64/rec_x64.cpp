@@ -169,6 +169,14 @@ WIN32_ONLY(     ".seh_pushreg %r14                              \n\t")
 #undef _U
 #undef _S
 
+void ngen_init()
+{
+}
+
+void ngen_ResetBlocks()
+{
+}
+
 RuntimeBlockInfo* ngen_AllocateBlock(void)
 {
    return new DynaRBI();
@@ -2136,7 +2144,7 @@ void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 
 static BlockCompilerx64* compilerx64_data;
 
-void ngen_Compile_x64(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 {
 	verify(CPU_RUNNING == offsetof(Sh4RCB, cntx.CpuRunning));
 	verify(PC == offsetof(Sh4RCB, cntx.pc));
@@ -2151,25 +2159,25 @@ void ngen_Compile_x64(RuntimeBlockInfo* block, bool force_checks, bool reset, bo
 	delete compiler;
 }
 
-void ngen_CC_Call_x64(shil_opcode*op, void* function)
+void ngen_CC_Call(shil_opcode*op, void* function)
 {
    BlockCompilerx64 *compiler = compilerx64_data;
    compiler->ngen_CC_Call(*op, function);
 }
 
-void ngen_CC_Param_x64(shil_opcode* op,shil_param* par,CanonicalParamType tp)
+void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 {
    BlockCompilerx64 *compiler = compilerx64_data;
    compiler->ngen_CC_param(*op, *par, tp);
 }
 
-void ngen_CC_Start_x64(shil_opcode* op)
+void ngen_CC_Start(shil_opcode* op)
 {
    BlockCompilerx64 *compiler = compilerx64_data;
    compiler->ngen_CC_Start(*op);
 }
 
-void ngen_CC_Finish_x64(shil_opcode* op)
+void ngen_CC_Finish(shil_opcode* op)
 {
 }
 

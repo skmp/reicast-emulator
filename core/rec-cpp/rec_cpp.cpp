@@ -28,7 +28,7 @@ void ngen_blockcheckfail_CC(u32 pc) {
 }
 int idxnxx = 0;
 
-void ngen_ResetBlocks_cpp(void)
+void ngen_ResetBlocks(void)
 {
 	idxnxx = 0;
 }
@@ -1875,7 +1875,7 @@ public:
 
 BlockCompilercpp *compilercpp_data;
 
-void ngen_Compile_cpp(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
@@ -1888,25 +1888,25 @@ void ngen_Compile_cpp(RuntimeBlockInfo* block, bool force_checks, bool reset, bo
 	delete compiler;
 }
 
-void ngen_CC_Call_cpp(shil_opcode*op, void* function)
+void ngen_CC_Call(shil_opcode*op, void* function)
 {
    BlockCompilercpp *compiler = compilercpp_data;
 	compiler->ngen_CC_Call(op, function);
 }
 
-void ngen_CC_Finish_cpp(shil_opcode* op)
+void ngen_CC_Finish(shil_opcode* op)
 {
    BlockCompilercpp *compiler = compilercpp_data;
 	compiler->ngen_CC_Finish(op);
 }
 
-void ngen_CC_Start_cpp(shil_opcode* op)
+void ngen_CC_Start(shil_opcode* op)
 {
    BlockCompilercpp *compiler = compilercpp_data;
    compiler->ngen_CC_Start(op);
 }
 
-void ngen_CC_Param_cpp(shil_opcode* op,shil_param* par,CanonicalParamType tp)
+void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 {
    BlockCompilercpp *compiler = compilercpp_data;
    compiler->ngen_CC_param(*op, *par, tp);

@@ -18,6 +18,11 @@ struct DynaRBI: RuntimeBlockInfo
 	}
 };
 
+void ngen_ResetBlocks()
+{
+	mem_code_end = 0;
+}
+
 RuntimeBlockInfo* ngen_AllocateBlock(void)
 {
    return new DynaRBI();
@@ -261,7 +266,7 @@ void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
 	
 }
 
-void ngen_Compile_x86(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
 {
 	//initialise stuff
 	DetectCpuFeatures();
@@ -689,7 +694,7 @@ size_t mem_code_base=0;
 size_t mem_code_end=0;
 void* mem_code[3][2][5];
 
-void ngen_init_x86_32bit(void)
+void ngen_init(void)
 {
 	if (mem_code_end != 0)
 		return;

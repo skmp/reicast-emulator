@@ -489,7 +489,6 @@ bool BaseTextureCacheData::Delete()
 	if (custom_load_in_progress > 0)
 		return false;
 
-	if (lock_block)
 	{
 		std::lock_guard<cMutex> lock(vramlist_lock);
 		if (lock_block)

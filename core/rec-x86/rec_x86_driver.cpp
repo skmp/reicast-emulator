@@ -18,6 +18,12 @@ struct DynaRBI: RuntimeBlockInfo
 	}
 };
 
+void ngen_GetFeatures(ngen_features* dst)
+{
+	dst->InterpreterFallback = false;
+	dst->OnlyDynamicEnds     = false;
+}
+
 RuntimeBlockInfo* ngen_AllocateBlock(void)
 {
    return new DynaRBI();
@@ -25,7 +31,7 @@ RuntimeBlockInfo* ngen_AllocateBlock(void)
 
 x86_block* x86e;
 
-extern int cycle_counter;
+static int cycle_counter;
 
 void* loop_no_update;
 void* intc_sched;

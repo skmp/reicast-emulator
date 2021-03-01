@@ -104,6 +104,12 @@ void ngen_ResetBlocks()
 	}
 }
 
+void ngen_GetFeatures(ngen_features* dst)
+{
+	dst->InterpreterFallback = false;
+	dst->OnlyDynamicEnds     = false;
+}
+
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32, u32 pc)
 {

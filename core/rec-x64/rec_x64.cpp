@@ -31,7 +31,9 @@ struct DynaRBI : RuntimeBlockInfo
    }
 };
 
-extern int cycle_counter;
+extern "C" {
+   int cycle_counter;
+}
 
 extern "C" {
 
@@ -175,6 +177,12 @@ void ngen_init()
 
 void ngen_ResetBlocks()
 {
+}
+
+void ngen_GetFeatures(ngen_features* dst)
+{
+	dst->InterpreterFallback = false;
+	dst->OnlyDynamicEnds = false;
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock(void)

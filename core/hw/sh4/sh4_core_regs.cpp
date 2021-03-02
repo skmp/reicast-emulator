@@ -13,17 +13,24 @@ u8* sh4_dyna_rcb;
 
 static INLINE void ChangeGPR()
 {
+#ifdef HAVE_MODERN_CXX
+   std::swap((u32 (&)[8])r, r_bank);
+#else
 	u32 temp;
 	for (int i=0;i<8;i++)
 	{
-		temp=r[i];
-		r[i]=r_bank[i];
-		r_bank[i]=temp;
+		temp      = r[i];
+		r[i]      = r_bank[i];
+		r_bank[i] = temp;
 	}
+#endif
 }
 
 static INLINE void ChangeFP()
 {
+#ifdef HAVE_MODERN_CXX
+   std::swap((f32 (&)[16])Sh4cntx.xffr, *(f32 (*)[16])&Sh4cntx.xffr[16]);
+#else
 	u32 temp;
 	for (int i=0;i<16;i++)
 	{
@@ -31,6 +38,7 @@ static INLINE void ChangeFP()
 		fr_hex[i]=xf_hex[i];
 		xf_hex[i]=temp;
 	}
+#endif
 }
 
 //called when sr is changed and we must check for reg banks etc.

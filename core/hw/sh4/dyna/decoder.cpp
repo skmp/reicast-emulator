@@ -849,6 +849,7 @@ static bool dec_generic(u32 op)
 
 				default:
 					die("DM_MUL: Failed to classify opcode");
+               return false;
 			}
 
 			Emit(op,rd,rs1,rs2,0,shil_param(),rd2);
@@ -993,59 +994,52 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 				}
 				else
 				{
-					u32 op = IReadMem16(state.cpu.rpc);
+               u32 op = IReadMem16(state.cpu.rpc);
 
-					if (op==0 && state.cpu.is_delayslot)
+					blk->guest_opcodes++;
+					if (!mmu_enabled())
 					{
-						INFO_LOG(DYNAREC, "Delayslot 0 hack!");
+						if (op>=0xF000)
+							blk->guest_cycles+=0;
+						else
+							blk->guest_cycles+=CPU_RATIO;
 					}
 					else
 					{
-						blk->guest_opcodes++;
-						if (!mmu_enabled())
+						blk->guest_cycles += std::max((int)OpDesc[op]->LatencyCycles, 1);
+					}
+					if (OpDesc[op]->IsFloatingPoint())
+					{
+						if (sr.FD == 1)
 						{
-							if (op>=0xF000)
-								blk->guest_cycles+=0;
-							else
-								blk->guest_cycles+=CPU_RATIO;
+							// We need to know FPSCR to compile the block, so let the exception handler run first
+							// as it may change the fp registers
+							Do_Exception(next_pc, 0x800, 0x100);
+							return false;
 						}
-						else
-						{
-							blk->guest_cycles += max((int)OpDesc[op]->LatencyCycles, 1);
-						}
-						if (OpDesc[op]->IsFloatingPoint())
-						{
-							if (sr.FD == 1)
-							{
-								// We need to know FPSCR to compile the block, so let the exception handler run first
-								// as it may change the fp registers
-								Do_Exception(next_pc, 0x800, 0x100);
-								return false;
-							}
-							blk->has_fpu_op = true;
-						}
+						blk->has_fpu_op = true;
+					}
 
-						verify(!(state.cpu.is_delayslot && OPCODE_SETPC(OpDesc[op]->type)));
-						if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
+					verify(!(state.cpu.is_delayslot && OPCODE_SETPC(OpDesc[op]->type)));
+					if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
+					{
+						if (state.ngen.InterpreterFallback || !dec_generic(op))
 						{
-							if (state.ngen.InterpreterFallback || !dec_generic(op))
+							dec_fallback(op);
+							if (OPCODE_SETPC(OpDesc[op]->type))
 							{
-								dec_fallback(op);
-								if (OPCODE_SETPC(OpDesc[op]->type))
-								{
-									dec_DynamicSet(reg_nextpc);
-									dec_End(0xFFFFFFFF,BET_DynamicJump,false);
-								}
-								if (OPCODE_SETFPSCR(OpDesc[op]->type) && !state.cpu.is_delayslot)
-								{
-									dec_End(state.cpu.rpc+2,BET_StaticJump,false);
-								}
+								dec_DynamicSet(reg_nextpc);
+								dec_End(0xFFFFFFFF,BET_DynamicJump,false);
+							}
+							if (OPCODE_SETFPSCR(OpDesc[op]->type) && !state.cpu.is_delayslot)
+							{
+								dec_End(state.cpu.rpc+2,BET_StaticJump,false);
 							}
 						}
-						else
-						{
-							OpDesc[op]->rec_oph(op);
-						}
+					}
+					else
+					{
+						OpDesc[op]->rec_oph(op);
 					}
 					state.cpu.rpc+=2;
 				}

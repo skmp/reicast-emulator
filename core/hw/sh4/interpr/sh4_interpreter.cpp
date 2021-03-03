@@ -142,8 +142,7 @@ void ExecuteDelayslot()
 #endif
       u32 op = ReadNexOp();
 
-      if (op != 0)
-            ExecuteOpcode(op);
+      ExecuteOpcode(op);
 #if !defined(NO_MMU)
    }
    catch (SH4ThrownException& ex) {
@@ -171,10 +170,6 @@ void ExecuteDelayslot_RTE()
 // every SH4_TIMESLICE cycles
 int UpdateSystem()
 {
-	//this is an optimisation (mostly for ARM)
-	//makes scheduling easier !
-	//update_fp* tmu=pUpdateTMU;
-	
 	Sh4cntx.sh4_sched_next -= SH4_TIMESLICE;
 	if (Sh4cntx.sh4_sched_next<0)
 		sh4_sched_tick(SH4_TIMESLICE);

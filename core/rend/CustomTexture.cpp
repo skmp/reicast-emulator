@@ -61,7 +61,7 @@ void CustomTexture::LoaderThread()
 				texture->ComputeHash();
 				if (texture->custom_image_data != NULL)
 				{
-					delete [] texture->custom_image_data;
+					free(texture->custom_image_data);
 					texture->custom_image_data = NULL;
 				}
 				if (!texture->dirty)

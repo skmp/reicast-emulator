@@ -9,10 +9,8 @@
 	Renderer
 */
 
-#include "ta.h"
 #include "spg.h"
 #include "pvr_regs.h"
-#include "pvr_mem.h"
 #include "Renderer_if.h"
 #include "rend/CustomTexture.h"
 

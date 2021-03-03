@@ -193,11 +193,11 @@ void FinishRender(TA_context* ctx)
 	frame_finished.Set();
 }
 
-cMutex mtx_pool;
+static cMutex mtx_pool;
 
 /* texture cache entry pool. */
-vector<TA_context*> ctx_pool;
-vector<TA_context*> ctx_list;
+static vector<TA_context*> ctx_pool;
+static vector<TA_context*> ctx_list;
 
 TA_context* tactx_Alloc(void)
 {

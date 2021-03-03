@@ -109,9 +109,6 @@ cMutex mtx_rqueue;
 TA_context* rqueue;
 cResetEvent frame_finished;
 
-double last_frame = 0;
-u64 last_cycles = 0;
-
 bool QueueRender(TA_context* ctx)
 {
    verify(ctx != 0);
@@ -123,23 +120,31 @@ bool QueueRender(TA_context* ctx)
 		return false;
  	}
 
-	//Try to limit speed to a "sane" level
-	//Speed is also limited via audio, but audio
-	//is sometimes not accurate enough (android, vista+)
-	u32 cycle_span = (u32)(sh4_sched_now64() - last_cycles);
-	last_cycles = sh4_sched_now64();
-	double time_span = os_GetSeconds() - last_frame;
-	last_frame = os_GetSeconds();
+   if (settings.pvr.SynchronousRendering)
+   {
+      //Try to limit speed to a "sane" level
+      //Speed is also limited via audio, but audio
+      //is sometimes not accurate enough (android, vista+)
+      static double last_frame = 0;
+      static u64 last_cycles   = 0;
+      u64 sched_now            = sh4_sched_now64();
+      u32 cycle_span           = (u32)(sched_now - last_cycles);
+      last_cycles              = sched_now;
+      double time_in_secs      = os_GetSeconds();
+      double time_span         = time_in_secs - last_frame;
+      last_frame               = time_in_secs;
+      bool too_fast            = (cycle_span / time_span) > SH4_MAIN_CLOCK;
 
-	bool too_fast = (cycle_span / time_span) > SH4_MAIN_CLOCK;
+      if (rqueue && too_fast)
+      {
+         //wait for a frame if
+         //  we have another one queue'd and
+         //  sh4 run at > 120% on the last slice
+         //  and SynchronousRendering is enabled
+         frame_finished.Wait();
+      }
+   }
 
-	if (rqueue && too_fast && settings.pvr.SynchronousRendering) {
-		//wait for a frame if
-		//  we have another one queue'd and
-		//  sh4 run at > 120% on the last slice
-		//  and SynchronousRendering is enabled
-		frame_finished.Wait();
-	}
 
 	if (rqueue)
    {

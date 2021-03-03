@@ -2,6 +2,7 @@
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
+#include "hw/mem/_vmem.h"
 #include "cheats.h"
 #include "spg.h"
 

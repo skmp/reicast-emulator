@@ -9,7 +9,6 @@
 	Renderer
 */
 
-#include "drkPvr.h"
 #include "ta.h"
 #include "spg.h"
 #include "pvr_regs.h"

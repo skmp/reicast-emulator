@@ -79,9 +79,7 @@ void main()
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 	vtx_uv = in_uv;
-	highp vec4 vpos = in_pos;
-	
-	vpos = normal_matrix * vpos;
+	highp vec4 vpos = normal_matrix * in_pos;
 	vpos.w = 1.0 / vpos.z;
 #if TARGET_GL != GLES2
    vpos.z = vpos.w;

@@ -1,5 +1,6 @@
 #include "ta.h"
 #include "ta_ctx.h"
+#include "hw/holly/holly_intc.h"
 
 u32 ta_type_lut[256];
 

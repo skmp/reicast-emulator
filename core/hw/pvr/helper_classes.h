@@ -25,7 +25,7 @@ struct List
 	}
 
 	__forceinline 
-	T* Append(int n=1)
+	T* Append(int n = 1)
 	{
 		int ad=avail-n;
 

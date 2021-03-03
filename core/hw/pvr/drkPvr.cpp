@@ -17,12 +17,6 @@
 #include "Renderer_if.h"
 #include "rend/CustomTexture.h"
 
-void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
-{
-	rend_text_invl(block);
-}
-
-
 void libPvr_Reset(bool hard)
 {
    Regs_Reset(hard);

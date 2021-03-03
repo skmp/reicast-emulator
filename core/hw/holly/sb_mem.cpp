@@ -438,15 +438,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
 	{
-		switch (sz)
-		{
-			case 1:
-				return aica_ram.data[addr & ARAM_MASK];
-			case 2:
-				return *(u16*)&aica_ram.data[addr & ARAM_MASK];
-			case 4:
-				return *(u32*)&aica_ram.data[addr & ARAM_MASK];
-		}
+      return (T)ReadMemArr<sz>(aica_ram.data, addr & ARAM_MASK);
 	}
 	//map 0x0100 to 0x01FF
 	else if (base >= 0x0100 && base <= 0x01FF) // G2 Ext. Device #1
@@ -526,31 +518,16 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	else if ((base >=0x0070) && (base <=0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) // AICA- Sound Cntr. Reg.
 	{
 		WriteMem_aica_reg(addr,data,sz);
-		return;
 	}
 	//map 0x0071 to 0x0071
 	else if ((base >=0x0071) && (base <=0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) // AICA- RTC Cntr. Reg.
 	{
 		WriteMem_aica_rtc(addr,data,sz);
-		return;
 	}
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) // AICA- Wave Memory
 	{
-
-		switch (sz)
-		{
-			case 1:
-				aica_ram.data[addr & ARAM_MASK]         = (u8)data;
-				break;
-			case 2:
-				*(u16*)&aica_ram.data[addr & ARAM_MASK] = (u16)data;
-				break;
-			case 4:
-				*(u32*)&aica_ram.data[addr & ARAM_MASK] = data;
-				break;
-		}
-		return;
+      WriteMemArr<sz>(aica_ram.data, addr & ARAM_MASK, data);
 	}
 	//map 0x0100 to 0x01FF
 	else if (base >= 0x0100 && base <= 0x01FF) // G2 Ext. Device #1
@@ -560,7 +537,6 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		else
 			INFO_LOG(COMMON, "Write to BBA not implemented, addr=%x, data=%x, size=%d", addr, data, sz);
 	}
-	return;
 }
 
 //Init/Res/Term

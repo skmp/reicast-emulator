@@ -13,9 +13,11 @@
 #include "pvr_regs.h"
 #include "Renderer_if.h"
 #include "rend/CustomTexture.h"
+#include "rend/TexCache.h"
 
 void libPvr_Reset(bool hard)
 {
+   KillTex = true;
    Regs_Reset(hard);
    spg_Reset(hard);
 }

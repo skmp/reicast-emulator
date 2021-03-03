@@ -16,7 +16,6 @@ void rend_swap_frame();
 
 void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
-void rend_text_invl(vram_block* bl);
 
 #ifdef GLuint
 GLuint

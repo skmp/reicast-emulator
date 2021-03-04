@@ -383,7 +383,7 @@ using namespace std;
 #define putinf    LOGI
 #endif
 
-#ifndef RELEASE
+#ifndef NDEBUG
 #define EMUERROR(format, ...) printf("Error in %s:%s:%d: " format "\n", __FILE__,__FUNCTION__ ,__LINE__, ##__VA_ARGS__)
 #else
 #define EMUERROR(...)

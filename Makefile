@@ -942,8 +942,6 @@ else
 	ifeq ($(HAVE_LTCG), 1)
 		CORE_DEFINES   += -flto
 	endif
-
-	CORE_DEFINES      += -DRELEASE
 endif
 
 ifeq ($(HAVE_GL3), 1)

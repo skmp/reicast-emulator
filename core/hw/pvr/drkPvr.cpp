@@ -12,7 +12,6 @@
 #include "spg.h"
 #include "pvr_regs.h"
 #include "Renderer_if.h"
-#include "ta_ctx.h"
 #include "rend/CustomTexture.h"
 #include "rend/TexCache.h"
 

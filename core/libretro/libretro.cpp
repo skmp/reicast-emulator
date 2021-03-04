@@ -244,19 +244,6 @@ static void *emu_thread_func(void *)
 }
 #endif
 
-
-void co_dc_yield(void)
-{
-#if !defined(TARGET_NO_THREADS)
-    if (!settings.rend.ThreadedRendering)
-#endif
-    {
-    	if (settings.UpdateMode || settings.UpdateModeForced)
-    		return;
-    	dc_stop();
-    }
-}
-
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
    video_cb = cb;

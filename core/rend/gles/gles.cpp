@@ -1063,8 +1063,6 @@ void rend_set_fb_scale(float x, float y)
 	fb_scale_y = y;
 }
 
-void co_dc_yield(void);
-
 bool ProcessFrame(TA_context* ctx)
 {
    ctx->rend_inuse.Lock();

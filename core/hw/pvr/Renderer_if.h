@@ -16,6 +16,9 @@ void rend_swap_frame();
 void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
 
+/* forward declaration */
+void dc_stop();
+
 #ifdef GLuint
 GLuint
 #else
@@ -26,9 +29,6 @@ GetTexture(TSP tsp,TCW tcw);
 
 ///////
 extern TA_context* _pvrrc;
-
-/* function prototype */
-void co_dc_yield(void);
 
 #define pvrrc (_pvrrc->rend)
 
@@ -45,7 +45,18 @@ struct Renderer
 	virtual bool Process(TA_context* ctx)=0;
 	virtual bool Render()=0;
 
-	virtual void Present() { co_dc_yield(); }
+	virtual void Present() 
+   {
+      /* co_dc_yield - yields back to main cooperative thread */
+#if !defined(TARGET_NO_THREADS)
+      if (!settings.rend.ThreadedRendering)
+#endif
+      {
+         if (settings.UpdateMode || settings.UpdateModeForced)
+            return;
+         dc_stop();
+      }
+   }
 
 	virtual void DrawOSD() { }
 

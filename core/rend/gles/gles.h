@@ -158,7 +158,6 @@ void findGLVersion();
 GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
 bool CompilePipelineShader(PipelineShader* s);
-void co_dc_yield(void);
 void vertex_buffer_unmap();
 
 extern GLuint vmuTextureId[4];

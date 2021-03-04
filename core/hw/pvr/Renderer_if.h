@@ -27,6 +27,9 @@ GetTexture(TSP tsp,TCW tcw);
 ///////
 extern TA_context* _pvrrc;
 
+/* function prototype */
+void co_dc_yield(void);
+
 #define pvrrc (_pvrrc->rend)
 
 struct Renderer
@@ -42,7 +45,7 @@ struct Renderer
 	virtual bool Process(TA_context* ctx)=0;
 	virtual bool Render()=0;
 
-	virtual void Present()=0;
+	virtual void Present() { co_dc_yield(); }
 
 	virtual void DrawOSD() { }
 

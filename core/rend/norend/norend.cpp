@@ -22,8 +22,6 @@ struct norend : Renderer
 	{
 		return true;//!pvrrc.isRTT;
 	}
-
-	void Present() { }
 };
 
 

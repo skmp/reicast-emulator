@@ -26,8 +26,6 @@
 #include <memory>
 #include <vector>
 
-void co_dc_yield();
-
 class BaseVulkanRenderer : public Renderer
 {
 public:
@@ -104,11 +102,6 @@ public:
 			texCommandPool.EndFrame();
 
 		return result;
-	}
-
-	void Present() override
-	{
-		co_dc_yield();
 	}
 
 protected:

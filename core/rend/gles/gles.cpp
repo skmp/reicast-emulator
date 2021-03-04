@@ -1147,11 +1147,6 @@ struct glesrend : Renderer
       return ret;
    }
 
-	void Present() override
-   {
-      co_dc_yield();
-   }
-
 	virtual u64 GetTexture(TSP tsp, TCW tcw) override {
 		return gl_GetTexture(tsp, tcw);
 	}

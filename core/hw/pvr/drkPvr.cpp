@@ -20,8 +20,6 @@ void libPvr_Reset(bool hard)
    KillTex = true;
    Regs_Reset(hard);
    spg_Reset(hard);
-
-   tactx_Term();
 }
 
 
@@ -41,6 +39,5 @@ void libPvr_Term(void)
 {
    custom_texture.Terminate();	// Avoid deadlock on exit (win32)
    rend_term();
-   tactx_Term();
    spg_Term();
 }

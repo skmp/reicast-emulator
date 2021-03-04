@@ -135,7 +135,8 @@ bool QueueRender(TA_context* ctx)
       last_frame               = time_in_secs;
       bool too_fast            = (cycle_span / time_span) > SH4_MAIN_CLOCK;
 
-      if (rqueue && too_fast)
+      // Vulkan: RTT frames seem to be discarded often
+      if (rqueue && (too_fast || ctx->rend.isRTT))
       {
          //wait for a frame if
          //  we have another one queue'd and

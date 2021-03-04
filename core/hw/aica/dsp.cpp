@@ -766,17 +766,11 @@ void dsp_recompile()
 	x86e.Generate();
 }
 
-
-
-void dsp_print_mame();
-void dsp_step_mame();
-void dsp_emu_grandia();
 void dsp_step()
 {
 	if (dsp.dyndirty)
 	{
 		dsp.dyndirty=false;
-		//dsp_print_mame();
 		dsp_recompile();
 	}
    if (dsp.Stopped)

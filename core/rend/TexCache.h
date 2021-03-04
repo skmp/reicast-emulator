@@ -637,7 +637,6 @@ void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 
 bool VramLockedWriteOffset(size_t offset);
 #ifdef HAVE_TEXUPSCALE
-void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
 #endif
 
@@ -777,6 +776,8 @@ public:
 
 		return texture;
 	}
+
+   virtual ~BaseTextureCache() {}
 
 	void CollectCleanup()
 	{

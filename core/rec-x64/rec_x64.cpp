@@ -35,17 +35,6 @@ extern "C" {
    int cycle_counter;
 }
 
-extern "C" {
-
-void ngen_FailedToFindBlock_internal(void)
-{
-	rdv_FailedToFindBlock(Sh4cntx.pc);
-}
-
-};
-
-void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
-
 #ifdef __MACH__
 #define _U "_"
 #else

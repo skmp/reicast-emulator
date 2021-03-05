@@ -271,6 +271,12 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 	return next_pc;
 }
 
+static void ngen_FailedToFindBlock_internal() {
+	rdv_FailedToFindBlock(Sh4cntx.pc);
+}
+
+void (*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
+
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
 	RuntimeBlockInfoPtr rbi = bm_GetBlock2(block_cpde);

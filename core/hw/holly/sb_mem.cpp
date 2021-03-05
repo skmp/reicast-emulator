@@ -388,21 +388,21 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x005F to 0x005F
 	else if (likely(base==0x005F))
 	{
-		if ( /*&& (addr>= 0x00400000)*/ (addr<= 0x005F67FF)) // :Unassigned
+      if (addr <= 0x005F67FF) // :Unassigned
 		{
 			INFO_LOG(MEMORY, "Read from area0_32 not implemented [Unassigned], addr=%x", addr);
 		}
-		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
+      else if (addr >= 0x005F7000 && addr <= 0x005F70FF) // GD-ROM
 		{
 			if (settings.System == DC_PLATFORM_NAOMI || settings.System == DC_PLATFORM_ATOMISWAVE)
 				return (T)ReadMem_naomi(addr,sz);
 			return (T)ReadMem_gdrom(addr,sz);
 		}
-		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
+      else if (likely(addr >= 0x005F6800 && addr <= 0x005F7CFF)) // /*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
 			return (T)sb_ReadMem(addr,sz);
 		}
-		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
+      else if (likely(addr >= 0x005F8000 && addr <= 0x005F9FFF)) // :TA / PVR Core Reg.
 		{
 			if (sz != 4) return 0;		// House of the Dead 2
 			return (T)PvrReg(addr, u32);
@@ -424,6 +424,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
 	{
 		EMUERROR2("Read from area0_32 not implemented [G2 (Reserved)], addr=%x",addr);
+      return 0;
 	}
 	//map 0x0070 to 0x0070
 	else if ((base ==0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) //	:AICA- Sound Cntr. Reg.
@@ -476,11 +477,11 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x005F to 0x005F
 	else if ( likely(base==0x005F) )
 	{
-		if (/*&& (addr>= 0x00400000) */ (addr<= 0x005F67FF)) // Unassigned
+      if (addr <= 0x005F67FF) // Unassigned
 		{
 			EMUERROR4("Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d",addr,data,sz);
 		}
-		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
+      else if (addr >= 0x005F7000 && addr <= 0x005F70FF) // GD-ROM
 		{
 			if (settings.System == DC_PLATFORM_NAOMI || settings.System == DC_PLATFORM_ATOMISWAVE)
 				WriteMem_naomi(addr,data,sz);
@@ -496,6 +497,9 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 			verify(sz==4);
 			pvr_WriteReg(addr,data);
 		}
+      else
+         EMUERROR4("Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d",addr,data,sz);
+
 	}
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
@@ -537,6 +541,8 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		else
 			INFO_LOG(COMMON, "Write to BBA not implemented, addr=%x, data=%x, size=%d", addr, data, sz);
 	}
+   else
+      EMUERROR4("Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d",addr,data,sz);
 }
 
 //Init/Res/Term

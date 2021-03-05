@@ -39,7 +39,7 @@ static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand
 static s8 alloc_fregs[] = { 8, 9, 10, 11, -1 };		// XMM8-11
 #endif
 
-class BlockCompilerx64;
+class BlockCompiler;
 
 struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
 #ifdef EXPLODE_SPANS
@@ -49,7 +49,7 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
 #endif
 															 >
 {
-	X64RegAlloc(BlockCompilerx64 *compiler) : compiler(compiler) {}
+	X64RegAlloc(BlockCompiler *compiler) : compiler(compiler) {}
 
 	void DoAlloc(RuntimeBlockInfo* block)
 	{
@@ -95,7 +95,7 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
 #endif
 	}
 
-	BlockCompilerx64 *compiler;
+	BlockCompiler *compiler;
 };
 
 #endif /* CORE_REC_X64_X64_REGALLOC_H_ */

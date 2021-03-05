@@ -268,12 +268,12 @@ static void do_sqw_nommu_local(u32 addr, u8* sqb)
 	do_sqw_nommu(addr, sqb);
 }
 
-class BlockCompilerx64 : public Xbyak::CodeGenerator
+class BlockCompiler : public Xbyak::CodeGenerator
 {
 public:
-	BlockCompilerx64() : BlockCompilerx64((u8 *)emit_GetCCPtr()) {}
+	BlockCompiler() : BlockCompiler((u8 *)emit_GetCCPtr()) {}
 
-	BlockCompilerx64(u8 *code_ptr) : Xbyak::CodeGenerator(emit_FreeSpace(), code_ptr), regalloc(this)
+	BlockCompiler(u8 *code_ptr) : Xbyak::CodeGenerator(emit_FreeSpace(), code_ptr), regalloc(this)
 	{
 #ifdef _WIN32
       call_regs.push_back(ecx);
@@ -535,19 +535,19 @@ public:
               break;
 
             case shop_and:
-               GenBinaryOp(op, &BlockCompilerx64::and_);
+               GenBinaryOp(op, &BlockCompiler::and_);
                break;
             case shop_or:
-               GenBinaryOp(op, &BlockCompilerx64::or_);
+               GenBinaryOp(op, &BlockCompiler::or_);
                break;
             case shop_xor:
-               GenBinaryOp(op, &BlockCompilerx64::xor_);
+               GenBinaryOp(op, &BlockCompiler::xor_);
                break;
             case shop_add:
-               GenBinaryOp(op, &BlockCompilerx64::add);
+               GenBinaryOp(op, &BlockCompiler::add);
                break;
             case shop_sub:
-               GenBinaryOp(op, &BlockCompilerx64::sub);
+               GenBinaryOp(op, &BlockCompiler::sub);
                break;
 
 #define SHIFT_OP(natop) \
@@ -936,16 +936,16 @@ public:
                //
 
             case shop_fadd:
-               GenBinaryFOp(op, &BlockCompilerx64::addss);
+               GenBinaryFOp(op, &BlockCompiler::addss);
                break;
             case shop_fsub:
-               GenBinaryFOp(op, &BlockCompilerx64::subss);
+               GenBinaryFOp(op, &BlockCompiler::subss);
                break;
             case shop_fmul:
-               GenBinaryFOp(op, &BlockCompilerx64::mulss);
+               GenBinaryFOp(op, &BlockCompiler::mulss);
                break;
             case shop_fdiv:
-               GenBinaryFOp(op, &BlockCompilerx64::divss);
+               GenBinaryFOp(op, &BlockCompiler::divss);
                break;
 
             case shop_fabs:
@@ -1470,8 +1470,8 @@ public:
 	}
 
 private:
-	typedef void (BlockCompilerx64::*X64BinaryOp)(const Xbyak::Operand&, const Xbyak::Operand&);
-	typedef void (BlockCompilerx64::*X64BinaryFOp)(const Xbyak::Xmm&, const Xbyak::Operand&);
+	typedef void (BlockCompiler::*X64BinaryOp)(const Xbyak::Operand&, const Xbyak::Operand&);
+	typedef void (BlockCompiler::*X64BinaryFOp)(const Xbyak::Xmm&, const Xbyak::Operand&);
 
 	bool GenReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* block)
 	{
@@ -2129,9 +2129,9 @@ public:
 	static u32 mem_access_offset;
 };
 
-const u32 BlockCompilerx64::read_mem_op_size = 30;
-const u32 BlockCompilerx64::write_mem_op_size = 30;
-u32 BlockCompilerx64::mem_access_offset = 0;
+const u32 BlockCompiler::read_mem_op_size = 30;
+const u32 BlockCompiler::write_mem_op_size = 30;
+u32 BlockCompiler::mem_access_offset = 0;
 
 void X64RegAlloc::Preload(u32 reg, Xbyak::Operand::Code nreg)
 {
@@ -2150,7 +2150,7 @@ void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
    compiler->RegWriteback_FPU(reg, nreg);
 }
 
-static BlockCompilerx64* compilerx64_data;
+static BlockCompiler* compiler;
 
 void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 {
@@ -2158,10 +2158,8 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 	verify(PC == offsetof(Sh4RCB, cntx.pc));
 	verify(emit_FreeSpace() >= 16 * 1024);
 
-	compilerx64_data = new BlockCompilerx64();
+	compiler = new BlockCompiler();
 
-	BlockCompilerx64 *compiler = compilerx64_data;
-	
 	compiler->compile(block, force_checks, reset, staging, optimise);
 
 	delete compiler;
@@ -2169,19 +2167,16 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 
 void ngen_CC_Call(shil_opcode*op, void* function)
 {
-   BlockCompilerx64 *compiler = compilerx64_data;
    compiler->ngen_CC_Call(*op, function);
 }
 
 void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 {
-   BlockCompilerx64 *compiler = compilerx64_data;
    compiler->ngen_CC_param(*op, *par, tp);
 }
 
 void ngen_CC_Start(shil_opcode* op)
 {
-   BlockCompilerx64 *compiler = compilerx64_data;
    compiler->ngen_CC_Start(*op);
 }
 
@@ -2212,7 +2207,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	verify(opid < block->oplist.size());
 	const shil_opcode& op = block->oplist[opid];
 
-	BlockCompilerx64 *assembler = new BlockCompilerx64(code_ptr - BlockCompilerx64::mem_access_offset);
+	BlockCompiler *assembler = new BlockCompiler(code_ptr - BlockCompiler::mem_access_offset);
 	assembler->InitializeRewrite(block.get(), opid);
 	if (op.op == shop_readm)
 		assembler->GenReadMemorySlow(op, block.get());
@@ -2222,7 +2217,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	verify(block->host_code_size >= assembler->getSize());
 	delete assembler;
 	block->memory_accesses.erase(it);
-	host_pc = (unat)(code_ptr - BlockCompilerx64::mem_access_offset);
+	host_pc = (unat)(code_ptr - BlockCompiler::mem_access_offset);
 
 	return true;
 }

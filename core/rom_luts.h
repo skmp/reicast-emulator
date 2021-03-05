@@ -61,11 +61,17 @@ static struct game_type lut_games[] =
    { "T-45001D05", -1, -1, -1,  1,  -1, 1, 0, 0 },           /* Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU) */
 
    /* Extra depth scaling */
+   { "T0002M    ", -1, -1, -1,  -1, -1, 1e26, 0, 0 },        /* Samurai Shodown 6 (Dreamcast port) */
    { "MK-51182  ", -1, -1, -1,  -1, -1, 10000.f, 0, 0 },     /* NHL 2K2 */
    { "T-8109N   ", -1, -1, -1,  -1, -1, 100.f, 0, 0 },       /* Re-Volt (US) */
    { "T8107D  50", -1, -1, -1,  -1, -1, 100.f, 0, 0 },       /* Re-Volt (EU) */
 
    /* Disable VMEM32 (WinCE) */
+   { "T0000M    ", -1, -1, -1,  -1, -1, 1,  1, 0 },           /* Heroes of Might and Magic III */
+   { "6107117   ", -1, -1, -1,  -1, -1, 1,  1, 0 },           /* WebTV */
+   { "610-7390  ", -1, -1, -1,  -1, -1, 1,  1, 0 },           /* WebTV */
+   { "610-7391  ", -1, -1, -1,  -1, -1, 1,  1, 0 },           /* WebTV */
+   { "T26702N   ", -1, -1, -1,  -1, -1, 1,  1, 0 },           /* PBA Bowling */
    { "T14303M   ", -1, -1, -1,  -1, -1, 1,  1, 0 },           /* Super Producers */
    { "T45401D 50", -1, -1, -1,  -1, -1, 1,  1, 0 },           /* Giant Killers */
    { "T42101N 00", -1, -1, -1,  -1, -1, 1,  1, 0 },           /* Wild Metal (US) */

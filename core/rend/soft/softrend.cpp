@@ -1209,7 +1209,7 @@ struct softrend : Renderer
 
 		#define SHUFFL(v) v
 
-		#if HOST_OS == OS_WINDOWS
+      #if defined(_WIN32)
 			#define FLIP_Y 479 - 
 		#else
 			#define FLIP_Y

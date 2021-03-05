@@ -2021,7 +2021,7 @@ void FlushCache()
 
 
 
-#if HOST_CPU==CPU_X86 && HOST_OS == OS_WINDOWS
+#if HOST_CPU==CPU_X86 && defined(_WIN32)
 
 #include <windows.h>
 

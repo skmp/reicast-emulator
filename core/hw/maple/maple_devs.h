@@ -95,7 +95,7 @@ struct maple_device
 	virtual bool maple_serialize(void **data, unsigned int *total_size){return true;};
 	virtual bool maple_unserialize(void **data, unsigned int *total_size){return true;};
 	virtual MapleDeviceType get_device_type() = 0;
-	virtual void get_lightgun_pos() {};
+	virtual bool get_lightgun_pos() { return false; };
 };
 
 maple_device* maple_Create(MapleDeviceType type);

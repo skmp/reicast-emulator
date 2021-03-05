@@ -1488,11 +1488,12 @@ struct maple_lightgun : maple_base
 	  }
    }
 
-   virtual void get_lightgun_pos()
+   virtual bool get_lightgun_pos()
    {
 	  f32 x, y;
 	  config->GetAbsolutePosition(&x, &y);
 	  read_lightgun_position(x + 0.5f, y + 0.5f);
+     return true;
    }
 };
 

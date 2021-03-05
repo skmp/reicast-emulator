@@ -635,7 +635,11 @@ void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 #define texPAL4_VQ32 texture_VQ<convPAL4_TW<u32>, u32>
 #define texPAL8_VQ32 texture_VQ<convPAL8_TW<u32>, u32>
 
+class BaseTextureCacheData;
+
 bool VramLockedWriteOffset(size_t offset);
+void libCore_vramlock_Lock(u32 start_offset, u32 end_offset, BaseTextureCacheData *texture);
+
 #ifdef HAVE_TEXUPSCALE
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
 #endif

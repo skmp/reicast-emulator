@@ -175,7 +175,7 @@ void vramlock_list_add(vram_block* block)
  
 cMutex vramlist_lock;
 
-vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
+void libCore_vramlock_Lock(u32 start_offset64, u32 end_offset64, BaseTextureCacheData *texture)
 {
 	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
  
@@ -196,17 +196,22 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	block->end=end_offset64;
 	block->start=start_offset64;
 	block->len=end_offset64-start_offset64+1;
-	block->userdata=userdata;
+	block->userdata = texture;
 	block->type=64;
 
 	{
 		std::lock_guard<cMutex> lock(vramlist_lock);
 
-		// This also protects vram if needed
-		vramlock_list_add(block);
-	}
+      if (texture->lock_block == nullptr)
+      {
+         // This also protects vram if needed
+         vramlock_list_add(block);
+         texture->lock_block = block;
+      }
+      else
+         free(block);
 
-	return block;
+	}
 }
 
 bool VramLockedWriteOffset(size_t offset)
@@ -218,7 +223,7 @@ bool VramLockedWriteOffset(size_t offset)
 	std::vector<vram_block *>& list = VramLocks[addr_hash];
 
 	{
-		std::lock_guard<cMutex> lock(vramlist_lock);
+		std::lock_guard<cMutex> lockguard(vramlist_lock);
 
 		for (auto& lock : list)
 		{
@@ -727,8 +732,7 @@ void BaseTextureCacheData::Update()
 	h = original_h;
 
 	//lock the texture to detect changes in it
-	if (lock_block == nullptr)
-		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
+   libCore_vramlock_Lock(sa_tex, sa + size - 1, this);
 
 	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
 	if (settings.rend.DumpTextures)

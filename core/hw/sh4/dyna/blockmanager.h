@@ -93,7 +93,6 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 void bm_WriteBlockMap(const string& file);
 
 extern "C" {
-__attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
 __attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr);
 }
 

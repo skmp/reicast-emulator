@@ -41,7 +41,7 @@ u32 unprotected_blocks;
 
 // addr must be a physical address
 // This returns an executable address
-DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
+static DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
 	DynarecCodeEntryPtr rv = FPCA(addr);
 
@@ -404,6 +404,16 @@ void bm_WriteBlockMap(const string& file)
 	}
 }
 
+#if 0
+void sh4_jitsym(FILE* out)
+{
+	for (auto& it : blkmap)
+	{
+		RuntimeBlockInfoPtr& block = it.second;
+		fprintf(out, "%p %d %08X\n", block->code, block->host_code_size, block->addr);
+	}
+}
+
 u32 GetLookup(RuntimeBlockInfo* elem)
 {
 	return elem->lookups;
@@ -424,15 +434,6 @@ bool UDgreater3 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 	return elem1->runs*elem1->host_opcodes/elem1->guest_cycles > elem2->runs*elem2->host_opcodes/elem2->guest_cycles;
 }
 
-void sh4_jitsym(FILE* out)
-{
-	for (auto& it : blkmap)
-	{
-		RuntimeBlockInfoPtr& block = it.second;
-		fprintf(out, "%p %d %08X\n", block->code, block->host_code_size, block->addr);
-	}
-}
-#if 0
 void bm_PrintTopBlocks()
 {
 	double total_lups=0;
@@ -560,7 +561,7 @@ void RuntimeBlockInfo::Discard()
 		// Remove this block from the per-page block lists
 		for (u32 addr = this->addr & ~PAGE_MASK; addr < this->addr + this->sh4_code_size; addr += PAGE_SIZE)
 		{
-			set<RuntimeBlockInfo*>& block_list = blocks_per_page[(addr & RAM_MASK) / PAGE_SIZE];
+         auto& block_list = blocks_per_page[(addr & RAM_MASK) / PAGE_SIZE];
 			block_list.erase(this);
 		}
 	}

@@ -9,19 +9,21 @@
 #include <cstring>
 #include <string>
 
-#include "ConsoleListenerLibretro.h"
 #include "Log.h"
+#include "BitSet.h"
 #include "StringUtil.h"
 
 constexpr size_t MAX_MSGLEN = 1024;
+// Singleton. Ugh.
+static LogManager* s_log_manager;
 
 void GenericLog(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file, int line,
 		const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	if (LogManager::GetInstance())
-		LogManager::GetInstance()->Log(level, type, file, line, fmt, args);
+   if (s_log_manager)
+      s_log_manager->LogWithFullPath(level, type, file, line, fmt, args);
 	va_end(args);
 }
 
@@ -70,8 +72,7 @@ LogManager::LogManager(void *log_cb)
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
-	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener(log_cb));
-
+   retro_printf  = (retro_log_printf_t)log_cb;
 	// Set up log listeners
 	int verbosity = (int)LogTypes::LDEBUG;
 
@@ -82,7 +83,6 @@ LogManager::LogManager(void *log_cb)
 		verbosity = MAX_LOGLEVEL;
 
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
-	EnableListener(LogListener::CONSOLE_LISTENER, true);
 
 	for (LogContainer& container : m_log)
 	{
@@ -94,22 +94,38 @@ LogManager::LogManager(void *log_cb)
 
 LogManager::~LogManager()
 {
-	// The log window listener pointer is owned by the GUI code.
-	delete m_listeners[LogListener::CONSOLE_LISTENER];
 }
 
-void LogManager::Log(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file,
-		int line, const char* format, va_list args)
+void LogManager::LogLibretro(LogTypes::LOG_LEVELS level, const char* text)
 {
-	return LogWithFullPath(level, type, file + m_path_cutoff_point, line, format, args);
+   retro_log_level retro_level;
+   switch (level)
+   {
+      case LogTypes::LNOTICE:
+      case LogTypes::LINFO:
+         retro_level = RETRO_LOG_INFO;
+         break;
+      case LogTypes::LERROR:
+         retro_level = RETRO_LOG_ERROR;
+         break;
+      case LogTypes::LWARNING:
+         retro_level = RETRO_LOG_WARN;
+         break;
+      case LogTypes::LDEBUG:
+         retro_level = RETRO_LOG_DEBUG;
+         break;
+
+   }
+   if (retro_printf != nullptr)
+      retro_printf(retro_level, "%s", text);
 }
 
 void LogManager::LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type,
-		const char* file, int line, const char* format, va_list args)
+		const char* file_, int line, const char* format, va_list args)
 {
-	if (!IsEnabled(type, level) || !static_cast<bool>(m_listener_ids))
+	if (!IsEnabled(type, level))
 		return;
-
+   const char *file =  file_ + m_path_cutoff_point;
 	char temp[MAX_MSGLEN];
 	CharArrayFromFormatV(temp, MAX_MSGLEN, format, args);
 
@@ -117,14 +133,7 @@ void LogManager::LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE 
 			StringFromFormat("%s:%u %c[%s]: %s\n", file,
 					line, LogTypes::LOG_LEVEL_TO_CHAR[(int)level], GetShortName(type), temp);
 
-	for (auto listener_id : m_listener_ids)
-		if (m_listeners[listener_id])
-			m_listeners[listener_id]->Log(level, msg.c_str());
-}
-
-LogTypes::LOG_LEVELS LogManager::GetLogLevel() const
-{
-	return m_level;
+   LogLibretro(level, msg.c_str());
 }
 
 void LogManager::SetLogLevel(LogTypes::LOG_LEVELS level)
@@ -139,40 +148,12 @@ void LogManager::SetEnable(LogTypes::LOG_TYPE type, bool enable)
 
 bool LogManager::IsEnabled(LogTypes::LOG_TYPE type, LogTypes::LOG_LEVELS level) const
 {
-	return m_log[type].m_enable && GetLogLevel() >= level;
+	return m_log[type].m_enable && m_level >= level;
 }
 
 const char* LogManager::GetShortName(LogTypes::LOG_TYPE type) const
 {
 	return m_log[type].m_short_name;
-}
-
-const char* LogManager::GetFullName(LogTypes::LOG_TYPE type) const
-{
-	return m_log[type].m_full_name;
-}
-
-void LogManager::RegisterListener(LogListener::LISTENER id, LogListener* listener)
-{
-	m_listeners[id] = listener;
-}
-
-void LogManager::EnableListener(LogListener::LISTENER id, bool enable)
-{
-	m_listener_ids[id] = enable;
-}
-
-bool LogManager::IsListenerEnabled(LogListener::LISTENER id) const
-{
-	return m_listener_ids[id];
-}
-
-// Singleton. Ugh.
-static LogManager* s_log_manager;
-
-LogManager* LogManager::GetInstance()
-{
-	return s_log_manager;
 }
 
 void LogManager::Init(void *log_cb)

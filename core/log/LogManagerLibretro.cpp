@@ -23,7 +23,8 @@ void GenericLog(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char*
 	va_list args;
 	va_start(args, fmt);
    if (s_log_manager)
-      s_log_manager->LogWithFullPath(level, type, file, line, fmt, args);
+      if (s_log_manager->IsEnabled(type, level))
+         s_log_manager->LogWithFullPath(level, type, file, line, fmt, args);
 	va_end(args);
 }
 
@@ -96,9 +97,17 @@ LogManager::~LogManager()
 {
 }
 
-void LogManager::LogLibretro(LogTypes::LOG_LEVELS level, const char* text)
+void LogManager::LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type,
+		const char* file_, int line, const char* format, va_list args)
 {
+   const char *file =  file_ + m_path_cutoff_point;
+	char temp[MAX_MSGLEN];
+	CharArrayFromFormatV(temp, MAX_MSGLEN, format, args);
+	std::string msg =
+			StringFromFormat("%s:%u %c[%s]: %s\n", file,
+					line, LogTypes::LOG_LEVEL_TO_CHAR[(int)level], GetShortName(type), temp);
    retro_log_level retro_level;
+   const char *text = msg.c_str();
    switch (level)
    {
       case LogTypes::LNOTICE:
@@ -118,22 +127,6 @@ void LogManager::LogLibretro(LogTypes::LOG_LEVELS level, const char* text)
    }
    if (retro_printf != nullptr)
       retro_printf(retro_level, "%s", text);
-}
-
-void LogManager::LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type,
-		const char* file_, int line, const char* format, va_list args)
-{
-	if (!IsEnabled(type, level))
-		return;
-   const char *file =  file_ + m_path_cutoff_point;
-	char temp[MAX_MSGLEN];
-	CharArrayFromFormatV(temp, MAX_MSGLEN, format, args);
-
-	std::string msg =
-			StringFromFormat("%s:%u %c[%s]: %s\n", file,
-					line, LogTypes::LOG_LEVEL_TO_CHAR[(int)level], GetShortName(type), temp);
-
-   LogLibretro(level, msg.c_str());
 }
 
 void LogManager::SetLogLevel(LogTypes::LOG_LEVELS level)

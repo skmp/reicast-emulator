@@ -47,8 +47,6 @@ private:
   LogManager(LogManager&&) = delete;
   LogManager& operator=(LogManager&&) = delete;
 
-  void LogLibretro(LogTypes::LOG_LEVELS level, const char* text);
-
   LogTypes::LOG_LEVELS m_level;
   std::array<LogContainer, LogTypes::NUMBER_OF_LOGS> m_log{};
   size_t m_path_cutoff_point = 0;

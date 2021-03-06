@@ -279,7 +279,6 @@ extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
 
 extern "C" void ngen_FailedToFindBlock_();
-void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;  // in asm
 
 #include <map>
 
@@ -2380,9 +2379,11 @@ void ngen_ResetBlocks()
 */
 void ngen_init(void)
 {
-	INFO_LOG(DYNAREC, "Initializing the ARM32 dynarec");
-    verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
-    verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
+   INFO_LOG(DYNAREC, "Initializing the ARM32 dynarec");
+   verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
+   verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
+
+   ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
     
 	for (int s=0;s<6;s++)
 	{

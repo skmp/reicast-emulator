@@ -68,7 +68,6 @@ static void (*mainloop)(void *context);
 static int (*arm64_intc_sched)();
 static void (*arm64_no_update)();
 
-void(*ngen_FailedToFindBlock)();
 static bool restarting;
 
 void ngen_mainloop(void* v_cntx)

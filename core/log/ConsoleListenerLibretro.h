@@ -5,7 +5,7 @@
 #pragma once
 
 #include "LogManager.h"
-#include "libretro-common/include/libretro.h"
+#include <libretro.h>
 
 class ConsoleListener : public LogListener
 {
@@ -16,6 +16,5 @@ public:
   void Log(LogTypes::LOG_LEVELS, const char* text) override;
 
 private:
-  bool m_use_color;
   retro_log_printf_t retro_printf = nullptr;
 };

@@ -8,17 +8,26 @@
 #include <cstdarg>
 #include <cstring>
 #include <locale>
+#ifndef __LIBRETRO__
 #include <mutex>
 #include <ostream>
+#endif
 #include <string>
+#ifndef __LIBRETRO__
 #include <fstream>
+#endif
 
+#ifdef __LIBRETRO__
+#include "ConsoleListenerLibretro.h"
+#else
 #include "ConsoleListener.h"
+#endif
 #include "Log.h"
 #include "StringUtil.h"
 
 constexpr size_t MAX_MSGLEN = 1024;
 
+#ifndef __LIBRETRO__
 template <typename T>
 void OpenFStream(T& fstream, const std::string& filename, std::ios_base::openmode openmode)
 {
@@ -56,6 +65,7 @@ private:
 	std::ofstream m_logfile;
 	bool m_enable;
 };
+#endif
 
 void GenericLog(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file, int line,
 		const char* fmt, ...)
@@ -112,7 +122,9 @@ LogManager::LogManager(void *log_cb)
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
-	//	RegisterListener(LogListener::FILE_LISTENER, new FileLogListener("flycast.log"));
+#ifndef __LIBRETRO__
+	RegisterListener(LogListener::FILE_LISTENER, new FileLogListener("flycast.log"));
+#endif
 	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener(log_cb));
 
 	// Set up log listeners
@@ -125,9 +137,13 @@ LogManager::LogManager(void *log_cb)
 		verbosity = MAX_LOGLEVEL;
 
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
-	//	EnableListener(LogListener::FILE_LISTENER, false);
+#ifndef __LIBRETRO__
+	EnableListener(LogListener::FILE_LISTENER, false);
+#endif
 	EnableListener(LogListener::CONSOLE_LISTENER, true);
-	// EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
+#ifndef __LIBRETRO__
+	EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
+#endif
 
 	for (LogContainer& container : m_log)
 	{
@@ -141,7 +157,9 @@ LogManager::~LogManager()
 {
 	// The log window listener pointer is owned by the GUI code.
 	delete m_listeners[LogListener::CONSOLE_LISTENER];
-	// delete m_listeners[LogListener::FILE_LISTENER];
+#ifndef __LIBRETRO__
+	delete m_listeners[LogListener::FILE_LISTENER];
+#endif
 }
 
 // Return the current time formatted as Minutes:Seconds:Milliseconds

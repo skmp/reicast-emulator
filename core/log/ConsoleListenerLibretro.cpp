@@ -5,12 +5,11 @@
 #include <unistd.h>
 #endif
 
-#include "ConsoleListener.h"
+#include "ConsoleListenerLibretro.h"
 #include "Log.h"
 
 ConsoleListener::ConsoleListener(void *log_cb)
 {
-	m_use_color = false;
 	retro_printf = (retro_log_printf_t)log_cb;
 }
 
@@ -40,8 +39,4 @@ void ConsoleListener::Log(LogTypes::LOG_LEVELS level, const char* text)
 	}
 	if (retro_printf != nullptr)
 		retro_printf(retro_level, "%s", text);
-#if 0
-	else
-		printf("%s\n", text);
-#endif
 }

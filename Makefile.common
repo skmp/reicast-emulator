@@ -79,7 +79,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/imgread/common.cpp \
 					$(CORE_DIR)/core/imgread/cue.cpp \
 					$(CORE_DIR)/core/imgread/gdi.cpp \
-					$(CORE_DIR)/core/log/ConsoleListener.cpp \
+					$(CORE_DIR)/core/log/ConsoleListenerLibretro.cpp \
 					$(CORE_DIR)/core/log/LogManager.cpp \
 					\
 					$(CORE_DIR)/core/cheats.cpp \

@@ -657,7 +657,6 @@ struct settings_t
 extern settings_t settings;
 
 void LoadSettings(void);
-void SaveSettings(void);
 u32 GetRTC_now(void);
 
 static inline bool is_s8(u32 v) { return (s8)v==(s32)v; }

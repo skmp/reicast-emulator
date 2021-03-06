@@ -257,15 +257,6 @@
 #define HOST_64BIT_CPU
 #endif
 
-//Depricated build configs
-#ifdef HOST_NO_REC
-#error Dont use HOST_NO_REC
-#endif
-
-#ifdef HOST_NO_AREC
-#error Dont use HOST_NO_AREC
-#endif
-
 // Some restrictions on FEAT_NO_RWX_PAGES
 #if defined(FEAT_NO_RWX_PAGES) && FEAT_SHREC == DYNAREC_JIT
 #if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64

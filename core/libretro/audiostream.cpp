@@ -12,10 +12,9 @@ SoundFrame RingBuffer[SAMPLE_COUNT];
 void WriteSample(s16 r, s16 l)
 {
    static const u32 RingBufferByteSize = sizeof(RingBuffer);
-   static const u32 RingBufferSampleCount = SAMPLE_COUNT;
    static volatile u32 WritePtr;  //last written sample
    static volatile u32 ReadPtr;   //next sample to read
-	const u32 ptr = (WritePtr+1)%RingBufferSampleCount;
+	const u32 ptr = (WritePtr+1) % SAMPLE_COUNT;
 	RingBuffer[ptr].r=r;
 	RingBuffer[ptr].l=l;
 	WritePtr=ptr;

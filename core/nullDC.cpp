@@ -567,8 +567,3 @@ void LoadSettings(void)
 	settings.network.dns = "46.101.91.123";		// Dreamcast Live DNS
 	settings.network.server = "";
 }
-
-void SaveSettings(void)
-{
-}
-

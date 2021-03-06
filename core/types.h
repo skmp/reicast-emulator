@@ -804,8 +804,6 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb) ;
 
-#define SAMPLE_COUNT 512
-
 struct SoundFrame
 {
    s16 l;

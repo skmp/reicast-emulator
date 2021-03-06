@@ -35,8 +35,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "T40209D 50", nullptr,    { 0x2A8750, 0 }, { 0x3F400000 } },		// AeroWings 2 (PAL)
 		{ "T34101M   ", nullptr,    { 0x24CF20, 0x24CEEC, 0 }, { 0x3FAAAAAB, 0x43F00000, 0 } },	// Animastar (JP)
 		{ "MK-51171  ", nullptr,    { 0xCA20B8, 0 }, { 0x43700000 } },		// Alien Front Online (USA)
-      { "T2101M ", nullptr, { 0x13E8B4, 0x13E8E4, 0 }, { 0x43F00000, 0x3F400000 } }, // Berserk (JP)
-
+		{ "T2101M    ", nullptr,    { 0x13E8B4, 0x13E8E4, 0 }, { 0x43F00000, 0x3F400000 } },	// Berserk (JP)
 		{ "T13001D 18", nullptr,    { 0x2DAC44, 0 }, { 0x3F400000 } },		// Blue Stinger (En, De) (PAL)
 		{ "xxxxxxxxxx", nullptr,    { 0x2DAB84, 0 }, { 0x3F400000 } },		// Blue Stinger (Fr) (PAL)
 		{ "T13001D-05", nullptr,    { 0x2D9C84, 0 }, { 0x3F400000 } },		// Blue Stinger (Es, It?) (PAL)
@@ -95,9 +94,9 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		// Code 1-2 increases drawing distance
 		{ "T40203N   ", nullptr,    { 0x49D7F4, 0x49D8CC, 0x49D6F8, 0 }, { 0x3F07C3BB, 0x447A0000, 0x3FAAAAAB } },
 		// Ecco the Dolphin: Defender of the Future (PAL)
-      { "MK-5103350", nullptr, { 0x275418, 0x040E68, 0x040D1C, 0 }, { 0x49D9A5DA, 0x3F100000, 0x3F100000 } },
+		{ "MK-5103350", nullptr,    { 0x275418, 0x040E68, 0x040D1C, 0 }, { 0x49D9A5DA, 0x3F100000, 0x3F100000 } },
 		{ "T17705D 05", nullptr,    { 0x304870, 0 }, { 0x3F400000 } },		// Evolution - The World of Sacred Device (PAL)
-{ "T45005D 50", nullptr,    { 0x36CE5C, 0x36CE8C, 0 }, { 0x43F00000, 0x3F400000 } },	// Evolution 2 - Far Off Promise (PAL)
+		{ "T45005D 50", nullptr,    { 0x36CE5C, 0x36CE8C, 0 }, { 0x43F00000, 0x3F400000 } },	// Evolution 2 - Far Off Promise (PAL)
 		{ "T1711N    ", nullptr,    { 0x36C76C, 0x36C73C, 0 }, { 0x3F400000, 0x43F00000 } },	// Evolution 2 - Far Off Promise (USA)
 		{ "T8118D  50", nullptr,    { 0x2C6B7C, 0 }, { 0x00004000 } },		// Ferrari F355 Challenge (PAL) vga mode only
 		{ "HDR-0100  ", nullptr,    { 0x3235D4, 0 }, { 0x00004000 } },		// Ferrari F355 Challenge (JP) vga mode only
@@ -227,26 +226,25 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "T15104D 50", nullptr,    { 0x17EF68, 0 }, { 0x43F00010 } },		// Slave Zero (PAL) Widescreen, but a bit zoomed in
 		{ "MK-5101050", nullptr,    { 0x1A50EC, 0x1A511C, 0 }, { 0x43F00000, 0x3F400000 } },	// Snow Surfers (PAL)
 		{ "MK-5100050", nullptr,    { 0x88F528, 0x88F55C, 0 }, { 0x43F00000, 0x3FA66666 } },	// Sonic Adventure (PAL)
-      { "MK-51000 ", nullptr, { 0x88F5E8, 0x88F61C, 0 }, { 0x43F00000, 0x3FAAAAAB } }, // Sonic Adventure (USA)
+		{ "MK-51000  ", nullptr,    { 0x88F5E8, 0x88F61C, 0 }, { 0x43F00000, 0x3FAAAAAB } },	// Sonic Adventure (USA)
 		{ "MK-51117  ", nullptr,    { 0x28DEF8, 0x28DF28, 0 }, { 0x43F00000, 0x3f400000 } },	// Sonic Adventure 2 (USA)
 		{ "HDR-0165  ", nullptr,    { 0x28DF28, 0x28DEF8, 0 }, { 0x3F400000, 0x43F00000 } },	// Sonic Adventure 2 (JP)
-      { "MK-51060 ", nullptr, { 0x112A2C, 0 }, { 0x3F400000 } }, // Sonic Shuffle (US)
+		{ "MK-51060  ", nullptr,    { 0x112A2C, 0 }, { 0x3F400000 } },		// Sonic Shuffle (US)
 		{ "MK-5106050", nullptr,    { 0x110B4C, 0 }, { 0x3F400000 } },		// Sonic Shuffle (PAL)
 		{ "T9103M    ", nullptr,    { 0x25C714, 0x25C744, 0 }, { 0x43F00000, 0x3F400000 } },	// Sorcerian - Shichisei Mahou no Shito
 		{ "T1401D  50", nullptr,    { 0x2D6138, 0 }, { 0x3F400000 } },		// Soul Calibur (PAL)
 		{ "T1401N    ", nullptr,    { 0x266C28, 0 }, { 0x3F400000 } },		// Soul Calibur (USA)
-      { "T36802N   ", "  E     ", { 0x129FA0, 0x12A9BC, 0x1C9FDC, 0 },
-         { 0x3EF55555, 0x3EF55555, 0x000000F0 } },
-            // Soul Reaver (PAL) Code 2 is a Render Fix
+		{ "T36802N   ", "  E     ", { 0x129FA0, 0x12A9BC, 0x1C9FDC, 0 },
+				{ 0x3EF55555, 0x3EF55555, 0x000000F0 } },					// Soul Reaver (PAL) Code 2 is a Render Fix
 		{ "HDR-0190  ", nullptr,    { 0x14D3E0, 0 }, { 0x3F400000 } },		// Space Channel 5 Part 2 (JP)
-      { "T1216M    ", nullptr, { 0x017C38, 0x17F00, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.003 (JP)
-      { "T1216N    ", nullptr, { 0x017C58, 0x17F20, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (US)
-      { "T36816D 50", nullptr, { 0x017C78, 0x17F40, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (EU)
+		{ "T1216M    ", nullptr, { 0x017C38, 0x17F00, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.003 (JP)
+		{ "T1216N    ", nullptr, { 0x017C58, 0x17F20, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (US)
+		{ "T36816D 50", nullptr, { 0x017C78, 0x17F40, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (EU)
 		// Star Wars Episode I Racer (USA)
 		// Code 1-4 removes the black bars on top and bottom in FMV
 		{ "T23001N   ", nullptr,    { 0x17AE20, 0x29A96C, 0x29A98C, 0x29A9AC, 0x29A9CC, 0 },
-         { 0x3F400000, 0x42900000, 0x42900000, 0x43CE0000, 0x43CE0000 } },
-      { "T40206N   ", nullptr,    { 0x43296C, 0 }, { 0x3F400000, 0 } },	// Super Magnetic Neo (US)
+				{ 0x3F400000, 0x42900000, 0x42900000, 0x43CE0000, 0x43CE0000 } },
+		{ "T40206N   ", nullptr,    { 0x43296C, 0 }, { 0x3F400000, 0 } },	// Super Magnetic Neo (US)
 		{ "T40206D 50", nullptr,    { 0x43E34C, 0 }, { 0x3F400000, 0 } },	// Super Magnetic Neo (EU)
 //		{ "T7014D  50", nullptr,    { 0xE2B234, 0 }, { 0x3F800000 } },		// Super Runabout (PAL) doesn't work?
 		{ "T17721D 50", nullptr,    { 0x45CED4, 0 }, { 0x3F400000 } },		// Surf Rocket Racers (PAL) alt: 021EBF40 3F400000

@@ -98,17 +98,6 @@ LogManager::~LogManager()
 	delete m_listeners[LogListener::CONSOLE_LISTENER];
 }
 
-// Return the current time formatted as Minutes:Seconds:Milliseconds
-// in the form 00:00:000.
-static std::string GetTimeFormatted()
-{
-	double now = os_GetSeconds();
-	u32 minutes = (u32)now / 60;
-	u32 seconds = (u32)now % 60;
-	u32 ms = (now - (u32)now) * 1000;
-	return StringFromFormat("%02d:%02d:%03d", minutes, seconds, ms);
-}
-
 void LogManager::Log(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file,
 		int line, const char* format, va_list args)
 {
@@ -125,7 +114,7 @@ void LogManager::LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE 
 	CharArrayFromFormatV(temp, MAX_MSGLEN, format, args);
 
 	std::string msg =
-			StringFromFormat("%s %s:%u %c[%s]: %s\n", GetTimeFormatted().c_str(), file,
+			StringFromFormat("%s:%u %c[%s]: %s\n", file,
 					line, LogTypes::LOG_LEVEL_TO_CHAR[(int)level], GetShortName(type), temp);
 
 	for (auto listener_id : m_listener_ids)

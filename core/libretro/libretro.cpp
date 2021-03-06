@@ -1182,37 +1182,38 @@ static void update_variables(bool first_startup)
 
 void retro_run (void)
 {
-   bool fastforward = false;
    bool updated     = false;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward) && settings.rend.ThreadedRendering)
-      settings.aica.LimitFPS = !fastforward;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables(false);
 
-   refresh_devices(false);
+   if (devices_need_refresh)
+      refresh_devices(false);
 
 #if !defined(TARGET_NO_THREADS)
    if (settings.rend.ThreadedRendering)
    {
-	   // On the first call, we start the emulator thread
-	   if (first_run)
-	   {
-		   emu_thread.Start();
-		   first_run = false;
-	   }
+      bool fastforward = false;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward))
+         settings.aica.LimitFPS = !fastforward;
 
-	   poll_cb();
+      // On the first call, we start the emulator thread
+      if (first_run)
+      {
+         emu_thread.Start();
+         first_run = false;
+      }
 
-	   if (settings.pvr.rend == 0 || settings.pvr.rend == 3)
-	   	glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
+      poll_cb();
 
-	   // Render
-	   is_dupe = !rend_single_frame();
+      if (settings.pvr.rend == 0 || settings.pvr.rend == 3)
+         glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
 
-	   if (settings.pvr.rend == 0 || settings.pvr.rend == 3)
-	   	glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+      // Render
+      is_dupe = !rend_single_frame();
+
+      if (settings.pvr.rend == 0 || settings.pvr.rend == 3)
+         glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
    }
    else
 #endif
@@ -2034,7 +2035,8 @@ bool retro_load_game(const struct retro_game_info *game)
    if (naomi_cart_GetRotation() == 3)
       rotation = rotate_screen ? 0 : 1;
    environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rotation);
-   refresh_devices(true);
+   if (devices_need_refresh)
+      refresh_devices(true);
 
    return true;
 }
@@ -2355,31 +2357,28 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 
 static void refresh_devices(bool first_startup)
 {
-	if (devices_need_refresh)
-	{
-		devices_need_refresh = false;
-		set_input_descriptors();
+   devices_need_refresh = false;
+   set_input_descriptors();
 
-		if (!first_startup)
-		{
-			if (settings.System == DC_PLATFORM_DREAMCAST)
-				maple_ReconnectDevices();
+   if (!first_startup)
+   {
+      if (settings.System == DC_PLATFORM_DREAMCAST)
+         maple_ReconnectDevices();
 
-			if (rumble.set_rumble_state)
-			{
-				for(int i = 0; i < MAPLE_PORTS; i++)
-				{
-					rumble.set_rumble_state(i, RETRO_RUMBLE_STRONG, 0);
-					rumble.set_rumble_state(i, RETRO_RUMBLE_WEAK,   0);
-				}
-			}
-		}
-		else
-		{
-			mcfg_DestroyDevices();
-			mcfg_CreateDevices();
-		}
-	}
+      if (rumble.set_rumble_state)
+      {
+         for(int i = 0; i < MAPLE_PORTS; i++)
+         {
+            rumble.set_rumble_state(i, RETRO_RUMBLE_STRONG, 0);
+            rumble.set_rumble_state(i, RETRO_RUMBLE_WEAK,   0);
+         }
+      }
+   }
+   else
+   {
+      mcfg_DestroyDevices();
+      mcfg_CreateDevices();
+   }
 }
 
 // API version (to detect version mismatch)

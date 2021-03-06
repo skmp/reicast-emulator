@@ -446,6 +446,58 @@ InputDescriptors zombie_inputs = {
 	  },
 };
 
+// World Series 99 / Super Major League 99
+// World Series Baseball / Super Major League
+static InputDescriptors wsbb_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "BTN A" },
+		{ NAOMI_BTN1_KEY, "BTN B" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "STICK Y", Full, 1, true },
+		{ "STICK X", Full, 0, true },
+		{ "BAT", Half, 4, true },
+		{ "", Half, 5 },	// unused but P2 starts at axis 4
+		{ NULL },
+	},
+};
+
+static InputDescriptors ringout_inputs  = {
+	{
+		{ NAOMI_BTN0_KEY, "BUMPER" },
+		{ NAOMI_BTN1_KEY, "BACK" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "STEER", Full, 0 },
+		{ "ACCEL", Half, 4 },
+		{ NULL },
+	},
+};
+
+static InputDescriptors sstrkfgt_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "GUN TRIGGER" },
+		{ NAOMI_BTN1_KEY, "MISSILE BTN" },
+		{ NAOMI_BTN2_KEY, "AIR BRAKE" },
+		{ NAOMI_BTN3_KEY, "VIEW CHANGE" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "ELEVATOR", Full, 1 },
+		{ "AILERON", Full, 0 },
+		{ "THRUST LEVER", Half, 4 },
+		{ "RUDDER PEDAL", Full, 2 },
+		{ NULL },
+	},
+};
 //
 // AtomisWave games
 //

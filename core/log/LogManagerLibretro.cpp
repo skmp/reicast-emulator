@@ -2,7 +2,7 @@
 // Licensed under GPLv2+
 // Refer to the license.txt file included.
 
-#include "LogManager.h"
+#include "LogManagerLibretro.h"
 
 #include <algorithm>
 #include <cstdarg>

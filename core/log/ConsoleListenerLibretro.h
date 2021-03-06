@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "LogManager.h"
+#include "LogManagerLibretro.h"
 #include <libretro.h>
 
 class ConsoleListener : public LogListener

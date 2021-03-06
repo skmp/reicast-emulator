@@ -7,55 +7,13 @@
 #include <algorithm>
 #include <cstdarg>
 #include <cstring>
-#include <locale>
-#include <mutex>
-#include <ostream>
 #include <string>
-#include <fstream>
 
-#include "ConsoleListener.h"
+#include "ConsoleListenerLibretro.h"
 #include "Log.h"
 #include "StringUtil.h"
 
 constexpr size_t MAX_MSGLEN = 1024;
-
-template <typename T>
-void OpenFStream(T& fstream, const std::string& filename, std::ios_base::openmode openmode)
-{
-#ifdef _WIN32
-	fstream.open(UTF8ToTStr(filename).c_str(), openmode);
-#else
-	fstream.open(filename.c_str(), openmode);
-#endif
-}
-
-class FileLogListener : public LogListener
-{
-public:
-	FileLogListener(const std::string& filename)
-	{
-		OpenFStream(m_logfile, filename, std::ios::app);
-		SetEnable(true);
-	}
-
-	void Log(LogTypes::LOG_LEVELS, const char* msg) override
-	{
-		if (!IsEnabled() || !IsValid())
-			return;
-
-		std::lock_guard<std::mutex> lk(m_log_lock);
-		m_logfile << msg << std::flush;
-	}
-
-	bool IsValid() const { return m_logfile.good(); }
-	bool IsEnabled() const { return m_enable; }
-	void SetEnable(bool enable) { m_enable = enable; }
-
-private:
-	std::mutex m_log_lock;
-	std::ofstream m_logfile;
-	bool m_enable;
-};
 
 void GenericLog(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file, int line,
 		const char* fmt, ...)
@@ -112,7 +70,6 @@ LogManager::LogManager(void *log_cb)
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
-	RegisterListener(LogListener::FILE_LISTENER, new FileLogListener("flycast.log"));
 	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener(log_cb));
 
 	// Set up log listeners
@@ -125,9 +82,7 @@ LogManager::LogManager(void *log_cb)
 		verbosity = MAX_LOGLEVEL;
 
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
-	EnableListener(LogListener::FILE_LISTENER, false);
 	EnableListener(LogListener::CONSOLE_LISTENER, true);
-	EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
 
 	for (LogContainer& container : m_log)
 	{
@@ -141,7 +96,6 @@ LogManager::~LogManager()
 {
 	// The log window listener pointer is owned by the GUI code.
 	delete m_listeners[LogListener::CONSOLE_LISTENER];
-	delete m_listeners[LogListener::FILE_LISTENER];
 }
 
 // Return the current time formatted as Minutes:Seconds:Milliseconds

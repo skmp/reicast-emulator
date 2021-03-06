@@ -719,7 +719,7 @@ static void line_fill()
 
 	line_buffer_pos = 0;
 
-	for(int i=0; i != line_buffer_size;) {
+	for(int i=0; i < line_buffer_size;) {
 		// vlc 0: start of line
 		// vlc 1: interior of line
 		// vlc 2-9: 7-1 bytes from end of line

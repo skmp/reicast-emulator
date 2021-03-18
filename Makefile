@@ -949,7 +949,7 @@ ifeq ($(HAVE_GL3), 1)
 	CORE_DEFINES += -DHAVE_GL3
 endif
 
-RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer 
+RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ftree-vectorize -fomit-frame-pointer 
 
 ifeq ($(WITH_DYNAREC), arm)
 	ifneq (,$(findstring odroid,$(platform)))
@@ -1065,7 +1065,7 @@ CFLAGS         += $(CORE_DEFINES)
 CXXFLAGS       += $(CORE_DEFINES)
 
 CFLAGS   += $(OPTFLAGS) -c
-CFLAGS   += -fno-strict-aliasing -ffast-math
+CFLAGS   += -fno-strict-aliasing
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 LIBS     += -lm 
 

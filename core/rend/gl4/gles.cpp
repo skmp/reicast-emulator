@@ -107,7 +107,7 @@ uniform float trilinear_alpha;
 uniform vec4 fog_clamp_min;
 uniform vec4 fog_clamp_max;
 uniform sampler2D palette;
-uniform int palette_index;
+uniform float palette_index;
 
 uniform ivec2 blend_mode[2];
 #if pp_TwoVolumes == 1
@@ -148,9 +148,8 @@ vec4 fog_clamp(vec4 col)
 
 vec4 palettePixel(sampler2D tex, vec2 coords)
 {
-   int color_idx = int(floor(texture(tex, coords).r * 255.0 + 0.5)) + palette_index;
-   vec2 c = vec2(float(color_idx % 32) / 31.0, float(color_idx / 32) / 31.0);
-   return texture(palette, c);
+	vec4 c = vec4(texture(tex, coords).r * 255.0 / 1023.0 + palette_index, 0.5, 0.0, 0.0);
+	return texture(palette, c.xy);
 }
 
 #endif

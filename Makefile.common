@@ -263,19 +263,14 @@ XXHASH_SOURCES_C = $(DEPS_DIR)/xxhash/xxhash.c
 
 ZLIB_SOURCES_C = \
 					$(DEPS_DIR)/zlib/deflate.c \
-					$(DEPS_DIR)/zlib/gzlib.c \
 					$(DEPS_DIR)/zlib/uncompr.c \
 					$(DEPS_DIR)/zlib/zutil.c \
 					$(DEPS_DIR)/zlib/inffast.c \
-					$(DEPS_DIR)/zlib/gzread.c \
 					$(DEPS_DIR)/zlib/crc32.c \
-					$(DEPS_DIR)/zlib/gzwrite.c \
 					$(DEPS_DIR)/zlib/inflate.c \
 					$(DEPS_DIR)/zlib/infback.c \
 					$(DEPS_DIR)/zlib/inftrees.c \
 					$(DEPS_DIR)/zlib/trees.c \
-					$(DEPS_DIR)/zlib/gzclose.c \
-					$(DEPS_DIR)/zlib/compress.c \
 					$(DEPS_DIR)/zlib/adler32.c
 
 SOURCES_ASM :=

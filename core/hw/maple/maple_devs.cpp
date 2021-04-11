@@ -105,8 +105,7 @@ void maple_device::Setup(u32 prt)
 }
 maple_device::~maple_device()
 {
-	if (config)
-		delete config;
+   delete config;
 }
 
 /*

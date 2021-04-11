@@ -28,32 +28,32 @@ bool ngen_Rewrite(size_t &addr, size_t retadr, size_t acc);
 bool BM_LockedWrite(u8* address);
 
 
-static LONG ExceptionHandler(EXCEPTION_POINTERS *ep)
+static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 {
+   EXCEPTION_POINTERS* ep = ExceptionInfo;
+
    u32 dwCode = ep->ExceptionRecord->ExceptionCode;
+
+   EXCEPTION_RECORD* pExceptionRecord=ep->ExceptionRecord;
 
    if (dwCode != EXCEPTION_ACCESS_VIOLATION)
       return EXCEPTION_CONTINUE_SEARCH;
 
-   EXCEPTION_RECORD* pExceptionRecord=ep->ExceptionRecord;
    u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
 
    //printf("[EXC] During access to : 0x%X\n", address);
 
-   // code protection in RAM
 	if (bm_RamWriteAccess(address))
+	{
 		return EXCEPTION_CONTINUE_EXECUTION;
-   // texture protection in VRAM
+	}
 	else if (VramLockedWrite(address))
       return EXCEPTION_CONTINUE_EXECUTION;
 #ifndef TARGET_NO_NVMEM
-   /* FPCB jump table protection */
    if (BM_LockedWrite(address))
       return EXCEPTION_CONTINUE_EXECUTION;
 #endif
-
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
-   // fast mem access rewriting
    if ( ngen_Rewrite((size_t&)ep->ContextRecord->Eip,*(size_t*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
    {
       //remove the call from call stack
@@ -63,8 +63,11 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ep)
       return EXCEPTION_CONTINUE_EXECUTION;
    }
 #endif
+   else
+   {
+   	ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
+   }
 
-   ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
    return EXCEPTION_CONTINUE_SEARCH;
 }
 

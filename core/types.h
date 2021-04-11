@@ -677,7 +677,7 @@ void plugins_Reset(bool Manual);
 
 //PVR
 s32 libPvr_Init(void);
-void libPvr_Reset(bool Manual);
+void libPvr_Reset(bool hard);
 void libPvr_Term(void);
 
 void* libPvr_GetRenderTarget(void);

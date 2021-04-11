@@ -28,7 +28,7 @@ void sh4_mmr_init();
 void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
-void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
+void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf=0, RegWriteAddrFP* wf=0);
 
 #define A7_REG_HASH(addr) (((addr) >> 16) & 0x1FFF)
 

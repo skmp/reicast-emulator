@@ -132,12 +132,6 @@
 #define DC_PLATFORM_AURORA      6   /* Needs to be done, Uses newer 300 mhz sh4 + 150 mhz pvr mbx SoC */
 
 
-//HOST_OS
-#define OS_WINDOWS   0x10000001
-#define OS_LINUX     0x10000002
-#define OS_DARWIN    0x10000003
-#define OS_HORIZON   0x10000004
-
 //HOST_CPU
 #define CPU_X86      0x20000001
 #define CPU_ARM      0x20000002
@@ -207,7 +201,6 @@
 #ifndef HOST_CPU
 #define HOST_CPU CPU_ARM64
 #endif
-#define HOST_OS OS_HORIZON
 #endif
 
 #if defined(TARGET_NAOMI)

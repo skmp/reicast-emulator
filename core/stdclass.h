@@ -214,13 +214,13 @@ public :
 		slock_free(mutx);
 #endif
 	}
-	void Lock()
+	void lock()
 	{
 #ifndef TARGET_NO_THREADS
 		slock_lock(mutx);
 #endif
 	}
-	bool TryLock()
+	bool trylock()
 	{
 #ifndef TARGET_NO_THREADS
 		return slock_try_lock(mutx);
@@ -228,15 +228,12 @@ public :
 		return false;
 #endif
 	}
-	void Unlock()
+	void unlock()
 	{
 #ifndef TARGET_NO_THREADS
 		slock_unlock(mutx);
 #endif
 	}
-	// std::BasicLockable so we can use std::lock_guard
-	void lock() { Lock(); }
-	void unlock() { Unlock(); }
 };
 
 //Set the path !

@@ -105,14 +105,14 @@ static int modem_read(struct pico_device *dev, void *data, int len)
 	u8 *p = (u8 *)data;
 
 	int count = 0;
-	out_buffer_lock.Lock();
+	out_buffer_lock.lock();
 	while (!out_buffer.empty() && count < len)
 	{
 		*p++ = out_buffer.front();
 		out_buffer.pop();
 		count++;
 	}
-	out_buffer_lock.Unlock();
+	out_buffer_lock.unlock();
 
     return count;
 }
@@ -121,37 +121,37 @@ static int modem_write(struct pico_device *dev, const void *data, int len)
 {
 	u8 *p = (u8 *)data;
 
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	while (len > 0)
 	{
 		in_buffer.push(*p++);
 		len--;
 	}
-	in_buffer_lock.Unlock();
+	in_buffer_lock.unlock();
 
     return len;
 }
 
 void write_pico(u8 b)
 {
-	out_buffer_lock.Lock();
+	out_buffer_lock.lock();
 	out_buffer.push(b);
-	out_buffer_lock.Unlock();
+	out_buffer_lock.unlock();
 }
 
 int read_pico()
 {
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	if (in_buffer.empty())
 	{
-		in_buffer_lock.Unlock();
+		in_buffer_lock.unlock();
 		return -1;
 	}
 	else
 	{
 		u32 b = in_buffer.front();
 		in_buffer.pop();
-		in_buffer_lock.Unlock();
+		in_buffer_lock.unlock();
 		return b;
 	}
 }
@@ -455,9 +455,9 @@ static void read_native_sockets()
 	struct pico_msginfo msginfo;
 
 	// If modem buffer is full, wait
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	size_t in_buffer_size = in_buffer.size();
-	in_buffer_lock.Unlock();
+	in_buffer_lock.unlock();
 	if (in_buffer_size >= 256)
 		return;
 

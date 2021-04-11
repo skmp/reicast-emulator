@@ -85,7 +85,7 @@ bool TryDecodeTARC(void)
 		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
 		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
 			
-      vd_ctx->rend_inuse.Lock();
+      vd_ctx->rend_inuse.lock();
 		vd_rc = vd_ctx->rend;
 
 		//signal the vdec thread
@@ -101,7 +101,7 @@ void VDecEnd(void)
 
 	vd_ctx->rend = vd_rc;
 
-   vd_ctx->rend_inuse.Unlock();
+   vd_ctx->rend_inuse.unlock();
 
 	vd_ctx = 0;
 }
@@ -155,10 +155,10 @@ bool QueueRender(TA_context* ctx)
 	}
 
    frame_finished.Reset();
-   mtx_rqueue.Lock();
+   mtx_rqueue.lock();
 	TA_context* old = rqueue;
 	rqueue=ctx;
-   mtx_rqueue.Unlock();
+   mtx_rqueue.unlock();
 
    verify(!old);
 
@@ -167,9 +167,9 @@ bool QueueRender(TA_context* ctx)
 
 TA_context* DequeueRender(void)
 {
-   mtx_rqueue.Lock();
+   mtx_rqueue.lock();
 	TA_context* rv = rqueue;
-   mtx_rqueue.Unlock();
+   mtx_rqueue.unlock();
 
 	if (rv)
 		FrameCount++;
@@ -179,9 +179,9 @@ TA_context* DequeueRender(void)
 
 bool rend_framePending(void)
 {
-   mtx_rqueue.Lock();
+   mtx_rqueue.lock();
 	TA_context* rv = rqueue;
-   mtx_rqueue.Unlock();
+   mtx_rqueue.unlock();
 
 	return rv != 0;
 }
@@ -191,9 +191,9 @@ void FinishRender(TA_context* ctx)
 	if (ctx != NULL)
 	{
 		verify(rqueue == ctx);
-		mtx_rqueue.Lock();
+		mtx_rqueue.lock();
 		rqueue = NULL;
-		mtx_rqueue.Unlock();
+		mtx_rqueue.unlock();
 
 		tactx_Recycle(ctx);
 	}
@@ -210,13 +210,13 @@ TA_context* tactx_Alloc(void)
 {
 	TA_context* rv = 0;
 
-   mtx_pool.Lock();
+   mtx_pool.lock();
 	if (!ctx_pool.empty())
 	{
 		rv = ctx_pool[ctx_pool.size()-1];
 		ctx_pool.pop_back();
 	}
-   mtx_pool.Unlock();
+   mtx_pool.unlock();
 	
 	if (!rv)
    {
@@ -229,7 +229,7 @@ TA_context* tactx_Alloc(void)
 
 void tactx_Recycle(TA_context* poped_ctx)
 {
-   mtx_pool.Lock();
+   mtx_pool.lock();
    if (ctx_pool.size()>2)
    {
       poped_ctx->Free();
@@ -240,7 +240,7 @@ void tactx_Recycle(TA_context* poped_ctx)
       poped_ctx->Reset();
       ctx_pool.push_back(poped_ctx);
    }
-   mtx_pool.Unlock();
+   mtx_pool.unlock();
 }
 
 TA_context* tactx_Find(u32 addr, bool allocnew)

@@ -224,10 +224,10 @@ struct TA_context
 	void Reset()
 	{
       tad.Clear();
-      rend_inuse.Lock();
+      rend_inuse.lock();
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
-      rend_inuse.Unlock();
+      rend_inuse.unlock();
 	}
 
 	void Free()

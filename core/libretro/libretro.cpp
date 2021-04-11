@@ -1246,7 +1246,6 @@ void retro_reset (void)
 #endif
 
    settings.dreamcast.cable = 3;
-   settings.dreamcast.RTC = GetRTC_now();
    update_variables(false);
    dc_reset(true);
 

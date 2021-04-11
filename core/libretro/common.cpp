@@ -26,6 +26,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include "oslib/host_context.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/mem/vmem32.h"
 
@@ -183,24 +184,6 @@ void setup_seh(void)
 #endif
 #endif
 
-struct rei_host_context_t
-{
-#if HOST_CPU != CPU_GENERIC
-	size_t pc;
-#endif
-
-#if HOST_CPU == CPU_X86
-	u32 eax;
-	u32 ecx;
-	u32 esp;
-#elif HOST_CPU == CPU_ARM
-	u32 r[15];
-#elif HOST_CPU == CPU_ARM64
-	u64 x2;
-#endif
-};
-
-
 #define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
 
 template <typename Ta, typename Tb>
@@ -212,7 +195,7 @@ static void bicopy(Ta& rei, Tb& seg, bool to_segfault)
       rei = seg;
 }
 
-static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault)
+static void context_segfault(host_context_t* reictx, void* segfault_ctx, bool to_segfault)
 {
 #if !defined(TARGET_NO_EXCEPTIONS)
 #if HOST_CPU == CPU_ARM
@@ -259,12 +242,12 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
 #endif
 }
 
-static void context_from_segfault(rei_host_context_t* reictx, void* segfault_ctx)
+static void context_from_segfault(host_context_t* reictx, void* segfault_ctx)
 {
    context_segfault(reictx, segfault_ctx, false);
 }
 
-static void context_to_segfault(rei_host_context_t* reictx, void* segfault_ctx)
+static void context_to_segfault(host_context_t* reictx, void* segfault_ctx)
 {
 	context_segfault(reictx, segfault_ctx, true);
 }
@@ -278,7 +261,7 @@ bool BM_LockedWrite(u8* address);
 #ifdef __MACH__
 static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 {
-   rei_host_context_t ctx;
+   host_context_t ctx;
 
    context_from_segfault(&ctx, segfault_ctx);
 
@@ -307,7 +290,7 @@ extern "C" char __start__;
 
 static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
 {
-   rei_host_context_t ctx;
+   host_context_t ctx;
 
    context_from_segfault(&ctx, segfault_ctx);
 

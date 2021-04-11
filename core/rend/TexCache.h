@@ -1,4 +1,5 @@
 #pragma once
+#include "oslib/oslib.h"
 #include "hw/pvr/Renderer_if.h"
 
 #include <algorithm>

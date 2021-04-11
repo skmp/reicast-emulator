@@ -726,6 +726,11 @@ static void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
 static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
 static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
+//ARM
+s32 libARM_Init();
+void libARM_Reset(bool hard);
+void libARM_Term();
+
 template<u32 sz>
 u32 ReadMemArr(u8 *array, u32 addr)
 {
@@ -768,26 +773,6 @@ struct OnLoad
 	typedef void OnLoadFP(void);
 	OnLoad(OnLoadFP* fp) { fp(); }
 };
-
-void os_DoEvents();
-double os_GetSeconds();
-
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
-
-u32 static INLINE bitscanrev(u32 v)
-{
-#ifdef _MSC_VER
-	unsigned long rv;
-	_BitScanReverse(&rv,v);
-	return rv;
-#else
-	return 31-__builtin_clz(v);
-#endif
-}
-
-void os_DebugBreak(void);
 
 bool ra_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
 bool ra_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);

@@ -1,5 +1,6 @@
-#include "ta.h"
 #include "ta_ctx.h"
+#include "spg.h"
+#include "oslib/oslib.h"
 
 #include "hw/sh4/sh4_sched.h"
 

@@ -79,7 +79,7 @@ void arm_Run_(u32 CycleCount)
 	}
 }
 
-void arm_Run(u32 samples)
+void aicaarm::run(u32 samples)
 {
 	for (u32 i = 0; i < samples; i++)
 	{
@@ -91,12 +91,12 @@ void arm_Run(u32 samples)
 
 void armt_init();
 
-void arm_Init()
+void aicaarm::init()
 {
 #if FEAT_AREC != DYNAREC_NONE
 	armt_init();
 #endif
-	arm_Reset();
+   aicaarm::reset();
 
 	for (int i = 0; i < 256; i++)
 	{
@@ -275,7 +275,7 @@ void CPUUndefinedException()
 
 void FlushCache();
 
-void arm_Reset()
+void aicaarm::reset()
 {
    DEBUG_LOG(AICA_ARM, "AICA ARM Reset");
 #if FEAT_AREC != DYNAREC_NONE
@@ -339,15 +339,13 @@ void CPUFiq()
 #include "hw/sh4/sh4_core.h"
 
 
-void arm_SetEnabled(bool enabled)
+void aicaarm::enable(bool enabled)
 {
 	if(!Arm7Enabled && enabled)
-			arm_Reset();
+      aicaarm::reset();
 	
 	Arm7Enabled=enabled;
 }
-
-
 
 void update_armintc()
 {
@@ -1534,7 +1532,7 @@ void armv_MOV32(eReg regn, u32 imm)
 #endif
 
 //Run a timeslice for ARMREC
-void arm_Run(u32 samples)
+void aicaarm::run(u32 samples)
 {
 	for (int i = 0; i < samples; i++)
 	{

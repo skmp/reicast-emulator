@@ -38,10 +38,6 @@ extern char *game_data;
 extern bool boot_to_bios;
 extern bool reset_requested;
 
-extern void init_mem();
-extern void arm_Init();
-extern void term_mem();
-
 /*
 	libndc
 
@@ -87,8 +83,8 @@ s32 plugins_Init()
    if (s32 rv = libAICA_Init())
       return rv;
 
-   init_mem();
-   arm_Init();
+   if (s32 rv = libARM_Init())
+      return rv;
 
    //if (s32 rv = libExtDevice_Init())
    //	return rv;
@@ -103,7 +99,6 @@ void plugins_Term(void)
    //term all plugins
    //libExtDevice_Term();
    
-	term_mem();
 	//arm7_Term ?
    libAICA_Term();
 
@@ -116,9 +111,7 @@ void plugins_Reset(bool hard)
 	libPvr_Reset(hard);
 	libGDR_Reset(hard);
 	libAICA_Reset(hard);
-
-	arm_Reset();
-	arm_SetEnabled(false);
+   libARM_Reset(hard);
 
 	//libExtDevice_Reset(Manual);
 }

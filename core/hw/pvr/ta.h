@@ -1,4 +1,5 @@
 #pragma once
+#include "types.h"
 #include "ta_structs.h"
 
 enum

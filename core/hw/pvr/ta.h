@@ -32,6 +32,19 @@ void ta_vtx_data(u32* data, u32 size);
 
 bool ta_parse_vdrc(TA_context* ctx);
 
+class TaTypeLut
+{
+public:
+	static const TaTypeLut& instance() {
+		static TaTypeLut _instance;
+		return _instance;
+	}
+	u32 table[256];
+
+private:
+	TaTypeLut();
+};
+
 #define STRIPS_AS_PPARAMS 1
 
 #include "ta_ctx.h"

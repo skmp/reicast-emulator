@@ -3,11 +3,13 @@
 
 	Parsing of the TA stream and generation of vertex data !
 */
-#include <cmath>
 #include "ta.h"
 #include "ta_ctx.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
+
+#include <algorithm>
+#include <cmath>
 
 // TODO/FIXME - should be moved later
 bool pal_needs_update=true;
@@ -24,14 +26,6 @@ extern rend_context vd_rc;
 extern int screen_height;
 
 #define TACALL DYNACALL
-#define PLD(ptr,offs)
-#define TA_VTX 
-#define TA_SPR 
-#define TA_EOS 
-#define TA_PP 
-#define TA_SP 
-#define TA_EOL 
-#define TA_V64H
 
 //cache state vars
 static u32 tileclip_val = 0;
@@ -73,16 +67,13 @@ DECL_ALIGN(4) static u8 FaceBaseColor[4];
 DECL_ALIGN(4) static u8 FaceOffsColor[4];
 DECL_ALIGN(4) static u8 FaceBaseColor1[4];
 DECL_ALIGN(4) static u8 FaceOffsColor1[4];
-DECL_ALIGN(4) static u32 SFaceBaseColor;
-DECL_ALIGN(4) static u32 SFaceOffsColor;
-
-//splitter function lookup
-extern u32 ta_type_lut[256];
+static u32 SFaceBaseColor;
+static u32 SFaceOffsColor;
 
 //misc ones
-static const u32 ListType_None = -1;
-static const u32 SZ32 = 1;
-static const u32 SZ64 = 2;
+const u32 ListType_None = -1;
+const u32 SZ32 = 1;
+const u32 SZ64 = 2;
 
 #include "ta_structs.h"
 
@@ -105,10 +96,9 @@ static INLINE f32 f16(u16 v)
 
 //Splitter function (normally ta_dma_main , modified for split dma's)
 
-template<u32 instance>
 class FifoSplitter
 {
-public:
+   static const u32 *ta_type_lut;
 
 	static void ta_list_start(u32 new_list)
 	{
@@ -136,7 +126,6 @@ public:
 
 		if (part==2)
 		{
-			TA_V64H;
 			TaCmd=ta_main;
 		}
 
@@ -145,7 +134,7 @@ public:
 #define ver_32B_def(num) \
 case num : {\
 AppendPolyVertex##num(&vp->vtx##num);\
-rv=SZ32; TA_VTX; }\
+rv=SZ32; }\
 break;
 
 			//32b , always in one pass :)
@@ -166,7 +155,6 @@ case num : {\
 /*process first half*/\
 	if (part!=2)\
 	{\
-	TA_VTX;\
 	rv+=SZ32;\
 	AppendPolyVertex##num##A(&vp->vtx##num##A);\
 	}\
@@ -216,7 +204,6 @@ case num : {\
 	static Ta_Dma* TACALL ta_mod_vol_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		TA_VertexParam* vp=(TA_VertexParam*)data;
-		TA_VTX;
 		if (data==data_end)
 		{
 			AppendModVolVertexA(&vp->mvolA);
@@ -234,7 +221,6 @@ case num : {\
 	}
 	static Ta_Dma* TACALL ta_spriteB_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		TA_V64H;
 		//32B more needed , 32B done :)
 		TaCmd=ta_main;
 			
@@ -244,7 +230,6 @@ case num : {\
 	}
 	static Ta_Dma* TACALL ta_sprite_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		TA_SPR;
 		//verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
 		if (data==data_end)
 		{
@@ -263,7 +248,6 @@ case num : {\
 			AppendSpriteVertexA(&vp->spr1A);
 			AppendSpriteVertexB(&vp->spr1B);
 
-			//all 64B doneisimooooo la la la :*iiiiii  niarj
 			return data+SZ64;
 		}
 	}
@@ -274,23 +258,16 @@ case num : {\
 					//If SZ64  && 32 bytes
 #define IS_FIST_HALF ((poly_size!=SZ32) && (data==data_end))
 
-					//If SZ32 && >=32 bytes
-					//If SZ64 && > 32 bytes
-#define HAS_FULL_DATA (poly_size==SZ32 ? (data<=data_end) : (data<data_end))
-
-#define ITER PLD(data,128); \
-ta_handle_poly<poly_type,0>(data,0); \
-if (data->pcw.EndOfStrip) \
-	goto strip_end; \
-data+=poly_size;
-
 		if (IS_FIST_HALF)
 			goto fist_half;
 
 		do
-		{
-			ITER
-		} while (HAS_FULL_DATA);
+      {
+         ta_handle_poly<poly_type,0>(data, 0);
+         if (data->pcw.EndOfStrip)
+            goto strip_end;
+         data += poly_size;
+      } while (poly_size == SZ32 ? data <= data_end : data < data_end);
 			
 		if (IS_FIST_HALF)
 		{
@@ -308,7 +285,6 @@ strip_end:
 		TaCmd=ta_main;
 		if (data->pcw.EndOfStrip)
 			EndPolyStrip();
-		TA_EOS;
 		return data+poly_size;
 	}
 
@@ -340,15 +316,12 @@ strip_end:
 		return data+SZ32;
 	}
 
-public:
-	
 	//Group_En bit seems ignored, thanks p1pkin 
 #define group_EN() /*if (data->pcw.Group_En) */{ TileClipMode(data->pcw.User_Clip);}
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		do
 		{
-			PLD(data,128);
 			switch (data->pcw.ParaType)
 			{
 				//Control parameter
@@ -372,7 +345,6 @@ public:
 					CurrentList=ListType_None;
 					VertexDataFP=NullVertexData;
 					data+=SZ32;
-					TA_EOL;
 				}
 				break;
 				//32B
@@ -398,8 +370,6 @@ public:
 				//PolyType :32B/64B
 			case ParamType_Polygon_or_Modifier_Volume:
 				{
-
-					TA_PP;
 					group_EN();
 					//Yep , C++ IS lame & limited
 					#include "ta_const_df.h"
@@ -416,7 +386,7 @@ public:
 					else
 					{
 
-						u32 uid=ta_type_lut[data->pcw.obj_ctrl];
+                  u32 uid = ta_type_lut[data->pcw.obj_ctrl];
 						u32 psz=uid>>30;
 						u32 pdid=(u8)(uid);
 						u32 ppid=(u8)(uid>>8);
@@ -448,8 +418,6 @@ public:
 				//Sets Sprite info , and switches to ta_sprite_data function
 			case ParamType_Sprite:
 				{
-
-					TA_SP;
 					group_EN();
 					if (CurrentList==ListType_None)
 						ta_list_start(data->pcw.ListType);	//start a list ;)
@@ -462,13 +430,7 @@ public:
 
 				//Variable size
 			case ParamType_Vertex_Parameter:
-				//log ("vtx");
-				{
-
-					//printf("VTX:0x%08X\n",VertexDataFP);
-					//verify(VertexDataFP!=NullVertexData);
-					data=VertexDataFP(data,data_end);
-				}
+            data = VertexDataFP(data, data_end);
 				break;
 
 				//not handled
@@ -482,30 +444,16 @@ public:
 				break;
 			}
 		}
-		while(data<=data_end);
+		while (data <= data_end);
 		return data;
 	}
 
+public:
 	//Fill in lookup table
 	FifoSplitter()
 	{
-		for (int i=0;i<256;i++)
-		{
-			PCW pcw;
-			pcw.obj_ctrl=i;
-			u32 rv=	poly_data_type_id(pcw);
-			u32 type= poly_header_type_size(pcw);
-
-			if (type& 0x80)
-				rv|=(SZ64<<30);
-			else
-				rv|=(SZ32<<30);
-
-			rv|=(type&0x7F)<<8;
-
-			ta_type_lut[i]=rv;
-		}
 		VertexDataFP = NullVertexData;
+      ta_type_lut  = TaTypeLut::instance().table;
 	}
 	/*
 	Volume,Col_Type,Texture,Offset,Gouraud,16bit_UV
@@ -694,6 +642,7 @@ public:
 		CurrentPPlist = NULL;
 	}
 		
+private:
 	__forceinline
 		static void SetTileClip(u32 xmin,u32 ymin,u32 xmax,u32 ymax)
 	{
@@ -1423,11 +1372,32 @@ public:
 	}
 };
 
+const u32 *FifoSplitter::ta_type_lut;
+
+TaTypeLut::TaTypeLut()
+{
+	for (int i = 0; i < 256; i++)
+	{
+		PCW pcw;
+		pcw.obj_ctrl = i;
+		u32 rv = FifoSplitter::poly_data_type_id(pcw);
+		u32 type = FifoSplitter::poly_header_type_size(pcw);
+
+		if (type & 0x80)
+			rv |= SZ64 << 30;
+		else
+			rv |= SZ32 << 30;
+
+		rv |= (type & 0x7F) << 8;
+
+		table[i] = rv;
+	}
+}
 
 static bool ClearZBeforePass(int pass_number);
 static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax);
 
-FifoSplitter<0> TAFifo0;
+FifoSplitter TAFifo0;
 
 int ta_parse_cnt = 0;
 

@@ -28,6 +28,9 @@ typedef int8_t INT8;
 #elif defined(_LARGEFILE_SOURCE) && defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64
 	#define core_fseek fseeko64
 	#define core_ftell ftello64
+#elif defined(HAVE_LIBNX)
+	#define core_fseek fseek
+	#define core_ftell ftell
 #else
 	#define core_fseek fseeko
 	#define core_ftell ftello

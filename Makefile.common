@@ -4,6 +4,8 @@ LIBRETRO_COMM_DIR = $(CORE_DIR)/core/libretro-common
 INCFLAGS    += -I$(CORE_DIR)/core/libretro \
 					-I$(CORE_DIR)/core/ \
 					-I$(DEPS_DIR) \
+					-I$(CORE_DIR)/core/deps/libchdr/include \
+					-I$(CORE_DIR)/core/deps/lzma/C \
 					-I$(LIBRETRO_COMM_DIR)/include \
 					-I$(DEPS_DIR)/vixl \
 					-I$(DEPS_DIR)/stb
@@ -161,22 +163,11 @@ endif
 LIBCHDR_INCFLAGS = -I$(DEPS_DIR)/flac/include
 
 LIBCHDR_SOURCES_C = \
-					$(DEPS_DIR)/chdr/bitstream.c \
-					$(DEPS_DIR)/chdr/cdrom.c \
-					$(DEPS_DIR)/chdr/chd.c \
-					$(DEPS_DIR)/chdr/flac.c \
-					$(DEPS_DIR)/chdr/huffman.c \
-					\
-					$(DEPS_DIR)/flac/bitreader.c \
-					$(DEPS_DIR)/flac/cpu.c \
-					$(DEPS_DIR)/flac/crc.c \
-					$(DEPS_DIR)/flac/fixed.c \
-					$(DEPS_DIR)/flac/float.c \
-					$(DEPS_DIR)/flac/format.c \
-					$(DEPS_DIR)/flac/lpc.c \
-					$(DEPS_DIR)/flac/md5.c \
-					$(DEPS_DIR)/flac/memory.c \
-					$(DEPS_DIR)/flac/stream_decoder.c
+					$(DEPS_DIR)/libchdr/src/libchdr_bitstream.c \
+					$(DEPS_DIR)/libchdr/src/libchdr_cdrom.c \
+					$(DEPS_DIR)/libchdr/src/libchdr_chd.c \
+					$(DEPS_DIR)/libchdr/src/libchdr_flac.c \
+					$(DEPS_DIR)/libchdr/src/libchdr_huffman.c \
 
 LIBZIP_SOURCES_C = \
 					$(DEPS_DIR)/libzip/mkstemp.c \

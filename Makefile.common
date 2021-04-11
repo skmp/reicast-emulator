@@ -167,7 +167,6 @@ LIBCHDR_SOURCES_C = \
 					$(DEPS_DIR)/chdr/flac.c \
 					$(DEPS_DIR)/chdr/huffman.c \
 					\
-					$(DEPS_DIR)/flac/bitmath.c \
 					$(DEPS_DIR)/flac/bitreader.c \
 					$(DEPS_DIR)/flac/cpu.c \
 					$(DEPS_DIR)/flac/crc.c \

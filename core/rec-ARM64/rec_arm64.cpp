@@ -1256,9 +1256,7 @@ public:
 			if (!mmu_enabled())
 			{
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
-				Mov(x2, sizeof(Sh4RCB));
-				Sub(x2, x28, x2);
-				Add(x2, x2, sizeof(Sh4Context));		// x2 now points to FPCB
+            Sub(x2, x28, offsetof(Sh4RCB, cntx));
 #if RAM_SIZE_MAX == 33554432
 				Ubfx(w1, w29, 1, 24);
 #else
@@ -1346,6 +1344,7 @@ public:
 
 		// int intc_sched()
 		arm64_intc_sched = GetCursorAddress<int (*)()>();
+      verify((void *)arm64_intc_sched == (void *)CodeCache);
 		B(&intc_sched);
 
 		// void no_update()
@@ -2211,14 +2210,14 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 
 static void generate_mainloop()
 {
-	if (mainloop != NULL)
+	if (mainloop != nullptr)
 		return;
 	compiler = new Arm64Assembler();
 
 	compiler->GenMainloop();
 
 	delete compiler;
-	compiler = NULL;
+	compiler = nullptr;
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()

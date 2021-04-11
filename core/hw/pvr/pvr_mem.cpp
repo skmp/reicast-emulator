@@ -57,7 +57,7 @@ void YUV_init(void)
 #pragma GCC optimize ("-O2")
 #endif
 
-static void YUV_Block8x8(u8* inuv,u8* iny, u8* out)
+static void YUV_Block8x8(const u8* inuv, const u8* iny, u8* out)
 {
 	u8* line_out_0=out+0;
 	u8* line_out_1=out+YUV_x_size*2;

@@ -919,7 +919,7 @@ shil_opc(fipr)
 #if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
-f32,f1,(float* fn, float* fm),
+f32,f1,(const float* fn, const float* fm),
 
 	// multiplications are done with 28 bits of precision (53 - 25) and the final sum at 30 bits
 	double idp = reduce_precision<25>((double)fn[0] * fm[0]);
@@ -960,7 +960,7 @@ shil_opc(ftrv)
 #if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
-void,f1,(float* fd,float* fn, float* fm),
+void,f1,(float* fd, const float* fn, const float* fm),
 
 	double v1 = reduce_precision<25>((double)fm[0]  * fn[0]) +
 				reduce_precision<25>((double)fm[4]  * fn[1]) +
@@ -1100,7 +1100,7 @@ shil_opc_end()
 shil_opc(frswap)
 shil_canonical
 (
-void,f1,(u64* fd1,u64* fd2,u64* fs1,u64* fs2),
+void,f1,(u64* fd1, u64* fd2, const u64* fs1, const u64* fs2),
 
 	u64 temp;
 	for (int i=0;i<8;i++)

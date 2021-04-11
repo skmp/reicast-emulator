@@ -476,11 +476,8 @@ SOURCES_C += \
 				$(DEPS_DIR)/lzma/C/LzFind.c \
 				$(DEPS_DIR)/lzma/C/Lzma2Dec.c \
 				$(DEPS_DIR)/lzma/C/Lzma86Dec.c \
-				$(DEPS_DIR)/lzma/C/Lzma86Enc.c \
 				$(DEPS_DIR)/lzma/C/LzmaDec.c \
-				$(DEPS_DIR)/lzma/C/LzmaEnc.c \
-				$(DEPS_DIR)/lzma/C/LzmaLib.c \
-				$(DEPS_DIR)/lzma/C/Sort.c
+				$(DEPS_DIR)/lzma/C/LzmaEnc.c
 
 ifeq ($(SYSTEM_ZLIB), 1)
 	CFLAGS += $(shell pkg-config --cflags zlib)

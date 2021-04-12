@@ -203,8 +203,8 @@ void FinishRender(TA_context* ctx)
 static cMutex mtx_pool;
 
 /* texture cache entry pool. */
-static vector<TA_context*> ctx_pool;
-static vector<TA_context*> ctx_list;
+static std::vector<TA_context*> ctx_pool;
+static std::vector<TA_context*> ctx_list;
 
 TA_context* tactx_Alloc(void)
 {

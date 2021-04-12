@@ -147,24 +147,24 @@ int spg_line_sched(int tag, int cycl, int jit)
 	u32 min_active = pvr_numscanlines;
 
 	if (min_scanline < SPG_VBLANK_INT.vblank_in_interrupt_line_number)
-		min_active = min(min_active, SPG_VBLANK_INT.vblank_in_interrupt_line_number);
+		min_active = std::min(min_active, SPG_VBLANK_INT.vblank_in_interrupt_line_number);
 
 	if (min_scanline < SPG_VBLANK_INT.vblank_out_interrupt_line_number)
-		min_active = min(min_active, SPG_VBLANK_INT.vblank_out_interrupt_line_number);
+		min_active = std::min(min_active, SPG_VBLANK_INT.vblank_out_interrupt_line_number);
 
 	if (min_scanline < SPG_VBLANK.vstart)
-		min_active = min(min_active, SPG_VBLANK.vstart);
+		min_active = std::min(min_active, SPG_VBLANK.vstart);
 
 	if (min_scanline < SPG_VBLANK.vbend)
-		min_active = min(min_active, SPG_VBLANK.vbend);
+		min_active = std::min(min_active, SPG_VBLANK.vbend);
 
 	if (min_scanline < pvr_numscanlines)
-		min_active = min(min_active, pvr_numscanlines);
+		min_active = std::min(min_active, pvr_numscanlines);
 
 	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
-		min_active = min(min_active, lightgun_line);
+		min_active = std::min(min_active, lightgun_line);
 
-	min_active = max(min_active,min_scanline);
+	min_active = std::max(min_active,min_scanline);
 
 	return (min_active - pvr_cur_scanline)*Line_Cycles;
 }

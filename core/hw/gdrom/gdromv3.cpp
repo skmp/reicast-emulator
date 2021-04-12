@@ -1046,7 +1046,7 @@ static int getGDROMTicks()
      if (len - SB_GDLEND > 10240)
 		 return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
 	  else
-        return   min((u32)10240, len - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
+        return   std::min((u32)10240, len - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
    }
    else
 	  return 0;
@@ -1080,9 +1080,9 @@ static int GDRomschd(int i, int c, int j)
 	//if we don't have any more sectors to read
    //make sure we don't underrun the cache :)
 	if (read_params.remaining_sectors == 0)
-		len = min(len, read_buff.cache_size);
+		len = std::min(len, read_buff.cache_size);
 
-	len = min(len, (u32)10240);
+	len = std::min(len, (u32)10240);
 
 #if 0
 	// do we need to do this for GDROM DMA?

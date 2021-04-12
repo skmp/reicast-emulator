@@ -1132,9 +1132,9 @@ _end:
 		blk->guest_cycles *= 1.5f;
 
 	//make sure we don't use wayy-too-many cycles
-	blk->guest_cycles=min(blk->guest_cycles,max_cycles);
+	blk->guest_cycles = std::min(blk->guest_cycles,max_cycles);
 	//make sure we don't use wayy-too-few cycles
-	blk->guest_cycles=max(1U,blk->guest_cycles);
+	blk->guest_cycles = std::max(1U,blk->guest_cycles);
 	blk=0;
 
 	return true;

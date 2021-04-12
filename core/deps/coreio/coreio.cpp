@@ -19,16 +19,16 @@
 
 struct CORE_FILE {
 	FILE* f;
-	string path;
+   std::string path;
 	size_t seek_ptr;
 
-	string host;
+   std::string host;
 	int port;
 };
 
 core_file* core_fopen(const char* filename)
 {
-	string p = filename;
+   std::string p = filename;
 
 	CORE_FILE* rv = new CORE_FILE();
 	rv->f = 0;

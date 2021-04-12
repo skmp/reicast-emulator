@@ -569,7 +569,7 @@ struct maple_sega_vmu: maple_base
 	{
 		memset(flash_data,0,sizeof(flash_data));
 		memset(lcd_data,0,sizeof(lcd_data));
-		string apath = get_writable_vmu_path(logical_port);
+      std::string apath = get_writable_vmu_path(logical_port);
 
 		vmu_screen_params[bus_id].vmu_lcd_screen = lcd_data_decoded ;
 

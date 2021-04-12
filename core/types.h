@@ -324,7 +324,6 @@ struct maple_device_instance
 //includes from c++rt
 #include <vector>
 #include <string>
-using namespace std;
 
 //used for asm-olny functions
 #if defined(X86) && defined(_MSC_VER)
@@ -523,7 +522,7 @@ struct settings_t
 	} bios;
 
 	struct {
-		string ElfFile;
+      std::string ElfFile;
 	} reios;
 
 	struct

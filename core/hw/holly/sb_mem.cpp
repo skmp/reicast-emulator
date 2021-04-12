@@ -192,8 +192,8 @@ void FixUpFlash()
 	}
 }
 
-static bool nvmem_load(const string& root,
-      const string& s1, const char *s2)
+static bool nvmem_load(const std::string& root,
+      const std::string& s1, const char *s2)
 {
    switch (settings.System)
    {
@@ -211,7 +211,7 @@ static bool nvmem_load(const string& root,
    return false;
 }
 
-bool LoadRomFiles(const string& root)
+bool LoadRomFiles(const std::string& root)
 {
    if (settings.System != DC_PLATFORM_ATOMISWAVE)
    {
@@ -232,7 +232,7 @@ bool LoadRomFiles(const string& root)
    return true;
 }
 
-void SaveRomFiles(const string& root)
+void SaveRomFiles(const std::string& root)
 {
    switch (settings.System)
    {
@@ -267,7 +267,7 @@ u8 *get_nvmem_data(void)
    return NULL;
 }
 
-bool LoadHle(const string& root) {
+bool LoadHle(const std::string& root) {
 	if (!nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
 		WARN_LOG(FLASHROM, "No nvmem loaded\n");
 	}

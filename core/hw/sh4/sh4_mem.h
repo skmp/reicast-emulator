@@ -75,8 +75,8 @@ static inline bool IsOnRam(u32 addr)
 	return ((addr >> 26) & 7) == 3 && ((addr >> 29) & 7) != 7;
 }
 
-bool LoadRomFiles(const string& root);
-void SaveRomFiles(const string& root);
-bool LoadHle(const string& root);
+bool LoadRomFiles(const std::string& root);
+void SaveRomFiles(const std::string& root);
+bool LoadHle(const std::string& root);
 void FixUpFlash();
 void SetMemoryHandlers();

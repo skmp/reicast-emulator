@@ -62,7 +62,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	BlockEndType BlockType;
 	bool has_jcond;
 
-	vector<shil_opcode> oplist;
+   std::vector<shil_opcode> oplist;
 
 	bool contains_code(const u8* ptr)
 	{
@@ -75,7 +75,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	virtual void Relocate(void* dst)=0;
 	
 	//predecessors references
-	vector<RuntimeBlockInfoPtr> pre_refs;
+   std::vector<RuntimeBlockInfoPtr> pre_refs;
 
    void AddRef(const RuntimeBlockInfoPtr& other);
 	void RemRef(const RuntimeBlockInfoPtr& other);
@@ -90,7 +90,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	bool read_only;
 };
 
-void bm_WriteBlockMap(const string& file);
+void bm_WriteBlockMap(const std::string& file);
 
 extern "C" {
 __attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr);

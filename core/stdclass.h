@@ -115,7 +115,7 @@ public:
 
 	void Zero()
 	{
-		memset(data,0,sizeof(T)*Size);
+      memset(data,0,sizeof(T)*Size);
 	}
 
 	void Free()
@@ -237,22 +237,22 @@ public :
 };
 
 //Set the path !
-void set_user_config_dir(const string& dir);
-void set_user_data_dir(const string& dir);
-void add_system_config_dir(const string& dir);
-void add_system_data_dir(const string& dir);
+void set_user_config_dir(const std::string& dir);
+void set_user_data_dir(const std::string& dir);
+void add_system_config_dir(const std::string& dir);
+void add_system_data_dir(const std::string& dir);
 
 //subpath format: /data/fsca-table.bit
-string get_writable_data_path(const string& filename);
-string get_writable_vmu_path(const char *logical_port);
+std::string get_writable_data_path(const std::string& filename);
+std::string get_writable_vmu_path(const char *logical_port);
 
-bool mem_region_lock(void *start, size_t len);
-bool mem_region_unlock(void *start, size_t len);
-bool mem_region_set_exec(void *start, size_t len);
-void *mem_region_reserve(void *start, size_t len);
-bool mem_region_release(void *start, size_t len);
-void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite);
-bool mem_region_unmap_file(void *start, size_t len);
+bool mem_region_lock(void *start, std::size_t len);
+bool mem_region_unlock(void *start, std::size_t len);
+bool mem_region_set_exec(void *start, std::size_t len);
+void *mem_region_reserve(void *start, std::size_t len);
+bool mem_region_release(void *start, std::size_t len);
+void *mem_region_map_file(void *file_handle, void *dest, std::size_t len, std::size_t offset, bool readwrite);
+bool mem_region_unmap_file(void *start, std::size_t len);
 
 class VArray2
 {

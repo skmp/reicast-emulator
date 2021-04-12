@@ -264,14 +264,14 @@ void rend_start_render(void)
          ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
 			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 
-         max_idx              = max(max_idx,  ctx->rend.idx.used());
-         max_vtx              = max(max_vtx,  ctx->rend.verts.used());
-         max_op               = max(max_op,   ctx->rend.global_param_op.used());
-         max_pt               = max(max_pt,   ctx->rend.global_param_pt.used());
-         max_tr               = max(max_tr,   ctx->rend.global_param_tr.used());
+         max_idx              = std::max(max_idx,  ctx->rend.idx.used());
+         max_vtx              = std::max(max_vtx,  ctx->rend.verts.used());
+         max_op               = std::max(max_op,   ctx->rend.global_param_op.used());
+         max_pt               = std::max(max_pt,   ctx->rend.global_param_pt.used());
+         max_tr               = std::max(max_tr,   ctx->rend.global_param_tr.used());
 
-         max_mvo              = max(max_mvo,  ctx->rend.global_param_mvo.used());
-         max_modt             = max(max_modt, ctx->rend.modtrig.used());
+         max_mvo              = std::max(max_mvo,  ctx->rend.global_param_mvo.used());
+         max_modt             = std::max(max_modt, ctx->rend.modtrig.used());
 
          if (QueueRender(ctx))
          {

@@ -270,7 +270,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 			}
 			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, allow_write) != NULL);
 			u32 end = start + page_size;
-			const vector<vram_lock>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
+			const std::vector<vram_lock>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
 
 			{
 				std::lock_guard<cMutex> lock(vramlist_lock);

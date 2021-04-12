@@ -946,7 +946,7 @@ static void update_variables(bool first_startup)
 	   if (!strcmp("disabled", var.value))
 		   settings.pvr.ta_skip = 0;
 	   else {
-		   settings.pvr.ta_skip = max(0, min(6, var.value[0] - '0'));
+		   settings.pvr.ta_skip = std::max(0, std::min(6, var.value[0] - '0'));
 	   }
    }
    else
@@ -2716,28 +2716,28 @@ static void UpdateInputStateNaomi(u32 port)
 			case 0:
 			   /* Left stick X: [-128, 127] */
 			   if (axis_type == Half)
-				  joyx[port] = max((int)joyx[port], 0) * 2;
+				  joyx[port] = std::max((int)joyx[port], 0) * 2;
 			   else
 				  joyx[port] += 128;
 			   break;
 			case 1:
 			   /* Left stick Y: [-128, 127] */
 			   if (axis_type == Half)
-				  joyy[port] = max((int)joyy[port], 0) * 2;
+				  joyy[port] = std::max((int)joyy[port], 0) * 2;
 			   else
 				  joyy[port] += 128;
 			   break;
 			case 2:
 			   /* Right stick X: [-128, 127] */
 			   if (axis_type == Half)
-				  joyrx[port] = max((int)joyrx[port], 0) * 2;
+				  joyrx[port] = std::max((int)joyrx[port], 0) * 2;
 			   else
 				  joyrx[port] += 128;
 			   break;
 			case 3:
 			   /* Right stick Y: [-128, 127] */
 			   if (axis_type == Half)
-				  joyry[port] = max((int)joyry[port], 0) * 2;
+				  joyry[port] = std::max((int)joyry[port], 0) * 2;
 			   else
 				  joyry[port] += 128;
 			   break;
@@ -3124,19 +3124,19 @@ void UpdateVibration(u32 port, u32 value, u32 max_duration)
 	  INC = 0;
    bool CNT = value & 1;
 
-   double pow = min((POW_POS + POW_NEG) / 7.0, 1.0);
+   double pow         = std::min((POW_POS + POW_NEG) / 7.0, 1.0);
    vib_strength[port] = pow;
 
    rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * pow));
 
    if (FREQ > 0 && (!CNT || INC))
-	  vib_stop_time[port] = get_time_ms() + min((int)(1000 * (INC ? abs(INC) * max(POW_POS, POW_NEG) : 1) / FREQ), (int)max_duration);
+	  vib_stop_time[port] = get_time_ms() + std::min((int)(1000 * (INC ? abs(INC) * std::max(POW_POS, POW_NEG) : 1) / FREQ), (int)max_duration);
    else
 	  vib_stop_time[port] = get_time_ms() + max_duration;
    if (INC == 0 || pow == 0)
 	  vib_delta[port] = 0.0;
    else
-	  vib_delta[port] = FREQ / (1000.0 * INC * max(POW_POS, POW_NEG));
+	  vib_delta[port] = FREQ / (1000.0 * INC * std::max(POW_POS, POW_NEG));
 }
 
 extern u8 kb_shift; 		// shift keys pressed (bitmask)

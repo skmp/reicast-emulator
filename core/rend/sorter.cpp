@@ -27,18 +27,18 @@ struct IndexTrig
 #if 0
 static float min3(float v0, float v1, float v2)
 {
-	return min(min(v0,v1),v2);
+	return std::min(std::min(v0,v1),v2);
 }
 
 static float max3(float v0, float v1, float v2)
 {
-	return max(max(v0,v1),v2);
+	return std::max(std::max(v0,v1),v2);
 }
 #endif
 
 static float minZ(const Vertex *v, const u32 *mod)
 {
-	return min(min(v[mod[0]].z,v[mod[1]].z),v[mod[2]].z);
+	return std::min(std::min(v[mod[0]].z, v[mod[1]].z), v[mod[2]].z);
 }
 
 static bool operator<(const IndexTrig& left, const IndexTrig& right)
@@ -80,7 +80,7 @@ void SortPParams(int first, int count)
 			u32 zv=0xFFFFFFFF;
 			while(vtx!=vtx_end)
 			{
-				zv=min(zv,(u32&)vtx->z);
+				zv = std::min(zv,(u32&)vtx->z);
 				vtx++;
 			}
 
@@ -128,7 +128,7 @@ bool Intersect(Vertex* a, Vertex* b)
 }
 
 //root for quick-union
-u16 rid(vector<u16>& v, u16 id)
+u16 rid(std::vector<u16>& v, u16 id)
 {
 	while(id!=v[id]) id=v[id];
 	return id;
@@ -144,9 +144,9 @@ struct TrigBounds
 //find 3d bounding box for triangle
 TrigBounds bound(Vertex* v)
 {
-	TrigBounds rv = {	min(min(v[0].x,v[1].x),v[2].x), max(max(v[0].x,v[1].x),v[2].x),
-						min(min(v[0].y,v[1].y),v[2].y), max(max(v[0].y,v[1].y),v[2].y),
-						min(min(v[0].z,v[1].z),v[2].z), max(max(v[0].z,v[1].z),v[2].z),
+	TrigBounds rv = {	std::min(std::min(v[0].x,v[1].x),v[2].x), std::max(std::max(v[0].x,v[1].x),v[2].x),
+						std::min(std::min(v[0].y,v[1].y),v[2].y), std::max(std::max(v[0].y,v[1].y),v[2].y),
+						std::min(std::min(v[0].z,v[1].z),v[2].z), std::max(std::max(v[0].z,v[1].z),v[2].z),
 					};
 
 	return rv;

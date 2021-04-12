@@ -14,10 +14,10 @@
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"
 
+#define MIPS_COUNTER 0
+
 #include <algorithm>
 #include <map>
-
-#define MIPS_COUNTER 0
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -71,7 +71,7 @@ struct CC_PS
 	shil_param* prm;
 };
 
-typedef vector<CC_PS> CC_pars_t;
+typedef std::vector<CC_PS> CC_pars_t;
 
 
 struct opcode_cc_aBaCbC {
@@ -1069,7 +1069,7 @@ struct opcode_blockend : public opcodeExec {
 template <int sz>
 struct opcode_check_block : public opcodeExec {
 	RuntimeBlockInfo* block;
-	vector<u8> code;
+   std::vector<u8> code;
 	const void* ptr;
 
 	opcodeExec* setup(RuntimeBlockInfo* block) {
@@ -1188,7 +1188,7 @@ opcodeExec* createType2(const CC_pars_t& prms, void* fun) {
 }
 
 
-map<void*, int> funs;
+std::map<void*, int> funs;
 
 
 int funs_id_count;
@@ -1205,7 +1205,7 @@ template <> \
 opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun, shil_opcode* opcode) { \
 	typedef OPCODE_CC(sig) CTR; \
 	\
-	static map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
+	static std::map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
 		
 #define FAST_gis \
 };\
@@ -1406,7 +1406,7 @@ FAST_gis
 
 typedef opcodeExec*(*foas)(const CC_pars_t& prms, void* fun, shil_opcode* opcode);
 
-string getCTN(foas code);
+std::string getCTN(foas code);
 
 template <typename CTR>
 opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
@@ -1428,7 +1428,7 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	return rv;
 }
 
-map< string, foas> unmap = {
+std::map< std::string, foas> unmap = {
 	{ "aBaCbC", &createType_fast<opcode_cc_aBaCbC> },
 	{ "aCaCbC", &createType<opcode_cc_aCaCbC> },
 	{ "aCaBbC", &createType<opcode_cc_aCaBbC> },
@@ -1463,8 +1463,8 @@ map< string, foas> unmap = {
 	{ "vV", &createType<opcode_cc_vV> },
 };
 
-string getCTN(foas f) {
-	auto it = find_if(unmap.begin(), unmap.end(), [f](const map< string, foas>::value_type& s) { return s.second == f; });
+std::string getCTN(foas f) {
+	auto it = find_if(unmap.begin(), unmap.end(), [f](const std::map< std::string, foas>::value_type& s) { return s.second == f; });
 
 	return it->first;
 }
@@ -1875,7 +1875,7 @@ public:
 
 	void ngen_CC_Finish(shil_opcode* op)
 	{
-		string nm = "";
+      std::string nm = "";
 		for (auto m : CC_pars) {
 			nm += (char)(m.type + 'a');
 			nm += (char)(m.prm->type + 'A');

@@ -2,7 +2,6 @@
 #include "../types.h"
 #include "x86_op_classes.h"
 
-using namespace std;
 //Oh god , x86 is a sooo badly designed opcode arch -_-
 
 const char* DissasmClass(x86_opcode_class opcode);

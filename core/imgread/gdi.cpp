@@ -22,7 +22,7 @@ Disc* load_gdi(const char* file)
 	core_fread(t, gdi_data, gdi_len);
 	core_fclose(t);
 
-	istringstream gdi(gdi_data);
+   std::istringstream gdi(gdi_data);
 
 	u32 iso_tc = 0;
 	gdi >> iso_tc;
@@ -50,7 +50,7 @@ Disc* load_gdi(const char* file)
 	s32 OFFSET=0;
 	for (u32 i=0;i<iso_tc;i++)
 	{
-		string track_filename;
+      std::string track_filename;
 
 		//TRACK FADS CTRL SSIZE file OFFSET
 		gdi >> TRACK;

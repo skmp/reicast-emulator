@@ -21,7 +21,7 @@
 #include "types.h"
 #include "common.h"
 
-static u32 getSectorSize(const string& type) {
+static u32 getSectorSize(const std::string& type) {
 		if (type == "AUDIO")
 			return 2352;	// PCM Audio
 		else if (type == "CDG")
@@ -68,7 +68,7 @@ Disc* cue_parse(const char* file)
 	core_fread(fsource, cue_data, cue_len);
 	core_fclose(fsource);
 
-	istringstream cuesheet(cue_data);
+   std::istringstream cuesheet(cue_data);
 
 	char path[512];
 	strcpy(path, file);
@@ -83,14 +83,14 @@ Disc* cue_parse(const char* file)
 
 	Disc* disc = new Disc();
 	u32 current_fad = 150;
-	string track_filename;
+   std::string track_filename;
 	u32 track_number = -1;
-	string track_type;
+   std::string track_type;
 	u32 session_number = 0;
 
 	while (!cuesheet.eof())
 	{
-		string token;
+      std::string token;
 		cuesheet >> token;
 
 		if (token == "REM")

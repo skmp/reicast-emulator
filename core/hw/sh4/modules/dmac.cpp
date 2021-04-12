@@ -54,7 +54,9 @@ void DMAC_Ch2St()
    // 13000000 - 13FFFFE0
    else
 	{
-		if (SB_LMMODE0 == 0)
+      bool path64b = SB_C2DSTAT & 0x02000000 ? SB_LMMODE1 == 0 : SB_LMMODE0 == 0;
+
+		if (path64b)
 		{
 			// 64-bit path
          dst = (dst & 0x00FFFFFF) | 0xa4000000;
@@ -77,7 +79,7 @@ void DMAC_Ch2St()
 			while (len > 0)
 			{
 				u32 v = ReadMem32_nommu(src);
-				pvr_write_area1_32(dst, v);
+            pvr_write_area1<u32>(dst, v);
 				len -= 4;
 				src += 4;
 				dst += 4;
@@ -103,7 +105,11 @@ static const InterruptID dmac_itr[] = { sh4_DMAC_DMTE0, sh4_DMAC_DMTE1, sh4_DMAC
 template<u32 ch>
 void WriteCHCR(u32 addr, u32 data)
 {
-	DMAC_CHCR(ch).full=data;
+   if (ch == 0 || ch == 1)
+		DMAC_CHCR(ch).full = data & 0xff0ffff7;
+	else
+		// no AL or RL on channels 2 and 3
+		DMAC_CHCR(ch).full = data & 0xff0afff7;
 	
 	if (DMAC_CHCR(ch).TE == 0 && DMAC_CHCR(ch).DE && DMAC_DMAOR.DME)
 	{
@@ -111,8 +117,9 @@ void WriteCHCR(u32 addr, u32 data)
 		{
 			u32 len = DMAC_DMATCR(ch) * 32;
 
-         DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d rs:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).RS,
+         DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d TS:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).TS,
                DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
+         verify(DMAC_CHCR(ch).TS == 4);
 			for (u32 ofs = 0; ofs < len; ofs += 4)
 			{
 				u32 data = ReadMem32_nommu(DMAC_SAR(ch) + ofs);
@@ -120,6 +127,14 @@ void WriteCHCR(u32 addr, u32 data)
 			}
 
 			DMAC_CHCR(ch).TE = 1;
+         if (DMAC_CHCR(ch).SM == 1)
+            DMAC_SAR(ch) += len;
+         else if (DMAC_CHCR(ch).SM == 2)
+            DMAC_SAR(ch) -= len;
+         if (DMAC_CHCR(ch).DM == 1)
+            DMAC_DAR(ch) += len;
+         else if (DMAC_CHCR(ch).DM == 2)
+            DMAC_DAR(ch) -= len;
 		}
 
 		InterruptPend(dmac_itr[ch], DMAC_CHCR(ch).TE);

@@ -138,7 +138,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		}
 		else if (sz==4)
 		{
-			return _vmem_RF32[id/4](addr);
+			return _vmem_RF32[id](addr);
 		}
 		else if (sz==8)
 		{

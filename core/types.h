@@ -348,14 +348,20 @@ struct maple_device_instance
 #endif
 
 //no inline -- fixme
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define NOINLINE __declspec(noinline)
-#define likely(x) x
-#define unlikely(x) x
 #else
 #define NOINLINE __attribute__ ((noinline))
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)       __builtin_expect((x),0)
+#endif
+
+#ifdef _MSC_VER
+#define likely(x) x
+#define unlikely(x) x
+#define expected(x, y) x
+#else
+#define likely(x)      __builtin_expect(!!(x), 1)
+#define unlikely(x)    __builtin_expect(!!(x), 0)
+#define expected(x, y) __builtin_expect((x), (y))
 #endif
 
 //basic includes

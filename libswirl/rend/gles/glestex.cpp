@@ -5,6 +5,7 @@
 
 
 #include <algorithm>
+#include <math.h>
 #include "glcache.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
@@ -493,6 +494,18 @@ typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
 TextureCacheData *getTextureCacheData(u8* vram, TSP tsp, TCW tcw);
 
+
+double binaryFractionToDouble(u32 numberIntegerPart, u32 numberFractionalPart, u32 fractionalPartLength)
+{
+	double sum = 0;
+
+	for (u32 i = 1; i <= fractionalPartLength; ++i) {
+		sum += !!(numberFractionalPart & (1 << fractionalPartLength - i)) * pow(.5, i);
+	}
+
+	return numberIntegerPart + sum;
+}
+
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	if (gl.rtt.fbo) glDeleteFramebuffers(1,&gl.rtt.fbo);
@@ -508,6 +521,11 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	int fbw2 = 2;
 	while (fbw2 < fbw)
 		fbw2 *= 2;
+
+	if (SCALER_CTL.vscalefactor != 0x0400) {
+		fbh2 = round(fbh2 * binaryFractionToDouble(
+				SCALER_CTL.vscalefactor >> 10, SCALER_CTL.vscalefactor & 0x3FF, 10));
+	}
 
 	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
 	{

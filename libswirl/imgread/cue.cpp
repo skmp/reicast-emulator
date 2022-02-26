@@ -64,7 +64,9 @@ Disc* cue_parse(const wchar* file)
 	u32 current_fad = 150;
 	string track_filename;
 	u32 track_number = -1;
+	u32 session_number = -1;
 	string track_type;
+	bool first_track = false;
 
 	while (!cuesheet.eof())
 	{
@@ -77,6 +79,12 @@ Disc* cue_parse(const wchar* file)
 			if (token == "HIGH-DENSITY")
 			{
 				current_fad = 45000 + 150;
+			}
+			else if (token == "SESSION")
+			{
+				first_track = true;
+				cuesheet >> session_number;
+				continue;
 			}
 			else if (token != "SINGLE-DENSITY")
 				printf("CUE parse error: unrecognized REM token %s. Expected SINGLE-DENSITY or HIGH-DENSITY\n", token.c_str());
@@ -116,6 +124,16 @@ Disc* cue_parse(const wchar* file)
 		{
 			cuesheet >> track_number;
 			cuesheet >> track_type;
+
+			if (first_track)
+			{
+				first_track = false;
+
+				Session s;
+				s.StartFAD=(u32)(current_fad);
+				s.FirstTrack=track_number;
+				disc->sessions.push_back(s);
+			}
 		}
 		else if (token == "INDEX")
 		{

@@ -19,7 +19,7 @@
 #include <dirent.h>
 #endif
 #include <sys/stat.h>
-
+#include <fstream>
 #include "gui.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
@@ -60,6 +60,13 @@ static bool touch_up;
 #endif
 
 extern bool subfolders_read;
+
+static std::string file_toRename = ""; //used for rename function
+static std::string path_toRename = ""; //same
+static std::string currentDirectory = ""; //this stores the current file open
+std::vector<std::string> dirs; //store of all the paths that contain a relative file (inside the selected content path(s))
+std::vector<std::string> content_paths; //store of the content path(s)
+
 
 static double last_render;
 std::vector<float> render_times;
@@ -674,6 +681,8 @@ struct ReicastUI_impl : GUI {
         DIR* dir = opendir(path.c_str());
         if (dir == NULL)
             return;
+
+
         while (true)
         {
             struct dirent* entry = readdir(dir);
@@ -730,11 +739,130 @@ struct ReicastUI_impl : GUI {
     {
         if (game_list_done)
             return;
+
         game_list.clear();
-        for (auto path : settings.dreamcast.ContentPath)
+        content_paths.clear();
+        dirs.clear();
+        bool isMultiple = false;
+
+        if (settings.dreamcast.ContentPath.size() > 1)
+            isMultiple = true;
+
+        for (auto path : settings.dreamcast.ContentPath) {
             add_game_directory(path, game_list);
+            if (isMultiple) 
+                currentDirectory = "ShowAll";
+            else 
+                currentDirectory = path;
+            
+            content_paths.push_back(path.c_str());
+        }
+        initDirectoryVector();
         std::stable_sort(game_list.begin(), game_list.end());
         game_list_done = true;
+    }
+
+    void fetch_game_list(const std::string& path, bool multiplePaths) //this fetch_game_list runs when browsing from directories bar
+    {
+        if (multiplePaths) {
+            currentDirectory = "ShowAll";
+            game_list.clear();
+            for (auto all_dirs : settings.dreamcast.ContentPath) {
+                add_game_directory(all_dirs, game_list);
+                std::stable_sort(game_list.begin(), game_list.end());
+            }
+            game_list_done = true;
+        }
+        else {
+            currentDirectory = path;
+            game_list.clear();
+            add_game_directory(path, game_list);
+            std::stable_sort(game_list.begin(), game_list.end());
+            game_list_done = true;
+        }
+        
+        
+    }
+
+    void initDirectoryVector() {  //initialization of the vectors used
+        for (auto parent_dirs : game_list) {
+            std::string splitter = parent_dirs.path.substr(0, parent_dirs.path.find_last_of("/\\"));
+            dirs.push_back(splitter.c_str());
+        }
+
+        for (auto path : settings.dreamcast.ContentPath)
+            dirs.push_back(path);
+
+        if (settings.dreamcast.ContentPath.size() > 1) {
+            content_paths.push_back("ShowAll");
+            dirs.push_back("ShowAll");
+        }
+        
+        std::sort(dirs.begin(), dirs.end());
+        dirs.erase(std::unique(dirs.begin(), dirs.end()), dirs.end());
+        for (int i = 0; i < dirs.size(); i++) {
+            if (dirs[i].empty()) {
+                dirs.erase(dirs.begin() + i);
+            }
+        }
+
+    }
+
+    std::string getFormattedDirs(const std::string dir_str) { //formatting the appearence of vectors elements
+        std::string forTitle;
+        bool compare = false;
+
+        if (dir_str.compare("ShowAll") == 0) 
+            return "All Roms";
+
+       
+
+        for (auto paths : content_paths) {
+            if (paths.compare(dir_str) == 0) {
+                compare = true;
+            }
+        }
+
+        if (!compare) {
+            for (auto paths : content_paths) {
+                if (dir_str.find(paths.c_str()) != std::string::npos) {
+                    std::size_t foundinTitle = paths.find_last_of("/\\");
+                    std::string temp_holder = dir_str.substr(foundinTitle + 1);
+                    return forTitle.append("/").append(temp_holder);
+                }
+            }
+        }
+        else {
+            std::size_t foundinTitle = dir_str.find_last_of("/\\");
+            return forTitle = dir_str.substr(foundinTitle + 1);
+        }
+
+    }
+
+    void showDirectoriesBar() {  //Directories bar itself!
+       
+        ImGui::Text("Current Directory: ");
+        ImGui::SameLine();
+        std::string forTitle = getFormattedDirs(currentDirectory);
+        if (ImGui::BeginCombo(" ", forTitle.c_str(), ImGuiComboFlags_None))
+        {
+            for (int i = 0; i < dirs.size(); i++)
+            {
+                std::string forSelectable = getFormattedDirs(dirs[i]);
+                bool is_selected = false;
+                if (ImGui::Selectable(forSelectable.c_str(), &is_selected)) {
+                    if (forSelectable.compare("All Roms") != 0) {
+                        RefreshFiles();
+                        fetch_game_list(dirs[i], false);
+                    }
+                    else {
+                        RefreshFiles();
+                        fetch_game_list(dirs[i] , true);
+                    }
+                }
+            }
+            ImGui::EndCombo();
+        }
     }
 
     void gui_render_demo()
@@ -928,6 +1056,107 @@ struct ReicastUI_impl : GUI {
         }
     }
 
+    std::string convertToString(char* a, int size)
+    {
+        int i;
+        string s = "";
+        for (i = 0; i < size; i++) {
+            if (a[i] != 0)
+                s = s + a[i];
+        }
+        for (int i = 0; i < s.length(); i++) {
+            
+            if ((s[i] >= 48 && s[i] <= 57) ||
+                (s[i] >= 65 && s[i] <= 90) ||
+                (s[i] >= 97 && s[i] <= 122))
+            {
+                continue;
+            }
+            else
+                return "";
+        }
+        return s;
+    }
+
+    void loadExplorerPopups() { //various popups, saved in this function to keep things (relatively) tidy
+
+        if (!file_toRename.empty()) {
+            static char buf[64]{ "" };
+            std::string extension = file_toRename.substr(file_toRename.size() - 4).c_str();
+            if (ImGui::BeginPopupModal("Rename File")) {
+                ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 250.f * scaling);
+                ImGui::Text("Please, enter a valid new name for the file (Cannot contain special symbols and spaces).");
+                ImGui::Text(file_toRename.c_str());
+                ImGui::InputText("##input", buf, IM_ARRAYSIZE(buf));
+                ImGui::SameLine();
+                ImGui::Text(extension.c_str());
+                float currentwidth = ImGui::GetContentRegionAvailWidth();
+                ImGui::SetCursorPosX(
+                    (currentwidth - 80.f * scaling) / 3.f + ImGui::GetStyle().WindowPadding.x);
+                if (ImGui::Button("Okay", ImVec2(50.f * scaling, 0.f))) {
+                    int s_size = sizeof(buf) / sizeof(char);
+                    std::string new_name = convertToString(buf, s_size);
+                    if (!new_name.empty()) {
+                        new_name.append(extension);
+                        if (renameFile(path_toRename, new_name)) {
+                            path_toRename = "";
+                            file_toRename = "";
+                            buf[0] = '\0';
+                            ImGui::CloseCurrentPopup();
+                            RefreshFiles();
+                            
+                        }
+                        else  
+                            buf[0] = '\0';
+                    }
+                    else {
+                        buf[0] = '\0';
+                    }
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(70.f * scaling, 0.f))) {
+                    path_toRename = "";
+                    file_toRename = "";
+                    buf[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                    RefreshFiles();
+                }
+
+                ImGui::SetItemDefaultFocus();
+                ImGui::EndPopup();
+            }
+        }
+
+        if (ImGui::BeginPopupModal("Error on Delete"))
+        {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 250.f * scaling);
+            ImGui::Text("Error deleting file. Please, try removing it manually.");
+            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+            if (ImGui::Button("Okay", ImVec2(80.f * scaling, 0.f)))
+            {
+                ImGui::CloseCurrentPopup();
+                RefreshFiles();
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::EndPopup();
+        }
+        if (ImGui::BeginPopupModal("File Deleted")) {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 250.f * scaling);
+            ImGui::Text("File Deleted Successfully!");
+            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            ImGui::SetCursorPosX(
+                (currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+            if (ImGui::Button("Okay", ImVec2(80.f * scaling, 0.f))) {
+                ImGui::CloseCurrentPopup();
+                RefreshFiles();
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::EndPopup();
+        }
+
+    }
+
     void gui_render_content()
     {
         ImGui_Impl_NewFrame();
@@ -984,9 +1213,16 @@ struct ReicastUI_impl : GUI {
             ImGui::PopID();
 #endif
 
+
+            showDirectoriesBar();
+
             ImGui::Text("%s", "");
             ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "LOCAL ROMS");
-
+            loadExplorerPopups();
+            int gamelistSelection = -1;
+            std::string game_name;
+            std::string game_path;
+            const char* rom_extras[] = { "Play", "Rename", "Delete" }; //new buttons
             for (auto game : game_list)
                 if (filter.PassFilter(game.name.c_str()))
                 {
@@ -996,8 +1232,60 @@ struct ReicastUI_impl : GUI {
                         if (gui_start_game(game.path))
                             gui_state = Closed;
                     }
+                    ImGui::SetItemAllowOverlap();
+                    ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize(" ...").x  /*+ ImGui::GetStyle().ItemSpacing.x*/);
+                    
+                    if (ImGui::BeginCombo("##gamesCombo", " ... ", ImGuiComboFlags_NoArrowButton))  //combo inside PushID
+                    {
+                        for (int i = 0; i < IM_ARRAYSIZE(rom_extras); i++)
+                        {
+                            bool is_selected = false;
+                            if (ImGui::Selectable(rom_extras[i], &is_selected)) {
+                                game_name = game.name;
+                                game_path = game.path;
+                                gamelistSelection = i;
+                            }
+                            if (is_selected) {
+                                ImGui::SetItemDefaultFocus();
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
                     ImGui::PopID();
                 }
+
+
+            if (gamelistSelection != -1) { //drawing user selection out of loop, to avoid ImGUI scope issues and running unnecessary functions over and over again.
+                if (gamelistSelection == 0) {
+                    if (gui_start_game(game_path))
+                        gui_state = Closed;
+                }
+                else if (gamelistSelection == 2) {
+                    if (deleteFile(game_path))
+                        ImGui::OpenPopup("File Deleted");
+                    else
+                        ImGui::OpenPopup("Error on Delete");
+                }
+                else {
+                    
+#ifdef _ANDROID
+                    std::string showvirtualKeyboard(const std::string & new_vk);  //JNI function, can be found under NativeGLActivity.java and Android.cpp
+                    std::string android_response = showvirtualKeyboard(game_name.c_str());
+                    if (android_response.compare("..") != 0) {
+                        if(renameFile(game_path, android_response))
+                            RefreshFiles();
+                            fetch_game_list();
+                    }
+#else
+                    file_toRename = game_name;
+                    path_toRename = game_path;
+                    ImGui::OpenPopup("Rename File");
+#endif
+
+                }
+            }
+
+
 
 
             if (!settings.cloudroms.HideHomebrew)
@@ -1051,6 +1339,26 @@ struct ReicastUI_impl : GUI {
             }
         }
         return std::string("");
+    }
+
+    bool renameFile(const std::string& path, const std::string& newname) {
+        std::string path_nofile = path.substr(0, path.find_last_of("\\/"));
+        path_nofile.append("/").append(newname);
+        if (rename(path.c_str(), path_nofile.c_str()) != 0) 
+            return false;
+        else 
+            return true;
+        
+
+    }
+
+    bool deleteFile(const std::string& path) {
+        if (remove(path.c_str()) != 0) {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 
     void render_vmus()

@@ -1,7 +1,12 @@
 /*
 	This file is part of libswirl
 */
-#include "license/bsd"
+
+#include "license/bsd" // Not so sure about that, TBH. See https://github.com/skmp/nullDC/blob/master/nulldc/plugins/drkPvr/nullRend.cpp#L6C2-L7C130.
+//                        ||
+//                        \/
+// Parts of this seem to have been derived from: https://web.archive.org/web/20120220025947/http://devmaster.net/forums/topic/1145-advanced-rasterization and possibly other unnamed "articles"
+// See https://github.com/skmp/nullDC-svn/commit/a6bfb450fd8e4db1731c33e99227004318fd52d6#commitcomment-121127862 for more details
 
 
 #include <omp.h>

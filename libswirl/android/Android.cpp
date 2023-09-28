@@ -646,6 +646,7 @@ static jmethodID VJoyStartEditingMID;
 static jmethodID VJoyStopEditingMID;
 static jmethodID VJoyResetEditingMID;
 static jmethodID MsgboxMID;
+static jmethodID showVirtualKeyboardMID;
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_register(JNIEnv *env, jobject obj, jobject activity)
 {
@@ -661,7 +662,21 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_register(JNIEnv 
         VJoyStopEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStopEditing", "(Z)V");
         VJoyResetEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyResetEditing", "()V");
         MsgboxMID = env->GetMethodID(env->GetObjectClass(activity), "Msgbox", "(Ljava/lang/String;I)I");
+        showVirtualKeyboardMID = env->GetMethodID(env->GetObjectClass(activity), "showVirtualKeyboard", "(Ljava/lang/String;)Ljava/lang/String;");
     }
+}
+
+std::string showvirtualKeyboard(const std::string& path) {
+
+    JNIEnv* env = jvm_attacher.getEnv();
+    auto jstr = env->NewStringUTF(path.c_str());
+    jstring resultJNIStr = (jstring)env->CallObjectMethod(g_activity, showVirtualKeyboardMID, jstr);
+    const char* resultCStr = env->GetStringUTFChars(resultJNIStr, NULL);
+    size_t length = (size_t)env->GetStringUTFLength(resultJNIStr);
+    std::string resultStr(resultCStr, length);
+    env->ReleaseStringUTFChars(resultJNIStr, resultCStr);
+    return resultStr;
+
 }
 
 void vjoy_start_editing()
